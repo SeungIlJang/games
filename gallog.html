@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> 갤로그의 귀환</h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.60 · 참격에 약한 찌릿찌릿 전기</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.61 · 참격 찌릿찌릿 전기 (조금 더 세게)</div>
     <div style="font-size:20px;font-weight:800;margin-bottom:4px;">🪙 <span id="goldNum">0</span> &nbsp;·&nbsp; ⚔️ 시작강도 <span id="diffNum">0</span></div>
     <div style="font-size:14px;opacity:.8;margin-bottom:8px;">🏆 최고 생존 <span id="bestNum">0</span>초</div>
     <div style="margin-bottom:10px;font-size:13px;display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;">🎮 <span id="nickDisp" style="font-weight:700;color:#ffd25c;">-</span>
@@ -979,14 +979,14 @@ function render(){
     ctx.restore(); }
   // 참격 찌릿찌릿 — 슬래시 반경에 약하게 흐르는 전기 크래클 (은은)
   for(const s of player.slashFx){ const k=Math.min(1,s.t/s.max), a=1-k;
-    const rr=s.r, N=8;
-    ctx.save(); ctx.lineCap='round'; ctx.strokeStyle='#bfefff'; ctx.shadowColor='#7cf6ff'; ctx.shadowBlur=4; ctx.lineWidth=1;
+    const rr=s.r, N=10;
+    ctx.save(); ctx.lineCap='round'; ctx.strokeStyle='#d3f4ff'; ctx.shadowColor='#7cf6ff'; ctx.shadowBlur=6; ctx.lineWidth=1.4;
     for(let i=0;i<N;i++){ const ca=s.ang0 + i*(6.283/N) + k*0.4;
-      ctx.globalAlpha=a*0.38*(0.5+Math.random()*0.5); // 약하게 깜빡(찌릿)
+      ctx.globalAlpha=a*0.62*(0.55+Math.random()*0.45); // 조금 더 세게 깜빡(찌릿)
       const tx=Math.cos(ca+1.5708), ty=Math.sin(ca+1.5708);
       let x0=player.x+Math.cos(ca)*rr, y0=player.y+Math.sin(ca)*rr;
       ctx.beginPath(); ctx.moveTo(x0,y0);
-      for(let q=1;q<=3;q++){ const along=q*3.2, jit=(q%2?1:-1)*(1.6+Math.random()*1.4);
+      for(let q=1;q<=3;q++){ const along=q*4.0, jit=(q%2?1:-1)*(2.2+Math.random()*1.8);
         const xx=x0+tx*along+Math.cos(ca)*jit, yy=y0+ty*along+Math.sin(ca)*jit;
         ctx.lineTo(xx,yy); }
       ctx.stroke(); }
