@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> 갤로그의 귀환</h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.45 · 참격 이펙트(회전 슬래시)</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.46 · 참격 전기 효과 추가</div>
     <div style="font-size:20px;font-weight:800;margin-bottom:4px;">🪙 <span id="goldNum">0</span> &nbsp;·&nbsp; ⚔️ 시작강도 <span id="diffNum">0</span></div>
     <div style="font-size:14px;opacity:.8;margin-bottom:8px;">🏆 최고 생존 <span id="bestNum">0</span>초</div>
     <div style="margin-bottom:10px;font-size:13px;display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;">🎮 <span id="nickDisp" style="font-weight:700;color:#ffd25c;">-</span>
@@ -990,6 +990,17 @@ function render(){
     // 흰 코어 호
     ctx.shadowBlur=0; ctx.strokeStyle='#ffffff'; ctx.lineWidth=2.5; ctx.globalAlpha=a*0.9;
     ctx.beginPath(); ctx.arc(player.x,player.y, s.r*0.94, st, st+arc); ctx.stroke();
+    // ⚡ 전기 아크 (링을 따라 지지직 — 반경 지터)
+    ctx.strokeStyle='#cfefff'; ctx.shadowColor='#7cf6ff'; ctx.shadowBlur=12; ctx.lineWidth=2; ctx.globalAlpha=a;
+    ctx.beginPath();
+    for(let bI=0;bI<=12;bI++){ const aa=st+arc*(bI/12), rr=s.r*0.94+(Math.random()-0.5)*s.r*0.18;
+      const xx=player.x+Math.cos(aa)*rr, yy=player.y+Math.sin(aa)*rr; if(bI===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy); }
+    ctx.stroke();
+    // ⚡ 방사형 번개 스파크 (중심→링, 지그재그 분기)
+    const forks=s.evo?4:3;
+    for(let f=0;f<forks;f++){ const fa=st+arc*Math.random(); ctx.beginPath(); ctx.moveTo(player.x,player.y);
+      for(let kk=1;kk<=4;kk++){ const cr=s.r*0.94*(kk/4), ja=fa+(Math.random()-0.5)*0.5;
+        ctx.lineTo(player.x+Math.cos(ja)*cr, player.y+Math.sin(ja)*cr); } ctx.stroke(); }
     ctx.restore(); }
   // 삼도류 검기(크레센트 슬래시)
   for(const bl of player.blades){ const a=Math.max(0,bl.life/bl.max); ctx.save(); ctx.globalAlpha=a; ctx.lineCap='round'; ctx.lineJoin='round';
