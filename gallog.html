@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> 갤로그의 귀환</h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.47 · 참격=캐릭터 전기 크래클(은은)</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.48 · 참격 무기=다이아에 전기 상시 흐름</div>
     <div style="font-size:20px;font-weight:800;margin-bottom:4px;">🪙 <span id="goldNum">0</span> &nbsp;·&nbsp; ⚔️ 시작강도 <span id="diffNum">0</span></div>
     <div style="font-size:14px;opacity:.8;margin-bottom:8px;">🏆 최고 생존 <span id="bestNum">0</span>초</div>
     <div style="margin-bottom:10px;font-size:13px;display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;">🎮 <span id="nickDisp" style="font-weight:700;color:#ffd25c;">-</span>
@@ -1045,6 +1045,18 @@ function render(){
   ctx.lineWidth=3; ctx.strokeStyle='#ffffff'; ctx.beginPath();
   for(let i=0;i<sides;i++){ const a=aim+i/sides*Math.PI*2, px=player.x+Math.cos(a)*pr, py=player.y+Math.sin(a)*pr; i?ctx.lineTo(px,py):ctx.moveTo(px,py); } ctx.closePath(); ctx.stroke();
   ctx.fillStyle='#0d0f1a'; ctx.beginPath(); ctx.arc(player.x,player.y,pr*0.35,0,Math.PI*2); ctx.fill();
+  // ⚡ 참격 무기 보유 시: 다이아(점)에 전기가 상시 은은하게 흐름
+  if(player.weapons&&player.weapons.slash){ ctx.save(); ctx.lineCap='round';
+    const er=pr+4, flick=0.55+0.45*Math.sin(time*22);
+    ctx.strokeStyle='#c8f2ff'; ctx.shadowColor='#7cf6ff'; ctx.shadowBlur=6; ctx.globalAlpha=0.55*flick; ctx.lineWidth=1.3;
+    for(let i=0;i<3;i++){ const base=time*2.4 + i*2.094;
+      ctx.beginPath();
+      for(let seg=0;seg<=3;seg++){ const rr=pr*0.55+er*(seg/3)*0.75, ja=base+(Math.random()-0.5)*0.5;
+        const xx=player.x+Math.cos(ja)*rr, yy=player.y+Math.sin(ja)*rr; seg?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy); }
+      ctx.stroke(); }
+    if(Math.random()<0.5){ const sa=Math.random()*6.283; ctx.shadowBlur=0; ctx.fillStyle='#eaffff'; ctx.globalAlpha=0.75*flick;
+      ctx.beginPath(); ctx.arc(player.x+Math.cos(sa)*er, player.y+Math.sin(sa)*er, 1.2, 0, 6.283); ctx.fill(); }
+    ctx.restore(); }
   ctx.restore();
   // 피격 붉은 화면 / 레벨업 플래시
   if(hurtFlash>0){ ctx.fillStyle='rgba(255,40,70,'+(hurtFlash*0.45).toFixed(3)+')'; ctx.fillRect(0,0,W,H); }
