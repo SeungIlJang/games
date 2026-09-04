@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> 갤로그의 귀환</h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.49 · 참격=기존 그대로+발동시 전기 느낌 (상시 아우라 제거)</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.50 · 참격=점 둘레에 또렷한 번개 가닥 링 (스케치 반영)</div>
     <div style="font-size:20px;font-weight:800;margin-bottom:4px;">🪙 <span id="goldNum">0</span> &nbsp;·&nbsp; ⚔️ 시작강도 <span id="diffNum">0</span></div>
     <div style="font-size:14px;opacity:.8;margin-bottom:8px;">🏆 최고 생존 <span id="bestNum">0</span>초</div>
     <div style="margin-bottom:10px;font-size:13px;display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;">🎮 <span id="nickDisp" style="font-weight:700;color:#ffd25c;">-</span>
@@ -977,26 +977,25 @@ function render(){
     ctx.globalAlpha=a; ctx.fillStyle='#050109'; ctx.beginPath(); ctx.arc(0,0,void_,0,Math.PI*2); ctx.fill();
     ctx.strokeStyle='rgba(200,150,255,'+(0.55*a).toFixed(2)+')'; ctx.lineWidth=2; ctx.shadowColor='#b06bff'; ctx.shadowBlur=12; ctx.beginPath(); ctx.arc(0,0,void_,0,Math.PI*2); ctx.stroke(); ctx.shadowBlur=0;
     ctx.restore(); }
-  // 참격 이펙트 — 캐릭터(점)에 전기가 살짝 흐르는 느낌 (발동 순간에만, 은은한 크래클)
+  // 참격 이펙트 — 캐릭터(점) 둘레에 또렷한 번개 가닥들이 촥 뻗음 (승일님 스케치대로)
   for(const s of player.slashFx){ const k=Math.min(1,s.t/s.max), a=1-k;
     ctx.save(); ctx.lineCap='round'; ctx.lineJoin='round';
-    const rIn=player.r+2, rOut=player.r+10+(s.evo?4:0); // 캐릭터 바로 주변
-    // 짧은 지그재그 전기 아크 몇 가닥 (점 둘레를 감돌며 흐름)
-    ctx.strokeStyle='#cff6ff'; ctx.shadowColor='#7cf6ff'; ctx.shadowBlur=7; ctx.globalAlpha=a; ctx.lineWidth=1.7;
-    const n=s.evo?5:4;
-    for(let i=0;i<n;i++){ const base=s.ang + s.dir*6.283*k + i*(6.283/n);
-      ctx.beginPath(); let pr=rIn, pa=base+(Math.random()-0.5)*0.3;
-      ctx.moveTo(player.x+Math.cos(pa)*pr, player.y+Math.sin(pa)*pr);
-      for(let seg=1;seg<=3;seg++){ pr=rIn+(rOut-rIn)*(seg/3); pa=base+(Math.random()-0.5)*0.7;
-        ctx.lineTo(player.x+Math.cos(pa)*pr, player.y+Math.sin(pa)*pr); }
-      ctx.stroke(); }
-    // 작은 스파크 점 (튀는 느낌)
-    ctx.shadowBlur=0; ctx.fillStyle='#eaffff'; ctx.globalAlpha=a*0.8;
-    for(let sp=0;sp<3;sp++){ const sa=Math.random()*6.283, sr=rIn+Math.random()*(rOut-rIn);
-      ctx.beginPath(); ctx.arc(player.x+Math.cos(sa)*sr, player.y+Math.sin(sa)*sr, 1.2, 0, 6.283); ctx.fill(); }
-    // 아주 옅은 AoE 범위 힌트 (얇은 링)
-    ctx.globalAlpha=a*0.14; ctx.strokeStyle='#8fd8ff'; ctx.lineWidth=1.4;
-    ctx.beginPath(); ctx.arc(player.x,player.y, s.r*0.94, 0, 6.283); ctx.stroke();
+    const rIn=player.r+6, rOut=player.r+34+(s.evo?12:0); // 점 둘레에서 바깥으로 크게
+    const n=s.evo?13:11; // 링을 두르는 번개 가닥 수
+    for(let i=0;i<n;i++){ const base=s.ang + s.dir*k*0.6 + i*(6.283/n);
+      // 라디얼 지그재그 번개 한 가닥 (바깥으로 뻗음)
+      const pts=[]; const segs=3;
+      for(let seg=0;seg<=segs;seg++){ const rr=rIn+(rOut-rIn)*(seg/segs);
+        const off=(seg===0||seg===segs)?0:(seg%2?1:-1)*(0.30+Math.random()*0.18);
+        const pa=base+off; pts.push([player.x+Math.cos(pa)*rr, player.y+Math.sin(pa)*rr]); }
+      // 글로우 패스 (굵고 옅은 시안)
+      ctx.strokeStyle='#7cf6ff'; ctx.shadowColor='#7cf6ff'; ctx.shadowBlur=10; ctx.globalAlpha=a*0.75; ctx.lineWidth=6;
+      ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]); for(let q=1;q<pts.length;q++) ctx.lineTo(pts[q][0],pts[q][1]); ctx.stroke();
+      // 코어 패스 (밝은 흰-시안, 선명)
+      ctx.strokeStyle='#eaffff'; ctx.shadowBlur=0; ctx.globalAlpha=a; ctx.lineWidth=2.4;
+      ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]); for(let q=1;q<pts.length;q++) ctx.lineTo(pts[q][0],pts[q][1]); ctx.stroke();
+      // 끝점 스파크
+      ctx.fillStyle='#eaffff'; ctx.globalAlpha=a*0.95; ctx.beginPath(); ctx.arc(pts[segs][0],pts[segs][1],2.4,0,6.283); ctx.fill(); }
     ctx.restore(); }
   // 삼도류 검기(크레센트 슬래시)
   for(const bl of player.blades){ const a=Math.max(0,bl.life/bl.max); ctx.save(); ctx.globalAlpha=a; ctx.lineCap='round'; ctx.lineJoin='round';
