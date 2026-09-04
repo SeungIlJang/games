@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> 갤로그의 귀환</h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.50 · 참격=점 둘레에 또렷한 번개 가닥 링 (스케치 반영)</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.51 · 참격=점 둘레 빨간 번개 가닥 링 (스케치 색상 반영)</div>
     <div style="font-size:20px;font-weight:800;margin-bottom:4px;">🪙 <span id="goldNum">0</span> &nbsp;·&nbsp; ⚔️ 시작강도 <span id="diffNum">0</span></div>
     <div style="font-size:14px;opacity:.8;margin-bottom:8px;">🏆 최고 생존 <span id="bestNum">0</span>초</div>
     <div style="margin-bottom:10px;font-size:13px;display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;">🎮 <span id="nickDisp" style="font-weight:700;color:#ffd25c;">-</span>
@@ -988,14 +988,14 @@ function render(){
       for(let seg=0;seg<=segs;seg++){ const rr=rIn+(rOut-rIn)*(seg/segs);
         const off=(seg===0||seg===segs)?0:(seg%2?1:-1)*(0.30+Math.random()*0.18);
         const pa=base+off; pts.push([player.x+Math.cos(pa)*rr, player.y+Math.sin(pa)*rr]); }
-      // 글로우 패스 (굵고 옅은 시안)
-      ctx.strokeStyle='#7cf6ff'; ctx.shadowColor='#7cf6ff'; ctx.shadowBlur=10; ctx.globalAlpha=a*0.75; ctx.lineWidth=6;
+      // 글로우 패스 (굵고 옅은 빨강)
+      ctx.strokeStyle='#ff4a4a'; ctx.shadowColor='#ff2020'; ctx.shadowBlur=10; ctx.globalAlpha=a*0.8; ctx.lineWidth=6;
       ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]); for(let q=1;q<pts.length;q++) ctx.lineTo(pts[q][0],pts[q][1]); ctx.stroke();
-      // 코어 패스 (밝은 흰-시안, 선명)
-      ctx.strokeStyle='#eaffff'; ctx.shadowBlur=0; ctx.globalAlpha=a; ctx.lineWidth=2.4;
+      // 코어 패스 (밝은 흰-빨강, 선명)
+      ctx.strokeStyle='#ffd0d0'; ctx.shadowBlur=0; ctx.globalAlpha=a; ctx.lineWidth=2.4;
       ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]); for(let q=1;q<pts.length;q++) ctx.lineTo(pts[q][0],pts[q][1]); ctx.stroke();
       // 끝점 스파크
-      ctx.fillStyle='#eaffff'; ctx.globalAlpha=a*0.95; ctx.beginPath(); ctx.arc(pts[segs][0],pts[segs][1],2.4,0,6.283); ctx.fill(); }
+      ctx.fillStyle='#ffe0e0'; ctx.globalAlpha=a*0.95; ctx.beginPath(); ctx.arc(pts[segs][0],pts[segs][1],2.4,0,6.283); ctx.fill(); }
     ctx.restore(); }
   // 삼도류 검기(크레센트 슬래시)
   for(const bl of player.blades){ const a=Math.max(0,bl.life/bl.max); ctx.save(); ctx.globalAlpha=a; ctx.lineCap='round'; ctx.lineJoin='round';
