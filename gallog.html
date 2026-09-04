@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> 갤로그의 귀환</h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.57 · 참격=흰 곡선 칼자국 + 총알 전기 스파크</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.58 · 참격=흰 곡선 칼자국 (볼트 전기 원복)</div>
     <div style="font-size:20px;font-weight:800;margin-bottom:4px;">🪙 <span id="goldNum">0</span> &nbsp;·&nbsp; ⚔️ 시작강도 <span id="diffNum">0</span></div>
     <div style="font-size:14px;opacity:.8;margin-bottom:8px;">🏆 최고 생존 <span id="bestNum">0</span>초</div>
     <div style="margin-bottom:10px;font-size:13px;display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;">🎮 <span id="nickDisp" style="font-weight:700;color:#ffd25c;">-</span>
@@ -1003,21 +1003,8 @@ function render(){
     ctx.shadowBlur=0; ctx.strokeStyle='#ffffff'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(gx,gy); ctx.lineTo(tx,ty); ctx.stroke();
     ctx.restore(); }
   ctx.globalAlpha=1;
-  // bullets (크기·색) + 총알마다 뾰족뾰족 튀는 전기 스파크 (지지직)
-  for(const b of bullets){ const s=b.size||3;
-    ctx.save(); ctx.lineCap='round'; ctx.strokeStyle='#cff6ff'; ctx.shadowColor='#39e6ff'; ctx.shadowBlur=8;
-    const spikes=6;
-    for(let k=0;k<spikes;k++){ const a=time*9 + k*(6.283/spikes) + (b.x+b.y)*0.04;
-      const len=s*2.0 + Math.random()*s*1.8;             // 삐죽 길이 랜덤
-      const midA=a+(Math.random()-0.5)*0.7;               // 중간에서 꺾임(뾰족)
-      const sx=b.x+Math.cos(a)*(s*1.0), sy=b.y+Math.sin(a)*(s*1.0);
-      const mx=b.x+Math.cos(midA)*(len*0.55), my=b.y+Math.sin(midA)*(len*0.55);
-      const ex=b.x+Math.cos(a)*len, ey=b.y+Math.sin(a)*len;
-      ctx.globalAlpha=0.85; ctx.lineWidth=1.4;
-      ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(mx,my); ctx.lineTo(ex,ey); ctx.stroke(); }
-    ctx.restore();
-    // 총알 코어
-    ctx.fillStyle=b.color||'#ffe066'; ctx.fillRect(b.x-s,b.y-s,s*2,s*2); }
+  // bullets (크기·색)
+  for(const b of bullets){ const s=b.size||3; ctx.fillStyle=b.color||'#ffe066'; ctx.fillRect(b.x-s,b.y-s,s*2,s*2); }
   // orbit (몸 주위 도는 육각형)
   for(const o of player.orbs){ poly(o.x,o.y,o.evo?13:9,6,time*(o.evo?5:3),o.evo?'#ff8ae0':'#ffe08a'); }
   // 적 탄막
