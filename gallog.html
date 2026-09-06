@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> 갤로그의 귀환</h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.64 · 카메라 추적세기 개발자튜닝 추가 (기본4/10)</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.65 · 카메라 추적세기 0~10 (0=화면고정)</div>
     <div style="font-size:20px;font-weight:800;margin-bottom:4px;">🪙 <span id="goldNum">0</span> &nbsp;·&nbsp; ⚔️ 시작강도 <span id="diffNum">0</span></div>
     <div style="font-size:14px;opacity:.8;margin-bottom:8px;">🏆 최고 생존 <span id="bestNum">0</span>초</div>
     <div style="margin-bottom:10px;font-size:13px;display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;">🎮 <span id="nickDisp" style="font-weight:700;color:#ffd25c;">-</span>
@@ -441,7 +441,7 @@ const DEV_KNOBS=[
   {k:'awakenStep', name:'각성 간격(레벨)',   step:1,    hint:'이후 N레벨마다 (기본15)'},
   {k:'levelHp',    name:'레벨업 체력+회복',  step:1,    hint:'레벨당 최대체력+N·회복+N (기본8)'},
   {k:'reviveXp',   name:'부활 경험치 비율',  step:0.05, hint:'0~1 (기본0.95)'},
-  {k:'camFollow',  name:'카메라 추적세기',   step:1,    hint:'1~10 · 낮을수록 느슨/부드럼, 높을수록 딱붙음 (기본4)'},
+  {k:'camFollow',  name:'카메라 추적세기',   step:1,    hint:'0~10 · 0=화면고정(기존), 낮을수록 느슨, 높을수록 딱붙음 (기본4)'},
 ];
 function openDev(){
   const box=document.getElementById('devFields'); box.innerHTML='';
@@ -755,11 +755,17 @@ function update(dt){
   // move — 방향만 주면 전속력(반응성↑). moveDir은 미조작 시 0이라 자동 정지
   const mag = 1;
   player.x+=moveDir.x*player.speed*mag*dt; player.y+=moveDir.y*player.speed*mag*dt;
-  // 무한 필드: 화면 밖 가두기 없음 → 카메라가 플레이어를 부드럽게 추적
-  const camF=Math.max(1,Math.min(10, TUNE.camFollow||4));   // 1~10 (개발자 튜닝)
-  const camK=Math.min(1, dt*camF*2);
-  cam.x += (player.x - W/2 - cam.x)*camK;
-  cam.y += (player.y - H/2 - cam.y)*camK;
+  // 카메라 추적세기 0~10 (0=기존처럼 화면 고정, 플레이어 화면 안에 갇힘)
+  const camF=Math.max(0,Math.min(10, TUNE.camFollow!=null?TUNE.camFollow:4));
+  if(camF<=0){
+    player.x=Math.max(player.r,Math.min(W-player.r,player.x));
+    player.y=Math.max(player.r,Math.min(H-player.r,player.y));
+    cam.x=0; cam.y=0;
+  } else {
+    const camK=Math.min(1, dt*camF*2);
+    cam.x += (player.x - W/2 - cam.x)*camK;
+    cam.y += (player.y - H/2 - cam.y)*camK;
+  }
   // spawn (난이도 시계 기준)
   stageTime+=dt;
   lifestealT+=dt; if(lifestealT>=1){ lifestealT-=1; lifestealAcc=0; } // 흡혈 상한 초기화
