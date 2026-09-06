@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> 갤로그의 귀환</h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.67 · 다국어 1단계 (한/영/일 UI·메뉴)</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.68 · 다국어 2단계 (설명·무기·직업·보스 번역)</div>
     <div id="langSel" style="display:flex;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">한국어</button>
       <button data-lang="en" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">English</button>
@@ -210,6 +210,54 @@ function applyI18n(){
   const ls=document.getElementById('langSel'); if(ls) ls.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.lang===LANG));
 }
 function setLang(l){ if(!I18N[l])return; LANG=l; try{localStorage.setItem('ss_lang',l);}catch(e){} applyI18n(); if(typeof renderShop==='function'){try{renderShop();renderClasses();}catch(e){}} }
+// ===== 2단계: 설명/이름 번역 (용어사전 GLOSS + 문장/보스명 TR) =====
+const GLOSS={
+ en:{'레일건':'Railgun','스플릿링':'Split Ring','초신성':'Supernova','톱날궤도':'Saw Orbit','대참격':'Great Slash','군집미사일':'Missile Swarm','삼천세계':'Trichiliocosm','특이점':'Singularity','새 무기':'New Weapon','강화':'Upgrade','진화':'Evolve','부족':'short','비공개':'Hidden','최대 강화':'MAXED','공격력':'ATK','최대체력':'Max HP','최대 체력':'Max HP','피해감소':'Dmg Reduce','유도미사일':'Homing','삼도류':'Santoryu','블랙홀':'Blackhole','충격파':'Nova','획득량':'Gain','데미지':'DMG','이동속도':'Move Spd','회복':'Heal','범위':'Range','골드':'Gold','획득':'Gain','공격':'ATK','연사':'Fire Rate','이동':'Move','사거리':'Range','관통':'Pierce','탄속':'Bullet Spd','체력':'HP','자석':'Magnet','흡혈':'Lifesteal','흡수':'Absorb','볼트':'Bolt','산탄':'Spread','궤도':'Orbit','참격':'Slash','유도':'Homing'},
+ ja:{'레일건':'レールガン','스플릿링':'スプリットリング','초신성':'超新星','톱날궤도':'鋸軌道','대참격':'大斬撃','군집미사일':'ミサイル群','삼천세계':'三千世界','특이점':'特異点','새 무기':'新武器','강화':'強化','진화':'進化','부족':'不足','비공개':'非公開','최대 강화':'最大強化','공격력':'攻撃力','최대체력':'最大体力','최대 체력':'最大体力','피해감소':'被ダメ減','유도미사일':'誘導','삼도류':'三刀流','블랙홀':'ブラックホール','충격파':'衝撃波','획득량':'獲得量','데미지':'ダメージ','이동속도':'移動速度','회복':'回復','범위':'範囲','골드':'ゴールド','획득':'獲得','공격':'攻撃','연사':'連射','이동':'移動','사거리':'射程','관통':'貫通','탄속':'弾速','체력':'体力','자석':'マグネット','흡혈':'吸血','흡수':'吸収','볼트':'ボルト','산탄':'散弾','궤도':'軌道','참격':'斬撃','유도':'誘導'}
+};
+const _GK={ en:Object.keys(GLOSS.en).sort((a,b)=>b.length-a.length), ja:Object.keys(GLOSS.ja).sort((a,b)=>b.length-a.length) };
+const TR={
+ en:{
+  '가까운 적에게 발사 (강화 시 다발)':'Fires at nearest enemy (multi-shot when upgraded)',
+  '부채꼴로 여러 발 (근접 강함)':'Fan of shots (strong up close)',
+  '주변으로 퍼지는 파동 (전방위)':'A wave that spreads around you (omni)',
+  '몸을 도는 도형이 적을 갈아버림':'Orbiting shapes grind down enemies',
+  '주변 적을 근접 참격 (범위)':'Melee slash around you (AoE)',
+  '적을 쫓아가 폭발 (범위 피해)':'Chases enemies and explodes (AoE)',
+  '검 3자루로 3방향 근접 참격. 진화=전방위 회전베기(타츠마키)':'3 swords slash in 3 directions. Evolve = spinning omni-slash (Tatsumaki)',
+  '탄을 쏴 착탄지에 회오리 생성 → 적을 빨아들임 (스테이지 10+)':'Fire a shot to spawn a vortex that pulls enemies in (Stage 10+)',
+  '볼트 · 전직 전 기본 용사 (아래에서 직업 선택)':'Bolt · base Hero before class change (pick a class below)',
+  '🔒 소문 속의 상위 전직 — 막대한 골드로만 개방':'🔒 A rumored higher class — unlocked only with massive gold',
+  '모든 무기 발사 속도':'All weapons’ fire rate','전체 데미지 증가':'Increases all damage','이동 속도 증가':'Increases move speed','조준 범위 증가':'Increases aim range','총알이 적을 관통':'Bullets pierce enemies','체력 회복 포함':'Includes healing','젬 흡수 범위':'Gem pickup range','적 처치 시 체력 회복':'Heal on kill',
+  '돌격병':'Charger','소환술사':'Summoner','포격수':'Gunner','나선체':'Spiral','폭렬구':'Blast Orb','저격수':'Sniper','광란자':'Frenzy','군단장':'Legion Commander','중포병':'Heavy Gunner',
+  '관문왕 (10)':'Gatekeeper (10)','대공 (20)':'Skylord (20)','군주 (30)':'Overlord (30)','폭군 (40)':'Tyrant (40)','심연군주 (50)':'Abyss Lord (50)','마왕 (60)':'Demon King (60)','파괴자 (70)':'Destroyer (70)','종말 (80)':'Apocalypse (80)','공허 (90)':'Void (90)','★최종보스★ (100)':'★FINAL BOSS★ (100)',
+  '무기가 상위 형태로 각성!':'Weapon awakens to a higher form!',
+  '✓ 선택됨':'✓ Selected','▶ 선택':'▶ Select','🔒 선행필요':'🔒 Locked' },
+ ja:{
+  '가까운 적에게 발사 (강화 시 다발)':'近い敵に発射（強化で多発）',
+  '부채꼴로 여러 발 (근접 강함)':'扇状に複数発（近接に強い）',
+  '주변으로 퍼지는 파동 (전방위)':'周囲に広がる波動（全方位）',
+  '몸을 도는 도형이 적을 갈아버림':'体を回る図形が敵を削る',
+  '주변 적을 근접 참격 (범위)':'周囲の敵を近接斬撃（範囲）',
+  '적을 쫓아가 폭발 (범위 피해)':'敵を追尾して爆発（範囲）',
+  '검 3자루로 3방향 근접 참격. 진화=전방위 회전베기(타츠마키)':'3本の剣で3方向斬撃。進化=全方位回転斬り（タツマキ）',
+  '탄을 쏴 착탄지에 회오리 생성 → 적을 빨아들임 (스테이지 10+)':'弾を撃ち着弾地に渦を生成→敵を吸い込む（ステージ10+）',
+  '볼트 · 전직 전 기본 용사 (아래에서 직업 선택)':'ボルト · 転職前の基本勇者（下で職業を選択）',
+  '🔒 소문 속의 상위 전직 — 막대한 골드로만 개방':'🔒 噂の上位転職 — 莫大なゴールドでのみ開放',
+  '모든 무기 발사 속도':'全武器の発射速度','전체 데미지 증가':'全ダメージ増加','이동 속도 증가':'移動速度増加','조준 범위 증가':'照準範囲増加','총알이 적을 관통':'弾が敵を貫通','체력 회복 포함':'回復込み','젬 흡수 범위':'ジェム吸収範囲','적 처치 시 체력 회복':'撃破時に回復',
+  '돌격병':'突撃兵','소환술사':'召喚師','포격수':'砲撃手','나선체':'螺旋体','폭렬구':'爆裂球','저격수':'狙撃手','광란자':'狂乱者','군단장':'軍団長','중포병':'重砲兵',
+  '관문왕 (10)':'関門王 (10)','대공 (20)':'大空 (20)','군주 (30)':'君主 (30)','폭군 (40)':'暴君 (40)','심연군주 (50)':'深淵君主 (50)','마왕 (60)':'魔王 (60)','파괴자 (70)':'破壊者 (70)','종말 (80)':'終末 (80)','공허 (90)':'虚無 (90)','★최종보스★ (100)':'★最終ボス★ (100)',
+  '무기가 상위 형태로 각성!':'武器が上位形態に覚醒！',
+  '✓ 선택됨':'✓ 選択中','▶ 선택':'▶ 選択','🔒 선행필요':'🔒 前提必要' }
+};
+function trDesc(s){ if(s==null) return s; if(LANG==='ko') return s;
+  if(TR[LANG]&&TR[LANG][s]!=null) return TR[LANG][s];
+  let r=s; const g=GLOSS[LANG], ks=_GK[LANG]; if(g&&ks){ for(const k of ks){ if(r.indexOf(k)>=0) r=r.split(k).join(g[k]); } }
+  return r; }
+Object.assign(I18N.ko,{ potionFmt:'❤️ 체력 물약 · 30% 회복 (🪙 %)', goSurv:'생존', goCombo:'최대콤보', goBest:'최고', goRun:'이번판', goHave:'보유', goRec:'🏆신기록!', rankKills:'처치', rankSec:'초', rankNth:'위' });
+Object.assign(I18N.en,{ potionFmt:'❤️ Health Potion · Heal 30% (🪙 %)', goSurv:'Survived', goCombo:'Max Combo', goBest:'Best', goRun:'This run', goHave:'Have', goRec:'🏆 New record!', rankKills:'kills', rankSec:'s', rankNth:'' });
+Object.assign(I18N.ja,{ potionFmt:'❤️ 回復ポーション · 30%回復 (🪙 %)', goSurv:'生存', goCombo:'最大コンボ', goBest:'最高', goRun:'今回', goHave:'所持', goRec:'🏆新記録！', rankKills:'撃破', rankSec:'秒', rankNth:'位' });
+function nth(i){ return LANG==='en'?('#'+(i+1)):((i+1)+t('rankNth')); }
 let W = 0, H = 0, DPR = 1, safeTop = 0, safeBot = 0;
 // 세이프 영역(노치/상태바/내비바) 측정용 프로브
 const safeProbe = document.createElement('div');
@@ -417,7 +465,7 @@ function fillShop(box){
   box.innerHTML='';
   META_DEFS.forEach(d=>{ const l=metaLvl(d.key), c=metaCost(d), maxed=l>=d.max, can=!maxed&&meta.gold>=c;
     const el=document.createElement('div'); el.className='card'; if(!can) el.style.opacity=.5;
-    el.innerHTML=`<div class="t">${d.name} <span style="opacity:.55;font-size:14px;">Lv${l}${maxed?' · MAX':''}</span></div><div class="d">${d.desc} · ${maxed?'최대 강화':('🪙 '+c)}</div>`;
+    el.innerHTML=`<div class="t">${trDesc(d.name)} <span style="opacity:.55;font-size:14px;">Lv${l}${maxed?' · MAX':''}</span></div><div class="d">${trDesc(d.desc)} · ${maxed?trDesc('최대 강화'):('🪙 '+c)}</div>`;
     if(can) el.onclick=()=>{ if(meta.gold<c||metaLvl(d.key)>=d.max) return; initAudio(); meta.gold-=c; meta.lvls[d.key]=l+1;
       if(player && (state==='play'||state==='paused')) d.one(player); // 게임 중이면 즉시 적용
       saveMeta(); renderShop(); tone(880,0.08,'square',0.14,1200); };
@@ -431,7 +479,7 @@ function renderShop(){
   const bn=document.getElementById('bestNum'); if(bn) bn.textContent=best;
   const box=document.getElementById('shop'); if(box) fillShop(box);
   const box2=document.getElementById('shop2'); if(box2) fillShop(box2);
-  const pb=document.getElementById('potionBtn'); if(pb && player) pb.textContent='❤️ 체력 물약 · 30% 회복 (🪙 '+potionCost()+')';
+  const pb=document.getElementById('potionBtn'); if(pb && player) pb.textContent=t('potionFmt').replace('%',potionCost());
 }
 function renderClasses(){
   const box=document.getElementById('classes'); if(!box) return; box.innerHTML='';
@@ -448,9 +496,9 @@ function renderClasses(){
     const idw=IDENTITY_WEAPON[n.base], wn=(WEAPONS[idw]&&WEAPONS[idw].name)||idw||'';
     if(hidden){
       el.style.borderStyle='dashed'; el.style.borderColor='#6b5cff';
-      el.innerHTML=`<div class="t">${n.icon} <span style="letter-spacing:3px;">？？？</span> <span style="font-size:11px;color:#b98cff;font-weight:700;">비공개 · L${n.tier+1}</span> <span style="font-size:12px;color:${buyable?'#ffd25c':'#8892b0'};">${badge}</span></div><div class="d" style="opacity:.65;">🔒 소문 속의 상위 전직 — 막대한 골드로만 개방</div>`;
+      el.innerHTML=`<div class="t">${n.icon} <span style="letter-spacing:3px;">？？？</span> <span style="font-size:11px;color:#b98cff;font-weight:700;">${trDesc('비공개')} · L${n.tier+1}</span> <span style="font-size:12px;color:${buyable?'#ffd25c':'#8892b0'};">${trDesc(badge)}</span></div><div class="d" style="opacity:.65;">${trDesc('🔒 소문 속의 상위 전직 — 막대한 골드로만 개방')}</div>`;
     } else {
-      el.innerHTML=`<div class="t">${n.icon} ${dispName(n)} <span style="font-size:12px;color:#7cf6ff;font-weight:700;">${wn}L${idLevelFor(n)}</span> <span style="opacity:.45;font-size:11px;">${LANG==='ko'?n.en:''}</span> <span style="font-size:12px;color:${sel?'#5ce1ff':(owned?'#9dffbf':(buyable?'#ffd25c':'#8892b0'))};">${badge}</span></div><div class="d">${n.desc}</div>`;
+      el.innerHTML=`<div class="t">${n.icon} ${dispName(n)} <span style="font-size:12px;color:#7cf6ff;font-weight:700;">${trDesc(wn)}L${idLevelFor(n)}</span> <span style="opacity:.45;font-size:11px;">${LANG==='ko'?n.en:''}</span> <span style="font-size:12px;color:${sel?'#5ce1ff':(owned?'#9dffbf':(buyable?'#ffd25c':'#8892b0'))};">${trDesc(badge)}</span></div><div class="d">${trDesc(n.desc)}</div>`;
     }
     el.onclick=()=>{ initAudio();
       if(owned){ meta.sel=n.key; tone(700,0.08,'square',0.12); }
@@ -642,7 +690,7 @@ function makeBoss(spec){
   e.color=spec.c; e.shape=spec.s!=null?spec.s:(BKIND[spec.k]?BKIND[spec.k].s:0);
   e.mile=mile; e.bossName=spec.n;
   enemies.push(e); bossAlive=true;
-  banner=(mile?'👑 ':'⬢ ')+spec.n; bannerT=2.2; tone(mile?55:70,0.5,'sawtooth',0.25,50); noise(0.4,0.3);
+  banner=(mile?'👑 ':'⬢ ')+trDesc(spec.n); bannerT=2.2; tone(mile?55:70,0.5,'sawtooth',0.25,50); noise(0.4,0.3);
 }
 function buildBossQueue(){
   bossQueue=[]; const s=stage;
@@ -790,7 +838,7 @@ function openLevelUp(){
   state='levelup'; sfx.levelup(); flashT=0.4;
   const box=document.getElementById('cards'); box.innerHTML='';
   buildChoices().forEach(u=>{ const el=document.createElement('div'); el.className='card';
-    el.innerHTML=`<div class="t">${u.t}</div><div class="d">${u.d}</div>`;
+    el.innerHTML=`<div class="t">${trDesc(u.t)}</div><div class="d">${trDesc(u.d)}</div>`;
     el.onclick=()=>{ u.a(player); document.getElementById('levelup').classList.add('hidden'); state='play'; lastTs=performance.now(); };
     box.appendChild(el); });
   document.getElementById('levelup').classList.remove('hidden');
@@ -1134,7 +1182,7 @@ function render(){
   // 보유 골드 (우측 하단)
   ctx.textAlign='right'; ctx.fillStyle='#ffd25c'; ctx.font='bold 16px system-ui'; ctx.fillText('🪙 '+meta.gold, W-14, H-16-B); ctx.textAlign='left';
   // boss HP 바
-  if(bossAlive){ const b=enemies.find(e=>e.boss&&!e.dead); if(b){ ctx.fillStyle='rgba(0,0,0,.5)'; ctx.fillRect(30,102+T,W-60,10); ctx.fillStyle=b.mile?'#ffd25c':'#ff5ce1'; ctx.fillRect(30,102+T,(W-60)*Math.max(0,b.hp/b.maxhp),10); ctx.fillStyle='#fff'; ctx.font='bold 11px system-ui'; ctx.textAlign='center'; ctx.fillText((b.mile?'👑 ':'⬢ ')+(b.bossName||'BOSS')+(bossQueue.length>0?' · +'+bossQueue.length:''),W/2,98+T); ctx.textAlign='left'; } }
+  if(bossAlive){ const b=enemies.find(e=>e.boss&&!e.dead); if(b){ ctx.fillStyle='rgba(0,0,0,.5)'; ctx.fillRect(30,102+T,W-60,10); ctx.fillStyle=b.mile?'#ffd25c':'#ff5ce1'; ctx.fillRect(30,102+T,(W-60)*Math.max(0,b.hp/b.maxhp),10); ctx.fillStyle='#fff'; ctx.font='bold 11px system-ui'; ctx.textAlign='center'; ctx.fillText((b.mile?'👑 ':'⬢ ')+trDesc(b.bossName||'BOSS')+(bossQueue.length>0?' · +'+bossQueue.length:''),W/2,98+T); ctx.textAlign='left'; } }
   // 배너
   if(bannerT>0){ ctx.globalAlpha=Math.min(1,bannerT); ctx.fillStyle='#ff5ce1'; ctx.font='bold 30px system-ui'; ctx.textAlign='center'; ctx.fillText(banner,W/2,H*0.28); ctx.textAlign='left'; ctx.globalAlpha=1; }
   // joystick
@@ -1157,10 +1205,10 @@ function startGame(){ initAudio(); reset(); document.getElementById('start').cla
 function gameOver(){ state='over'; sfx.over();
   document.getElementById('pauseBtn').style.display='none'; document.getElementById('playShopBtn').style.display='none';
   const surv=Math.floor(time); let rec='';
-  if(surv>best){ best=surv; try{localStorage.setItem('ss_best',best);}catch{} rec=' 🏆신기록!'; }
+  if(surv>best){ best=surv; try{localStorage.setItem('ss_best',best);}catch{} rec=' '+t('goRec'); }
   lastEndBonus=Math.floor((time*0.4 + maxCombo) * goldMult()); // 마감 보너스(생존·콤보)
   meta.gold+=lastEndBonus; lastEarned=runGold+lastEndBonus; saveMeta(); renderShop();
-  document.getElementById('overStats').innerHTML=`STAGE <b>${stage}</b> · 생존 <b>${surv}초</b>${rec} · 처치 <b>${kills}</b> · 최대콤보 <b>${maxCombo}</b><br/>🏆 최고 ${best}초 &nbsp;·&nbsp; 🪙 이번판 <b>+${lastEarned}</b> (보유 ${meta.gold})`;
+  document.getElementById('overStats').innerHTML=`STAGE <b>${stage}</b> · ${t('goSurv')} <b>${surv}${t('sec')}</b>${rec} · ${t('hudKills')} <b>${kills}</b> · ${t('goCombo')} <b>${maxCombo}</b><br/>🏆 ${t('goBest')} ${best}${t('sec')} &nbsp;·&nbsp; 🪙 ${t('goRun')} <b>+${lastEarned}</b> (${t('goHave')} ${meta.gold})`;
   const rb=document.getElementById('reviveBtn'); const canRevive=!won&&reviveCount<MAX_REVIVE; rb.style.display=canRevive?'block':'none'; if(canRevive) rb.textContent=`🎬 광고 보고 부활 (${reviveCount+1}/${MAX_REVIVE})`;
   const db=document.getElementById('dblBtn'); db.disabled=false; db.style.opacity=1; db.textContent='🎬 광고 보고 골드 2배'; goldDoubled=false;
   lastRunTs=Date.now(); saveRun({stage,time:surv,kills,gold:lastEarned,ts:lastRunTs}); rankMode='gstage'; renderRank();
@@ -1176,7 +1224,7 @@ function renderLocal(){ const runs=loadRuns();
   const sorted=[...runs].sort((a,b)=>(b.stage-a.stage)||(b.time-a.time));
   if(!sorted.length) return '<div style="opacity:.6;text-align:center;">아직 기록이 없어요</div>';
   let html=''; sorted.slice(0,8).forEach((r,i)=>{ const mine=r.ts===lastRunTs;
-    html += '<div style="'+(mine?'color:#ffd25c;font-weight:800;':'')+'">'+(RANK_MEDALS[i]||((i+1)+'위'))+' <b>STAGE '+r.stage+'</b> <span style="opacity:.55;font-size:11px;">'+r.kills+'처치 · '+r.time+'초</span></div>'; });
+    html += '<div style="'+(mine?'color:#ffd25c;font-weight:800;':'')+'">'+(RANK_MEDALS[i]||nth(i))+' <b>STAGE '+r.stage+'</b> <span style="opacity:.55;font-size:11px;">'+r.kills+' '+t('rankKills')+' · '+r.time+t('rankSec')+'</span></div>'; });
   return html;
 }
 async function renderGlobal(field){
@@ -1191,7 +1239,7 @@ async function renderGlobal(field){
     const main=field==='stage'?('STAGE '+(r.stage|0)):((r.kills|0)+' 처치');
     const sub =field==='stage'?((r.kills|0)+'처치'):('STAGE '+(r.stage|0));
     const nm=String(r.name||'익명').replace(/[<>&]/g,'').slice(0,16);
-    html += '<div style="'+(mine?'color:#ffd25c;font-weight:800;':'')+'">'+(RANK_MEDALS[i]||((i+1)+'위'))+' <b>'+nm+'</b> · '+main+' <span style="opacity:.5;font-size:11px;">'+sub+'</span></div>'; });
+    html += '<div style="'+(mine?'color:#ffd25c;font-weight:800;':'')+'">'+(RANK_MEDALS[i]||nth(i))+' <b>'+nm+'</b> · '+main+' <span style="opacity:.5;font-size:11px;">'+sub+'</span></div>'; });
   el.innerHTML=html;
 }
 function renderRank(){
