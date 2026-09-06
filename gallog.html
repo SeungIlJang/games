@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> 갤로그의 귀환</h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.65 · 카메라 추적세기 0~10 (0=화면고정)</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.66 · 개발자튜닝: 보스 강함·보스 잼 배수 추가</div>
     <div style="font-size:20px;font-weight:800;margin-bottom:4px;">🪙 <span id="goldNum">0</span> &nbsp;·&nbsp; ⚔️ 시작강도 <span id="diffNum">0</span></div>
     <div style="font-size:14px;opacity:.8;margin-bottom:8px;">🏆 최고 생존 <span id="bestNum">0</span>초</div>
     <div style="margin-bottom:10px;font-size:13px;display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;">🎮 <span id="nickDisp" style="font-weight:700;color:#ffd25c;">-</span>
@@ -428,7 +428,7 @@ let lifestealAcc=0, lifestealT=0; // 흡혈 초당 회복 상한용
 let combo=0, comboTimer=0, maxCombo=0;
 let best=0; try{ best=parseInt(localStorage.getItem('ss_best')||'0')||0; }catch{}
 // ---- 개발자 튜닝 (로고 클릭+비번 799879) ----
-const TUNE_DEFAULTS={ hpWall:0.4, startPow:0.35, awakenStart:15, awakenStep:15, levelHp:8, reviveXp:0.95, enemyHp:1.0, enemySpeed:1.0, camFollow:4 };
+const TUNE_DEFAULTS={ hpWall:0.4, startPow:0.35, awakenStart:15, awakenStep:15, levelHp:8, reviveXp:0.95, enemyHp:1.0, enemySpeed:1.0, camFollow:4, bossPow:1.0, bossGem:1.0 };
 let TUNE=Object.assign({},TUNE_DEFAULTS);
 try{ TUNE=Object.assign(TUNE, JSON.parse(localStorage.getItem('ss_tune')||'{}')); }catch(e){}
 function saveTune(){ try{ localStorage.setItem('ss_tune', JSON.stringify(TUNE)); }catch(e){} }
@@ -442,6 +442,8 @@ const DEV_KNOBS=[
   {k:'levelHp',    name:'레벨업 체력+회복',  step:1,    hint:'레벨당 최대체력+N·회복+N (기본8)'},
   {k:'reviveXp',   name:'부활 경험치 비율',  step:0.05, hint:'0~1 (기본0.95)'},
   {k:'camFollow',  name:'카메라 추적세기',   step:1,    hint:'0~10 · 0=화면고정(기존), 낮을수록 느슨, 높을수록 딱붙음 (기본4)'},
+  {k:'bossPow',    name:'보스 강함 배수',    step:0.1,  hint:'보스 체력·데미지× (기본1.0, 예 1.5=1.5배 강함)'},
+  {k:'bossGem',    name:'보스 잼 배수',      step:0.1,  hint:'보스 처치 시 큰 젬 개수× (기본1.0)'},
 ];
 function openDev(){
   const box=document.getElementById('devFields'); box.innerHTML='';
@@ -588,9 +590,10 @@ function makeBoss(spec){
   const mile=!!spec.mile, hpMul=spec.hpMul!=null?spec.hpMul:(mile?2.2:1);
   const p=edgePos(), e=makeEnemy(p.x,p.y,'tank',1);
   e.type='boss'; e.boss=true; e.big=true; e.r=mile?58:46;
-  e.hp=e.maxhp=(140+stage*95)*(1+stage*0.05)*hpMul*TUNE.enemyHp;
+  const bp=(TUNE.bossPow!=null?TUNE.bossPow:1);
+  e.hp=e.maxhp=(140+stage*95)*(1+stage*0.05)*hpMul*TUNE.enemyHp*bp;
   e.speed=(38+stage*1.5)*(mile?0.92:1)*TUNE.enemySpeed;
-  e.dmg=(18+stage*2.4)*(mile?1.5:1);
+  e.dmg=(18+stage*2.4)*(mile?1.5:1)*bp;
   e.gem=0; e.bossKind=spec.k; e.abilityCd=mile?2:3; e.dashT=0; e.spin=0;
   e.color=spec.c; e.shape=spec.s!=null?spec.s:(BKIND[spec.k]?BKIND[spec.k].s:0);
   e.mile=mile; e.bossName=spec.n;
@@ -632,7 +635,7 @@ function hurtEnemy(e,dmg,color){
     if(e.boss) heals.push({x:e.x,y:e.y}); else if(Math.random()<0.02) heals.push({x:e.x,y:e.y}); // 힐 드롭(희귀)
     if(e.type==='splitter'){ for(let i=0;i<2;i++){ const a=rand(0,6.28); enemies.push(makeEnemy(e.x+Math.cos(a)*10,e.y+Math.sin(a)*10,'fast',1+time/60)); } }
     if(e.boss){ kills+=15;
-      const nBig=Math.max(1,stage); for(let i=0;i<nBig;i++){ const a=rand(0,6.28),d=rand(10,40+nBig*1.5); gems.push({x:e.x+Math.cos(a)*d,y:e.y+Math.sin(a)*d,v:20}); } // 보스 전용 '큰 젬' = 스테이지 수만큼(각 20XP)
+      const nBig=Math.max(1,Math.round(stage*(TUNE.bossGem!=null?TUNE.bossGem:1))); for(let i=0;i<nBig;i++){ const a=rand(0,6.28),d=rand(10,40+nBig*1.5); gems.push({x:e.x+Math.cos(a)*d,y:e.y+Math.sin(a)*d,v:20}); } // 보스 전용 '큰 젬' = 스테이지×보스잼배수 (각 20XP)
       for(let i=0;i<24;i++){ const a=rand(0,6.28),s=rand(60,240); particles.push({x:e.x,y:e.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:rand(.4,.8),color:'#ff5ce1'}); }
       if(bossQueue.length>0){ spawnNextBoss(); } else { stageClear(); } }
   }
