@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> 갤로그의 귀환</h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.62 · 참격 찌릿 전기 (살짝 더 찐하게)</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.63 · 무한 필드 + 카메라 추적 (이동범위 확장)</div>
     <div style="font-size:20px;font-weight:800;margin-bottom:4px;">🪙 <span id="goldNum">0</span> &nbsp;·&nbsp; ⚔️ 시작강도 <span id="diffNum">0</span></div>
     <div style="font-size:14px;opacity:.8;margin-bottom:8px;">🏆 최고 생존 <span id="bestNum">0</span>초</div>
     <div style="margin-bottom:10px;font-size:13px;display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;">🎮 <span id="nickDisp" style="font-weight:700;color:#ffd25c;">-</span>
@@ -469,6 +469,7 @@ function dtime(){ return startOffset + (stage-1)*22 + stageTime; }
 function ddiff(){ return stage===1 ? stageTime*0.6 : dtime(); }
 function metaPower(){ return Object.values(meta.lvls).reduce((a,b)=>a+b,0); }
 
+let cam={x:0,y:0};   // 카메라(무한 필드, 플레이어 추적)
 function reset(){
   player = { x:W/2, y:H/2, r:14, hp:100, maxhp:100,
     speed:210, fireRate:2.2, dmg:12, bulletSpeed:430, range:280,
@@ -476,6 +477,7 @@ function reset(){
     weapons:{ bolt:1 }, timers:{ bolt:0 }, orbs:[], novas:[], blades:[], holes:[], slashFx:[], orbAngle:0, evolved:{},
     awakened:false, awakenAt:TUNE.awakenStart, awakenCount:0, dmgReduce:1, sigCd:0, cls:'hero', baseCls:'hero', invuln:0 };
   applyMeta(player); applyClass(player);
+  cam.x=player.x-W/2; cam.y=player.y-H/2;   // 카메라 스냅
   enemies=[]; bullets=[]; gems=[]; particles=[]; texts=[]; heals=[]; ebullets=[];
   flashT=0; hurtFlash=0; goldDoubled=false; reviveCount=0; combo=0; comboTimer=0; maxCombo=0; runGold=0;
   time=0; kills=0; spawnTimer=0; shake=0; bossAlive=false; banner='STAGE 1 ▶ 보스 처치!'; bannerT=2.6; startHintT=5;
@@ -528,9 +530,9 @@ const ENEMY_CAP=60;       // 화면 동시 적 수 상한(잡몹 2배 반영)
 const ELITE_CAP=3;        // 동시 정예 수 상한
 const FODDER=['normal','fast','shard'], MID=['weaver','spiker','splitter'], ELITE=['ringed','tank','twin'];
 const pick=a=>a[Math.floor(Math.random()*a.length)];
-function edgePos(){ const e=Math.floor(rand(0,4));
-  if(e===0)return{x:rand(0,W),y:-20}; if(e===1)return{x:W+20,y:rand(0,H)};
-  if(e===2)return{x:rand(0,W),y:H+20}; return{x:-20,y:rand(0,H)}; }
+function edgePos(){ // 무한 필드: 플레이어 주변, 화면 밖 링에서 스폰
+  const ang=rand(0,6.283), rad=Math.hypot(W,H)/2 + rand(30,120);
+  return { x: player.x+Math.cos(ang)*rad, y: player.y+Math.sin(ang)*rad }; }
 function makeEnemy(x,y,type,diff){
   const D=ETYPE[type], speedScale=1+Math.min(ddiff()/150,1.9), s=rand(D.spd[0],D.spd[1])*speedScale*TUNE.enemySpeed;
   const hp=D.hp*diff*TUNE.enemyHp;
@@ -752,8 +754,10 @@ function update(dt){
   // move — 방향만 주면 전속력(반응성↑). moveDir은 미조작 시 0이라 자동 정지
   const mag = 1;
   player.x+=moveDir.x*player.speed*mag*dt; player.y+=moveDir.y*player.speed*mag*dt;
-  player.x=Math.max(player.r,Math.min(W-player.r,player.x));
-  player.y=Math.max(player.r,Math.min(H-player.r,player.y));
+  // 무한 필드: 화면 밖 가두기 없음 → 카메라가 플레이어를 부드럽게 추적
+  const camK=Math.min(1, dt*8);
+  cam.x += (player.x - W/2 - cam.x)*camK;
+  cam.y += (player.y - H/2 - cam.y)*camK;
   // spawn (난이도 시계 기준)
   stageTime+=dt;
   lifestealT+=dt; if(lifestealT>=1){ lifestealT-=1; lifestealAcc=0; } // 흡혈 상한 초기화
@@ -907,13 +911,17 @@ function drawEnemyShape(e,col){
 let stars=[];
 function initStars(){ stars=[]; for(let i=0;i<120;i++){ const L=i%3; stars.push({x:Math.random()*W,y:Math.random()*H,z:L===2?2.5:L===1?1.6:1,sp:L===2?1.7:L===1?1.0:0.55,a:L===2?0.95:0.5,c:L===2?'#bfe3ff':'#ffffff',seed:Math.random()*6.28}); } }
 function render(){
+  // bg — 우주 별밭 (화면 고정 + 카메라 패럴랙스)
+  ctx.fillStyle='#05060f'; ctx.fillRect(0,0,W,H);
+  if(!stars.length) initStars();
+  for(const s of stars){ s.y+=s.sp; if(s.y>H) s.y-=H;
+    const par=s.z*0.12, px=((s.x-cam.x*par)%W+W)%W, py=((s.y-cam.y*par)%H+H)%H;
+    ctx.globalAlpha=Math.min(1,s.a*(0.55+0.45*Math.sin(time*2+s.seed))); ctx.fillStyle=s.c; ctx.fillRect(px,py,s.z,s.z); }
+  ctx.globalAlpha=1;
+  // ── 월드(카메라 추적 + 흔들림) 시작 ── (이 save는 아래 HUD 직전 restore로 닫힘)
   ctx.save();
   if(shake>0) ctx.translate(rand(-shake,shake),rand(-shake,shake));
-  // bg — 우주 별밭 (스크롤 파랄랙스)
-  ctx.fillStyle='#05060f'; ctx.fillRect(-20,-20,W+40,H+40);
-  if(!stars.length) initStars();
-  for(const s of stars){ s.y+=s.sp; if(s.y>H+2){ s.y=-2; s.x=Math.random()*W; } ctx.globalAlpha=Math.min(1,s.a*(0.55+0.45*Math.sin(time*2+s.seed))); ctx.fillStyle=s.c; ctx.fillRect(s.x,s.y,s.z,s.z); }
-  ctx.globalAlpha=1;
+  ctx.translate(-cam.x,-cam.y);
   // gems (diamonds)
   for(const g of gems){
     // 3단계: 작은(1XP) / 중간(2~8XP) / 큰(보스전용 20XP)
