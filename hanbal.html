@@ -81,7 +81,7 @@
   </div>
 </div>
 
-<div class="ver">v0.11 · 광고 부활 판당 5회</div>
+<div class="ver">v0.12 · 광고 부활 안정화 (버튼 먹통 수정)</div>
 <script>
 const cv=document.getElementById('game'), ctx=cv.getContext('2d');
 let W=0,H=0,DPR=1;
@@ -142,11 +142,13 @@ async function playAd(onReward){
     try{
       lr=await AdMob.addListener('onRewardedVideoAdReward',()=>{ got=true; });
       await AdMob.prepareRewardVideoAd({ adId: AD_USE_TEST?AD_REWARD_TEST:AD_REWARD_REAL });
+      let lf=null;
       await new Promise((resolve)=>{ let done=false; const fin=()=>{ if(done)return; done=true; resolve(); };
         AdMob.addListener('onRewardedVideoAdDismissed',fin).then(l=>{ ld=l; });
-        AdMob.showRewardVideoAd().catch(fin); setTimeout(fin,120000); });
-      if(lr&&lr.remove) lr.remove(); if(ld&&ld.remove) ld.remove();
-      adPlaying=false; if(got) onReward(); return;   // 끝까지 봐야 보상
+        AdMob.addListener('onRewardedVideoAdFailedToShow',fin).then(l=>{ lf=l; });
+        AdMob.showRewardVideoAd().catch(fin); setTimeout(fin,40000); });
+      if(lr&&lr.remove) lr.remove(); if(ld&&ld.remove) ld.remove(); if(lf&&lf.remove) lf.remove();
+      adPlaying=false; onReward(); return;   // 광고 흐름 종료 후 부활(이벤트 유실·행오프 방지)
     }catch(e){ if(lr&&lr.remove)lr.remove(); if(ld&&ld.remove)ld.remove(); adPlaying=false; onReward(); return; }
   }
   setTimeout(()=>{ adPlaying=false; onReward(); }, 800);   // 웹 시뮬레이션
