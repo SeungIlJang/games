@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.82 · 진화무기 안보이던 문제 수정(레벨숫자 항상표시·진화=금색)</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.83 · 진화무기 발사 안되던 버그 수정(타이머 유실 복구)</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">한국어</button>
       <button data-lang="en" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">English</button>
@@ -818,7 +818,8 @@ function plantHole(x,y,l,evo){
   tone(52,0.5,'sine',0.2,24); noise(0.35,0.16);
 }
 function weaponFireTick(dt){
-  for(const key in player.weapons){ if(key==='orbit') continue; const w=WEAPONS[key], l=player.weapons[key];
+  for(const key in player.weapons){ if(key==='orbit'||!WEAPONS[key]) continue; const w=WEAPONS[key], l=player.weapons[key];
+    if(player.timers[key]==null || player.timers[key]!==player.timers[key]) player.timers[key]=0; // null/undefined/NaN 방어: 타이머 유실 시 0으로 복구 → 진화·전직 무기 발사 누락 방지
     player.timers[key]-=dt; if(player.timers[key]<=0){ player.timers[key]=w.interval(player,l)/player.fireRate; w.fire(player,l); } } // fireRate=전역 연사(모든 무기)
 }
 function burst(x,y,color,n){ for(let i=0;i<n;i++){ const a=rand(0,Math.PI*2),s=rand(40,180); particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:rand(.3,.6),color}); } }
