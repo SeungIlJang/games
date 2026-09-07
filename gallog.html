@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.70 · 타이틀도 언어별 (Gallog's Return / ギャロッグの帰還)</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.71 · 언어 선택 유지 안정화 (재렌더/복귀 대비)</div>
     <div id="langSel" style="display:flex;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">한국어</button>
       <button data-lang="en" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">English</button>
@@ -204,6 +204,7 @@ if(!I18N[LANG]) LANG='en';
 function t(k){ return (I18N[LANG]&&I18N[LANG][k]!=null)?I18N[LANG][k] : (I18N.ko[k]!=null?I18N.ko[k]:k); }
 function dispName(o){ if(!o) return ''; if(LANG==='ko') return o.name||o.en||''; if(LANG==='en') return o.en||o.name||''; return (o.en&&typeof CLASS_JA!=='undefined'&&CLASS_JA[o.en])||o.ja||o.en||o.name||''; }
 function applyI18n(){
+  try{ const s=localStorage.getItem('ss_lang'); if(s&&I18N[s]) LANG=s; }catch(e){}   // 저장값에서 언어 재동기화(재렌더 대비)
   document.documentElement.lang=LANG;
   document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent=t(el.dataset.i18n); });
   document.querySelectorAll('[data-i18n-html]').forEach(el=>{ el.innerHTML=t(el.dataset.i18nHtml); });
@@ -1272,6 +1273,10 @@ document.getElementById('startBtn').onclick=beginOrTutorial;
 // 언어 선택
 document.querySelectorAll('#langSel button').forEach(b=>{ b.onclick=()=>setLang(b.dataset.lang); });
 applyI18n();
+// 앱 WebView 재렌더/복귀 시 언어 되돌아감 방지 — 저장값 기준 재적용
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) applyI18n(); });
+window.addEventListener('focus', applyI18n);
+window.addEventListener('pageshow', applyI18n);
 // 시작화면 탭: 전직 트리 / 영구 강화
 (function(){ const tc=document.getElementById('tabClasses'), ts=document.getElementById('tabShop'), cw=document.getElementById('classesWrap'), sw=document.getElementById('shopWrap');
   if(!tc||!ts) return;
