@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.80 · 마일보스 XP 1.5배 · 산탄상한600 · HUD겹침·물약·리더보드 수정</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.81 · 골드 하단복귀 · 무기 7개째부터 윗줄(좌측)로</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">한국어</button>
       <button data-lang="en" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">English</button>
@@ -1205,11 +1205,14 @@ function render(){
     ctx.fillStyle='#ffd25c'; ctx.font='bold 14px system-ui'; ctx.textAlign='center';
     ctx.fillText('⏸ 좌상단 버튼 = 일시정지 / 상점', W/2, TY+26);
     ctx.globalAlpha=1; ctx.restore(); ctx.textAlign='left'; }
-  // 무기 빌드 표시 (하단)
-  let wx=14; ctx.font='15px system-ui';
-  for(const k in player.weapons){ const lv=player.weapons[k], ev=player.evolved[k]; ctx.fillStyle=ev?'#ffd25c':'#cfe3ff'; ctx.fillText(WEAPONS[k].icon+(ev?'★':lv), wx, H-16-B); wx+=46; }
-  // 보유 골드 (우측 하단, 무기줄과 겹치지 않게 한 줄 위)
-  ctx.textAlign='right'; ctx.fillStyle='#ffd25c'; ctx.font='bold 16px system-ui'; ctx.fillText('🪙 '+meta.gold, W-14, H-16-B-26); ctx.textAlign='left';
+  // 무기 빌드 표시 (하단). 7개째부터는 윗줄(좌측)로 → 골드와 겹침 방지
+  let wx=14, wx2=14, wi=0; ctx.font='15px system-ui';
+  for(const k in player.weapons){ const lv=player.weapons[k], ev=player.evolved[k]; ctx.fillStyle=ev?'#ffd25c':'#cfe3ff';
+    if(wi<6){ ctx.fillText(WEAPONS[k].icon+(ev?'★':lv), wx, H-16-B); wx+=46; }
+    else { ctx.fillText(WEAPONS[k].icon+(ev?'★':lv), wx2, H-16-B-26); wx2+=46; }
+    wi++; }
+  // 보유 골드 (우측 하단, 무기 라인과 동일한 줄)
+  ctx.textAlign='right'; ctx.fillStyle='#ffd25c'; ctx.font='bold 16px system-ui'; ctx.fillText('🪙 '+meta.gold, W-14, H-16-B); ctx.textAlign='left';
   // boss HP 바
   if(bossAlive){ const b=enemies.find(e=>e.boss&&!e.dead); if(b){ ctx.fillStyle='rgba(0,0,0,.5)'; ctx.fillRect(30,102+T,W-60,10); ctx.fillStyle=b.mile?'#ffd25c':'#ff5ce1'; ctx.fillRect(30,102+T,(W-60)*Math.max(0,b.hp/b.maxhp),10); ctx.fillStyle='#fff'; ctx.font='bold 11px system-ui'; ctx.textAlign='center'; ctx.fillText((b.mile?'👑 ':'⬢ ')+trDesc(b.bossName||'BOSS')+(bossQueue.length>0?' · +'+bossQueue.length:''),W/2,98+T); ctx.textAlign='left'; } }
   // 배너
