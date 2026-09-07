@@ -1,0 +1,132 @@
+<!DOCTYPE html><html lang="ko"><head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+<title>모두의 숫자</title>
+<style>
+  html,body{margin:0;height:100%;background:#0a0e1a;overflow:hidden;font-family:system-ui,-apple-system,sans-serif;color:#eef;touch-action:none;user-select:none;-webkit-user-select:none}
+  #wrap{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+  #target{font-size:15px;color:#8fa;letter-spacing:1px;margin-bottom:2px}
+  #targetN{font-size:44px;font-weight:900;color:#7cf6ff;text-shadow:0 0 18px rgba(124,246,255,.5);line-height:1}
+  #cur{font-size:120px;font-weight:900;line-height:1;margin:18px 0;transition:none}
+  #seq{font-size:20px;color:#556;letter-spacing:2px;min-height:26px}
+  #hint{font-size:13px;color:#8892b0;margin-top:8px;height:18px}
+  #hud{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:0;right:0;display:flex;justify-content:space-between;padding:0 16px;font-weight:800;font-size:15px}
+  #combo{color:#ffd34d}
+  #ver{position:absolute;left:8px;bottom:calc(6px + env(safe-area-inset-bottom,0px));font-size:10px;color:#3a4560}
+  .big{animation:pop .12s ease-out}
+  @keyframes pop{0%{transform:scale(1.25)}100%{transform:scale(1)}}
+  #over,#start{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,10,22,.9);gap:10px;padding:24px;text-align:center}
+  .hidden{display:none!important}
+  h1{font-size:40px;margin:0 0 4px;text-shadow:0 0 20px rgba(124,246,255,.4)}
+  .sub{color:#9fb;opacity:.8;font-size:15px}
+  .miss{color:#ff6a7a;font-size:22px;font-weight:800}
+  .rec{color:#ffd34d;font-weight:800}
+  .btn{background:#3a7bff;color:#fff;border:none;border-radius:16px;padding:16px 34px;font-size:20px;font-weight:800;box-shadow:0 6px 0 #1f52c0;margin-top:8px}
+</style></head>
+<body>
+<div id="hud"><div>점수 <span id="score">0</span></div><div id="combo"></div><div>최고 <span id="best">0</span></div></div>
+<div id="wrap">
+  <div id="target">🎯 이 숫자에서 멈춰!</div>
+  <div id="targetN">–</div>
+  <div id="cur">–</div>
+  <div id="seq"></div>
+  <div id="hint"></div>
+</div>
+
+<div id="start">
+  <h1>모두의 숫자</h1>
+  <div class="sub">숫자가 <b>규칙</b>대로 바뀝니다.<br/>수열을 읽고 <b style="color:#7cf6ff">목표 숫자</b>에서 <b>탭</b>해서 멈추세요!</div>
+  <div class="sub" style="opacity:.6;font-size:13px;">틀리거나 놓치면 즉시 끝 · 갈수록 빨라짐</div>
+  <button class="btn" id="startBtn">시작</button>
+  <div class="sub" style="margin-top:6px;">최고 기록 <b id="best2">0</b></div>
+</div>
+
+<div id="over" class="hidden">
+  <h1 id="overTitle">아깝다!</h1>
+  <div class="miss" id="overMsg"></div>
+  <div class="sub">점수 <b id="overScore">0</b> <span id="overRec"></span></div>
+  <div class="sub" style="opacity:.7">최고 <b id="overBest">0</b></div>
+  <button class="btn" id="retryBtn">한 판 더</button>
+</div>
+<div id="ver">v0.1 · 긴장·오기 코어</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let AC; function beep(f,d,type,g){ try{ if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)(); const o=AC.createOscillator(),v=AC.createGain(); o.type=type||'square'; o.frequency.value=f; v.gain.value=g||0.05; o.connect(v); v.connect(AC.destination); const t=AC.currentTime; o.start(t); v.gain.setValueAtTime(v.gain.value,t); v.gain.exponentialRampToValueAtTime(0.0001,t+(d||0.08)); o.stop(t+(d||0.08)); }catch(e){} }
+
+let best=+(localStorage.getItem('num_best')||0);
+$('best').textContent=best; $('best2').textContent=best; $('overBest').textContent=best;
+
+let state='start';        // start | play | over
+let cur=0, step=1, target=0, score=0, combo=0, seq=[], timer=null, interval=700, passed=false;
+
+function pickStep(){ // 규칙: 등차 (초반 쉬움→점점 다양)
+  const pool = score<4 ? [2,3,4,5] : score<9 ? [2,3,4,5,6,7] : [-3,-2,2,3,4,5,6,7,8];
+  let s=pool[Math.floor(Math.random()*pool.length)]; if(s===0)s=3; return s;
+}
+function newRound(keepCur){
+  step=pickStep();
+  if(!keepCur) cur=Math.floor(Math.random()*15)+5;
+  const k=Math.floor(Math.random()*3)+3;          // 목표까지 3~5틱
+  target=cur+step*k;
+  passed=false;
+  seq=[cur];
+  render();
+}
+function speed(){ return Math.max(190, 720 - score*24); }
+
+function tick(){
+  cur+=step;
+  seq.push(cur); if(seq.length>4) seq.shift();
+  // 목표 지나침 판정(놓침)
+  if((step>0 && cur>target) || (step<0 && cur<target)){ gameOver('miss', '놓쳤다! '+target+' 지나감'); return; }
+  render(true);
+  beep(320+Math.min(score,20)*10, 0.03, 'sine', 0.03); // 틱 사운드(빨라질수록 높아짐)
+  interval=speed();
+  timer=setTimeout(tick, interval);
+}
+function render(pulse){
+  $('targetN').textContent=target;
+  const c=$('cur'); c.textContent=cur;
+  // 속도 오를수록 붉게(긴장)
+  const heat=Math.min(1,score/16); c.style.color='rgb('+Math.round(238+ (255-238)*heat)+','+Math.round(238-120*heat)+','+Math.round(255-200*heat)+')';
+  if(pulse){ c.classList.remove('big'); void c.offsetWidth; c.classList.add('big'); }
+  $('seq').textContent=seq.join('  →  ');
+  $('score').textContent=score;
+  $('combo').textContent=combo>=2?(combo+' 콤보 🔥'):'';
+  // 목표 근접 힌트
+  const dist=Math.round((target-cur)/step);
+  $('hint').textContent=(dist>0 && dist<=2)?'⚡ 곧 목표!':'';
+}
+function start(){ score=0; combo=0; interval=720; $('start').classList.add('hidden'); $('over').classList.add('hidden'); state='play'; newRound(false);
+  clearTimeout(timer); timer=setTimeout(tick, 900); }
+function tap(){
+  if(state==='start'){ start(); return; }
+  if(state==='over'){ start(); return; }
+  if(state!=='play') return;
+  if(cur===target){ // 성공
+    score++; combo++; if(combo>2) beep(880+combo*8,0.06,'square',0.06); else beep(760,0.06,'square',0.06);
+    flash('#173a2a');
+    clearTimeout(timer); newRound(true); timer=setTimeout(tick, Math.max(260, speed()));
+  } else { // 실패(오답 위치)
+    const d=Math.abs(target-cur);
+    gameOver('miss', '아깝다! 목표 '+target+', '+cur+'에서 멈춤 (差 '+d+')');
+  }
+}
+function flash(col){ document.body.style.background=col; setTimeout(()=>document.body.style.background='#0a0e1a',90); }
+function gameOver(kind,msg){
+  clearTimeout(timer); state='over'; beep(160,0.25,'sawtooth',0.08);
+  let rec=false; if(score>best){ best=score; localStorage.setItem('num_best',best); rec=true; }
+  $('best').textContent=best; $('overBest').textContent=best;
+  $('overTitle').textContent = rec?'🏆 신기록!':'아깝다!';
+  $('overMsg').textContent=msg;
+  $('overScore').textContent=score;
+  $('overRec').innerHTML = rec?'<span class="rec">최고 갱신!</span>' : (best>0?('(최고까지 '+(best-score+1)+'점!)'):'');
+  $('over').classList.remove('hidden');
+}
+addEventListener('pointerdown', e=>{ if(e.target.closest('.btn')) return; tap(); });
+$('startBtn').onclick=()=>start();
+$('retryBtn').onclick=()=>start();
+</script>
+</body></html>
