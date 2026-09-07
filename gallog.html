@@ -266,9 +266,9 @@ function trDesc(s){ if(s==null) return s; if(LANG==='ko') return s;
   if(TR[LANG]&&TR[LANG][s]!=null) return TR[LANG][s];
   let r=s; const g=GLOSS[LANG], ks=_GK[LANG]; if(g&&ks){ for(const k of ks){ if(r.indexOf(k)>=0) r=r.split(k).join(g[k]); } }
   return r; }
-Object.assign(I18N.ko,{ potionFmt:'❤️ 체력 물약 · 30% 회복 (🪙 %)', goSurv:'생존', goCombo:'최대콤보', goBest:'최고', goRun:'이번판', goHave:'보유', goRec:'🏆신기록!', rankKills:'처치', rankSec:'초', rankNth:'위' });
-Object.assign(I18N.en,{ potionFmt:'❤️ Health Potion · Heal 30% (🪙 %)', goSurv:'Survived', goCombo:'Max Combo', goBest:'Best', goRun:'This run', goHave:'Have', goRec:'🏆 New record!', rankKills:'kills', rankSec:'s', rankNth:'' });
-Object.assign(I18N.ja,{ potionFmt:'❤️ 回復ポーション · 30%回復 (🪙 %)', goSurv:'生存', goCombo:'最大コンボ', goBest:'最高', goRun:'今回', goHave:'所持', goRec:'🏆新記録！', rankKills:'撃破', rankSec:'秒', rankNth:'位' });
+Object.assign(I18N.ko,{ potionFmt:'❤️ 체력 물약 · 30% 회복 (🪙 {c})', goSurv:'생존', goCombo:'최대콤보', goBest:'최고', goRun:'이번판', goHave:'보유', goRec:'🏆신기록!', rankKills:'처치', rankSec:'초', rankNth:'위' });
+Object.assign(I18N.en,{ potionFmt:'❤️ Health Potion · Heal 30% (🪙 {c})', goSurv:'Survived', goCombo:'Max Combo', goBest:'Best', goRun:'This run', goHave:'Have', goRec:'🏆 New record!', rankKills:'kills', rankSec:'s', rankNth:'' });
+Object.assign(I18N.ja,{ potionFmt:'❤️ 回復ポーション · 30%回復 (🪙 {c})', goSurv:'生存', goCombo:'最大コンボ', goBest:'最高', goRun:'今回', goHave:'所持', goRec:'🏆新記録！', rankKills:'撃破', rankSec:'秒', rankNth:'位' });
 function nth(i){ return LANG==='en'?('#'+(i+1)):((i+1)+t('rankNth')); }
 Object.assign(I18N.ko,{ title:'갤로그의 귀환', langAuto:'🌐 지역 기준 자동 선택됨 · 버튼으로 변경 가능' });
 Object.assign(I18N.en,{ title:'Gallog’s Return', langAuto:'🌐 Auto-selected by region · tap to change' });
@@ -507,7 +507,7 @@ function renderShop(){
   const bn=document.getElementById('bestNum'); if(bn) bn.textContent=best;
   const box=document.getElementById('shop'); if(box) fillShop(box);
   const box2=document.getElementById('shop2'); if(box2) fillShop(box2);
-  const pb=document.getElementById('potionBtn'); if(pb && player) pb.textContent=t('potionFmt').replace('%',potionCost());
+  const pb=document.getElementById('potionBtn'); if(pb && player) pb.textContent=t('potionFmt').replace('{c}',potionCost());
 }
 function renderClasses(){
   const box=document.getElementById('classes'); if(!box) return; box.innerHTML='';
