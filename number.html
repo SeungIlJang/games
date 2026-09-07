@@ -65,7 +65,7 @@
   <div class="sub" style="opacity:.7">최고 <b id="overBest">0</b></div>
   <button class="btn" id="retryBtn">한 판 더</button>
 </div>
-<div id="ver">v0.5 · 여유↑·슬로모·손맛강화</div>
+<div id="ver">v0.6 · 슬로모 3판까지만</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -153,7 +153,7 @@ function tick(){
   const dir=Math.sign(target-(seq[0]));
   if((dir>=0 && cur>target) || (dir<0 && cur<target)){ die('놓쳤다! '+target+' 지나감'); return; }
   render(true);
-  const nv=cur+stepAt(ti), slow=(target-cur!==0 && nv===target);   // 목표 직전 = 슬로모(여유+손맛)
+  const nv=cur+stepAt(ti), slow=(hits<3 && target-cur!==0 && nv===target);   // 슬로모는 3판까지만(그 뒤엔 실력)
   $('wrap').classList.toggle('slow', slow);
   if(slow) tone(880,0.05,'sine',0.05); else tone(300+Math.min(hits,22)*11, 0.03, 'sine', 0.03);
   timer=setTimeout(tick, slow ? Math.round(speed()*1.9)+140 : speed());
