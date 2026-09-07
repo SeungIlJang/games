@@ -755,7 +755,8 @@ function hurtEnemy(e,dmg,color){
     if(e.boss) heals.push({x:e.x,y:e.y}); else if(Math.random()<0.02) heals.push({x:e.x,y:e.y}); // 힐 드롭(희귀)
     if(e.type==='splitter'){ for(let i=0;i<2;i++){ const a=rand(0,6.28); enemies.push(makeEnemy(e.x+Math.cos(a)*10,e.y+Math.sin(a)*10,'fast',1+time/60)); } }
     if(e.boss){ kills+=15;
-      const nBig=Math.max(1,Math.round(stage*(TUNE.bossGem!=null?TUNE.bossGem:1))); for(let i=0;i<nBig;i++){ const a=rand(0,6.28),d=rand(10,40+nBig*1.5); gems.push({x:e.x+Math.cos(a)*d,y:e.y+Math.sin(a)*d,v:20}); } // 보스 전용 '큰 젬' = 스테이지×보스잼배수 (각 20XP)
+      const gemXp=e.mile?30:20; // 마일 보스(스테이지 10·20…90)는 경험치 1.5배(20→30)
+      const nBig=Math.max(1,Math.round(stage*(TUNE.bossGem!=null?TUNE.bossGem:1))); for(let i=0;i<nBig;i++){ const a=rand(0,6.28),d=rand(10,40+nBig*1.5); gems.push({x:e.x+Math.cos(a)*d,y:e.y+Math.sin(a)*d,v:gemXp}); } // 보스 전용 '큰 젬' = 스테이지×보스잼배수
       for(let i=0;i<24;i++){ const a=rand(0,6.28),s=rand(60,240); particles.push({x:e.x,y:e.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:rand(.4,.8),color:'#ff5ce1'}); }
       if(bossQueue.length>0){ spawnNextBoss(); } else { stageClear(); } }
   }
