@@ -28,7 +28,11 @@
   @keyframes near{0%{transform:scale(1)}100%{transform:scale(1.09)}}
   .float{position:fixed;left:50%;top:46%;transform:translateX(-50%);font-size:34px;font-weight:900;z-index:7;pointer-events:none;animation:fl .7s ease-out forwards}
   @keyframes fl{0%{opacity:0;transform:translate(-50%,10px) scale(.7)}20%{opacity:1;transform:translate(-50%,-4px) scale(1.1)}100%{opacity:0;transform:translate(-50%,-52px) scale(1)}}
-  #over,#start{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,10,22,.92);gap:10px;padding:24px;text-align:center;z-index:10}
+  #over,#start,#lb{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,10,22,.92);gap:10px;padding:24px;text-align:center;z-index:10}
+  #lb{z-index:12}
+  #lbList{width:100%;max-width:340px;margin:6px 0}
+  .lbrow{display:flex;justify-content:space-between;align-items:center;padding:9px 14px;margin:5px 0;border-radius:10px;font-size:17px;font-weight:700}
+  #lbEdit{color:#7cf6ff;text-decoration:underline;margin-left:8px;font-size:13px}
   .hidden{display:none!important}
   h1{font-size:40px;margin:0 0 4px;text-shadow:0 0 22px rgba(124,246,255,.4)}
   .sub{color:#9fb;opacity:.85;font-size:15px}
@@ -58,21 +62,31 @@
   <div class="sub" style="opacity:.6;font-size:13px;">틀리거나 놓치면 즉시 끝 · 갈수록 빨라짐<br/><b style="color:#ff9a5a">처음 3판만 슬로모로 도와줘요 · 4판부터 실전!</b></div>
   <button class="btn" id="startBtn">시작</button>
   <div class="sub" style="margin-top:6px;">최고 <b id="best2">0</b></div>
-  <div id="changelog">🆕 <b id="clVer">v0.9</b> · <span id="clNote">광고 이어하기 · 점수 공유 · 전면광고(탑100 기본세트)</span></div>
+  <button class="btn" id="lbBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:11px 24px;font-size:16px;margin-top:10px">🏆 랭킹</button>
+  <div id="changelog">🆕 <b id="clVer">v1.0</b> · <span id="clNote">랭킹(Top-10) 추가 · 광고 이어하기·공유·전면광고</span></div>
 </div>
 
 <div id="over" class="hidden">
   <h1 id="overTitle">아깝다!</h1>
   <div class="miss" id="overMsg"></div>
   <div class="sub">점수 <b id="overScore">0</b> <span id="overRec"></span></div>
+  <div class="sub" id="overRank" style="color:#ffd34d;font-weight:800;min-height:20px"></div>
   <div class="sub" style="opacity:.7">최고 <b id="overBest">0</b></div>
   <button class="btn" id="reviveBtn" style="background:#2ec77a;box-shadow:0 6px 0 #1a8a52;display:none">🎬 광고 보고 이어하기</button>
   <div style="display:flex;gap:10px;margin-top:8px">
-    <button class="btn" id="retryBtn" style="padding:14px 24px;font-size:18px">한 판 더</button>
-    <button class="btn" id="shareBtn" style="padding:14px 24px;font-size:18px;background:#20263c;box-shadow:0 6px 0 #10131f">🏆 공유</button>
+    <button class="btn" id="retryBtn" style="padding:14px 22px;font-size:18px">한 판 더</button>
+    <button class="btn" id="shareBtn" style="padding:14px 22px;font-size:18px;background:#20263c;box-shadow:0 6px 0 #10131f">🏆 공유</button>
   </div>
+  <div id="overLbBtn" style="margin-top:12px;color:#7cf6ff;font-size:15px;text-decoration:underline">🏆 랭킹 보기</div>
 </div>
-<div id="ver">v0.9 · 광고이어하기·공유·전면광고</div>
+
+<div id="lb" class="hidden">
+  <h1>🏆 랭킹</h1>
+  <div class="sub" id="lbName"></div>
+  <div id="lbList"></div>
+  <button class="btn" id="lbClose" style="margin-top:6px">닫기</button>
+</div>
+<div id="ver">v1.0 · 랭킹·광고·공유</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -132,6 +146,23 @@ async function playInterstitial(done){   // 전면 광고 (라운드 사이)
   }
   if(done) done();
 }
+// ── 랭킹(로컬 Top-10) ──
+let myName = (function(){ try{ return localStorage.getItem('num_name')||'나'; }catch(e){ return '나'; } })();
+function esc(s){ return String(s).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c])); }
+function loadLB(){ try{ return JSON.parse(localStorage.getItem('num_lb')||'[]'); }catch(e){ return []; } }
+function saveLB(a){ try{ localStorage.setItem('num_lb', JSON.stringify(a)); }catch(e){} }
+function insertScore(sc){ let a=loadLB(); a.forEach(e=>e.me=false); const entry={name:myName,score:sc,me:true}; a.push(entry); a.sort((x,y)=>y.score-x.score); a=a.slice(0,10); saveLB(a); return a.findIndex(e=>e.me)+1; }  // 0=탑10 밖
+function renderLB(){ const a=loadLB();
+  $('lbName').innerHTML='닉네임: <b>'+esc(myName)+'</b><span id="lbEdit">✏️ 변경</span>';
+  $('lbEdit').onclick=editName;
+  const box=$('lbList');
+  if(!a.length){ box.innerHTML='<div class="sub" style="opacity:.6;padding:24px">아직 기록이 없어요.<br/>첫 주인공이 되어보세요! 🎯</div>'; return; }
+  box.innerHTML=a.map((e,i)=>{ const medal=['🥇','🥈','🥉'][i]||('<span style="opacity:.55;display:inline-block;width:1.4em">'+(i+1)+'</span>');
+    return '<div class="lbrow" style="background:'+(e.me?'rgba(124,246,255,.16)':'rgba(255,255,255,.045)')+';border:1px solid '+(e.me?'rgba(124,246,255,.55)':'transparent')+'"><span>'+medal+' '+esc(e.name)+'</span><b style="color:#7cf6ff">'+e.score+'</b></div>'; }).join('');
+}
+function editName(){ const n=prompt('닉네임 (최대 8자)', myName); if(n && n.trim()){ myName=n.trim().slice(0,8); try{localStorage.setItem('num_name',myName);}catch(e){} renderLB(); } }
+function showLB(){ renderLB(); $('lb').classList.remove('hidden'); }
+function hideLB(){ $('lb').classList.add('hidden'); }
 function shareScore(){
   const txt='모두의 숫자 '+score+'점! 🎯 규칙 읽고 목표에서 STOP — 도전해봐!\nhttps://seungiljang.github.io/games/number.html';
   try{ if(navigator.share){ navigator.share({title:'모두의 숫자', text:txt}); return; } }catch(e){}
@@ -249,6 +280,8 @@ function die(msg){
   $('overTitle').textContent = rec?'🏆 신기록!':'아깝다!';
   $('overMsg').textContent=msg; $('overScore').textContent=score;
   $('overRec').innerHTML = rec?'<span class="rec">최고 갱신!</span>' : (best>0?('(최고까지 '+(best-score)+'점!)'):'');
+  const rank = score>0 ? insertScore(score) : 0;
+  $('overRank').textContent = rank>0 ? ('🏆 랭킹 '+rank+'위'+(rank===1?' — 1등!':(rank<=3?' 진입!':''))) : '';
   deathCount++;
   // 이어하기(광고) 버튼: 판당 1회 · 점수>0 일 때만
   $('reviveBtn').style.display = (!reviveUsed && score>0) ? 'block' : 'none';
@@ -272,5 +305,9 @@ $('startBtn').onclick=()=>start();
 $('retryBtn').onclick=()=>retryGame();
 $('reviveBtn').onclick=()=>revive();
 $('shareBtn').onclick=()=>shareScore();
+$('lbBtn').onclick=()=>showLB();
+$('overLbBtn').onclick=()=>showLB();
+$('lbClose').onclick=()=>hideLB();
+$('best2').textContent=best;
 </script>
 </body></html>
