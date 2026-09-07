@@ -1229,8 +1229,8 @@ function loop(ts){
 requestAnimationFrame(loop);
 
 // ---- Flow ----
-function startGame(){ initAudio(); reset(); document.getElementById('start').classList.add('hidden'); document.getElementById('over').classList.add('hidden'); document.getElementById('paused').classList.add('hidden'); document.getElementById('pauseBtn').style.display='block'; document.getElementById('playShopBtn').style.display='block'; state='play'; lastTs=performance.now(); }
-function gameOver(){ state='over'; sfx.over();
+function startGame(){ initAudio(); reset(); hideBanner(); document.getElementById('start').classList.add('hidden'); document.getElementById('over').classList.add('hidden'); document.getElementById('paused').classList.add('hidden'); document.getElementById('pauseBtn').style.display='block'; document.getElementById('playShopBtn').style.display='block'; state='play'; lastTs=performance.now(); }
+function gameOver(){ state='over'; sfx.over(); showBanner();
   document.getElementById('pauseBtn').style.display='none'; document.getElementById('playShopBtn').style.display='none';
   const surv=Math.floor(time); let rec='';
   if(surv>best){ best=surv; try{localStorage.setItem('ss_best',best);}catch{} rec=' '+t('goRec'); }
@@ -1305,8 +1305,10 @@ document.getElementById('homeBtn').onclick=()=>{ document.getElementById('over')
 const AD_USE_TEST=true;
 const AD_REWARD_REAL='ca-app-pub-9017259597860535/2171653136';
 const AD_REWARD_TEST='ca-app-pub-3940256099942544/5224354917';
+const AD_BANNER_TEST='ca-app-pub-3940256099942544/6300978111'; // 구글 공식 테스트 배너
+const AD_BANNER_REAL=''; // 출시 시 실제 배너 광고단위 ID 입력
 let admobReady=false;
-(async function initAdMob(){ try{ const C=window.Capacitor; if(C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.AdMob){ await C.Plugins.AdMob.initialize({initializeForTesting:AD_USE_TEST}); admobReady=true; } }catch(e){ admobReady=false; } })();
+(async function initAdMob(){ try{ const C=window.Capacitor; if(C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.AdMob){ await C.Plugins.AdMob.initialize({initializeForTesting:AD_USE_TEST}); admobReady=true; if(typeof state==='undefined'||state!=='play') showBanner(); } }catch(e){ admobReady=false; } })();
 // 광고 대기/재생 오버레이 (멈춘 느낌 방지 — 준비 중 스피너·점 애니메이션 표시)
 const _adOv=document.getElementById('adOverlay');
 const _adTitle=_adOv.querySelector('h1');
@@ -1341,6 +1343,10 @@ async function playAd(cb){
   // 웹/개발/광고실패 폴백 — 대기 연출(카운트다운) 후 보상
   simulateAd(()=>{ lastTs=performance.now(); adPlaying=false; cb(); });
 }
+// 배너광고 — 메뉴/결과 화면에만(플레이 중 숨김 → 오탭 방지)
+let bannerShown=false;
+async function showBanner(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)||bannerShown) return; bannerShown=true; try{ await C.Plugins.AdMob.showBanner({ adId: AD_USE_TEST?AD_BANNER_TEST:AD_BANNER_REAL, adSize:'BANNER', position:'BOTTOM_CENTER', margin:0, isTesting:AD_USE_TEST }); }catch(e){ bannerShown=false; } }
+async function hideBanner(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)||!bannerShown) return; bannerShown=false; try{ await C.Plugins.AdMob.hideBanner(); }catch(e){} }
 document.getElementById('reviveBtn').onclick=()=>{ if(reviveCount>=MAX_REVIVE||state!=='over') return; reviveCount++; document.getElementById('reviveBtn').style.display='none';
   playAd(()=>{ meta.gold=Math.max(0, meta.gold-lastEndBonus); saveMeta(); // 부활: 마감 보너스 회수(이미 썼으면 0까지만 — 마이너스 방지)
     player.hp=player.maxhp; player.xp=Math.min(player.xpNeed-1, Math.floor(player.xpNeed*TUNE.reviveXp)); enemies.length=0; bullets.length=0; ebullets.length=0; // 부활: 체력100% + 경험치(TUNE) 채워 시작
@@ -1348,7 +1354,7 @@ document.getElementById('reviveBtn').onclick=()=>{ if(reviveCount>=MAX_REVIVE||s
     // ⚠️ 부활 시 보스 상태 리셋 — 안 하면 보스가 다시 안 나와 스테이지가 멈춤(무한 farming 버그)
     bossAlive=false; bossSpawned=false; bossQueue=[];
     stageTime=Math.max(0, STAGE_BOSS_DELAY-10); // 부활 후 10초 뒤 보스 재등장(숨 돌릴 시간 — 즉사 방지)
-    document.getElementById('over').classList.add('hidden'); document.getElementById('pauseBtn').style.display='block'; document.getElementById('playShopBtn').style.display='block'; banner=t('bnRevive'); bannerT=1.6; resize(); state='play'; lastTs=performance.now(); }); };
+    document.getElementById('over').classList.add('hidden'); document.getElementById('pauseBtn').style.display='block'; document.getElementById('playShopBtn').style.display='block'; hideBanner(); banner=t('bnRevive'); bannerT=1.6; resize(); state='play'; lastTs=performance.now(); }); };
 document.getElementById('dblBtn').onclick=(e)=>{ if(goldDoubled) return; goldDoubled=true; const b=e.currentTarget; b.disabled=true; b.style.opacity=.5; b.textContent='광고 재생 중…';
   playAd(()=>{ meta.gold+=lastEarned; saveMeta(); renderShop(); b.textContent='✓ 골드 2배 완료'; tone(1046,0.12,'square',0.14,1568); }); };
 document.getElementById('muteBtn').onclick=(e)=>{ e.stopPropagation(); muted=!muted; if(!muted) initAudio(); e.currentTarget.textContent=muted?'🔇':'🔊'; };

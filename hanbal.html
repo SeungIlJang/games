@@ -136,8 +136,10 @@ async function renderLB(){
 const AD_USE_TEST=true;
 const AD_REWARD_TEST='ca-app-pub-3940256099942544/5224354917'; // 구글 공식 테스트 리워드
 const AD_REWARD_REAL=''; // 출시 시 실제 리워드 광고단위 ID 입력
+const AD_BANNER_TEST='ca-app-pub-3940256099942544/6300978111'; // 구글 공식 테스트 배너
+const AD_BANNER_REAL=''; // 출시 시 실제 배너 광고단위 ID 입력
 let admobReady=false;
-(async function initAdMob(){ try{ const C=window.Capacitor; if(C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.AdMob){ await C.Plugins.AdMob.initialize({initializeForTesting:AD_USE_TEST}); admobReady=true; } }catch(e){ admobReady=false; } })();
+(async function initAdMob(){ try{ const C=window.Capacitor; if(C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.AdMob){ await C.Plugins.AdMob.initialize({initializeForTesting:AD_USE_TEST}); admobReady=true; if(typeof state==='undefined'||state!=='play') showBanner(); } }catch(e){ admobReady=false; } })();
 function adLoading(on){ let el=document.getElementById('adLoading');
   if(!el){ if(!document.getElementById('adSpKf')){ const st=document.createElement('style'); st.id='adSpKf'; st.textContent='@keyframes sp{to{transform:rotate(360deg)}}'; document.head.appendChild(st); }
     el=document.createElement('div'); el.id='adLoading';
@@ -165,6 +167,10 @@ async function playAd(onReward){
   }
   setTimeout(()=>{ _done(onReward); }, 800);   // 웹 시뮬레이션
 }
+// 배너광고 — 메뉴/결과 화면에만(플레이 중 숨김 → 오탭 방지)
+let bannerShown=false;
+async function showBanner(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)||bannerShown) return; bannerShown=true; try{ await C.Plugins.AdMob.showBanner({ adId: AD_USE_TEST?AD_BANNER_TEST:AD_BANNER_REAL, adSize:'BANNER', position:'BOTTOM_CENTER', margin:0, isTesting:AD_USE_TEST }); }catch(e){ bannerShown=false; } }
+async function hideBanner(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)||!bannerShown) return; bannerShown=false; try{ await C.Plugins.AdMob.hideBanner(); }catch(e){} }
 function gunUnlocked(g){ return best>=g.unlock; }
 function renderGunSelect(){
   const box=document.getElementById('gunsel'); if(!box) return; box.innerHTML='';
@@ -271,11 +277,12 @@ function gameOver(){
   document.getElementById('dblBtn').classList.toggle('hidden', doubledRun);    // 2배도 판당 1회
   document.getElementById('over').classList.remove('hidden');
   document.getElementById('over').classList.add('on');
+  showBanner();   // 결과 화면에 배너
   submitScore().then(renderLB).catch(()=>renderLB()); // 리더보드 제출·갱신
 }
 function reviveGame(){ if(reviveCount>=MAX_REVIVE) return; playAd(()=>{
   reviveCount++; lives=2; combo=0; bullet=null; parts=[]; pops=[]; rings=[]; targets=[]; spawnTarget();
-  state='play';
+  state='play'; hideBanner();
   document.getElementById('over').classList.add('hidden'); document.getElementById('over').classList.remove('on');
   lastTs=performance.now();
 }); }
@@ -289,7 +296,7 @@ function doubleScore(){ if(doubledRun) return; playAd(()=>{
 }); }
 function startGame(){
   if(!gunUnlocked(GUNS[selGun])) selGun=0;   // 잠긴 총이면 기본으로
-  reset(); state='play';
+  reset(); state='play'; hideBanner();
   document.getElementById('start').classList.add('hidden');
   document.getElementById('start').classList.remove('on');
   document.getElementById('over').classList.add('hidden');
