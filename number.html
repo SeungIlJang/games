@@ -58,7 +58,7 @@
   <div class="sub" style="opacity:.6;font-size:13px;">틀리거나 놓치면 즉시 끝 · 갈수록 빨라짐</div>
   <button class="btn" id="startBtn">시작</button>
   <div class="sub" style="margin-top:6px;">최고 <b id="best2">0</b></div>
-  <div id="changelog">🆕 <b id="clVer">v0.6</b> · <span id="clNote">슬로모 3판까지만</span></div>
+  <div id="changelog">🆕 <b id="clVer">v0.7</b> · <span id="clNote">롤링 무제한 대기 · 4판부터 힌트/슬로모 완전제거</span></div>
 </div>
 
 <div id="over" class="hidden">
@@ -68,7 +68,7 @@
   <div class="sub" style="opacity:.7">최고 <b id="overBest">0</b></div>
   <button class="btn" id="retryBtn">한 판 더</button>
 </div>
-<div id="ver">v0.6 · 슬로모 3판까지만</div>
+<div id="ver">v0.7 · 롤링무제한·4판부터힌트제거</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -122,7 +122,7 @@ function newRound(keepCur){
   if(curIsRoll){
     target = rnd(8,40); rollLo=target-6; rollHi=target+2; cur=rollLo; seq=[];
     banner('⚡ 롤링! 감으로 STOP','#c9a3ff'); vib(30);
-    rollTO=setTimeout(()=>{ if(state==='play') die('너무 느려! 놓쳤다'); }, 3400);
+    // 롤링은 누를 때까지 여유있게 대기 (제한시간 없음)
   } else {
     if(!keepCur) cur = hits<2 ? 1 : rnd(4,16);
     const k=rnd(3,5); let t=cur; for(let i=0;i<k;i++) t+=stepAt(i); target=t; seq=[cur];
@@ -138,12 +138,12 @@ function render(pulse){
     return;
   }
   const heat=Math.min(1,hits/14); c.style.color='rgb('+Math.round(238+17*heat)+','+Math.round(238-130*heat)+','+Math.round(255-210*heat)+')';
-  const nextVal=cur+stepAt(ti); const near=(target-cur)!==0 && nextVal===target;
+  const nextVal=cur+stepAt(ti); const near=hits<3 && (target-cur)!==0 && nextVal===target;   // 텔레그래프도 3판까지만
   c.classList.toggle('near', !!near);
   if(pulse && !near){ c.classList.remove('big'); void c.offsetWidth; c.classList.add('big'); }
   $('seq').textContent=seq.join('  →  ');
   $('score').textContent=score; $('combo').textContent=hits>=2?('🔥 '+hits+' 연속'):'';
-  $('hint').textContent = near?'⚡ 다음이 목표! 탭!' : (cur===target?'👆 지금!':'');
+  $('hint').textContent = hits<3 ? (near?'⚡ 다음이 목표! 탭!' : (cur===target?'👆 지금!':'')) : '';
   $('vig').style.boxShadow='inset 0 0 '+(120-heat*40)+'px 10px rgba('+Math.round(60*heat)+',0,0,'+(0.5+heat*0.35).toFixed(2)+')';
 }
 function tick(){
