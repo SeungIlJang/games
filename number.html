@@ -49,7 +49,7 @@
   <div class="sub" style="opacity:.7">최고 <b id="overBest">0</b></div>
   <button class="btn" id="retryBtn">한 판 더</button>
 </div>
-<div id="ver">v0.1 · 긴장·오기 코어</div>
+<div id="ver">v0.2 · 초반 3판 +1 온보딩 · 속도 상향</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -61,20 +61,21 @@ $('best').textContent=best; $('best2').textContent=best; $('overBest').textConte
 let state='start';        // start | play | over
 let cur=0, step=1, target=0, score=0, combo=0, seq=[], timer=null, interval=700, passed=false;
 
-function pickStep(){ // 규칙: 등차 (초반 쉬움→점점 다양)
-  const pool = score<4 ? [2,3,4,5] : score<9 ? [2,3,4,5,6,7] : [-3,-2,2,3,4,5,6,7,8];
+function pickStep(){ // 규칙: 등차 (처음 3판 +1로 아주 쉽게 → 점점 다양·어렵게)
+  if(score<3) return 1;                              // 온보딩: 1 2 3 4 5
+  const pool = score<7 ? [2,3,4,5] : score<12 ? [2,3,4,5,6,7] : [-4,-3,-2,2,3,4,5,6,7,8];
   let s=pool[Math.floor(Math.random()*pool.length)]; if(s===0)s=3; return s;
 }
 function newRound(keepCur){
   step=pickStep();
-  if(!keepCur) cur=Math.floor(Math.random()*15)+5;
+  if(!keepCur) cur = score<3 ? 1 : (Math.floor(Math.random()*12)+4);
   const k=Math.floor(Math.random()*3)+3;          // 목표까지 3~5틱
   target=cur+step*k;
   passed=false;
   seq=[cur];
   render();
 }
-function speed(){ return Math.max(190, 720 - score*24); }
+function speed(){ return Math.max(150, 600 - score*32); }  // 더 빠르게·더 가파르게
 
 function tick(){
   cur+=step;
@@ -99,8 +100,8 @@ function render(pulse){
   const dist=Math.round((target-cur)/step);
   $('hint').textContent=(dist>0 && dist<=2)?'⚡ 곧 목표!':'';
 }
-function start(){ score=0; combo=0; interval=720; $('start').classList.add('hidden'); $('over').classList.add('hidden'); state='play'; newRound(false);
-  clearTimeout(timer); timer=setTimeout(tick, 900); }
+function start(){ score=0; combo=0; interval=620; $('start').classList.add('hidden'); $('over').classList.add('hidden'); state='play'; newRound(false);
+  clearTimeout(timer); timer=setTimeout(tick, 620); }
 function tap(){
   if(state==='start'){ start(); return; }
   if(state==='over'){ start(); return; }
@@ -108,7 +109,7 @@ function tap(){
   if(cur===target){ // 성공
     score++; combo++; if(combo>2) beep(880+combo*8,0.06,'square',0.06); else beep(760,0.06,'square',0.06);
     flash('#173a2a');
-    clearTimeout(timer); newRound(true); timer=setTimeout(tick, Math.max(260, speed()));
+    clearTimeout(timer); newRound(true); timer=setTimeout(tick, Math.max(200, speed()));
   } else { // 실패(오답 위치)
     const d=Math.abs(target-cur);
     gameOver('miss', '아깝다! 목표 '+target+', '+cur+'에서 멈춤 (差 '+d+')');
