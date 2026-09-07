@@ -59,11 +59,11 @@
 <div id="start">
   <h1>모두의 숫자</h1>
   <div class="sub">숫자가 <b>규칙</b>대로 바뀝니다. 수열을 읽고 <b style="color:#7cf6ff">목표</b>에서 <b>탭</b>!<br/>가끔 <b style="color:#c9a3ff">⚡ 롤링</b>은 초고속 — <b>감으로</b> 멈추세요!</div>
-  <div class="sub" style="opacity:.6;font-size:13px;">틀리거나 놓치면 즉시 끝 · 갈수록 빨라짐<br/><b style="color:#ff9a5a">처음 3판만 슬로모로 도와줘요 · 4판부터 실전!</b></div>
+  <div class="sub" style="opacity:.6;font-size:13px;">틀리거나 놓치면 즉시 끝 · 갈수록 빨라짐<br/><b style="color:#ff9a5a">처음 2판만 슬로모로 도와줘요 · 3판부터 실전!</b></div>
   <button class="btn" id="startBtn">시작</button>
   <div class="sub" style="margin-top:6px;">최고 <b id="best2">0</b></div>
   <button class="btn" id="lbBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:11px 24px;font-size:16px;margin-top:10px">🏆 랭킹</button>
-  <div id="changelog">🆕 <b id="clVer">v1.0</b> · <span id="clNote">랭킹(Top-10) 추가 · 광고 이어하기·공유·전면광고</span></div>
+  <div id="changelog">🆕 <b id="clVer">v1.1</b> · <span id="clNote">슬로모 2판까지로 단축(3판부터 실전)</span></div>
 </div>
 
 <div id="over" class="hidden">
@@ -86,7 +86,7 @@
   <div id="lbList"></div>
   <button class="btn" id="lbClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v1.0 · 랭킹·광고·공유</div>
+<div id="ver">v1.1 · 슬로모 2판까지</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -216,7 +216,7 @@ function newRound(keepCur){
   } else {
     if(!keepCur) cur = hits<2 ? 1 : rnd(4,16);
     const k=rnd(3,5); let t=cur; for(let i=0;i<k;i++) t+=stepAt(i); target=t; seq=[cur];
-    if(hits>=3 && !slowEndShown){ slowEndShown=true; banner('🔥 슬로모 끝! 이제 실전','#ff9a5a'); vib([20,40,20]); }
+    if(hits>=2 && !slowEndShown){ slowEndShown=true; banner('🔥 슬로모 끝! 이제 실전','#ff9a5a'); vib([20,40,20]); }
   }
   render(false);
 }
@@ -229,12 +229,12 @@ function render(pulse){
     return;
   }
   const heat=Math.min(1,hits/14); c.style.color='rgb('+Math.round(238+17*heat)+','+Math.round(238-130*heat)+','+Math.round(255-210*heat)+')';
-  const nextVal=cur+stepAt(ti); const near=hits<3 && (target-cur)!==0 && nextVal===target;   // 텔레그래프도 3판까지만
+  const nextVal=cur+stepAt(ti); const near=hits<2 && (target-cur)!==0 && nextVal===target;   // 텔레그래프도 2판까지만
   c.classList.toggle('near', !!near);
   if(pulse && !near){ c.classList.remove('big'); void c.offsetWidth; c.classList.add('big'); }
   $('seq').textContent=seq.join('  →  ');
   $('score').textContent=score; $('combo').textContent=hits>=2?('🔥 '+hits+' 연속'):'';
-  $('hint').textContent = hits<3 ? (near?'⚡ 다음이 목표! 탭!' : (cur===target?'👆 지금!':'')) : '';
+  $('hint').textContent = hits<2 ? (near?'⚡ 다음이 목표! 탭!' : (cur===target?'👆 지금!':'')) : '';
   $('vig').style.boxShadow='inset 0 0 '+(120-heat*40)+'px 10px rgba('+Math.round(60*heat)+',0,0,'+(0.5+heat*0.35).toFixed(2)+')';
 }
 function tick(){
@@ -247,7 +247,7 @@ function tick(){
   const dir=Math.sign(target-(seq[0]));
   if((dir>=0 && cur>target) || (dir<0 && cur<target)){ die('놓쳤다! '+target+' 지나감'); return; }
   render(true);
-  const nv=cur+stepAt(ti), slow=(hits<3 && target-cur!==0 && nv===target);   // 슬로모는 3판까지만(그 뒤엔 실력)
+  const nv=cur+stepAt(ti), slow=(hits<2 && target-cur!==0 && nv===target);   // 슬로모는 2판까지만(그 뒤엔 실력)
   $('wrap').classList.toggle('slow', slow);
   if(slow) tone(880,0.05,'sine',0.05); else tone(300+Math.min(hits,22)*11, 0.03, 'sine', 0.03);
   timer=setTimeout(tick, slow ? Math.round(speed()*1.9)+140 : speed());
