@@ -85,8 +85,8 @@
     <button class="btn" id="shopCloseBtn" data-i18n="close">닫기</button>
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
-    <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> 갤로그의 귀환</h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.69 · 다국어 3단계 (일본어 직업명·튜토리얼·팝업)</div>
+    <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.70 · 타이틀도 언어별 (Gallog's Return / ギャロッグの帰還)</div>
     <div id="langSel" style="display:flex;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">한국어</button>
       <button data-lang="en" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">English</button>
@@ -259,6 +259,7 @@ Object.assign(I18N.ko,{ potionFmt:'❤️ 체력 물약 · 30% 회복 (🪙 %)',
 Object.assign(I18N.en,{ potionFmt:'❤️ Health Potion · Heal 30% (🪙 %)', goSurv:'Survived', goCombo:'Max Combo', goBest:'Best', goRun:'This run', goHave:'Have', goRec:'🏆 New record!', rankKills:'kills', rankSec:'s', rankNth:'' });
 Object.assign(I18N.ja,{ potionFmt:'❤️ 回復ポーション · 30%回復 (🪙 %)', goSurv:'生存', goCombo:'最大コンボ', goBest:'最高', goRun:'今回', goHave:'所持', goRec:'🏆新記録！', rankKills:'撃破', rankSec:'秒', rankNth:'位' });
 function nth(i){ return LANG==='en'?('#'+(i+1)):((i+1)+t('rankNth')); }
+Object.assign(I18N.ko,{ title:'갤로그의 귀환' }); Object.assign(I18N.en,{ title:'Gallog’s Return' }); Object.assign(I18N.ja,{ title:'ギャロッグの帰還' });
 Object.assign(I18N.ko,{ tutTitle:'🎮 조작법', tutStart:'시작하기', needClass:'먼저 % 전직이 필요해요', noGold:'골드가 부족해요! 🪙% 필요',
   tutBody:'👆 <b>화면 드래그</b> — 그 방향으로 이동<br/>🔫 <b>자동 발사</b> — 가까운 적을 자동 조준<br/>💎 <b>젬 획득</b> — 처치 시 나오는 젬 모아 레벨업<br/>⬆️ <b>레벨업</b> — 무기/능력 3택 강화<br/>🌟 무기를 <b>Lv6</b>까지 올리면 <b>진화</b>!<br/>💀 죽어도 <b>골드는 남아요</b> — 영구 강화로 더 강하게' });
 Object.assign(I18N.en,{ tutTitle:'🎮 How to Play', tutStart:'Start', needClass:'Unlock % first', noGold:'Not enough gold! Need 🪙%',
