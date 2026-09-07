@@ -86,17 +86,17 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.74 · 선택 언어 버튼 강조 표시</div>
-    <div id="langSel" style="display:flex;gap:6px;justify-content:center;margin-bottom:8px;">
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.75 · 언어버튼 숨김 + 🌐언어변경 버튼(이름변경 옆)</div>
+    <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">한국어</button>
       <button data-lang="en" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">English</button>
       <button data-lang="ja" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">日本語</button>
     </div>
-    <div id="langAuto" style="font-size:11px;opacity:.6;color:#9fe8c8;margin-bottom:8px;display:none;">🌐 지역에 맞춰 자동 선택됨 · 아래에서 변경 가능</div>
     <div style="font-size:20px;font-weight:800;margin-bottom:4px;">🪙 <span id="goldNum">0</span> &nbsp;·&nbsp; ⚔️ <span data-i18n="lblStartPow">시작강도</span> <span id="diffNum">0</span></div>
     <div style="font-size:14px;opacity:.8;margin-bottom:8px;"><span data-i18n="lblBest">🏆 최고 생존</span> <span id="bestNum">0</span><span data-i18n="bestSuffix">초</span></div>
     <div style="margin-bottom:10px;font-size:13px;display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;">🎮 <span id="nickDisp" style="font-weight:700;color:#ffd25c;">-</span>
       <button id="nickEditBtn" data-i18n="nickEdit" style="pointer-events:auto;background:#2b3350;border:1px solid #3a3f55;color:#cdd;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;">✏️ 이름 변경</button>
+      <button id="langBtn" style="pointer-events:auto;background:#2b3350;border:1px solid #3a3f55;color:#cdd;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;">🌐 한국어</button>
       <input id="nickIn" maxlength="12" data-i18n-ph="nickPh" placeholder="새 이름 입력" style="display:none;background:#161a2c;border:1px solid #3a3f55;color:#fff;border-radius:8px;padding:6px 10px;font-size:13px;width:130px;text-align:center;pointer-events:auto;" /></div>
     <p class="sub" style="margin-bottom:10px;" data-i18n="tagline">강화할수록 초반부터 더 빠르고 격렬해져요</p>
     <div style="display:flex;gap:8px;justify-content:center;margin-bottom:8px;">
@@ -219,6 +219,7 @@ function applyI18n(){
   const ls=document.getElementById('langSel'); if(ls) ls.querySelectorAll('button').forEach(b=>{ const on=b.dataset.lang===LANG;
     b.style.background=on?'#3a7bff':'#20263c'; b.style.color=on?'#fff':'#cdd'; b.style.borderColor=on?'#5ce1ff':'#2b3350';
     b.style.boxShadow=on?'0 0 0 2px rgba(92,225,255,.45)':'none'; });
+  const lb=document.getElementById('langBtn'); if(lb){ const nm={ko:'한국어',en:'English',ja:'日本語'}; lb.textContent='🌐 '+(nm[LANG]||LANG); }
 }
 function setLang(l){ if(!I18N[l])return; LANG=l; LANG_AUTO=false; saveLang(l); applyI18n(); if(typeof renderShop==='function'){try{renderShop();renderClasses();}catch(e){}} }
 // ===== 2단계: 설명/이름 번역 (용어사전 GLOSS + 문장/보스명 TR) =====
@@ -1283,6 +1284,8 @@ function beginOrTutorial(){ initAudio(); if(!localStorage.getItem('ss_tut')){ do
 document.getElementById('startBtn').onclick=beginOrTutorial;
 // 언어 선택
 document.querySelectorAll('#langSel button').forEach(b=>{ b.onclick=()=>setLang(b.dataset.lang); });
+{ const _order=['ko','en','ja']; const lb=document.getElementById('langBtn');
+  if(lb) lb.onclick=()=>{ const i=_order.indexOf(LANG); setLang(_order[(i+1)%_order.length]); }; }
 applyI18n();
 // 앱 WebView 재렌더/복귀 시 언어 되돌아감 방지 — 저장값 기준 재적용
 document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) applyI18n(); });
