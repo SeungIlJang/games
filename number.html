@@ -55,10 +55,10 @@
 <div id="start">
   <h1>모두의 숫자</h1>
   <div class="sub">숫자가 <b>규칙</b>대로 바뀝니다. 수열을 읽고 <b style="color:#7cf6ff">목표</b>에서 <b>탭</b>!<br/>가끔 <b style="color:#c9a3ff">⚡ 롤링</b>은 초고속 — <b>감으로</b> 멈추세요!</div>
-  <div class="sub" style="opacity:.6;font-size:13px;">틀리거나 놓치면 즉시 끝 · 갈수록 빨라짐</div>
+  <div class="sub" style="opacity:.6;font-size:13px;">틀리거나 놓치면 즉시 끝 · 갈수록 빨라짐<br/><b style="color:#ff9a5a">처음 3판만 슬로모로 도와줘요 · 4판부터 실전!</b></div>
   <button class="btn" id="startBtn">시작</button>
   <div class="sub" style="margin-top:6px;">최고 <b id="best2">0</b></div>
-  <div id="changelog">🆕 <b id="clVer">v0.7</b> · <span id="clNote">롤링 무제한 대기 · 4판부터 힌트/슬로모 완전제거</span></div>
+  <div id="changelog">🆕 <b id="clVer">v0.8</b> · <span id="clNote">슬로모 종료를 화면에 명시("🔥 이제 실전")</span></div>
 </div>
 
 <div id="over" class="hidden">
@@ -68,7 +68,7 @@
   <div class="sub" style="opacity:.7">최고 <b id="overBest">0</b></div>
   <button class="btn" id="retryBtn">한 판 더</button>
 </div>
-<div id="ver">v0.7 · 롤링무제한·4판부터힌트제거</div>
+<div id="ver">v0.8 · 슬로모종료 화면명시</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -102,7 +102,7 @@ function banner(txt,col){ const b=$('banner'); b.textContent=txt; b.style.color=
 let best=+(localStorage.getItem('num_best')||0);
 $('best').textContent=best; $('best2').textContent=best; $('overBest').textContent=best;
 let state='start', cur=0, target=0, score=0, hits=0, rule=null, ti=0, seq=[], timer=null;
-let curIsRoll=false, rollLo=0, rollHi=0, rollTO=null;
+let curIsRoll=false, rollLo=0, rollHi=0, rollTO=null, slowEndShown=false;
 
 function makeRule(){
   if(hits<2) return {type:'add',s:1};                         // 온보딩 2판
@@ -126,6 +126,7 @@ function newRound(keepCur){
   } else {
     if(!keepCur) cur = hits<2 ? 1 : rnd(4,16);
     const k=rnd(3,5); let t=cur; for(let i=0;i<k;i++) t+=stepAt(i); target=t; seq=[cur];
+    if(hits>=3 && !slowEndShown){ slowEndShown=true; banner('🔥 슬로모 끝! 이제 실전','#ff9a5a'); vib([20,40,20]); }
   }
   render(false);
 }
@@ -162,7 +163,7 @@ function tick(){
   timer=setTimeout(tick, slow ? Math.round(speed()*1.9)+140 : speed());
 }
 function nextTick(first){ clearTimeout(timer); timer=setTimeout(tick, curIsRoll?ROLL_MS:first); }
-function start(){ score=0; hits=0; $('start').classList.add('hidden'); $('over').classList.add('hidden'); state='play';
+function start(){ score=0; hits=0; slowEndShown=false; $('start').classList.add('hidden'); $('over').classList.add('hidden'); state='play';
   try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
   newRound(false); nextTick(560); }
 function hitOK(){
