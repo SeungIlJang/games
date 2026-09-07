@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.81 · 골드 하단복귀 · 무기 7개째부터 윗줄(좌측)로</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.82 · 진화무기 안보이던 문제 수정(레벨숫자 항상표시·진화=금색)</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">한국어</button>
       <button data-lang="en" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">English</button>
@@ -1208,8 +1208,9 @@ function render(){
   // 무기 빌드 표시 (하단). 7개째부터는 윗줄(좌측)로 → 골드와 겹침 방지
   let wx=14, wx2=14, wi=0; ctx.font='15px system-ui';
   for(const k in player.weapons){ const lv=player.weapons[k], ev=player.evolved[k]; ctx.fillStyle=ev?'#ffd25c':'#cfe3ff';
-    if(wi<6){ ctx.fillText(WEAPONS[k].icon+(ev?'★':lv), wx, H-16-B); wx+=46; }
-    else { ctx.fillText(WEAPONS[k].icon+(ev?'★':lv), wx2, H-16-B-26); wx2+=46; }
+    const label=WEAPONS[k].icon+lv; // 레벨 숫자(0~6) 항상 표시 → 어떤 무기도 안 보이는 일 없음. 진화=금색, 일반=연파랑으로 구분(★ 글리프 미표시 기기 대응)
+    if(wi<6){ ctx.fillText(label, wx, H-16-B); wx+=46; }
+    else { ctx.fillText(label, wx2, H-16-B-26); wx2+=46; }
     wi++; }
   // 보유 골드 (우측 하단, 무기 라인과 동일한 줄)
   ctx.textAlign='right'; ctx.fillStyle='#ffd25c'; ctx.font='bold 16px system-ui'; ctx.fillText('🪙 '+meta.gold, W-14, H-16-B); ctx.textAlign='left';
