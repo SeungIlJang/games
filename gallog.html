@@ -1000,7 +1000,7 @@ function update(dt){
   heals=heals.filter(h=>!h.got);
   // 성능 안전장치: 개체 수 상한
   if(enemies.length>300) enemies.length=300;
-  if(bullets.length>300) bullets.splice(0, bullets.length-300);
+  if(bullets.length>600){ bullets.sort((a,b)=>b.life-a.life); bullets.length=600; } // 상한 600 + 수명 짧은(곧 사라질) 탄부터 제거 → 방금 쏜 산탄 볼리 보호
   if(particles.length>240) particles.splice(0, particles.length-240);
   // 적 탄막
   for(const b of ebullets){ b.x+=b.vx*dt; b.y+=b.vy*dt; b.life-=dt;
