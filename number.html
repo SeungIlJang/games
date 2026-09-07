@@ -63,7 +63,7 @@
   <button class="btn" id="startBtn">시작</button>
   <div class="sub" style="margin-top:6px;">최고 <b id="best2">0</b></div>
   <button class="btn" id="lbBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:11px 24px;font-size:16px;margin-top:10px">🏆 랭킹</button>
-  <div id="changelog">🆕 <b id="clVer">v1.1</b> · <span id="clNote">슬로모 2판까지로 단축(3판부터 실전)</span></div>
+  <div id="changelog">🆕 <b id="clVer">v1.2</b> · <span id="clNote">전세계 랭킹(Firebase) 배선 — config 넣으면 자동 활성</span></div>
 </div>
 
 <div id="over" class="hidden">
@@ -86,7 +86,7 @@
   <div id="lbList"></div>
   <button class="btn" id="lbClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v1.1 · 슬로모 2판까지</div>
+<div id="ver">v1.2 · 전세계랭킹 배선(FB)</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -146,22 +146,42 @@ async function playInterstitial(done){   // 전면 광고 (라운드 사이)
   }
   if(done) done();
 }
-// ── 랭킹(로컬 Top-10) ──
+// ── 랭킹 ──
+// 🌐 전세계 랭킹: 아래 FB_CONFIG를 Firebase 콘솔 값으로 채우면 자동 활성화(비어있으면 로컬 Top-10로 동작)
+window.FB_CONFIG = window.FB_CONFIG || { apiKey:"", authDomain:"", projectId:"", appId:"" };
 let myName = (function(){ try{ return localStorage.getItem('num_name')||'나'; }catch(e){ return '나'; } })();
 function esc(s){ return String(s).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c])); }
+// 로컬 저장
 function loadLB(){ try{ return JSON.parse(localStorage.getItem('num_lb')||'[]'); }catch(e){ return []; } }
 function saveLB(a){ try{ localStorage.setItem('num_lb', JSON.stringify(a)); }catch(e){} }
-function insertScore(sc){ let a=loadLB(); a.forEach(e=>e.me=false); const entry={name:myName,score:sc,me:true}; a.push(entry); a.sort((x,y)=>y.score-x.score); a=a.slice(0,10); saveLB(a); return a.findIndex(e=>e.me)+1; }  // 0=탑10 밖
-function renderLB(){ const a=loadLB();
-  $('lbName').innerHTML='닉네임: <b>'+esc(myName)+'</b><span id="lbEdit">✏️ 변경</span>';
-  $('lbEdit').onclick=editName;
-  const box=$('lbList');
-  if(!a.length){ box.innerHTML='<div class="sub" style="opacity:.6;padding:24px">아직 기록이 없어요.<br/>첫 주인공이 되어보세요! 🎯</div>'; return; }
-  box.innerHTML=a.map((e,i)=>{ const medal=['🥇','🥈','🥉'][i]||('<span style="opacity:.55;display:inline-block;width:1.4em">'+(i+1)+'</span>');
-    return '<div class="lbrow" style="background:'+(e.me?'rgba(124,246,255,.16)':'rgba(255,255,255,.045)')+';border:1px solid '+(e.me?'rgba(124,246,255,.55)':'transparent')+'"><span>'+medal+' '+esc(e.name)+'</span><b style="color:#7cf6ff">'+e.score+'</b></div>'; }).join('');
+function insertScore(sc){ let a=loadLB(); a.forEach(e=>e.me=false); const entry={name:myName,score:sc,me:true}; a.push(entry); a.sort((x,y)=>y.score-x.score); a=a.slice(0,10); saveLB(a); return a.findIndex(e=>e.me)+1; }
+// Firebase(글로벌) — config 있으면 CDN 동적로드
+let fbReady=false, fbDb=null, fbApi=null;
+(async function initFB(){ try{
+  if(!window.FB_CONFIG || !FB_CONFIG.apiKey) return;
+  const appM=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+  const fsM =await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+  const app=appM.initializeApp(FB_CONFIG); fbDb=fsM.getFirestore(app); fbApi=fsM; fbReady=true;
+}catch(e){ fbReady=false; } })();
+async function fbSubmit(name,sc){ if(!fbReady) return; try{ await fbApi.addDoc(fbApi.collection(fbDb,'scores'),{ name:String(name).slice(0,12), score:Math.floor(sc), ts:fbApi.serverTimestamp() }); }catch(e){} }
+async function fbTop(){ if(!fbReady) return null; try{ const q=fbApi.query(fbApi.collection(fbDb,'scores'), fbApi.orderBy('score','desc'), fbApi.limit(20)); const s=await fbApi.getDocs(q); return s.docs.map(d=>d.data()); }catch(e){ return null; } }
+// 공통 렌더
+function renderList(a, mineFn){ const box=$('lbList');
+  if(!a || !a.length){ box.innerHTML='<div class="sub" style="opacity:.6;padding:24px">아직 기록이 없어요.<br/>첫 주인공이 되어보세요! 🎯</div>'; return; }
+  box.innerHTML=a.map((e,i)=>{ const me=mineFn?mineFn(e,i):e.me; const medal=['🥇','🥈','🥉'][i]||('<span style="opacity:.55;display:inline-block;width:1.4em">'+(i+1)+'</span>');
+    return '<div class="lbrow" style="background:'+(me?'rgba(124,246,255,.16)':'rgba(255,255,255,.045)')+';border:1px solid '+(me?'rgba(124,246,255,.55)':'transparent')+'"><span>'+medal+' '+esc(e.name)+'</span><b style="color:#7cf6ff">'+e.score+'</b></div>'; }).join('');
 }
-function editName(){ const n=prompt('닉네임 (최대 8자)', myName); if(n && n.trim()){ myName=n.trim().slice(0,8); try{localStorage.setItem('num_name',myName);}catch(e){} renderLB(); } }
-function showLB(){ renderLB(); $('lb').classList.remove('hidden'); }
+function lbHeader(mode){ $('lbName').innerHTML=mode+' · 닉네임: <b>'+esc(myName)+'</b><span id="lbEdit">✏️ 변경</span>'; $('lbEdit').onclick=editName; }
+function renderLB(){ lbHeader('📱 내 기기'); renderList(loadLB(), e=>e.me); }
+function editName(){ const n=prompt('닉네임 (최대 8자)', myName); if(n && n.trim()){ myName=n.trim().slice(0,8); try{localStorage.setItem('num_name',myName);}catch(e){} showLB(); } }
+let _mineMark=null;   // 방금 올린 내 기록 {name,score}
+async function showLB(){ $('lb').classList.remove('hidden');
+  if(fbReady){ lbHeader('🌐 전세계'); $('lbList').innerHTML='<div class="sub" style="opacity:.6;padding:24px">🌐 전세계 순위 불러오는 중…</div>';
+    const arr=await fbTop();
+    if(arr===null){ $('lbList').innerHTML='<div class="sub" style="opacity:.6;padding:24px">순위를 못 불러왔어요.<br/>잠시 후 다시 시도해주세요.</div>'; return; }
+    let marked=false; renderList(arr, (e)=>{ if(marked||!_mineMark) return false; if(e.name===_mineMark.name && e.score===_mineMark.score){ marked=true; return true; } return false; });
+  } else { renderLB(); }
+}
 function hideLB(){ $('lb').classList.add('hidden'); }
 function shareScore(){
   const txt='모두의 숫자 '+score+'점! 🎯 규칙 읽고 목표에서 STOP — 도전해봐!\nhttps://seungiljang.github.io/games/number.html';
@@ -281,7 +301,8 @@ function die(msg){
   $('overMsg').textContent=msg; $('overScore').textContent=score;
   $('overRec').innerHTML = rec?'<span class="rec">최고 갱신!</span>' : (best>0?('(최고까지 '+(best-score)+'점!)'):'');
   const rank = score>0 ? insertScore(score) : 0;
-  $('overRank').textContent = rank>0 ? ('🏆 랭킹 '+rank+'위'+(rank===1?' — 1등!':(rank<=3?' 진입!':''))) : '';
+  if(score>0 && fbReady){ _mineMark={name:myName,score:Math.floor(score)}; fbSubmit(myName,score); $('overRank').textContent='🌐 전세계 랭킹 등록! (랭킹 보기)'; }
+  else $('overRank').textContent = rank>0 ? ('🏆 랭킹 '+rank+'위'+(rank===1?' — 1등!':(rank<=3?' 진입!':''))) : '';
   deathCount++;
   // 이어하기(광고) 버튼: 판당 1회 · 점수>0 일 때만
   $('reviveBtn').style.display = (!reviveUsed && score>0) ? 'block' : 'none';
