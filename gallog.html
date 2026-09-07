@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.73 · 지역 자동선택 안내 + 변경 가능</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.74 · 선택 언어 버튼 강조 표시</div>
     <div id="langSel" style="display:flex;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">한국어</button>
       <button data-lang="en" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">English</button>
@@ -216,7 +216,9 @@ function applyI18n(){
   document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent=t(el.dataset.i18n); });
   document.querySelectorAll('[data-i18n-html]').forEach(el=>{ el.innerHTML=t(el.dataset.i18nHtml); });
   document.querySelectorAll('[data-i18n-ph]').forEach(el=>{ el.placeholder=t(el.dataset.i18nPh); });
-  const ls=document.getElementById('langSel'); if(ls) ls.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.lang===LANG));
+  const ls=document.getElementById('langSel'); if(ls) ls.querySelectorAll('button').forEach(b=>{ const on=b.dataset.lang===LANG;
+    b.style.background=on?'#3a7bff':'#20263c'; b.style.color=on?'#fff':'#cdd'; b.style.borderColor=on?'#5ce1ff':'#2b3350';
+    b.style.boxShadow=on?'0 0 0 2px rgba(92,225,255,.45)':'none'; });
 }
 function setLang(l){ if(!I18N[l])return; LANG=l; LANG_AUTO=false; saveLang(l); applyI18n(); if(typeof renderShop==='function'){try{renderShop();renderClasses();}catch(e){}} }
 // ===== 2단계: 설명/이름 번역 (용어사전 GLOSS + 문장/보스명 TR) =====
