@@ -81,7 +81,7 @@
   </div>
 </div>
 
-<div class="ver">v0.12 · 광고 부활 안정화 (버튼 먹통 수정)</div>
+<div class="ver">v0.13 · 광고 준비중 로딩 표시 추가</div>
 <script>
 const cv=document.getElementById('game'), ctx=cv.getContext('2d');
 let W=0,H=0,DPR=1;
@@ -134,8 +134,16 @@ const AD_REWARD_TEST='ca-app-pub-3940256099942544/5224354917'; // 구글 공식 
 const AD_REWARD_REAL=''; // 출시 시 실제 리워드 광고단위 ID 입력
 let admobReady=false;
 (async function initAdMob(){ try{ const C=window.Capacitor; if(C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.AdMob){ await C.Plugins.AdMob.initialize({initializeForTesting:AD_USE_TEST}); admobReady=true; } }catch(e){ admobReady=false; } })();
+function adLoading(on){ let el=document.getElementById('adLoading');
+  if(!el){ if(!document.getElementById('adSpKf')){ const st=document.createElement('style'); st.id='adSpKf'; st.textContent='@keyframes sp{to{transform:rotate(360deg)}}'; document.head.appendChild(st); }
+    el=document.createElement('div'); el.id='adLoading';
+    el.innerHTML='<div class="sp" style="width:38px;height:38px;border:5px solid rgba(255,255,255,.15);border-top-color:#ff7a2c;border-radius:50%;animation:sp .8s linear infinite;margin-bottom:14px;"></div><div>🎬 광고 준비중…</div>';
+    el.style.cssText='position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:99;background:rgba(8,10,22,.78);color:#fff;font-size:19px;font-weight:800;font-family:system-ui,-apple-system,sans-serif;';
+    document.body.appendChild(el); }
+  el.style.display=on?'flex':'none'; }
 async function playAd(onReward){
-  if(adPlaying) return; adPlaying=true;
+  if(adPlaying) return; adPlaying=true; adLoading(true);
+  const _done=(cb)=>{ adPlaying=false; adLoading(false); if(cb) cb(); };
   const C=window.Capacitor;
   if(admobReady && C && C.Plugins && C.Plugins.AdMob){
     const AdMob=C.Plugins.AdMob; let got=false, lr=null, ld=null;
@@ -148,10 +156,10 @@ async function playAd(onReward){
         AdMob.addListener('onRewardedVideoAdFailedToShow',fin).then(l=>{ lf=l; });
         AdMob.showRewardVideoAd().catch(fin); setTimeout(fin,40000); });
       if(lr&&lr.remove) lr.remove(); if(ld&&ld.remove) ld.remove(); if(lf&&lf.remove) lf.remove();
-      adPlaying=false; onReward(); return;   // 광고 흐름 종료 후 부활(이벤트 유실·행오프 방지)
-    }catch(e){ if(lr&&lr.remove)lr.remove(); if(ld&&ld.remove)ld.remove(); adPlaying=false; onReward(); return; }
+      _done(onReward); return;   // 광고 흐름 종료 후 부활(이벤트 유실·행오프 방지)
+    }catch(e){ if(lr&&lr.remove)lr.remove(); if(ld&&ld.remove)ld.remove(); _done(onReward); return; }
   }
-  setTimeout(()=>{ adPlaying=false; onReward(); }, 800);   // 웹 시뮬레이션
+  setTimeout(()=>{ _done(onReward); }, 800);   // 웹 시뮬레이션
 }
 function gunUnlocked(g){ return best>=g.unlock; }
 function renderGunSelect(){
