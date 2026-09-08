@@ -11,7 +11,9 @@
   #goalLbl{font-size:13px;color:#ffb0e6;letter-spacing:1px}
   #goal{font-size:24px;font-weight:900;margin-top:1px;text-shadow:0 0 16px rgba(255,120,220,.5)}
   #dex{font-size:13px;color:#9fe;margin-top:2px;font-weight:700}
+  #hearts{font-size:14px;font-weight:800;color:#ff6a9a;margin-bottom:2px}
   #lastAccTop{font-size:15px;font-weight:800;margin-top:3px;min-height:18px}
+  #noheart{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(18,14,30,.95);z-index:11;text-align:center;padding:24px}
   #streak{font-size:12px;color:#ffcf66;margin-top:2px;font-weight:800;min-height:16px}
   /* 하단 안내/버튼 */
   #hint{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;z-index:3;font-size:17px;font-weight:800;color:#ffe;pointer-events:none;min-height:24px}
@@ -38,6 +40,7 @@
 <body>
 <div id="stage"><canvas id="cv"></canvas></div>
 <div id="top">
+  <div id="hearts"></div>
   <div id="goalLbl">🎯 이번 목표</div>
   <div id="goal">–</div>
   <div id="dex">도감 0/10</div>
@@ -46,14 +49,26 @@
 </div>
 <div id="gripWrap" class="hidden"><div id="gripLbl">🔥 탭 연타! 꽉 잡아!</div><div id="gripBar"><div id="gripFill"></div></div></div>
 <div id="hint"></div>
-<div id="ver">v0.10 · 성공 상한 90%로 완화</div>
+<div id="ver">v1.0 · 하트·기록·연속실패보너스·공유·배너·도감완성</div>
 
 <div id="start">
   <h1>모두의 뽑기</h1>
   <div class="sub"><b>탭 2번</b>으로 집게를 <b style="color:#7cffb0">정가운데(초록 점)</b>에 정확히!<br><b style="color:#ffcf66">초록 성공존</b> 안에 멈추면 성공! (초반엔 크고 갈수록 작아져요)<br><span style="opacity:.7;font-size:13px">중앙에서 벗어난 만큼 놓칠 확률↑</span></div>
   <div id="dexGrid"></div>
-  <button class="btn" id="startBtn">뽑으러 가기</button>
-  <div id="changelog">🆕 <b>v0.10</b> · 성공 기준 상한 90%로 완화(74%→9판째 90% 수렴)</div>
+  <div class="sub" id="startStats" style="font-size:13px;opacity:.85"></div>
+  <div style="display:flex;gap:10px">
+    <button class="btn" id="startBtn">뽑으러 가기</button>
+    <button class="btn" id="shareBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:15px 22px">🏆 공유</button>
+  </div>
+  <div id="changelog">🆕 <b>v1.0</b> · 하트·연속성공 기록·연속실패 보너스·공유·배너·도감완성 (탑100 세트)</div>
+</div>
+
+<div id="noheart" class="hidden">
+  <div style="font-size:56px">💔</div>
+  <div style="font-size:30px;font-weight:900">하트를 다 썼어요</div>
+  <div class="sub" id="heartMsg"></div>
+  <button class="btn" id="heartAdBtn" style="background:#2ec77a;box-shadow:0 6px 0 #1a8a52">🎬 광고 보고 하트 +5</button>
+  <button class="btn" id="heartWaitBtn" style="background:#3a4568;box-shadow:0 6px 0 #222a44">기다리기 (첫 화면)</button>
 </div>
 
 <div id="over" class="hidden">
@@ -141,14 +156,14 @@ function newRound(keepTarget){
   layoutField(goal);
   $('goal').textContent=goal.e+' '+goal.n+' '+('★'.repeat(goal.r));
   $('dex').textContent='도감 '+dexCount()+'/'+DOLLS.length;
-  $('streak').textContent = failStreak>=2 ? ('🔥 '+failStreak+'연속 실패 — 다음 성공률 ↑') : '';
+  $('streak').textContent = failStreak>=2 ? ('😤 '+failStreak+'연속 실패 — 이번엔 과녁 커짐!') : (successStreak>=2?('🔥 '+successStreak+'연속 성공 중!'):'');
   claw={x:W/2,y:field().y-40,open:1,holding:null,phase:'',sway:0}; timeScale=1;
   state='aimX'; sweep=field().x; sweepDir=1; sweepSpd=1;
   $('hint').textContent='① 좌우 맞춰 탭!';
 }
 const ACC_R_BASE=72;                                // 정확도 환산 반경
 function accRadius(){ return ACC_R_BASE*(1+clawBonus*0.5); }
-function successThreshold(){ let t = 0.74 + playCount*0.017; return clamp(t-clawBonus*0.1, 0.6, 0.90); } // 스테이지(판)마다 성공존 축소: play0=74%(큰과녁)→약9판째 90%로 수렴(상한 90%)
+function successThreshold(){ const base=clamp(0.74+playCount*0.017, 0.55, 0.90); return clamp(base - clawBonus*0.1 - Math.min(failStreak,4)*0.025, 0.5, 0.90); } // 판마다 축소(상한90%) 후 광고/연속실패로 완화(매몰비용 오기)
 function accAt(px,py){ const t=dolls[target]; return clamp(1-Math.hypot(px-t.x,py-t.y)/accRadius(),0,1); }
 function commit(){
   const t=dolls[target]; const dist=Math.hypot(cx-t.x, cy-t.y);
@@ -226,18 +241,22 @@ function endResult(win, kind){
   if(state==='result') return; state='result'; timeScale=1; claw.sway=0; $('gripWrap').classList.add('hidden');
   const goal=window._goal;
   if(win){
-    if(!dex.includes(goal.n)){ dex.push(goal.n); saveDex(dex); }
+    const wasNew=!dex.includes(goal.n);
+    if(wasNew){ dex.push(goal.n); saveDex(dex); }
     failStreak=0; try{localStorage.setItem('ppopgi_fs',0);}catch(e){}
     clawBonus=0;
-    flash('🎯 정확도 '+(window.lastAcc||100)+'%! '+goal.e+' 획득!','#7cffb0'); chord(523); vib([20,50,30]);
+    successStreak++; totalCaught++; if(successStreak>bestStreak) bestStreak=successStreak; saveStats();
+    flash((successStreak>=3?('🔥'+successStreak+'연속! '):'')+'🎯'+(window.lastAcc||100)+'% '+goal.e+' 획득!','#7cffb0'); chord(523); vib([20,50,30]);
     burst(claw.x,H*0.5,'#7cffb0',40); screenShake=6;
     $('dex').textContent='도감 '+dexCount()+'/'+DOLLS.length; renderDexGrid();
-    setTimeout(()=>{ newRound(); },1100);
+    if(wasNew && dexCount()>=DOLLS.length){ setTimeout(()=>{ flash('🎉 도감 완성! 대단해요!','#ffd34d'); chord(659); burst(W/2,H*0.4,'#ffd34d',60); screenShake=10; },900); }
+    setTimeout(()=>{ startRound(); },1200);
   } else {
     failStreak++; try{localStorage.setItem('ppopgi_fs',failStreak);}catch(e){}
+    successStreak=0;
     const near = kind==='near';
     flash(near?'아—! 놓쳤다 😫':'빗나갔다 💨', '#ff6a7a'); tone(150,0.3,'sawtooth',0.12); setTimeout(()=>tone(100,0.3,'sawtooth',0.1),100);
-    vib(200); screenShake=near?14:6;
+    vib(200); screenShake=near?14:6; showBanner();
     $('overTitle').textContent = near?'아—! 놓쳤다 😫':'빗나갔다 💨';
     $('overMsg').innerHTML = '정확도 <b style="color:'+(near?'#ffcf66':'#ff8a8a')+'">'+(window.lastAcc||0)+'%</b> <span style="opacity:.7">(성공 '+(window.lastThresh||95)+'%↑)</span><br>'+(near?'중앙에서 살짝 벗어나 미끄러졌어요!':'중앙에서 많이 빗나갔어요')+'<br><b style="color:#ffcf66">'+goal.e+' '+goal.n+'</b> 조금만 더 정확히!';
     $('overDex').textContent=dexCount()+'/'+DOLLS.length;
@@ -353,11 +372,49 @@ function drawClaw(){
 function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
 requestAnimationFrame(loop);
 
+// ── 하트(시도권) ──
+const MAX_HEARTS=10, HEART_REGEN_MS=180000;   // 3분당 1개 회복
+let hearts=MAX_HEARTS, heartTs=Date.now();
+function loadHearts(){ try{ let h=parseInt(localStorage.getItem('ppopgi_hearts')), ts=parseInt(localStorage.getItem('ppopgi_heart_ts'));
+  if(isNaN(h))h=MAX_HEARTS; if(isNaN(ts))ts=Date.now();
+  const g=Math.floor((Date.now()-ts)/HEART_REGEN_MS); if(g>0&&h<MAX_HEARTS){ h=Math.min(MAX_HEARTS,h+g); ts+=g*HEART_REGEN_MS; } if(h>=MAX_HEARTS)ts=Date.now();
+  hearts=h; heartTs=ts; saveHearts(); }catch(e){ hearts=MAX_HEARTS; heartTs=Date.now(); } }
+function saveHearts(){ try{ localStorage.setItem('ppopgi_hearts',hearts); localStorage.setItem('ppopgi_heart_ts',heartTs); }catch(e){} }
+function addHearts(n){ loadHearts(); hearts=Math.min(MAX_HEARTS,hearts+n); saveHearts(); renderHearts(); }
+function heartTimer(){ if(hearts>=MAX_HEARTS) return ''; const left=Math.ceil((HEART_REGEN_MS-((Date.now()-heartTs)%HEART_REGEN_MS))/1000); return Math.floor(left/60)+':'+String(left%60).padStart(2,'0'); }
+function renderHearts(){ loadHearts(); const t=heartTimer(); $('hearts').innerHTML='❤️ '+hearts+' / '+MAX_HEARTS+(t?' <span style="opacity:.55;font-weight:600">(+1 '+t+')</span>':''); }
+setInterval(()=>{ renderHearts(); if(!$('noheart').classList.contains('hidden')){ loadHearts(); if(hearts>0){ $('noheart').classList.add('hidden'); toStart(); } } },1000);
+
+// ── 기록/스트릭 ──
+let successStreak=0, bestStreak=+(localStorage.getItem('ppopgi_best')||0), totalCaught=+(localStorage.getItem('ppopgi_total')||0);
+function saveStats(){ try{ localStorage.setItem('ppopgi_best',bestStreak); localStorage.setItem('ppopgi_total',totalCaught); }catch(e){} }
+function renderStartStats(){ $('startStats').innerHTML='🏆 최고 연속 <b>'+bestStreak+'</b> · 🧸 누적 <b>'+totalCaught+'</b>'; }
+
+// ── 배너광고 ──
+let bannerShown=false;
+async function showBanner(){ const C=window.Capacitor; if(!(C&&C.Plugins&&C.Plugins.AdMob)||bannerShown) return; bannerShown=true; try{ await C.Plugins.AdMob.showBanner({adId:'ca-app-pub-3940256099942544/6300978111',adSize:'BANNER',position:'BOTTOM_CENTER',margin:0,isTesting:true}); }catch(e){ bannerShown=false; } }
+async function hideBanner(){ const C=window.Capacitor; if(!(C&&C.Plugins&&C.Plugins.AdMob)||!bannerShown) return; bannerShown=false; try{ await C.Plugins.AdMob.hideBanner(); }catch(e){} }
+
+// ── 공유(바이럴) ──
+function shareGame(){ const txt='모두의 뽑기 🧸 도감 '+dexCount()+'/'+DOLLS.length+' · 최고 연속 '+bestStreak+'회! 나도 도전 👉\nhttps://seungiljang.github.io/games/ppopgi.html';
+  try{ if(navigator.share){ navigator.share({title:'모두의 뽑기',text:txt}); return; } }catch(e){}
+  try{ navigator.clipboard.writeText(txt); flash('📋 복사됨!','#7cf6ff'); }catch(e){} }
+
+// ── 화면 전환 ──
+function toStart(){ state='start'; $('over').classList.add('hidden'); $('noheart').classList.add('hidden'); $('start').classList.remove('hidden'); renderHearts(); renderStartStats(); renderDexGrid(); showBanner(); }
+function showNoHearts(){ state='result'; $('over').classList.add('hidden'); $('start').classList.add('hidden'); $('heartMsg').innerHTML='다음 하트까지 <b>'+heartTimer()+'</b><br>지금 바로 하려면 광고로 하트 +5!'; $('noheart').classList.remove('hidden'); showBanner(); }
+function startRound(goal){ loadHearts(); if(hearts<=0){ showNoHearts(); return; } if(hearts===MAX_HEARTS) heartTs=Date.now(); hearts--; saveHearts(); renderHearts(); $('over').classList.add('hidden'); $('noheart').classList.add('hidden'); hideBanner(); newRound(goal); }
+
 // 버튼
-function begin(){ try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){} $('start').classList.add('hidden'); $('over').classList.add('hidden'); clawBonus=0; newRound(); }
+function begin(){ try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){} $('start').classList.add('hidden'); clawBonus=0; startRound(); }
 $('startBtn').onclick=begin;
-$('retryBtn').onclick=()=>{ $('over').classList.add('hidden'); clawBonus=0; newRound(window._goal); };
-$('reviveBtn').onclick=()=>{ playAd(()=>{ $('over').classList.add('hidden'); clawBonus=0.3; flash('집게 힘 +30%! 💪','#7cf6ff'); newRound(window._goal); }); };
-renderDexGrid(); $('dex').textContent='도감 '+dexCount()+'/'+DOLLS.length;
+$('shareBtn').onclick=shareGame;
+$('retryBtn').onclick=()=>{ clawBonus=0; startRound(window._goal); };
+$('reviveBtn').onclick=()=>{ playAd(()=>{ $('over').classList.add('hidden'); clawBonus=0.3; flash('집게 힘 +30%! 💪','#7cf6ff'); hideBanner(); newRound(window._goal); }); };
+$('heartAdBtn').onclick=()=>{ playAd(()=>{ addHearts(5); flash('❤️ 하트 +5!','#ff6a9a'); startRound(); }); };
+$('heartWaitBtn').onclick=toStart;
+// 초기 화면
+(function initAds2(){ setTimeout(showBanner,800); })();
+renderDexGrid(); loadHearts(); renderHearts(); renderStartStats(); $('dex').textContent='도감 '+dexCount()+'/'+DOLLS.length;
 </script>
 </body></html>
