@@ -51,7 +51,7 @@
 </div>
 <div id="gripWrap" class="hidden"><div id="gripLbl">🔥 탭 연타! 꽉 잡아!</div><div id="gripBar"><div id="gripFill"></div></div></div>
 <div id="hint"></div>
-<div id="ver">v1.6 · 인형 크기 확대(초반 52px)→판마다 살짝 축소</div>
+<div id="ver">v1.7 · 인형 더 크게(56px)+과녁이 인형 크기에 비례</div>
 
 <div id="start">
   <h1>모두의 뽑기</h1>
@@ -63,7 +63,7 @@
     <button class="btn" id="startBtn">뽑으러 가기</button>
     <button class="btn" id="shareBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:15px 22px">🏆 공유</button>
   </div>
-  <div id="changelog">🆕 <b>v1.6</b> · 인형이 커졌어요! 초반엔 크게(52px) → 판이 갈수록 살짝 작아짐</div>
+  <div id="changelog">🆕 <b>v1.7</b> · 인형이 더 커졌어요(56px) · 과녁(성공존)도 인형 크기에 맞춰 같이 커져요</div>
 </div>
 
 <div id="noheart" class="hidden">
@@ -193,13 +193,12 @@ function newRound(keepTarget){
   state='aimX'; sweep=field().x; sweepDir=1; sweepSpd=1; renderLives();
   $('hint').textContent='① 좌우 맞춰 탭!';
 }
-const ACC_R_BASE=72;                                // 정확도 환산 반경
-function accRadius(){ return ACC_R_BASE*(1+clawBonus*0.5); }
+function accRadius(){ return dollSize()*1.35*(1+clawBonus*0.5); }  // 과녁(정확도) 반경 = 인형 크기에 비례 → 인형 크면 과녁도 큼
 // 희귀도 색/이름 (★=초록 / ★★=파랑 / ★★★=골드)
 const RAR=[null,{c:'124,255,176',hex:'#7cffb0',name:'일반'},{c:'110,180,255',hex:'#6eb4ff',name:'레어'},{c:'255,199,80',hex:'#ffc750',name:'★전설★'}];
 function rar(r){ return RAR[r]||RAR[1]; }
 function successThreshold(){ const r=(dolls[target]&&dolls[target].r)||1; const rar=(r-1)*0.06; const base=clamp(0.60+playCount*0.022+rar, 0.55, 0.92); return clamp(base - clawBonus*0.1 - Math.min(failStreak,4)*0.025, 0.48, 0.92); } // 초반 과녁 큼(0.60)→판마다 축소(+0.022/판) + 희귀도(★★=+0.06·★★★=+0.12) 후 광고/연속실패로 완화(매몰비용 오기)
-function dollSize(){ return Math.round(52 - Math.min(playCount,12)*1.0); } // 인형 이모지 크기: 초반 52px 크게 → 판마다 축소 → 40px 수렴
+function dollSize(){ return Math.round(56 - Math.min(playCount,12)*1.1); } // 인형 이모지 크기: 초반 56px 크게 → 판마다 축소 → 43px 수렴 (과녁도 이 크기에 비례)
 function accAt(px,py){ const t=dolls[target]; return clamp(1-Math.hypot(px-t.x,py-t.y)/accRadius(),0,1); }
 function commit(){
   const t=dolls[target]; const dist=Math.hypot(cx-t.x, cy-t.y);
