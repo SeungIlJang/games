@@ -11,6 +11,7 @@
   #goalLbl{font-size:13px;color:#ffb0e6;letter-spacing:1px}
   #goal{font-size:24px;font-weight:900;margin-top:1px;text-shadow:0 0 16px rgba(255,120,220,.5)}
   #dex{font-size:13px;color:#9fe;margin-top:2px;font-weight:700}
+  #lastAccTop{font-size:15px;font-weight:800;margin-top:3px;min-height:18px}
   #streak{font-size:12px;color:#ffcf66;margin-top:2px;font-weight:800;min-height:16px}
   /* 하단 안내/버튼 */
   #hint{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;z-index:3;font-size:17px;font-weight:800;color:#ffe;pointer-events:none;min-height:24px}
@@ -40,18 +41,19 @@
   <div id="goalLbl">🎯 이번 목표</div>
   <div id="goal">–</div>
   <div id="dex">도감 0/10</div>
+  <div id="lastAccTop"></div>
   <div id="streak"></div>
 </div>
 <div id="gripWrap" class="hidden"><div id="gripLbl">🔥 탭 연타! 꽉 잡아!</div><div id="gripBar"><div id="gripFill"></div></div></div>
 <div id="hint"></div>
-<div id="ver">v0.8 · 스테이지마다 성공존 점점 축소</div>
+<div id="ver">v0.9 · 실시간 정확도 첫판만·최종정확도 상단표시</div>
 
 <div id="start">
   <h1>모두의 뽑기</h1>
   <div class="sub"><b>탭 2번</b>으로 집게를 <b style="color:#7cffb0">정가운데(초록 점)</b>에 정확히!<br><b style="color:#ffcf66">초록 성공존</b> 안에 멈추면 성공! (초반엔 크고 갈수록 작아져요)<br><span style="opacity:.7;font-size:13px">중앙에서 벗어난 만큼 놓칠 확률↑</span></div>
   <div id="dexGrid"></div>
   <button class="btn" id="startBtn">뽑으러 가기</button>
-  <div id="changelog">🆕 <b>v0.8</b> · 스테이지 넘어갈수록 성공존이 매판 조금씩 축소</div>
+  <div id="changelog">🆕 <b>v0.9</b> · 실시간 정확도는 첫판만 · 최종 정확도 상단 상시표시</div>
 </div>
 
 <div id="over" class="hidden">
@@ -155,6 +157,8 @@ function commit(){
   const grab = acc>=0.45;                            // 어느정도 가까우면 집긴 함(니어미스 연출)
   const success = acc>=thr;                          // 성공 존 안이면 성공(초반 큼→후반 작음)
   outcome={grab, success, nearMiss:grab&&!success, acc};
+  const col = success?'#7cffb0':(outcome.nearMiss?'#ffcf66':'#ff8a8a');
+  $('lastAccTop').innerHTML='🎯 최종 정확도 <b style="color:'+col+'">'+window.lastAcc+'%</b> <span style="opacity:.6">(성공 '+window.lastThresh+'%↑)</span> '+(success?'✅':'❌');
   playCount++; try{localStorage.setItem('ppopgi_plays',playCount);}catch(e){}
   startSpectate();
 }
@@ -299,8 +303,8 @@ function draw(){
     ctx.beginPath(); ctx.moveTo(f.x,sweep); ctx.lineTo(f.x+f.w,sweep); ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle='#ffec6b'; ctx.beginPath(); ctx.arc(cx,sweep,5,0,6.28); ctx.fill();
   }
-  // 실시간 정확도 표시 (조준 중)
-  if(state==='aimX'||state==='aimY'){
+  // 실시간 정확도 표시 (조준 중) — 첫 판만(튜토리얼)
+  if((state==='aimX'||state==='aimY') && playCount===0){
     const liveAcc = (state==='aimX') ? accAt(sweep, dolls[target].y) : accAt(cx, sweep);
     const pct=Math.round(liveAcc*100), thr=Math.round(successThreshold()*100);
     ctx.save(); ctx.textAlign='center'; ctx.textBaseline='middle';
