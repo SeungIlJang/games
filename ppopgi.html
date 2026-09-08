@@ -44,14 +44,14 @@
 </div>
 <div id="gripWrap" class="hidden"><div id="gripLbl">🔥 탭 연타! 꽉 잡아!</div><div id="gripBar"><div id="gripFill"></div></div></div>
 <div id="hint"></div>
-<div id="ver">v0.4 · 능동 그립 사수(연타로 버티기)</div>
+<div id="ver">v0.5 · 정밀 스톱: 정가운데(95%+)만 성공</div>
 
 <div id="start">
   <h1>모두의 뽑기</h1>
-  <div class="sub"><b>탭 2번</b>으로 집게 조준 → 잡은 뒤<br><b style="color:#ffcf66">🔥 연타로 그립을 사수</b>해 출구까지 버텨요!<br><span style="opacity:.7;font-size:13px">흔들릴 때마다 그립이 뚝뚝 — 놓치기 직전 연타가 관건</span></div>
+  <div class="sub"><b>탭 2번</b>으로 집게를 <b style="color:#7cffb0">정가운데(초록 점)</b>에 정확히!<br><b style="color:#ffcf66">정확도 95%+</b> 만 성공 — 살짝 벗어나면 미끄러져요<br><span style="opacity:.7;font-size:13px">중앙에서 벗어난 만큼 놓칠 확률↑</span></div>
   <div id="dexGrid"></div>
   <button class="btn" id="startBtn">뽑으러 가기</button>
-  <div id="changelog">🆕 <b>v0.4</b> · 관전→능동! 잡은 뒤 연타로 그립 사수해 버티기(진짜 긴장)</div>
+  <div id="changelog">🆕 <b>v0.5</b> · 연타 제거·정밀 스톱: 정가운데 95%+만 성공 · 정확도% 표시</div>
 </div>
 
 <div id="over" class="hidden">
@@ -144,20 +144,20 @@ function newRound(keepTarget){
   state='aimX'; sweep=field().x; sweepDir=1; sweepSpd=1;
   $('hint').textContent='① 좌우 맞춰 탭!';
 }
+const SUCCESS_ACC=0.95;                             // 정가운데 95%+ 만 성공
 function commit(){
   const t=dolls[target]; const dist=Math.hypot(cx-t.x, cy-t.y);
-  const grabR=55*(1+clawBonus);
-  aimAcc=clamp(1-dist/grabR,0,1);                 // 조준 정확도 0~1
-  const grab = dist<=grabR;                        // 조준 안에 들면 집음(아니면 빗나감)
-  // 그립 닳는 속도: 조준 좋을수록 느림 / 첫3판 쉬움 / 연속실패·광고보너스로 완화 → 성공은 '연타 실력'이 결정
-  let base=(playCount<3)?0.30:0.52;
-  drainRate=clamp(base*(1.7-aimAcc) - clawBonus*0.3 - Math.min(failStreak,8)*0.02, 0.13, 0.95);
-  outcome={grab};                                  // 성공/니어미스는 능동 플레이로 갈림
+  const ACC_R=72*(1+clawBonus*0.5);                 // 정확도 환산 반경(작을수록 빡셈, 광고보너스로 완화)
+  const acc=clamp(1-dist/ACC_R,0,1);                // 1 = 정가운데
+  window.lastAcc=Math.round(acc*100);
+  const grab = acc>=0.45;                            // 어느정도 가까우면 집긴 함(니어미스 연출)
+  const success = acc>=SUCCESS_ACC;                  // 정가운데만 성공, 나머지 실패
+  outcome={grab, success, nearMiss:grab&&!success, acc};
   playCount++; try{localStorage.setItem('ppopgi_plays',playCount);}catch(e){}
   startSpectate();
 }
 function startSpectate(){
-  state='drop'; claw.phase='descend'; claw.x=cx; anim=0; heartT=0; gripVal=1; carryProg=0; shakeN=0;
+  state='drop'; claw.phase='descend'; claw.x=cx; anim=0; heartT=0; shakeN=0; claw.grip=1;
   $('hint').textContent=''; $('gripWrap').classList.add('hidden');
 }
 
@@ -180,28 +180,29 @@ function stepSpectate(dt){
       anim=0;
     }
   } else if(claw.phase==='lift'){
-    claw.open=0.05; // 꽉 잡음
-    claw.y-=300*dt; if(claw.holding){ claw.holding.x=claw.x; claw.holding.y=claw.y+34; }
-    if(claw.y<=field().y-30){ claw.y=field().y-30; claw.phase='carry'; anim=0; shakeN=0; $('hint').textContent=''; }
+    // 니어미스면 들어올릴 때부터 그립이 스멀스멀 풀림 → "떨어질 것 같다" 예감
+    if(outcome.nearMiss) claw.grip=Math.max(0.45, claw.grip - dt*0.30); else claw.grip=1;
+    claw.open=clamp((1-claw.grip)*0.7+0.05,0.05,0.5);
+    const slipL=(1-claw.grip)*16;
+    claw.y-=300*dt; if(claw.holding){ claw.holding.x=claw.x; claw.holding.y=claw.y+34+slipL; }
+    if(claw.y<=field().y-30){ claw.y=field().y-30; claw.phase='carry'; anim=0; shakeN=0; }
   } else if(claw.phase==='carry'){
-    // ⭐ 능동 그립 사수: 게이지가 닳고 흔들림에 뚝뚝 떨어짐 → 탭 연타로 채워 출구까지 버티면 성공
-    carryProg += dt/3.4;
-    claw.x = cx + (34-cx)*Math.min(1,carryProg);                        // cx → 출구(좌상단)
-    gripVal -= drainRate*dt;
-    const shakeAt=[0.18,0.42,0.66,0.86];
-    if(shakeN<shakeAt.length && carryProg>=shakeAt[shakeN]){ shakeN++; shakeMag=16; screenShake=Math.max(screenShake,6); gripVal-=0.16; tone(110,0.07,'sawtooth',0.12); vib([15,35]); burst(claw.x-4,claw.y+44,'#bfe0ff',6); }
-    gripVal=clamp(gripVal,0,1);
-    claw.open = clamp((1-gripVal)*0.72+0.05,0.05,0.85);                 // 그립 낮을수록 집게 벌어짐
-    const slip=(1-gripVal)*30;                                          // 그립 낮을수록 인형 미끄러짐
+    // 출구로 이동 (탭 없음 — 성공/실패는 조준 정밀도로 이미 결정됨)
+    claw.x += (34-claw.x)*Math.min(1,dt*2.0);
+    if(outcome.nearMiss){
+      claw.grip -= dt*0.5;                                             // 계속 풀림
+      const shakeAt=[0.35,0.8];
+      if(shakeN<shakeAt.length && anim>=shakeAt[shakeN]){ shakeN++; shakeMag=16; screenShake=Math.max(screenShake,6); claw.grip-=0.18; tone(110,0.07,'sawtooth',0.12); vib([15,35]); burst(claw.x-4,claw.y+44,'#bfe0ff',6); }
+      $('hint').textContent = claw.grip<0.5?'앗, 미끄러진다…!':'불안하게 흔들린다…';
+      if(claw.grip<=0.02){ $('hint').textContent=''; claw.phase='drop'; anim=0; }
+    } else { claw.grip=1; }
+    const g=claw.grip;
+    claw.open=clamp((1-g)*0.75+0.05,0.05,0.85);
+    const slip=(1-g)*30;
     if(claw.holding){ claw.holding.x=claw.x+Math.sin(anim*30)*shakeMag*0.2; claw.holding.y=claw.y+34+slip; }
     shakeMag*=0.92;
-    timeScale = gripVal<0.3 ? 0.4 : 0.85;                               // 위기(그립<30%)엔 슬로모
-    $('gripWrap').classList.remove('hidden');
-    $('gripFill').style.width=(gripVal*100).toFixed(0)+'%';
-    $('gripFill').style.background = gripVal<0.3?'#ff5a6e':(gripVal<0.6?'#ffcf66':'#5cffb0');
-    $('gripLbl').textContent = gripVal<0.3?'⚠️ 놓친다! 연타!!':'🔥 탭 연타! 꽉 잡아!';
-    if(gripVal<=0){ $('gripWrap').classList.add('hidden'); claw.phase='drop'; anim=0; }
-    else if(carryProg>=1){ $('gripWrap').classList.add('hidden'); claw.phase='deposit'; anim=0; }
+    timeScale = (outcome.nearMiss && g<0.45)?0.4:0.6;                  // 위기 슬로모
+    if(outcome.success && anim>1.6){ claw.phase='deposit'; anim=0; }
   } else if(claw.phase==='drop'){
     claw.open=0.9; // 집게 완전히 벌어짐(놓침)
     // 출구 바로 앞에서 낙하 (아—! 놓쳤다)
@@ -222,7 +223,7 @@ function endResult(win, kind){
     if(!dex.includes(goal.n)){ dex.push(goal.n); saveDex(dex); }
     failStreak=0; try{localStorage.setItem('ppopgi_fs',0);}catch(e){}
     clawBonus=0;
-    flash('🎉 '+goal.e+' 획득!','#7cffb0'); chord(523); vib([20,50,30]);
+    flash('🎯 정확도 '+(window.lastAcc||100)+'%! '+goal.e+' 획득!','#7cffb0'); chord(523); vib([20,50,30]);
     burst(claw.x,H*0.5,'#7cffb0',40); screenShake=6;
     $('dex').textContent='도감 '+dexCount()+'/'+DOLLS.length; renderDexGrid();
     setTimeout(()=>{ newRound(); },1100);
@@ -232,7 +233,7 @@ function endResult(win, kind){
     flash(near?'아—! 놓쳤다 😫':'빗나갔다 💨', '#ff6a7a'); tone(150,0.3,'sawtooth',0.12); setTimeout(()=>tone(100,0.3,'sawtooth',0.1),100);
     vib(200); screenShake=near?14:6;
     $('overTitle').textContent = near?'아—! 놓쳤다 😫':'빗나갔다 💨';
-    $('overMsg').innerHTML = (near?'출구 바로 앞에서 놓쳤어요…<br>':'조준이 살짝 빗나갔어요.<br>')+'<b style="color:#ffcf66">'+goal.e+' '+goal.n+'</b> 거의 다 왔는데!';
+    $('overMsg').innerHTML = '정확도 <b style="color:'+(near?'#ffcf66':'#ff8a8a')+'">'+(window.lastAcc||0)+'%</b> <span style="opacity:.7">(성공 '+(SUCCESS_ACC*100)+'%↑)</span><br>'+(near?'중앙에서 살짝 벗어나 미끄러졌어요!':'중앙에서 많이 빗나갔어요')+'<br><b style="color:#ffcf66">'+goal.e+' '+goal.n+'</b> 조금만 더 정확히!';
     $('overDex').textContent=dexCount()+'/'+DOLLS.length;
     setTimeout(()=>$('over').classList.remove('hidden'),700);
   }
@@ -243,10 +244,7 @@ function tap(){
   if(state==='aimX'){ cx=sweep; state='aimY'; sweep=field().y; sweepDir=1; $('hint').textContent='② 앞뒤 맞춰 탭! (빠름)'; tone(660,0.05,'square',0.08); vib(12); }
   else if(state==='aimY'){ cy=sweep; $('hint').textContent='내려—!'; tone(880,0.06,'square',0.1); vib([10,30]); commit(); }
 }
-addEventListener('pointerdown',e=>{ if(e.target.closest('.btn'))return;
-  if(state==='aimX'||state==='aimY') tap();
-  else if(state==='drop' && claw.phase==='carry'){ gripVal=Math.min(1,gripVal+0.12); tone(620,0.04,'square',0.09); vib(10); burst(claw.x,claw.y+28,'#7cffb0',3); } // 연타로 그립 사수
-});
+addEventListener('pointerdown',e=>{ if(e.target.closest('.btn'))return; if(state==='aimX'||state==='aimY') tap(); });
 
 function flash(txt,col){ const d=document.createElement('div'); d.className='flash'; d.textContent=txt; d.style.color=col; document.body.appendChild(d); setTimeout(()=>d.remove(),1000); }
 function burst(x,y,c,n){ for(let i=0;i<n;i++){ const a=Math.random()*6.28,s=rnd(1,5); parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-2,life:1,c,r:2+Math.random()*3}); } }
@@ -281,7 +279,9 @@ function draw(){
   ctx.textAlign='center'; ctx.textBaseline='middle';
   for(let i=0;i<dolls.length;i++){ const d=dolls[i]; const held=(claw.holding===d);
     if(!held){ ctx.fillStyle='rgba(0,0,0,.30)'; ctx.beginPath(); ctx.ellipse(d.x,d.y+17,15,5,0,0,6.28); ctx.fill(); } // 바닥 그림자
-    if(i===target && state!=='result' && !held){ ctx.save(); ctx.globalAlpha=0.45+0.3*Math.sin(performance.now()/300); ctx.strokeStyle='#ff5ce1'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(d.x,d.y,26,0,6.28); ctx.stroke(); ctx.restore(); }
+    if(i===target && state!=='result' && !held){ ctx.save(); ctx.globalAlpha=0.45+0.3*Math.sin(performance.now()/300); ctx.strokeStyle='#ff5ce1'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(d.x,d.y,26,0,6.28); ctx.stroke(); ctx.restore();
+      if(state==='aimX'||state==='aimY'){ ctx.save(); ctx.strokeStyle='rgba(124,255,176,.9)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(d.x,d.y,7,0,6.28); ctx.stroke(); ctx.fillStyle='#7cffb0'; ctx.beginPath(); ctx.arc(d.x,d.y,2.5,0,6.28); ctx.fill(); ctx.restore(); } // 정가운데 조준점
+    }
     ctx.font='34px system-ui';
     if(held){ ctx.save(); ctx.translate(d.x,d.y+2); ctx.rotate(claw.sway||0); ctx.fillText(d.e,0,2); ctx.restore(); } // 집게에 매달려 흔들림
     else ctx.fillText(d.e, d.x, d.y);
