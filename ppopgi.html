@@ -1,0 +1,305 @@
+<!DOCTYPE html><html lang="ko"><head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+<title>모두의 뽑기</title>
+<style>
+  html,body{margin:0;height:100%;background:#120e1e;overflow:hidden;font-family:system-ui,-apple-system,sans-serif;color:#fff;touch-action:none;user-select:none;-webkit-user-select:none}
+  #stage{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center}
+  canvas{display:block}
+  /* 상단 목표 */
+  #top{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:0;right:0;text-align:center;z-index:3;pointer-events:none}
+  #goalLbl{font-size:13px;color:#ffb0e6;letter-spacing:1px}
+  #goal{font-size:24px;font-weight:900;margin-top:1px;text-shadow:0 0 16px rgba(255,120,220,.5)}
+  #dex{font-size:13px;color:#9fe;margin-top:2px;font-weight:700}
+  #streak{font-size:12px;color:#ffcf66;margin-top:2px;font-weight:800;min-height:16px}
+  /* 하단 안내/버튼 */
+  #hint{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;z-index:3;font-size:17px;font-weight:800;color:#ffe;pointer-events:none;min-height:24px}
+  #ver{position:fixed;left:8px;bottom:calc(4px + env(safe-area-inset-bottom,0px));font-size:10px;color:#5a4a70;z-index:4}
+  .flash{position:fixed;left:50%;top:38%;transform:translateX(-50%);font-size:40px;font-weight:900;z-index:8;pointer-events:none;text-align:center;white-space:nowrap;animation:fl 1s ease-out forwards}
+  @keyframes fl{0%{opacity:0;transform:translate(-50%,14px) scale(.7)}18%{opacity:1;transform:translate(-50%,-4px) scale(1.12)}100%{opacity:0;transform:translate(-50%,-60px) scale(1)}}
+  .btn{background:#ff4db8;color:#fff;border:none;border-radius:16px;padding:15px 30px;font-size:19px;font-weight:800;box-shadow:0 6px 0 #b81f7f;cursor:pointer}
+  #start,#over{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(18,14,30,.94);z-index:10;text-align:center;padding:24px}
+  .hidden{display:none!important}
+  h1{font-size:40px;margin:0;text-shadow:0 0 22px rgba(255,80,200,.5)}
+  .sub{color:#e9c9ff;opacity:.9;font-size:15px;line-height:1.5}
+  #changelog{margin-top:14px;font-size:12px;color:#9fe;background:rgba(90,246,180,.1);border:1px solid rgba(90,246,180,.3);border-radius:10px;padding:7px 12px;max-width:320px}
+  #dexGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:6px 0 2px}
+  .dcell{width:46px;height:46px;border-radius:10px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:26px}
+  .dcell.lock{filter:grayscale(1);opacity:.28}
+  #overTitle{font-size:34px}
+  #reviveBtn{background:#2ec77a;box-shadow:0 6px 0 #1a8a52}
+</style></head>
+<body>
+<div id="stage"><canvas id="cv"></canvas></div>
+<div id="top">
+  <div id="goalLbl">🎯 이번 목표</div>
+  <div id="goal">–</div>
+  <div id="dex">도감 0/10</div>
+  <div id="streak"></div>
+</div>
+<div id="hint"></div>
+<div id="ver">v0.1 · 코어 프로토타입</div>
+
+<div id="start">
+  <h1>모두의 뽑기</h1>
+  <div class="sub"><b>탭 2번</b>으로 집게 위치를 맞추고<br><b style="color:#ff8ad6">내려!</b> → 3초 관전에서 성패가 갈려요<br><span style="opacity:.7;font-size:13px">정확히 조준할수록 성공률↑ · 도감을 채우세요</span></div>
+  <div id="dexGrid"></div>
+  <button class="btn" id="startBtn">뽑으러 가기</button>
+  <div id="changelog">🆕 <b>v0.1</b> · 2축조준·통제착각확률·니어미스 연출·도감·광고 재도전</div>
+</div>
+
+<div id="over" class="hidden">
+  <div id="overTitle">아—! 놓쳤다</div>
+  <div class="sub" id="overMsg"></div>
+  <button class="btn" id="reviveBtn">🎬 광고 보고 재도전 (집게 힘 +30%)</button>
+  <button class="btn" id="retryBtn" style="background:#3a7bff;box-shadow:0 6px 0 #1f52c0">다시 도전</button>
+  <div class="sub" style="opacity:.7">도감 <b id="overDex">0/10</b></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const rnd=(a,b)=>Math.random()*(b-a)+a, clamp=(v,a,b)=>v<a?a:v>b?b:v;
+// ── 오디오 ──
+let AC; function tone(f,d,type,g){ try{ if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)(); const o=AC.createOscillator(),v=AC.createGain(); o.type=type||'square'; o.frequency.value=f; v.gain.value=g||0.06; o.connect(v);v.connect(AC.destination); const t=AC.currentTime;o.start(t); v.gain.exponentialRampToValueAtTime(0.0001,t+(d||0.1)); o.stop(t+(d||0.1)); }catch(e){} }
+function chord(b){[0,4,7,12].forEach((s,i)=>setTimeout(()=>tone(b*Math.pow(2,s/12),0.18,'triangle',0.07),i*70));}
+function vib(m){try{navigator.vibrate&&navigator.vibrate(m);}catch(e){}}
+let heartT=0;
+// ── 광고(리워드) ──
+const AD_USE_TEST=true, AD_REWARD_TEST='ca-app-pub-3940256099942544/5224354917', AD_REWARD_REAL='';
+let admobReady=false, adPlaying=false;
+(async function(){ try{ const C=window.Capacitor; if(C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.AdMob){ await C.Plugins.AdMob.initialize({initializeForTesting:AD_USE_TEST}); admobReady=true; } }catch(e){} })();
+async function playAd(cb){ if(adPlaying)return; adPlaying=true; const C=window.Capacitor;
+  if(admobReady&&C&&C.Plugins&&C.Plugins.AdMob){ const A=C.Plugins.AdMob; let ld=null,lf=null;
+    try{ await A.prepareRewardVideoAd({adId:AD_USE_TEST?AD_REWARD_TEST:AD_REWARD_REAL});
+      await new Promise(res=>{let d=false;const fin=()=>{if(d)return;d=true;res();};
+        A.addListener('onRewardedVideoAdDismissed',fin).then(l=>ld=l); A.addListener('onRewardedVideoAdFailedToShow',fin).then(l=>lf=l);
+        A.showRewardVideoAd().catch(fin); setTimeout(fin,40000);});
+      if(ld&&ld.remove)ld.remove(); if(lf&&lf.remove)lf.remove(); adPlaying=false; cb(); return;
+    }catch(e){ adPlaying=false; cb(); return; } }
+  setTimeout(()=>{ adPlaying=false; cb(); },700); // 웹 시뮬
+}
+
+// ── 인형 도감 ──
+const DOLLS=[
+  {e:'🐻',n:'곰돌이',r:1},{e:'🐰',n:'토끼',r:1},{e:'🐸',n:'개구리',r:1},
+  {e:'🐱',n:'냥이',r:2},{e:'🐧',n:'펭귄',r:2},{e:'🐼',n:'판다',r:2},{e:'⭐',n:'별님',r:2},
+  {e:'🦆',n:'황금오리',r:3},{e:'🦄',n:'유니콘',r:3},{e:'💎',n:'보석',r:3},
+];
+function loadDex(){ try{ return JSON.parse(localStorage.getItem('ppopgi_dex')||'[]'); }catch(e){ return []; } }
+function saveDex(a){ try{ localStorage.setItem('ppopgi_dex',JSON.stringify(a)); }catch(e){} }
+let dex=loadDex();
+function dexCount(){ return dex.length; }
+function renderDexGrid(){ const g=$('dexGrid'); g.innerHTML=''; DOLLS.forEach(d=>{ const c=document.createElement('div'); c.className='dcell'+(dex.includes(d.n)?'':' lock'); c.textContent=dex.includes(d.n)?d.e:'❔'; g.appendChild(c); }); }
+
+// ── 캔버스 ──
+const cv=$('cv'), ctx=cv.getContext('2d'); let W=412,H=740,DPR=1, sc=1;
+function resize(){ DPR=Math.min(devicePixelRatio||1,2); const vw=innerWidth,vh=innerHeight; W=412; H=Math.round(W*vh/vw); cv.width=W*DPR; cv.height=H*DPR; cv.style.width=vw+'px'; cv.style.height=vh+'px'; ctx.setTransform(DPR,0,0,DPR,0,0); }
+addEventListener('resize',resize); resize();
+
+// 필드(유리장) 영역
+function field(){ return {x:24, y:H*0.28, w:W-48, h:H*0.46}; }
+let state='start';           // start|aimX|aimY|drop|result
+let dolls=[];                // 화면 배치된 인형들
+let target=-1;               // 목표 인형 index(dolls)
+let cx=0, cy=0;              // 조준 십자
+let sweep=0, sweepDir=1, sweepSpd=1;
+let claw={x:W/2,y:0,open:1,holding:null,phase:''};
+let outcome=null;            // {grab, success, nearMiss}
+let anim=0, shakeN=0, shakeMag=0;
+let playCount=+(localStorage.getItem('ppopgi_plays')||0);
+let failStreak=+(localStorage.getItem('ppopgi_fs')||0);
+let clawBonus=0;             // 광고 재도전 보너스(집게 힘)
+let parts=[], screenShake=0, flashCol=null, flashA=0;
+
+function pickTarget(){
+  // 미보유 우선(간절함)
+  const missing=DOLLS.filter(d=>!dex.includes(d.n));
+  const pool=missing.length?missing:DOLLS;
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+function layoutField(goal){
+  const f=field(); dolls=[];
+  // 인형 무더기: 여러 종류 흩뿌리기 + 목표 1개 확실히 포함
+  const set=[goal]; const others=DOLLS.filter(d=>d.n!==goal.n);
+  for(let i=0;i<7;i++) set.push(others[Math.floor(Math.random()*others.length)]);
+  set.forEach((d,i)=>{ dolls.push({...d, x:f.x+rnd(0.14,0.86)*f.w, y:f.y+rnd(0.32,0.9)*f.h, wob:0, vy:0, held:false, fall:false}); });
+  target=0; // goal은 첫 요소
+}
+function newRound(keepTarget){
+  const goal = keepTarget||pickTarget();
+  window._goal=goal;
+  layoutField(goal);
+  $('goal').textContent=goal.e+' '+goal.n+' '+('★'.repeat(goal.r));
+  $('dex').textContent='도감 '+dexCount()+'/'+DOLLS.length;
+  $('streak').textContent = failStreak>=2 ? ('🔥 '+failStreak+'연속 실패 — 다음 성공률 ↑') : '';
+  claw={x:W/2,y:field().y-40,open:1,holding:null,phase:''};
+  state='aimX'; sweep=field().x; sweepDir=1; sweepSpd=1;
+  $('hint').textContent='① 좌우 맞춰 탭!';
+}
+function commit(){
+  const t=dolls[target]; const dist=Math.hypot(cx-t.x, cy-t.y);
+  const grabR=55*(1+clawBonus);
+  const a=clamp(1-dist/grabR,0,1); // 조준 정확도 0~1
+  let cap;
+  if(playCount<3) cap=0.50+0.22*a;              // 첫 3판: 50~72% (할 만하다 각인)
+  else cap=0.10+0.32*a;                          // 이후: 10~42% (정확도가 실제로 반영=통제착각 유지)
+  cap=clamp(cap+clawBonus*0.5,0,0.95);
+  let grab = dist<=grabR;                         // 조준 안에 들면 일단 집음
+  let success = grab && Math.random()<cap;
+  if(failStreak>=8 && grab) success=true;         // 숨은 천장: 8연속 실패 시 강제 성공
+  // 집었는데 실패면 = 니어미스(출구 앞 낙하), 아예 빗나가면 clean miss
+  outcome={grab, success, nearMiss: grab&&!success};
+  playCount++; try{localStorage.setItem('ppopgi_plays',playCount);}catch(e){}
+  startSpectate();
+}
+function startSpectate(){
+  state='drop'; claw.phase='descend'; claw.x=cx; anim=0; heartT=0;
+  $('hint').textContent='';
+}
+
+// 관전 시퀀스 진행
+function stepSpectate(dt){
+  const t=dolls[target]; anim+=dt;
+  heartT-=dt; if(heartT<=0){ tone(70,0.09,'sine',0.16); heartT=0.62; } // 심장박동
+  if(claw.phase==='descend'){
+    claw.y += 420*dt;
+    const ty = outcome.grab ? t.y : cy;
+    if(claw.y>=ty){ claw.y=ty; claw.open=0; claw.phase='close'; anim=0; tone(180,0.08,'square',0.12); vib(20); }
+  } else if(claw.phase==='close'){
+    if(anim>0.28){
+      if(outcome.grab){ t.held=true; claw.holding=t; claw.phase='lift'; }
+      else { claw.phase='liftEmpty'; } // 빗나감
+      anim=0;
+    }
+  } else if(claw.phase==='lift'){
+    claw.y-=300*dt; if(claw.holding){ claw.holding.x=claw.x; claw.holding.y=claw.y+34; }
+    if(claw.y<=field().y-30){ claw.y=field().y-30; claw.phase='carry'; anim=0; shakeN=0; }
+  } else if(claw.phase==='carry'){
+    // 출구(좌상단)로 이동하며 흔들림 3회
+    claw.x += (34-claw.x)*Math.min(1,dt*2.2);
+    if(claw.holding){ claw.holding.x=claw.x; claw.holding.y=claw.y+34; }
+    const shakeTimes=[0.35,0.8,1.25];
+    if(shakeN<3 && anim>=shakeTimes[shakeN]){ shakeN++; shakeMag=10+shakeN*4; screenShake=Math.max(screenShake,3);
+      tone(120,0.06,'sawtooth',0.1); vib(15);
+      // 니어미스면 마지막 흔들림에서 놓침
+      if(outcome.nearMiss && shakeN===3){ claw.phase='drop'; anim=0; }
+    }
+    if(claw.holding) claw.holding.x += Math.sin(anim*40)*shakeMag*0.25;
+    shakeMag*=0.9;
+    if(anim>1.7){ if(outcome.success){ claw.phase='deposit'; anim=0; } else if(!outcome.nearMiss){ claw.phase='drop'; anim=0; } }
+  } else if(claw.phase==='drop'){
+    // 출구 바로 앞에서 낙하 (아—! 놓쳤다)
+    if(claw.holding){ claw.holding.vy=(claw.holding.vy||0)+900*dt; claw.holding.y+=claw.holding.vy*dt; claw.holding.x+=20*dt;
+      if(claw.holding.y>field().y+field().h-20){ endResult(false,'near'); } }
+    else endResult(false,'near');
+  } else if(claw.phase==='liftEmpty'){
+    claw.y-=300*dt; if(claw.y<=field().y-30){ endResult(false,'miss'); }
+  } else if(claw.phase==='deposit'){
+    if(claw.holding){ claw.holding.y+=500*dt; claw.holding.x=claw.x; if(claw.holding.y>H*0.9){ endResult(true); } }
+    else endResult(true);
+  }
+}
+function endResult(win, kind){
+  if(state==='result') return; state='result';
+  const goal=window._goal;
+  if(win){
+    if(!dex.includes(goal.n)){ dex.push(goal.n); saveDex(dex); }
+    failStreak=0; try{localStorage.setItem('ppopgi_fs',0);}catch(e){}
+    clawBonus=0;
+    flash('🎉 '+goal.e+' 획득!','#7cffb0'); chord(523); vib([20,50,30]);
+    burst(claw.x,H*0.5,'#7cffb0',40); screenShake=6;
+    $('dex').textContent='도감 '+dexCount()+'/'+DOLLS.length; renderDexGrid();
+    setTimeout(()=>{ newRound(); },1100);
+  } else {
+    failStreak++; try{localStorage.setItem('ppopgi_fs',failStreak);}catch(e){}
+    const near = kind==='near';
+    flash(near?'아—! 놓쳤다 😫':'빗나갔다 💨', '#ff6a7a'); tone(150,0.3,'sawtooth',0.12); setTimeout(()=>tone(100,0.3,'sawtooth',0.1),100);
+    vib(200); screenShake=near?14:6;
+    $('overTitle').textContent = near?'아—! 놓쳤다 😫':'빗나갔다 💨';
+    $('overMsg').innerHTML = (near?'출구 바로 앞에서 놓쳤어요…<br>':'조준이 살짝 빗나갔어요.<br>')+'<b style="color:#ffcf66">'+goal.e+' '+goal.n+'</b> 거의 다 왔는데!';
+    $('overDex').textContent=dexCount()+'/'+DOLLS.length;
+    setTimeout(()=>$('over').classList.remove('hidden'),700);
+  }
+}
+
+// 입력
+function tap(){
+  if(state==='aimX'){ cx=sweep; state='aimY'; sweep=field().y; sweepDir=1; $('hint').textContent='② 앞뒤 맞춰 탭! (빠름)'; tone(660,0.05,'square',0.08); vib(12); }
+  else if(state==='aimY'){ cy=sweep; $('hint').textContent='내려—!'; tone(880,0.06,'square',0.1); vib([10,30]); commit(); }
+}
+addEventListener('pointerdown',e=>{ if(e.target.closest('.btn'))return; if(state==='aimX'||state==='aimY') tap(); });
+
+function flash(txt,col){ const d=document.createElement('div'); d.className='flash'; d.textContent=txt; d.style.color=col; document.body.appendChild(d); setTimeout(()=>d.remove(),1000); }
+function burst(x,y,c,n){ for(let i=0;i<n;i++){ const a=Math.random()*6.28,s=rnd(1,5); parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-2,life:1,c,r:2+Math.random()*3}); } }
+
+// 렌더 루프
+let last=performance.now();
+function loop(now){ requestAnimationFrame(loop); let dt=(now-last)/1000; last=now; if(dt>0.05)dt=0.05;
+  if(state==='aimX'||state==='aimY'){ const f=field();
+    if(state==='aimX'){ sweep+=sweepDir*(f.w*1.15)*dt; if(sweep>f.x+f.w){sweep=f.x+f.w;sweepDir=-1;} if(sweep<f.x){sweep=f.x;sweepDir=1;} }
+    else { sweep+=sweepDir*(f.h*1.6)*dt; if(sweep>f.y+f.h){sweep=f.y+f.h;sweepDir=-1;} if(sweep<f.y){sweep=f.y;sweepDir=1;} } // 앞뒤 1.4배↑
+  }
+  if(state==='drop') stepSpectate(dt);
+  // 파티클
+  for(const p of parts){ p.x+=p.vx;p.y+=p.vy;p.vy+=0.15;p.life-=0.02; }
+  parts=parts.filter(p=>p.life>0);
+  draw();
+}
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  let sx=0,sy=0; if(screenShake>0){ sx=(Math.random()-.5)*screenShake; sy=(Math.random()-.5)*screenShake; screenShake*=0.85; if(screenShake<.4)screenShake=0; }
+  ctx.save(); ctx.translate(sx,sy);
+  const f=field();
+  // 배경 그라데이션
+  const bg=ctx.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#2a1140'); bg.addColorStop(1,'#120e1e'); ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+  // 유리장
+  ctx.fillStyle='rgba(120,80,200,.10)'; roundRect(f.x-8,f.y-46,f.w+16,f.h+70,18); ctx.fill();
+  ctx.strokeStyle='rgba(200,150,255,.5)'; ctx.lineWidth=3; roundRect(f.x-8,f.y-46,f.w+16,f.h+70,18); ctx.stroke();
+  // 출구(좌상단)
+  ctx.fillStyle='rgba(0,0,0,.35)'; roundRect(f.x-6,f.y-44,54,30,8); ctx.fill();
+  ctx.fillStyle='#ffcf66'; ctx.font='bold 11px system-ui'; ctx.textAlign='center'; ctx.fillText('출구',f.x+21,f.y-25);
+  // 인형들
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  for(let i=0;i<dolls.length;i++){ const d=dolls[i]; if(i===target && state!=='result'){ // 목표 글로우
+      ctx.save(); ctx.globalAlpha=0.5+0.3*Math.sin(performance.now()/300); ctx.strokeStyle='#ff5ce1'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(d.x,d.y,26,0,6.28); ctx.stroke(); ctx.restore(); }
+    ctx.font='34px system-ui'; ctx.fillText(d.e, d.x, d.y);
+  }
+  // 조준선/십자
+  if(state==='aimX'){ ctx.strokeStyle='#ffec6b'; ctx.lineWidth=2; ctx.setLineDash([6,6]); ctx.beginPath(); ctx.moveTo(sweep,f.y-30); ctx.lineTo(sweep,f.y+f.h); ctx.stroke(); ctx.setLineDash([]); }
+  else if(state==='aimY'){ ctx.strokeStyle='#ffec6b'; ctx.lineWidth=2; ctx.setLineDash([6,6]);
+    ctx.beginPath(); ctx.moveTo(cx,f.y-30); ctx.lineTo(cx,f.y+f.h); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(f.x,sweep); ctx.lineTo(f.x+f.w,sweep); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='#ffec6b'; ctx.beginPath(); ctx.arc(cx,sweep,5,0,6.28); ctx.fill();
+  }
+  // 집게
+  drawClaw();
+  // 파티클
+  for(const p of parts){ ctx.globalAlpha=Math.max(0,p.life); ctx.fillStyle=p.c; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.28); ctx.fill(); } ctx.globalAlpha=1;
+  ctx.restore();
+}
+function drawClaw(){
+  const f=field();
+  let cxp = (state==='drop')?claw.x : (state==='aimY'?cx : (state==='aimX'?sweep : W/2));
+  let topY=f.y-46;
+  // 레일 + 줄
+  ctx.strokeStyle='#8a6ac0'; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(f.x-8,topY); ctx.lineTo(f.x+f.w+8,topY); ctx.stroke();
+  let clawY = (state==='drop')?claw.y : topY+8;
+  ctx.strokeStyle='#cbb0f0'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(cxp,topY); ctx.lineTo(cxp,clawY); ctx.stroke();
+  // 집게 발
+  const open = (state==='drop')?claw.open:1; const spread=10+open*12;
+  ctx.strokeStyle='#e8d8ff'; ctx.lineWidth=5; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(cxp,clawY); ctx.lineTo(cxp-spread,clawY+20); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cxp,clawY); ctx.lineTo(cxp+spread,clawY+20); ctx.stroke();
+  ctx.fillStyle='#b98cff'; ctx.beginPath(); ctx.arc(cxp,clawY-3,6,0,6.28); ctx.fill();
+}
+function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+requestAnimationFrame(loop);
+
+// 버튼
+function begin(){ try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){} $('start').classList.add('hidden'); $('over').classList.add('hidden'); clawBonus=0; newRound(); }
+$('startBtn').onclick=begin;
+$('retryBtn').onclick=()=>{ $('over').classList.add('hidden'); clawBonus=0; newRound(window._goal); };
+$('reviveBtn').onclick=()=>{ playAd(()=>{ $('over').classList.add('hidden'); clawBonus=0.3; flash('집게 힘 +30%! 💪','#7cf6ff'); newRound(window._goal); }); };
+renderDexGrid(); $('dex').textContent='도감 '+dexCount()+'/'+DOLLS.length;
+</script>
+</body></html>
