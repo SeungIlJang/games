@@ -46,14 +46,14 @@
 </div>
 <div id="gripWrap" class="hidden"><div id="gripLbl">🔥 탭 연타! 꽉 잡아!</div><div id="gripBar"><div id="gripFill"></div></div></div>
 <div id="hint"></div>
-<div id="ver">v0.9 · 실시간 정확도 첫판만·최종정확도 상단표시</div>
+<div id="ver">v0.10 · 성공 상한 90%로 완화</div>
 
 <div id="start">
   <h1>모두의 뽑기</h1>
   <div class="sub"><b>탭 2번</b>으로 집게를 <b style="color:#7cffb0">정가운데(초록 점)</b>에 정확히!<br><b style="color:#ffcf66">초록 성공존</b> 안에 멈추면 성공! (초반엔 크고 갈수록 작아져요)<br><span style="opacity:.7;font-size:13px">중앙에서 벗어난 만큼 놓칠 확률↑</span></div>
   <div id="dexGrid"></div>
   <button class="btn" id="startBtn">뽑으러 가기</button>
-  <div id="changelog">🆕 <b>v0.9</b> · 실시간 정확도는 첫판만 · 최종 정확도 상단 상시표시</div>
+  <div id="changelog">🆕 <b>v0.10</b> · 성공 기준 상한 90%로 완화(74%→9판째 90% 수렴)</div>
 </div>
 
 <div id="over" class="hidden">
@@ -148,7 +148,7 @@ function newRound(keepTarget){
 }
 const ACC_R_BASE=72;                                // 정확도 환산 반경
 function accRadius(){ return ACC_R_BASE*(1+clawBonus*0.5); }
-function successThreshold(){ let t = 0.74 + playCount*0.017; return clamp(t-clawBonus*0.1, 0.6, 0.95); } // 스테이지(판)마다 성공존이 조금씩 축소: play0=74%(큰과녁)→약13판째 95%로 수렴
+function successThreshold(){ let t = 0.74 + playCount*0.017; return clamp(t-clawBonus*0.1, 0.6, 0.90); } // 스테이지(판)마다 성공존 축소: play0=74%(큰과녁)→약9판째 90%로 수렴(상한 90%)
 function accAt(px,py){ const t=dolls[target]; return clamp(1-Math.hypot(px-t.x,py-t.y)/accRadius(),0,1); }
 function commit(){
   const t=dolls[target]; const dist=Math.hypot(cx-t.x, cy-t.y);
