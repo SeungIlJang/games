@@ -51,7 +51,7 @@
 </div>
 <div id="gripWrap" class="hidden"><div id="gripLbl">🔥 탭 연타! 꽉 잡아!</div><div id="gripBar"><div id="gripFill"></div></div></div>
 <div id="hint"></div>
-<div id="ver">v1.1 · 성공 축하 연출 강화 + 생명 2개</div>
+<div id="ver">v1.2 · 광고 재도전 시 생명 회복 수정</div>
 
 <div id="start">
   <h1>모두의 뽑기</h1>
@@ -62,7 +62,7 @@
     <button class="btn" id="startBtn">뽑으러 가기</button>
     <button class="btn" id="shareBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:15px 22px">🏆 공유</button>
   </div>
-  <div id="changelog">🆕 <b>v1.1</b> · 성공 팡파레·색종이 폭죽 + 인형당 생명 2개(2번 도전)</div>
+  <div id="changelog">🆕 <b>v1.2</b> · 광고 재도전 시 생명 💗💗 가득 회복(버그수정)</div>
 </div>
 
 <div id="noheart" class="hidden">
@@ -426,7 +426,7 @@ function begin(){ try{if(!AC)AC=new(window.AudioContext||window.webkitAudioConte
 $('startBtn').onclick=begin;
 $('shareBtn').onclick=shareGame;
 $('retryBtn').onclick=()=>{ clawBonus=0; startRound(window._goal); };
-$('reviveBtn').onclick=()=>{ playAd(()=>{ $('over').classList.add('hidden'); clawBonus=0.3; flash('집게 힘 +30%! 💪','#7cf6ff'); hideBanner(); newRound(window._goal); }); };
+$('reviveBtn').onclick=()=>{ playAd(()=>{ $('over').classList.add('hidden'); clawBonus=0.3; lives=MAX_LIVES; renderLives(); flash('집게 힘 +30% · 생명 💗💗 회복!','#7cf6ff'); hideBanner(); newRound(window._goal); }); };
 $('heartAdBtn').onclick=()=>{ playAd(()=>{ addHearts(5); flash('❤️ 하트 +5!','#ff6a9a'); startRound(); }); };
 $('heartWaitBtn').onclick=toStart;
 // 초기 화면
