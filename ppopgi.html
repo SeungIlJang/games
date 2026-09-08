@@ -44,14 +44,14 @@
 </div>
 <div id="gripWrap" class="hidden"><div id="gripLbl">🔥 탭 연타! 꽉 잡아!</div><div id="gripBar"><div id="gripFill"></div></div></div>
 <div id="hint"></div>
-<div id="ver">v0.6 · 실시간 정확도% 표시</div>
+<div id="ver">v0.7 · 초반 과녁 크게(성공존 점점 축소)</div>
 
 <div id="start">
   <h1>모두의 뽑기</h1>
-  <div class="sub"><b>탭 2번</b>으로 집게를 <b style="color:#7cffb0">정가운데(초록 점)</b>에 정확히!<br><b style="color:#ffcf66">정확도 95%+</b> 만 성공 — 살짝 벗어나면 미끄러져요<br><span style="opacity:.7;font-size:13px">중앙에서 벗어난 만큼 놓칠 확률↑</span></div>
+  <div class="sub"><b>탭 2번</b>으로 집게를 <b style="color:#7cffb0">정가운데(초록 점)</b>에 정확히!<br><b style="color:#ffcf66">초록 성공존</b> 안에 멈추면 성공! (초반엔 크고 갈수록 작아져요)<br><span style="opacity:.7;font-size:13px">중앙에서 벗어난 만큼 놓칠 확률↑</span></div>
   <div id="dexGrid"></div>
   <button class="btn" id="startBtn">뽑으러 가기</button>
-  <div id="changelog">🆕 <b>v0.6</b> · 조준 중 실시간 정확도% 화면 표시(성공권 ★)</div>
+  <div id="changelog">🆕 <b>v0.7</b> · 초반 성공존 크게→갈수록 축소 · 실시간 정확도%</div>
 </div>
 
 <div id="over" class="hidden">
@@ -144,15 +144,16 @@ function newRound(keepTarget){
   state='aimX'; sweep=field().x; sweepDir=1; sweepSpd=1;
   $('hint').textContent='① 좌우 맞춰 탭!';
 }
-const SUCCESS_ACC=0.95, ACC_R_BASE=72;             // 정가운데 95%+ 만 성공 / 정확도 환산 반경
-function accAt(px,py){ const t=dolls[target]; const R=ACC_R_BASE*(1+clawBonus*0.5); return clamp(1-Math.hypot(px-t.x,py-t.y)/R,0,1); }
+const ACC_R_BASE=72;                                // 정확도 환산 반경
+function accRadius(){ return ACC_R_BASE*(1+clawBonus*0.5); }
+function successThreshold(){ let t = playCount<3?0.80 : playCount<6?0.88 : 0.95; return clamp(t-clawBonus*0.1, 0.6, 0.95); } // 초반 과녁 크게(기준 낮음)→점점 95%로
+function accAt(px,py){ const t=dolls[target]; return clamp(1-Math.hypot(px-t.x,py-t.y)/accRadius(),0,1); }
 function commit(){
   const t=dolls[target]; const dist=Math.hypot(cx-t.x, cy-t.y);
-  const ACC_R=ACC_R_BASE*(1+clawBonus*0.5);         // 정확도 환산 반경(작을수록 빡셈, 광고보너스로 완화)
-  const acc=clamp(1-dist/ACC_R,0,1);                // 1 = 정가운데
-  window.lastAcc=Math.round(acc*100);
+  const acc=clamp(1-dist/accRadius(),0,1);          // 1 = 정가운데
+  window.lastAcc=Math.round(acc*100); const thr=successThreshold(); window.lastThresh=Math.round(thr*100);
   const grab = acc>=0.45;                            // 어느정도 가까우면 집긴 함(니어미스 연출)
-  const success = acc>=SUCCESS_ACC;                  // 정가운데만 성공, 나머지 실패
+  const success = acc>=thr;                          // 성공 존 안이면 성공(초반 큼→후반 작음)
   outcome={grab, success, nearMiss:grab&&!success, acc};
   playCount++; try{localStorage.setItem('ppopgi_plays',playCount);}catch(e){}
   startSpectate();
@@ -234,7 +235,7 @@ function endResult(win, kind){
     flash(near?'아—! 놓쳤다 😫':'빗나갔다 💨', '#ff6a7a'); tone(150,0.3,'sawtooth',0.12); setTimeout(()=>tone(100,0.3,'sawtooth',0.1),100);
     vib(200); screenShake=near?14:6;
     $('overTitle').textContent = near?'아—! 놓쳤다 😫':'빗나갔다 💨';
-    $('overMsg').innerHTML = '정확도 <b style="color:'+(near?'#ffcf66':'#ff8a8a')+'">'+(window.lastAcc||0)+'%</b> <span style="opacity:.7">(성공 '+(SUCCESS_ACC*100)+'%↑)</span><br>'+(near?'중앙에서 살짝 벗어나 미끄러졌어요!':'중앙에서 많이 빗나갔어요')+'<br><b style="color:#ffcf66">'+goal.e+' '+goal.n+'</b> 조금만 더 정확히!';
+    $('overMsg').innerHTML = '정확도 <b style="color:'+(near?'#ffcf66':'#ff8a8a')+'">'+(window.lastAcc||0)+'%</b> <span style="opacity:.7">(성공 '+(window.lastThresh||95)+'%↑)</span><br>'+(near?'중앙에서 살짝 벗어나 미끄러졌어요!':'중앙에서 많이 빗나갔어요')+'<br><b style="color:#ffcf66">'+goal.e+' '+goal.n+'</b> 조금만 더 정확히!';
     $('overDex').textContent=dexCount()+'/'+DOLLS.length;
     setTimeout(()=>$('over').classList.remove('hidden'),700);
   }
@@ -281,7 +282,11 @@ function draw(){
   for(let i=0;i<dolls.length;i++){ const d=dolls[i]; const held=(claw.holding===d);
     if(!held){ ctx.fillStyle='rgba(0,0,0,.30)'; ctx.beginPath(); ctx.ellipse(d.x,d.y+17,15,5,0,0,6.28); ctx.fill(); } // 바닥 그림자
     if(i===target && state!=='result' && !held){ ctx.save(); ctx.globalAlpha=0.45+0.3*Math.sin(performance.now()/300); ctx.strokeStyle='#ff5ce1'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(d.x,d.y,26,0,6.28); ctx.stroke(); ctx.restore();
-      if(state==='aimX'||state==='aimY'){ ctx.save(); ctx.strokeStyle='rgba(124,255,176,.9)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(d.x,d.y,7,0,6.28); ctx.stroke(); ctx.fillStyle='#7cffb0'; ctx.beginPath(); ctx.arc(d.x,d.y,2.5,0,6.28); ctx.fill(); ctx.restore(); } // 정가운데 조준점
+      if(state==='aimX'||state==='aimY'){ ctx.save();
+        const zoneR=Math.max(6,(1-successThreshold())*accRadius()); // 성공 존 반경(초반 큼→후반 작음)
+        ctx.fillStyle='rgba(124,255,176,.16)'; ctx.beginPath(); ctx.arc(d.x,d.y,zoneR,0,6.28); ctx.fill();
+        ctx.strokeStyle='rgba(124,255,176,.85)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(d.x,d.y,zoneR,0,6.28); ctx.stroke();
+        ctx.fillStyle='#7cffb0'; ctx.beginPath(); ctx.arc(d.x,d.y,2.5,0,6.28); ctx.fill(); ctx.restore(); } // 정가운데 성공 존
     }
     ctx.font='34px system-ui';
     if(held){ ctx.save(); ctx.translate(d.x,d.y+2); ctx.rotate(claw.sway||0); ctx.fillText(d.e,0,2); ctx.restore(); } // 집게에 매달려 흔들림
@@ -297,12 +302,12 @@ function draw(){
   // 실시간 정확도 표시 (조준 중)
   if(state==='aimX'||state==='aimY'){
     const liveAcc = (state==='aimX') ? accAt(sweep, dolls[target].y) : accAt(cx, sweep);
-    const pct=Math.round(liveAcc*100);
+    const pct=Math.round(liveAcc*100), thr=Math.round(successThreshold()*100);
     ctx.save(); ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.font='bold 26px system-ui';
-    ctx.fillStyle = pct>=95?'#7cffb0':(pct>=70?'#ffcf66':'#ff6a7a');
+    ctx.fillStyle = pct>=thr?'#7cffb0':(pct>=thr-25?'#ffcf66':'#ff6a7a');
     ctx.fillText('정확도 '+pct+'%', W/2, f.y+22);
-    if(pct>=95){ ctx.font='bold 13px system-ui'; ctx.fillStyle='#7cffb0'; ctx.fillText('★ 성공권!', W/2, f.y+44); }
+    if(pct>=thr){ ctx.font='bold 13px system-ui'; ctx.fillStyle='#7cffb0'; ctx.fillText('★ 성공권!', W/2, f.y+44); }
     ctx.restore();
   }
   // 집게
