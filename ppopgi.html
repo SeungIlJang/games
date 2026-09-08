@@ -38,14 +38,14 @@
   <div id="streak"></div>
 </div>
 <div id="hint"></div>
-<div id="ver">v0.2 · 리얼 집게·매달림·마지막 슬로모션</div>
+<div id="ver">v0.3 · 니어미스 원인 시각화(집게 느슨→미끄러짐)</div>
 
 <div id="start">
   <h1>모두의 뽑기</h1>
   <div class="sub"><b>탭 2번</b>으로 집게 위치를 맞추고<br><b style="color:#ff8ad6">내려!</b> → 3초 관전에서 성패가 갈려요<br><span style="opacity:.7;font-size:13px">정확히 조준할수록 성공률↑ · 도감을 채우세요</span></div>
   <div id="dexGrid"></div>
   <button class="btn" id="startBtn">뽑으러 가기</button>
-  <div id="changelog">🆕 <b>v0.2</b> · 리얼 집게·인형 매달림·마지막 슬로모션 긴장연출</div>
+  <div id="changelog">🆕 <b>v0.3</b> · 놓치는 이유 보이게: 흔들림마다 집게 느슨→인형 미끄러짐</div>
 </div>
 
 <div id="over" class="hidden">
@@ -177,22 +177,27 @@ function stepSpectate(dt){
       anim=0;
     }
   } else if(claw.phase==='lift'){
+    claw.open=0.05; // 꽉 잡음
     claw.y-=300*dt; if(claw.holding){ claw.holding.x=claw.x; claw.holding.y=claw.y+34; }
-    if(claw.y<=field().y-30){ claw.y=field().y-30; claw.phase='carry'; anim=0; shakeN=0; }
+    if(claw.y<=field().y-30){ claw.y=field().y-30; claw.phase='carry'; anim=0; shakeN=0; claw.grip=1; }
   } else if(claw.phase==='carry'){
-    // 출구(좌상단)로 이동하며 흔들림 3회
+    // 출구(좌상단)로 이동하며 흔들림 3회 — 니어미스면 흔들림마다 그립이 느슨해져 미끄러짐(놓치는 원인)
     claw.x += (34-claw.x)*Math.min(1,dt*2.2);
-    if(claw.holding){ claw.holding.x=claw.x; claw.holding.y=claw.y+34; }
-    const shakeTimes=[0.35,0.8,1.25];
-    if(shakeN<3 && anim>=shakeTimes[shakeN]){ shakeN++; shakeMag=10+shakeN*4; screenShake=Math.max(screenShake,3);
-      tone(120,0.06,'sawtooth',0.1); vib(15);
-      // 니어미스면 마지막 흔들림에서 놓침
-      if(outcome.nearMiss && shakeN===3){ claw.phase='drop'; anim=0; }
+    const shakeTimes=[0.4,0.85,1.35];
+    if(shakeN<3 && anim>=shakeTimes[shakeN]){ shakeN++; shakeMag=12+shakeN*5; screenShake=Math.max(screenShake,4); tone(120,0.06,'sawtooth',0.1); vib([15,25]);
+      if(outcome.nearMiss){ claw.grip-=0.36; burst(claw.x-4, claw.y+44, '#bfe0ff', 5); // 미끄러짐(땀) 파티클
+        $('hint').textContent = claw.grip<0.55 ? '앗, 미끄러진다…!' : '집게가 흔들린다…';
+        if(shakeN>=3 || claw.grip<=0.05){ $('hint').textContent=''; claw.phase='drop'; anim=0; }
+      }
     }
-    if(claw.holding) claw.holding.x += Math.sin(anim*40)*shakeMag*0.25;
+    const g = outcome.nearMiss ? (claw.grip==null?1:claw.grip) : 1;   // 그립: 성공=1 유지 / 니어미스=점점 감소
+    claw.open = clamp((1-g)*0.8, 0.05, 0.8);                            // 느슨할수록 집게 벌어짐
+    const slip = (1-g)*24;                                              // 느슨할수록 인형이 아래로 미끄러짐
+    if(claw.holding){ claw.holding.x = claw.x + Math.sin(anim*40)*shakeMag*0.25; claw.holding.y = claw.y+34+slip; }
     shakeMag*=0.9;
-    if(anim>1.7){ if(outcome.success){ claw.phase='deposit'; anim=0; } else if(!outcome.nearMiss){ claw.phase='drop'; anim=0; } }
+    if(anim>1.85 && outcome.success){ claw.phase='deposit'; anim=0; }
   } else if(claw.phase==='drop'){
+    claw.open=0.9; // 집게 완전히 벌어짐(놓침)
     // 출구 바로 앞에서 낙하 (아—! 놓쳤다)
     if(claw.holding){ claw.holding.vy=(claw.holding.vy||0)+900*dt; claw.holding.y+=claw.holding.vy*dt; claw.holding.x+=20*dt;
       if(claw.holding.y>field().y+field().h-20){ endResult(false,'near'); } }
