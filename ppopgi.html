@@ -51,7 +51,7 @@
 </div>
 <div id="gripWrap" class="hidden"><div id="gripLbl">🔥 탭 연타! 꽉 잡아!</div><div id="gripBar"><div id="gripFill"></div></div></div>
 <div id="hint"></div>
-<div id="ver">v1.5 · 초반 과녁 크게→판마다 점점 작아지게(난이도 곡선 완화)</div>
+<div id="ver">v1.6 · 인형 크기 확대(초반 52px)→판마다 살짝 축소</div>
 
 <div id="start">
   <h1>모두의 뽑기</h1>
@@ -63,7 +63,7 @@
     <button class="btn" id="startBtn">뽑으러 가기</button>
     <button class="btn" id="shareBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:15px 22px">🏆 공유</button>
   </div>
-  <div id="changelog">🆕 <b>v1.5</b> · 처음엔 과녁을 크게 → 판이 갈수록 점점 작아져요(초반 쉽고 뒤로 갈수록 손맛↑)</div>
+  <div id="changelog">🆕 <b>v1.6</b> · 인형이 커졌어요! 초반엔 크게(52px) → 판이 갈수록 살짝 작아짐</div>
 </div>
 
 <div id="noheart" class="hidden">
@@ -199,6 +199,7 @@ function accRadius(){ return ACC_R_BASE*(1+clawBonus*0.5); }
 const RAR=[null,{c:'124,255,176',hex:'#7cffb0',name:'일반'},{c:'110,180,255',hex:'#6eb4ff',name:'레어'},{c:'255,199,80',hex:'#ffc750',name:'★전설★'}];
 function rar(r){ return RAR[r]||RAR[1]; }
 function successThreshold(){ const r=(dolls[target]&&dolls[target].r)||1; const rar=(r-1)*0.06; const base=clamp(0.60+playCount*0.022+rar, 0.55, 0.92); return clamp(base - clawBonus*0.1 - Math.min(failStreak,4)*0.025, 0.48, 0.92); } // 초반 과녁 큼(0.60)→판마다 축소(+0.022/판) + 희귀도(★★=+0.06·★★★=+0.12) 후 광고/연속실패로 완화(매몰비용 오기)
+function dollSize(){ return Math.round(52 - Math.min(playCount,12)*1.0); } // 인형 이모지 크기: 초반 52px 크게 → 판마다 축소 → 40px 수렴
 function accAt(px,py){ const t=dolls[target]; return clamp(1-Math.hypot(px-t.x,py-t.y)/accRadius(),0,1); }
 function commit(){
   const t=dolls[target]; const dist=Math.hypot(cx-t.x, cy-t.y);
@@ -369,9 +370,10 @@ function draw(){
   ctx.fillStyle='#ffcf66'; ctx.font='bold 11px system-ui'; ctx.textAlign='center'; ctx.fillText('출구',f.x+21,f.y-25);
   // 인형들
   ctx.textAlign='center'; ctx.textBaseline='middle';
+  const dsz=dollSize(); const ringR=Math.round(dsz*0.78);
   for(let i=0;i<dolls.length;i++){ const d=dolls[i]; const held=(claw.holding===d);
-    if(!held){ ctx.fillStyle='rgba(0,0,0,.30)'; ctx.beginPath(); ctx.ellipse(d.x,d.y+17,15,5,0,0,6.28); ctx.fill(); } // 바닥 그림자
-    if(i===target && state!=='result' && !held){ const R=rar(d.r); ctx.save(); ctx.globalAlpha=0.45+0.3*Math.sin(performance.now()/300); ctx.strokeStyle=R.hex; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(d.x,d.y,26,0,6.28); ctx.stroke(); ctx.restore();
+    if(!held){ ctx.fillStyle='rgba(0,0,0,.30)'; ctx.beginPath(); ctx.ellipse(d.x,d.y+dsz*0.5,dsz*0.44,dsz*0.15,0,0,6.28); ctx.fill(); } // 바닥 그림자(인형 크기 비례)
+    if(i===target && state!=='result' && !held){ const R=rar(d.r); ctx.save(); ctx.globalAlpha=0.45+0.3*Math.sin(performance.now()/300); ctx.strokeStyle=R.hex; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(d.x,d.y,ringR,0,6.28); ctx.stroke(); ctx.restore();
       if(state==='aimX'||state==='aimY'){ ctx.save();
         const zoneR=Math.max(6,(1-successThreshold())*accRadius()); // 성공 존 반경(초반 큼→후반 작음·희귀도↑=작음)
         ctx.fillStyle='rgba('+R.c+',.16)'; ctx.beginPath(); ctx.arc(d.x,d.y,zoneR,0,6.28); ctx.fill();
@@ -381,7 +383,7 @@ function draw(){
         ctx.globalAlpha=0.9; ctx.fillStyle=R.hex; ctx.font='bold 11px system-ui'; ctx.textAlign='center';
         ctx.fillText('★'.repeat(d.r)+' '+R.name, d.x, d.y-zoneR-8); ctx.restore(); } // 정가운데 성공 존
     }
-    ctx.font='34px system-ui';
+    ctx.font=dsz+'px system-ui';
     if(held){ ctx.save(); ctx.translate(d.x,d.y+2); ctx.rotate(claw.sway||0); ctx.fillText(d.e,0,2); ctx.restore(); } // 집게에 매달려 흔들림
     else ctx.fillText(d.e, d.x, d.y);
   }
