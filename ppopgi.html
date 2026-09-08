@@ -51,7 +51,7 @@
 </div>
 <div id="gripWrap" class="hidden"><div id="gripLbl">🔥 탭 연타! 꽉 잡아!</div><div id="gripBar"><div id="gripFill"></div></div></div>
 <div id="hint"></div>
-<div id="ver">v1.4 · 희귀도 난이도·보상 차등 강화(★★★ 어렵고·하트보상·전설연출)</div>
+<div id="ver">v1.5 · 초반 과녁 크게→판마다 점점 작아지게(난이도 곡선 완화)</div>
 
 <div id="start">
   <h1>모두의 뽑기</h1>
@@ -63,7 +63,7 @@
     <button class="btn" id="startBtn">뽑으러 가기</button>
     <button class="btn" id="shareBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:15px 22px">🏆 공유</button>
   </div>
-  <div id="changelog">🆕 <b>v1.4</b> · 별(희귀도)이 진짜로 작동! ★★★일수록 성공존 확 작아짐(색+등급표시) · 잡으면 하트 보상 & 전설 팡파레</div>
+  <div id="changelog">🆕 <b>v1.5</b> · 처음엔 과녁을 크게 → 판이 갈수록 점점 작아져요(초반 쉽고 뒤로 갈수록 손맛↑)</div>
 </div>
 
 <div id="noheart" class="hidden">
@@ -198,7 +198,7 @@ function accRadius(){ return ACC_R_BASE*(1+clawBonus*0.5); }
 // 희귀도 색/이름 (★=초록 / ★★=파랑 / ★★★=골드)
 const RAR=[null,{c:'124,255,176',hex:'#7cffb0',name:'일반'},{c:'110,180,255',hex:'#6eb4ff',name:'레어'},{c:'255,199,80',hex:'#ffc750',name:'★전설★'}];
 function rar(r){ return RAR[r]||RAR[1]; }
-function successThreshold(){ const r=(dolls[target]&&dolls[target].r)||1; const rar=(r-1)*0.06; const base=clamp(0.74+playCount*0.017+rar, 0.55, 0.95); return clamp(base - clawBonus*0.1 - Math.min(failStreak,4)*0.025, 0.5, 0.95); } // 판마다 축소 + 희귀도(★★=+0.06·★★★=+0.12 더 어려움) 후 광고/연속실패로 완화(매몰비용 오기)
+function successThreshold(){ const r=(dolls[target]&&dolls[target].r)||1; const rar=(r-1)*0.06; const base=clamp(0.60+playCount*0.022+rar, 0.55, 0.92); return clamp(base - clawBonus*0.1 - Math.min(failStreak,4)*0.025, 0.48, 0.92); } // 초반 과녁 큼(0.60)→판마다 축소(+0.022/판) + 희귀도(★★=+0.06·★★★=+0.12) 후 광고/연속실패로 완화(매몰비용 오기)
 function accAt(px,py){ const t=dolls[target]; return clamp(1-Math.hypot(px-t.x,py-t.y)/accRadius(),0,1); }
 function commit(){
   const t=dolls[target]; const dist=Math.hypot(cx-t.x, cy-t.y);
