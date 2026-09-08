@@ -44,14 +44,14 @@
 </div>
 <div id="gripWrap" class="hidden"><div id="gripLbl">🔥 탭 연타! 꽉 잡아!</div><div id="gripBar"><div id="gripFill"></div></div></div>
 <div id="hint"></div>
-<div id="ver">v0.5 · 정밀 스톱: 정가운데(95%+)만 성공</div>
+<div id="ver">v0.6 · 실시간 정확도% 표시</div>
 
 <div id="start">
   <h1>모두의 뽑기</h1>
   <div class="sub"><b>탭 2번</b>으로 집게를 <b style="color:#7cffb0">정가운데(초록 점)</b>에 정확히!<br><b style="color:#ffcf66">정확도 95%+</b> 만 성공 — 살짝 벗어나면 미끄러져요<br><span style="opacity:.7;font-size:13px">중앙에서 벗어난 만큼 놓칠 확률↑</span></div>
   <div id="dexGrid"></div>
   <button class="btn" id="startBtn">뽑으러 가기</button>
-  <div id="changelog">🆕 <b>v0.5</b> · 연타 제거·정밀 스톱: 정가운데 95%+만 성공 · 정확도% 표시</div>
+  <div id="changelog">🆕 <b>v0.6</b> · 조준 중 실시간 정확도% 화면 표시(성공권 ★)</div>
 </div>
 
 <div id="over" class="hidden">
@@ -144,10 +144,11 @@ function newRound(keepTarget){
   state='aimX'; sweep=field().x; sweepDir=1; sweepSpd=1;
   $('hint').textContent='① 좌우 맞춰 탭!';
 }
-const SUCCESS_ACC=0.95;                             // 정가운데 95%+ 만 성공
+const SUCCESS_ACC=0.95, ACC_R_BASE=72;             // 정가운데 95%+ 만 성공 / 정확도 환산 반경
+function accAt(px,py){ const t=dolls[target]; const R=ACC_R_BASE*(1+clawBonus*0.5); return clamp(1-Math.hypot(px-t.x,py-t.y)/R,0,1); }
 function commit(){
   const t=dolls[target]; const dist=Math.hypot(cx-t.x, cy-t.y);
-  const ACC_R=72*(1+clawBonus*0.5);                 // 정확도 환산 반경(작을수록 빡셈, 광고보너스로 완화)
+  const ACC_R=ACC_R_BASE*(1+clawBonus*0.5);         // 정확도 환산 반경(작을수록 빡셈, 광고보너스로 완화)
   const acc=clamp(1-dist/ACC_R,0,1);                // 1 = 정가운데
   window.lastAcc=Math.round(acc*100);
   const grab = acc>=0.45;                            // 어느정도 가까우면 집긴 함(니어미스 연출)
@@ -292,6 +293,17 @@ function draw(){
     ctx.beginPath(); ctx.moveTo(cx,f.y-30); ctx.lineTo(cx,f.y+f.h); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(f.x,sweep); ctx.lineTo(f.x+f.w,sweep); ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle='#ffec6b'; ctx.beginPath(); ctx.arc(cx,sweep,5,0,6.28); ctx.fill();
+  }
+  // 실시간 정확도 표시 (조준 중)
+  if(state==='aimX'||state==='aimY'){
+    const liveAcc = (state==='aimX') ? accAt(sweep, dolls[target].y) : accAt(cx, sweep);
+    const pct=Math.round(liveAcc*100);
+    ctx.save(); ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.font='bold 26px system-ui';
+    ctx.fillStyle = pct>=95?'#7cffb0':(pct>=70?'#ffcf66':'#ff6a7a');
+    ctx.fillText('정확도 '+pct+'%', W/2, f.y+22);
+    if(pct>=95){ ctx.font='bold 13px system-ui'; ctx.fillStyle='#7cffb0'; ctx.fillText('★ 성공권!', W/2, f.y+44); }
+    ctx.restore();
   }
   // 집게
   drawClaw();
