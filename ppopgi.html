@@ -12,6 +12,7 @@
   #goal{font-size:24px;font-weight:900;margin-top:1px;text-shadow:0 0 16px rgba(255,120,220,.5)}
   #dex{font-size:13px;color:#9fe;margin-top:2px;font-weight:700}
   #hearts{font-size:14px;font-weight:800;color:#ff6a9a;margin-bottom:2px}
+  #lives{font-size:16px;font-weight:800;margin-top:2px;min-height:20px}
   #lastAccTop{font-size:15px;font-weight:800;margin-top:3px;min-height:18px}
   #noheart{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(18,14,30,.95);z-index:11;text-align:center;padding:24px}
   #streak{font-size:12px;color:#ffcf66;margin-top:2px;font-weight:800;min-height:16px}
@@ -44,12 +45,13 @@
   <div id="goalLbl">🎯 이번 목표</div>
   <div id="goal">–</div>
   <div id="dex">도감 0/10</div>
+  <div id="lives"></div>
   <div id="lastAccTop"></div>
   <div id="streak"></div>
 </div>
 <div id="gripWrap" class="hidden"><div id="gripLbl">🔥 탭 연타! 꽉 잡아!</div><div id="gripBar"><div id="gripFill"></div></div></div>
 <div id="hint"></div>
-<div id="ver">v1.0 · 하트·기록·연속실패보너스·공유·배너·도감완성</div>
+<div id="ver">v1.1 · 성공 축하 연출 강화 + 생명 2개</div>
 
 <div id="start">
   <h1>모두의 뽑기</h1>
@@ -60,7 +62,7 @@
     <button class="btn" id="startBtn">뽑으러 가기</button>
     <button class="btn" id="shareBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:15px 22px">🏆 공유</button>
   </div>
-  <div id="changelog">🆕 <b>v1.0</b> · 하트·연속성공 기록·연속실패 보너스·공유·배너·도감완성 (탑100 세트)</div>
+  <div id="changelog">🆕 <b>v1.1</b> · 성공 팡파레·색종이 폭죽 + 인형당 생명 2개(2번 도전)</div>
 </div>
 
 <div id="noheart" class="hidden">
@@ -135,6 +137,9 @@ let playCount=+(localStorage.getItem('ppopgi_plays')||0);
 let failStreak=+(localStorage.getItem('ppopgi_fs')||0);
 let clawBonus=0;             // 광고 재도전 보너스(집게 힘)
 let parts=[], screenShake=0, flashCol=null, flashA=0;
+let lives=2; const MAX_LIVES=2;   // 인형 한 마리당 생명 2개(2번 실패해야 진짜 실패)
+function renderLives(){ if(state==='start'){ $('lives').innerHTML=''; return; } let s=''; for(let i=0;i<MAX_LIVES;i++) s+= i<lives?'💗':'🖤'; $('lives').innerHTML='<span style="letter-spacing:2px">'+s+'</span>'; }
+function confetti(x,y,n){ const cols=['#ff5ce1','#7cffb0','#ffd34d','#5ab0ff','#ff8a5a','#c9a3ff','#ffffff']; for(let i=0;i<n;i++){ const a=Math.random()*6.28, sp=rnd(2,9); parts.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-5,life:1.5,c:cols[i%cols.length],r:3+Math.random()*4}); } }
 
 function pickTarget(){
   // 미보유 우선(간절함)
@@ -158,7 +163,7 @@ function newRound(keepTarget){
   $('dex').textContent='도감 '+dexCount()+'/'+DOLLS.length;
   $('streak').textContent = failStreak>=2 ? ('😤 '+failStreak+'연속 실패 — 이번엔 과녁 커짐!') : (successStreak>=2?('🔥 '+successStreak+'연속 성공 중!'):'');
   claw={x:W/2,y:field().y-40,open:1,holding:null,phase:'',sway:0}; timeScale=1;
-  state='aimX'; sweep=field().x; sweepDir=1; sweepSpd=1;
+  state='aimX'; sweep=field().x; sweepDir=1; sweepSpd=1; renderLives();
   $('hint').textContent='① 좌우 맞춰 탭!';
 }
 const ACC_R_BASE=72;                                // 정확도 환산 반경
@@ -246,8 +251,10 @@ function endResult(win, kind){
     failStreak=0; try{localStorage.setItem('ppopgi_fs',0);}catch(e){}
     clawBonus=0;
     successStreak++; totalCaught++; if(successStreak>bestStreak) bestStreak=successStreak; saveStats();
-    flash((successStreak>=3?('🔥'+successStreak+'연속! '):'')+'🎯'+(window.lastAcc||100)+'% '+goal.e+' 획득!','#7cffb0'); chord(523); vib([20,50,30]);
-    burst(claw.x,H*0.5,'#7cffb0',40); screenShake=6;
+    flash('🎉 GET! '+goal.e+' '+goal.n+(successStreak>=3?(' 🔥'+successStreak+'연속!'):'')+'!','#7cffb0');
+    confetti(claw.x,H*0.42,90); burst(claw.x,H*0.5,'#ffffff',36);
+    chord(523); setTimeout(()=>chord(784),160); setTimeout(()=>chord(1046),330);   // 상승 팡파레
+    vib([20,40,20,40,90]); screenShake=13; flashA=1; flashCol='124,255,176';
     $('dex').textContent='도감 '+dexCount()+'/'+DOLLS.length; renderDexGrid();
     if(wasNew && dexCount()>=DOLLS.length){ setTimeout(()=>{ flash('🎉 도감 완성! 대단해요!','#ffd34d'); chord(659); burst(W/2,H*0.4,'#ffd34d',60); screenShake=10; },900); }
     setTimeout(()=>{ startRound(); },1200);
@@ -256,11 +263,18 @@ function endResult(win, kind){
     successStreak=0;
     const near = kind==='near';
     flash(near?'아—! 놓쳤다 😫':'빗나갔다 💨', '#ff6a7a'); tone(150,0.3,'sawtooth',0.12); setTimeout(()=>tone(100,0.3,'sawtooth',0.1),100);
-    vib(200); screenShake=near?14:6; showBanner();
-    $('overTitle').textContent = near?'아—! 놓쳤다 😫':'빗나갔다 💨';
-    $('overMsg').innerHTML = '정확도 <b style="color:'+(near?'#ffcf66':'#ff8a8a')+'">'+(window.lastAcc||0)+'%</b> <span style="opacity:.7">(성공 '+(window.lastThresh||95)+'%↑)</span><br>'+(near?'중앙에서 살짝 벗어나 미끄러졌어요!':'중앙에서 많이 빗나갔어요')+'<br><b style="color:#ffcf66">'+goal.e+' '+goal.n+'</b> 조금만 더 정확히!';
-    $('overDex').textContent=dexCount()+'/'+DOLLS.length;
-    setTimeout(()=>$('over').classList.remove('hidden'),700);
+    vib(200); screenShake=near?14:6;
+    lives--; renderLives();
+    if(lives>0){ // 생명 남음 → 같은 인형 다시 도전(하트 소모 없음)
+      setTimeout(()=>flash('💗 생명 -1 · 남은 '+lives+'개, 다시!','#ffcf66'),650);
+      setTimeout(()=>{ newRound(window._goal); },1500);
+    } else { // 생명 소진 → 진짜 실패
+      showBanner();
+      $('overTitle').textContent = near?'아—! 놓쳤다 😫':'빗나갔다 💨';
+      $('overMsg').innerHTML = '정확도 <b style="color:'+(near?'#ffcf66':'#ff8a8a')+'">'+(window.lastAcc||0)+'%</b> <span style="opacity:.7">(성공 '+(window.lastThresh||95)+'%↑)</span> · 💔 생명 0<br>'+(near?'중앙에서 살짝 벗어나 미끄러졌어요!':'중앙에서 많이 빗나갔어요')+'<br><b style="color:#ffcf66">'+goal.e+' '+goal.n+'</b> 조금만 더 정확히!';
+      $('overDex').textContent=dexCount()+'/'+DOLLS.length;
+      setTimeout(()=>$('over').classList.remove('hidden'),700);
+    }
   }
 }
 
@@ -285,6 +299,7 @@ function loop(now){ requestAnimationFrame(loop); let dt=(now-last)/1000; last=no
   // 파티클
   for(const p of parts){ p.x+=p.vx;p.y+=p.vy;p.vy+=0.15;p.life-=0.02; }
   parts=parts.filter(p=>p.life>0);
+  if(flashA>0) flashA=Math.max(0,flashA-0.035);
   draw();
 }
 function draw(){
@@ -339,6 +354,7 @@ function draw(){
   for(const p of parts){ ctx.globalAlpha=Math.max(0,p.life); ctx.fillStyle=p.c; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.28); ctx.fill(); } ctx.globalAlpha=1;
   // 슬로모션 비네트(긴장 연출)
   if(timeScale<1){ const v=ctx.createRadialGradient(claw.x,H*0.5,H*0.16,claw.x,H*0.5,H*0.62); v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(1,'rgba(25,0,40,.5)'); ctx.fillStyle=v; ctx.fillRect(0,0,W,H); }
+  if(flashA>0){ ctx.fillStyle='rgba('+(flashCol||'124,255,176')+','+(flashA*0.32).toFixed(2)+')'; ctx.fillRect(0,0,W,H); } // 성공 초록 플래시
   ctx.restore();
 }
 function drawClaw(){
@@ -401,9 +417,9 @@ function shareGame(){ const txt='모두의 뽑기 🧸 도감 '+dexCount()+'/'+D
   try{ navigator.clipboard.writeText(txt); flash('📋 복사됨!','#7cf6ff'); }catch(e){} }
 
 // ── 화면 전환 ──
-function toStart(){ state='start'; $('over').classList.add('hidden'); $('noheart').classList.add('hidden'); $('start').classList.remove('hidden'); renderHearts(); renderStartStats(); renderDexGrid(); showBanner(); }
+function toStart(){ state='start'; renderLives(); $('over').classList.add('hidden'); $('noheart').classList.add('hidden'); $('start').classList.remove('hidden'); renderHearts(); renderStartStats(); renderDexGrid(); showBanner(); }
 function showNoHearts(){ state='result'; $('over').classList.add('hidden'); $('start').classList.add('hidden'); $('heartMsg').innerHTML='다음 하트까지 <b>'+heartTimer()+'</b><br>지금 바로 하려면 광고로 하트 +5!'; $('noheart').classList.remove('hidden'); showBanner(); }
-function startRound(goal){ loadHearts(); if(hearts<=0){ showNoHearts(); return; } if(hearts===MAX_HEARTS) heartTs=Date.now(); hearts--; saveHearts(); renderHearts(); $('over').classList.add('hidden'); $('noheart').classList.add('hidden'); hideBanner(); newRound(goal); }
+function startRound(goal){ loadHearts(); if(hearts<=0){ showNoHearts(); return; } if(hearts===MAX_HEARTS) heartTs=Date.now(); hearts--; saveHearts(); renderHearts(); lives=MAX_LIVES; renderLives(); $('over').classList.add('hidden'); $('noheart').classList.add('hidden'); hideBanner(); newRound(goal); }
 
 // 버튼
 function begin(){ try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){} $('start').classList.add('hidden'); clawBonus=0; startRound(); }
