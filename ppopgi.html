@@ -51,7 +51,7 @@
 </div>
 <div id="gripWrap" class="hidden"><div id="gripLbl">🔥 탭 연타! 꽉 잡아!</div><div id="gripBar"><div id="gripFill"></div></div></div>
 <div id="hint"></div>
-<div id="ver">v1.3 · 테마 도감 5종(50) + 희귀도 난이도 + 테마 해금</div>
+<div id="ver">v1.4 · 희귀도 난이도·보상 차등 강화(★★★ 어렵고·하트보상·전설연출)</div>
 
 <div id="start">
   <h1>모두의 뽑기</h1>
@@ -63,7 +63,7 @@
     <button class="btn" id="startBtn">뽑으러 가기</button>
     <button class="btn" id="shareBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:15px 22px">🏆 공유</button>
   </div>
-  <div id="changelog">🆕 <b>v1.3</b> · 테마 5종 도감(50)! 테마 완성하면 다음 테마 해금 · ★★★일수록 성공존이 작아 어려움</div>
+  <div id="changelog">🆕 <b>v1.4</b> · 별(희귀도)이 진짜로 작동! ★★★일수록 성공존 확 작아짐(색+등급표시) · 잡으면 하트 보상 & 전설 팡파레</div>
 </div>
 
 <div id="noheart" class="hidden">
@@ -195,7 +195,10 @@ function newRound(keepTarget){
 }
 const ACC_R_BASE=72;                                // 정확도 환산 반경
 function accRadius(){ return ACC_R_BASE*(1+clawBonus*0.5); }
-function successThreshold(){ const r=(dolls[target]&&dolls[target].r)||1; const rar=(r-1)*0.04; const base=clamp(0.74+playCount*0.017+rar, 0.55, 0.94); return clamp(base - clawBonus*0.1 - Math.min(failStreak,4)*0.025, 0.5, 0.94); } // 판마다 축소 + 희귀도(★★★=+0.08 더 어려움) 후 광고/연속실패로 완화(매몰비용 오기)
+// 희귀도 색/이름 (★=초록 / ★★=파랑 / ★★★=골드)
+const RAR=[null,{c:'124,255,176',hex:'#7cffb0',name:'일반'},{c:'110,180,255',hex:'#6eb4ff',name:'레어'},{c:'255,199,80',hex:'#ffc750',name:'★전설★'}];
+function rar(r){ return RAR[r]||RAR[1]; }
+function successThreshold(){ const r=(dolls[target]&&dolls[target].r)||1; const rar=(r-1)*0.06; const base=clamp(0.74+playCount*0.017+rar, 0.55, 0.95); return clamp(base - clawBonus*0.1 - Math.min(failStreak,4)*0.025, 0.5, 0.95); } // 판마다 축소 + 희귀도(★★=+0.06·★★★=+0.12 더 어려움) 후 광고/연속실패로 완화(매몰비용 오기)
 function accAt(px,py){ const t=dolls[target]; return clamp(1-Math.hypot(px-t.x,py-t.y)/accRadius(),0,1); }
 function commit(){
   const t=dolls[target]; const dist=Math.hypot(cx-t.x, cy-t.y);
@@ -278,12 +281,17 @@ function endResult(win, kind){
     failStreak=0; try{localStorage.setItem('ppopgi_fs',0);}catch(e){}
     clawBonus=0;
     successStreak++; totalCaught++; if(successStreak>bestStreak) bestStreak=successStreak; saveStats();
-    flash('🎉 GET! '+goal.e+' '+goal.n+' '+('★'.repeat(goal.r))+(successStreak>=3?(' 🔥'+successStreak+'연속!'):'')+'!','#7cffb0');
-    const conf=60+goal.r*40;                          // ★★★일수록 더 화려하게
-    confetti(claw.x,H*0.42,conf); burst(claw.x,H*0.5,'#ffffff',24+goal.r*10);
-    chord(523); setTimeout(()=>chord(784),160); setTimeout(()=>chord(1046),330);   // 상승 팡파레
-    if(goal.r>=3){ setTimeout(()=>chord(1318),480); }  // 레어 추가 음
-    vib([20,40,20,40,90]); screenShake=10+goal.r*3; flashA=1; flashCol='124,255,176';
+    const R=rar(goal.r);
+    // 희귀도 보상: ★=하트0 / ★★=하트+1 / ★★★=하트+2 (귀한 걸 잡으면 실질 보너스 시도권)
+    const heartReward=goal.r-1; if(heartReward>0){ addHearts(heartReward); }
+    const head = goal.r>=3 ? '🌟 레어 GET! 🌟' : (goal.r===2 ? '✨ GET! ' : '🎉 GET! ');
+    flash(head+goal.e+' '+goal.n+' '+('★'.repeat(goal.r))+(successStreak>=3?(' 🔥'+successStreak+'연속!'):'')+(heartReward>0?(' ❤️+'+heartReward):''), R.hex);
+    const conf=50+goal.r*goal.r*35;                    // ★=85 · ★★=190 · ★★★=365 (제곱으로 확 차등)
+    confetti(claw.x,H*0.42,conf); burst(claw.x,H*0.5,'#ffffff',20+goal.r*14);
+    chord(523); setTimeout(()=>chord(784),150); setTimeout(()=>chord(1046),300);   // 상승 팡파레
+    if(goal.r>=2){ setTimeout(()=>chord(1318),450); }  // ★★+ 추가 음
+    if(goal.r>=3){ setTimeout(()=>chord(1568),600); setTimeout(()=>chord(2093),760); setTimeout(()=>burst(claw.x,H*0.42,R.hex,50),200); }  // ★★★ 전설 팡파레+골드 폭죽
+    vib(goal.r>=3?[20,40,20,40,20,40,120]:[20,40,20,40,90]); screenShake=8+goal.r*goal.r*2; flashA=1; flashCol=R.c;
     renderDexGrid();
     const done=themeCaught(THEME());
     $('dex').textContent=THEME().ico+' '+THEME().name+' '+done+'/'+THEME().dolls.length+' · 전체 '+totalCaughtDolls()+'/'+TOTAL_DOLLS;
@@ -363,12 +371,15 @@ function draw(){
   ctx.textAlign='center'; ctx.textBaseline='middle';
   for(let i=0;i<dolls.length;i++){ const d=dolls[i]; const held=(claw.holding===d);
     if(!held){ ctx.fillStyle='rgba(0,0,0,.30)'; ctx.beginPath(); ctx.ellipse(d.x,d.y+17,15,5,0,0,6.28); ctx.fill(); } // 바닥 그림자
-    if(i===target && state!=='result' && !held){ ctx.save(); ctx.globalAlpha=0.45+0.3*Math.sin(performance.now()/300); ctx.strokeStyle='#ff5ce1'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(d.x,d.y,26,0,6.28); ctx.stroke(); ctx.restore();
+    if(i===target && state!=='result' && !held){ const R=rar(d.r); ctx.save(); ctx.globalAlpha=0.45+0.3*Math.sin(performance.now()/300); ctx.strokeStyle=R.hex; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(d.x,d.y,26,0,6.28); ctx.stroke(); ctx.restore();
       if(state==='aimX'||state==='aimY'){ ctx.save();
-        const zoneR=Math.max(6,(1-successThreshold())*accRadius()); // 성공 존 반경(초반 큼→후반 작음)
-        ctx.fillStyle='rgba(124,255,176,.16)'; ctx.beginPath(); ctx.arc(d.x,d.y,zoneR,0,6.28); ctx.fill();
-        ctx.strokeStyle='rgba(124,255,176,.85)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(d.x,d.y,zoneR,0,6.28); ctx.stroke();
-        ctx.fillStyle='#7cffb0'; ctx.beginPath(); ctx.arc(d.x,d.y,2.5,0,6.28); ctx.fill(); ctx.restore(); } // 정가운데 성공 존
+        const zoneR=Math.max(6,(1-successThreshold())*accRadius()); // 성공 존 반경(초반 큼→후반 작음·희귀도↑=작음)
+        ctx.fillStyle='rgba('+R.c+',.16)'; ctx.beginPath(); ctx.arc(d.x,d.y,zoneR,0,6.28); ctx.fill();
+        ctx.strokeStyle='rgba('+R.c+',.9)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(d.x,d.y,zoneR,0,6.28); ctx.stroke();
+        ctx.fillStyle=R.hex; ctx.beginPath(); ctx.arc(d.x,d.y,2.5,0,6.28); ctx.fill();
+        // 희귀도 라벨(★ 개수 + 등급) — 별이 많을수록 존이 작다는 걸 눈으로 확인
+        ctx.globalAlpha=0.9; ctx.fillStyle=R.hex; ctx.font='bold 11px system-ui'; ctx.textAlign='center';
+        ctx.fillText('★'.repeat(d.r)+' '+R.name, d.x, d.y-zoneR-8); ctx.restore(); } // 정가운데 성공 존
     }
     ctx.font='34px system-ui';
     if(held){ ctx.save(); ctx.translate(d.x,d.y+2); ctx.rotate(claw.sway||0); ctx.fillText(d.e,0,2); ctx.restore(); } // 집게에 매달려 흔들림
