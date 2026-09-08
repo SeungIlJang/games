@@ -51,18 +51,19 @@
 </div>
 <div id="gripWrap" class="hidden"><div id="gripLbl">🔥 탭 연타! 꽉 잡아!</div><div id="gripBar"><div id="gripFill"></div></div></div>
 <div id="hint"></div>
-<div id="ver">v1.2 · 광고 재도전 시 생명 회복 수정</div>
+<div id="ver">v1.3 · 테마 도감 5종(50) + 희귀도 난이도 + 테마 해금</div>
 
 <div id="start">
   <h1>모두의 뽑기</h1>
   <div class="sub"><b>탭 2번</b>으로 집게를 <b style="color:#7cffb0">정가운데(초록 점)</b>에 정확히!<br><b style="color:#ffcf66">초록 성공존</b> 안에 멈추면 성공! (초반엔 크고 갈수록 작아져요)<br><span style="opacity:.7;font-size:13px">중앙에서 벗어난 만큼 놓칠 확률↑</span></div>
+  <div class="sub" id="themeHdr" style="font-weight:800;font-size:15px;margin-bottom:4px"></div>
   <div id="dexGrid"></div>
   <div class="sub" id="startStats" style="font-size:13px;opacity:.85"></div>
   <div style="display:flex;gap:10px">
     <button class="btn" id="startBtn">뽑으러 가기</button>
     <button class="btn" id="shareBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:15px 22px">🏆 공유</button>
   </div>
-  <div id="changelog">🆕 <b>v1.2</b> · 광고 재도전 시 생명 💗💗 가득 회복(버그수정)</div>
+  <div id="changelog">🆕 <b>v1.3</b> · 테마 5종 도감(50)! 테마 완성하면 다음 테마 해금 · ★★★일수록 성공존이 작아 어려움</div>
 </div>
 
 <div id="noheart" class="hidden">
@@ -104,17 +105,41 @@ async function playAd(cb){ if(adPlaying)return; adPlaying=true; const C=window.C
   setTimeout(()=>{ adPlaying=false; cb(); },700); // 웹 시뮬
 }
 
-// ── 인형 도감 ──
-const DOLLS=[
-  {e:'🐻',n:'곰돌이',r:1},{e:'🐰',n:'토끼',r:1},{e:'🐸',n:'개구리',r:1},
-  {e:'🐱',n:'냥이',r:2},{e:'🐧',n:'펭귄',r:2},{e:'🐼',n:'판다',r:2},{e:'⭐',n:'별님',r:2},
-  {e:'🦆',n:'황금오리',r:3},{e:'🦄',n:'유니콘',r:3},{e:'💎',n:'보석',r:3},
+// ── 테마 도감 (5테마 × 10종 = 50) ──
+const THEMES=[
+  {key:'animal', name:'동물', ico:'🐻', dolls:[
+    {e:'🐻',n:'곰돌이',r:1},{e:'🐰',n:'토끼',r:1},{e:'🐸',n:'개구리',r:1},
+    {e:'🐱',n:'냥이',r:2},{e:'🐧',n:'펭귄',r:2},{e:'🐼',n:'판다',r:2},{e:'🐨',n:'코알라',r:2},
+    {e:'🦊',n:'여우',r:3},{e:'🦁',n:'사자',r:3},{e:'🐯',n:'호랑이',r:3} ]},
+  {key:'food', name:'음식', ico:'🍔', dolls:[
+    {e:'🍔',n:'버거',r:1},{e:'🍕',n:'피자',r:1},{e:'🍟',n:'감자튀김',r:1},
+    {e:'🍩',n:'도넛',r:2},{e:'🍰',n:'케이크',r:2},{e:'🍫',n:'초코',r:2},{e:'🍦',n:'아이스크림',r:2},
+    {e:'🍣',n:'초밥',r:3},{e:'🍜',n:'라멘',r:3},{e:'🧁',n:'컵케이크',r:3} ]},
+  {key:'space', name:'우주', ico:'🚀', dolls:[
+    {e:'🚀',n:'로켓',r:1},{e:'🛸',n:'UFO',r:1},{e:'⭐',n:'별',r:1},
+    {e:'🌙',n:'달',r:2},{e:'☄️',n:'혜성',r:2},{e:'🪐',n:'토성',r:2},{e:'👽',n:'외계인',r:2},
+    {e:'🌌',n:'은하',r:3},{e:'🌠',n:'유성',r:3},{e:'🔭',n:'망원경',r:3} ]},
+  {key:'sea', name:'바다', ico:'🐠', dolls:[
+    {e:'🐠',n:'물고기',r:1},{e:'🐙',n:'문어',r:1},{e:'🦀',n:'게',r:1},
+    {e:'🐬',n:'돌고래',r:2},{e:'🐳',n:'고래',r:2},{e:'🦈',n:'상어',r:2},{e:'🐢',n:'거북',r:2},
+    {e:'🦑',n:'오징어',r:3},{e:'🐡',n:'복어',r:3},{e:'🧜',n:'인어',r:3} ]},
+  {key:'legend', name:'전설', ico:'🐉', dolls:[
+    {e:'🐉',n:'용',r:1},{e:'🦄',n:'유니콘',r:1},{e:'🔥',n:'불사조',r:1},
+    {e:'👑',n:'왕관',r:2},{e:'💎',n:'보석',r:2},{e:'🗡️',n:'성검',r:2},{e:'🏆',n:'트로피',r:2},
+    {e:'🌈',n:'무지개',r:3},{e:'💫',n:'정령',r:3},{e:'👾',n:'전설몬',r:3} ]},
 ];
-function loadDex(){ try{ return JSON.parse(localStorage.getItem('ppopgi_dex')||'[]'); }catch(e){ return []; } }
-function saveDex(a){ try{ localStorage.setItem('ppopgi_dex',JSON.stringify(a)); }catch(e){} }
+const TOTAL_DOLLS=THEMES.reduce((s,t)=>s+t.dolls.length,0);
+let curTheme=+(localStorage.getItem('ppopgi_theme')||0); if(curTheme>=THEMES.length) curTheme=THEMES.length-1;
+function THEME(){ return THEMES[curTheme]; }
+function did(theme,name){ return theme.key+':'+name; }
+function loadDex(){ try{ return JSON.parse(localStorage.getItem('ppopgi_dex2')||'[]'); }catch(e){ return []; } }
+function saveDex(a){ try{ localStorage.setItem('ppopgi_dex2',JSON.stringify(a)); }catch(e){} }
 let dex=loadDex();
-function dexCount(){ return dex.length; }
-function renderDexGrid(){ const g=$('dexGrid'); g.innerHTML=''; DOLLS.forEach(d=>{ const c=document.createElement('div'); c.className='dcell'+(dex.includes(d.n)?'':' lock'); c.textContent=dex.includes(d.n)?d.e:'❔'; g.appendChild(c); }); }
+function has(theme,d){ return dex.includes(did(theme,d.n)); }
+function themeCaught(theme){ return theme.dolls.filter(d=>has(theme,d)).length; }
+function totalCaughtDolls(){ return dex.length; }
+function dexCount(){ return themeCaught(THEME()); }  // 현재 테마 수집 수(하위호환)
+function renderDexGrid(){ const g=$('dexGrid'); g.innerHTML=''; THEME().dolls.forEach(d=>{ const got=has(THEME(),d); const c=document.createElement('div'); c.className='dcell'+(got?'':' lock'); c.textContent=got?d.e:'❔'; c.title=d.n+' '+'★'.repeat(d.r); g.appendChild(c); }); }
 
 // ── 캔버스 ──
 const cv=$('cv'), ctx=cv.getContext('2d'); let W=412,H=740,DPR=1, sc=1;
@@ -142,15 +167,17 @@ function renderLives(){ if(state==='start'){ $('lives').innerHTML=''; return; } 
 function confetti(x,y,n){ const cols=['#ff5ce1','#7cffb0','#ffd34d','#5ab0ff','#ff8a5a','#c9a3ff','#ffffff']; for(let i=0;i<n;i++){ const a=Math.random()*6.28, sp=rnd(2,9); parts.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-5,life:1.5,c:cols[i%cols.length],r:3+Math.random()*4}); } }
 
 function pickTarget(){
-  // 미보유 우선(간절함)
-  const missing=DOLLS.filter(d=>!dex.includes(d.n));
-  const pool=missing.length?missing:DOLLS;
-  return pool[Math.floor(Math.random()*pool.length)];
+  const T=THEME();
+  let pool=T.dolls.filter(d=>!has(T,d));      // 현재 테마 미보유 우선
+  if(!pool.length) pool=T.dolls;              // 다 모았으면(해금 직전) 전체
+  // 희귀도 가중: ★=3, ★★=2, ★★★=1 → ★★★일수록 목표로 덜 나옴(간절함)
+  const weighted=[]; pool.forEach(d=>{ const w=4-d.r; for(let i=0;i<w;i++) weighted.push(d); });
+  return weighted[Math.floor(Math.random()*weighted.length)];
 }
 function layoutField(goal){
   const f=field(); dolls=[];
-  // 인형 무더기: 여러 종류 흩뿌리기 + 목표 1개 확실히 포함
-  const set=[goal]; const others=DOLLS.filter(d=>d.n!==goal.n);
+  // 인형 무더기: 현재 테마에서 여러 종류 흩뿌리기 + 목표 1개 확실히 포함
+  const set=[goal]; const others=THEME().dolls.filter(d=>d.n!==goal.n);
   for(let i=0;i<7;i++) set.push(others[Math.floor(Math.random()*others.length)]);
   set.forEach((d,i)=>{ dolls.push({...d, x:f.x+rnd(0.14,0.86)*f.w, y:f.y+rnd(0.32,0.9)*f.h, wob:0, vy:0, held:false, fall:false}); });
   target=0; // goal은 첫 요소
@@ -160,7 +187,7 @@ function newRound(keepTarget){
   window._goal=goal;
   layoutField(goal);
   $('goal').textContent=goal.e+' '+goal.n+' '+('★'.repeat(goal.r));
-  $('dex').textContent='도감 '+dexCount()+'/'+DOLLS.length;
+  $('dex').textContent=THEME().ico+' '+THEME().name+' '+themeCaught(THEME())+'/'+THEME().dolls.length+' · 전체 '+totalCaughtDolls()+'/'+TOTAL_DOLLS;
   $('streak').textContent = failStreak>=2 ? ('😤 '+failStreak+'연속 실패 — 이번엔 과녁 커짐!') : (successStreak>=2?('🔥 '+successStreak+'연속 성공 중!'):'');
   claw={x:W/2,y:field().y-40,open:1,holding:null,phase:'',sway:0}; timeScale=1;
   state='aimX'; sweep=field().x; sweepDir=1; sweepSpd=1; renderLives();
@@ -168,7 +195,7 @@ function newRound(keepTarget){
 }
 const ACC_R_BASE=72;                                // 정확도 환산 반경
 function accRadius(){ return ACC_R_BASE*(1+clawBonus*0.5); }
-function successThreshold(){ const base=clamp(0.74+playCount*0.017, 0.55, 0.90); return clamp(base - clawBonus*0.1 - Math.min(failStreak,4)*0.025, 0.5, 0.90); } // 판마다 축소(상한90%) 후 광고/연속실패로 완화(매몰비용 오기)
+function successThreshold(){ const r=(dolls[target]&&dolls[target].r)||1; const rar=(r-1)*0.04; const base=clamp(0.74+playCount*0.017+rar, 0.55, 0.94); return clamp(base - clawBonus*0.1 - Math.min(failStreak,4)*0.025, 0.5, 0.94); } // 판마다 축소 + 희귀도(★★★=+0.08 더 어려움) 후 광고/연속실패로 완화(매몰비용 오기)
 function accAt(px,py){ const t=dolls[target]; return clamp(1-Math.hypot(px-t.x,py-t.y)/accRadius(),0,1); }
 function commit(){
   const t=dolls[target]; const dist=Math.hypot(cx-t.x, cy-t.y);
@@ -246,18 +273,35 @@ function endResult(win, kind){
   if(state==='result') return; state='result'; timeScale=1; claw.sway=0; $('gripWrap').classList.add('hidden');
   const goal=window._goal;
   if(win){
-    const wasNew=!dex.includes(goal.n);
-    if(wasNew){ dex.push(goal.n); saveDex(dex); }
+    const id=did(THEME(),goal.n); const wasNew=!dex.includes(id);
+    if(wasNew){ dex.push(id); saveDex(dex); }
     failStreak=0; try{localStorage.setItem('ppopgi_fs',0);}catch(e){}
     clawBonus=0;
     successStreak++; totalCaught++; if(successStreak>bestStreak) bestStreak=successStreak; saveStats();
-    flash('🎉 GET! '+goal.e+' '+goal.n+(successStreak>=3?(' 🔥'+successStreak+'연속!'):'')+'!','#7cffb0');
-    confetti(claw.x,H*0.42,90); burst(claw.x,H*0.5,'#ffffff',36);
+    flash('🎉 GET! '+goal.e+' '+goal.n+' '+('★'.repeat(goal.r))+(successStreak>=3?(' 🔥'+successStreak+'연속!'):'')+'!','#7cffb0');
+    const conf=60+goal.r*40;                          // ★★★일수록 더 화려하게
+    confetti(claw.x,H*0.42,conf); burst(claw.x,H*0.5,'#ffffff',24+goal.r*10);
     chord(523); setTimeout(()=>chord(784),160); setTimeout(()=>chord(1046),330);   // 상승 팡파레
-    vib([20,40,20,40,90]); screenShake=13; flashA=1; flashCol='124,255,176';
-    $('dex').textContent='도감 '+dexCount()+'/'+DOLLS.length; renderDexGrid();
-    if(wasNew && dexCount()>=DOLLS.length){ setTimeout(()=>{ flash('🎉 도감 완성! 대단해요!','#ffd34d'); chord(659); burst(W/2,H*0.4,'#ffd34d',60); screenShake=10; },900); }
-    setTimeout(()=>{ startRound(); },1200);
+    if(goal.r>=3){ setTimeout(()=>chord(1318),480); }  // 레어 추가 음
+    vib([20,40,20,40,90]); screenShake=10+goal.r*3; flashA=1; flashCol='124,255,176';
+    renderDexGrid();
+    const done=themeCaught(THEME());
+    $('dex').textContent=THEME().ico+' '+THEME().name+' '+done+'/'+THEME().dolls.length+' · 전체 '+totalCaughtDolls()+'/'+TOTAL_DOLLS;
+    let delay=1200;
+    if(wasNew && done>=THEME().dolls.length){
+      // 테마 완성! → 다음 테마 해금
+      if(curTheme < THEMES.length-1){
+        const nx=THEMES[curTheme+1];
+        setTimeout(()=>{ flash('🎊 '+THEME().name+' 테마 클리어!','#ffd34d'); chord(659); setTimeout(()=>chord(988),200); burst(W/2,H*0.4,'#ffd34d',70); screenShake=12; },900);
+        setTimeout(()=>{ curTheme++; try{localStorage.setItem('ppopgi_theme',curTheme);}catch(e){} flash('🔓 새 테마 해금! '+nx.ico+' '+nx.name,'#7cf6ff'); renderDexGrid(); renderStartStats(); },2000);
+        delay=3000;
+      } else {
+        // 마지막 테마까지 완성 = 전체 마스터
+        setTimeout(()=>{ flash('👑 전체 마스터! 50종 완성!','#ffd34d'); chord(659); setTimeout(()=>chord(988),180); setTimeout(()=>chord(1318),360); burst(W/2,H*0.4,'#ffd34d',100); screenShake=16; },900);
+        delay=2800;
+      }
+    }
+    setTimeout(()=>{ startRound(); },delay);
   } else {
     failStreak++; try{localStorage.setItem('ppopgi_fs',failStreak);}catch(e){}
     successStreak=0;
@@ -272,7 +316,7 @@ function endResult(win, kind){
       showBanner();
       $('overTitle').textContent = near?'아—! 놓쳤다 😫':'빗나갔다 💨';
       $('overMsg').innerHTML = '정확도 <b style="color:'+(near?'#ffcf66':'#ff8a8a')+'">'+(window.lastAcc||0)+'%</b> <span style="opacity:.7">(성공 '+(window.lastThresh||95)+'%↑)</span> · 💔 생명 0<br>'+(near?'중앙에서 살짝 벗어나 미끄러졌어요!':'중앙에서 많이 빗나갔어요')+'<br><b style="color:#ffcf66">'+goal.e+' '+goal.n+'</b> 조금만 더 정확히!';
-      $('overDex').textContent=dexCount()+'/'+DOLLS.length;
+      $('overDex').textContent=totalCaughtDolls()+'/'+TOTAL_DOLLS;
       setTimeout(()=>$('over').classList.remove('hidden'),700);
     }
   }
@@ -404,7 +448,10 @@ setInterval(()=>{ renderHearts(); if(!$('noheart').classList.contains('hidden'))
 // ── 기록/스트릭 ──
 let successStreak=0, bestStreak=+(localStorage.getItem('ppopgi_best')||0), totalCaught=+(localStorage.getItem('ppopgi_total')||0);
 function saveStats(){ try{ localStorage.setItem('ppopgi_best',bestStreak); localStorage.setItem('ppopgi_total',totalCaught); }catch(e){} }
-function renderStartStats(){ $('startStats').innerHTML='🏆 최고 연속 <b>'+bestStreak+'</b> · 🧸 누적 <b>'+totalCaught+'</b>'; }
+function renderStartStats(){
+  const h=$('themeHdr'); if(h){ const done=themeCaught(THEME()); const all=totalCaughtDolls();
+    h.innerHTML=THEME().ico+' <b>'+THEME().name+'</b> 테마 '+done+'/'+THEME().dolls.length+(done>=THEME().dolls.length?(curTheme<THEMES.length-1?' ✅':' 👑'):'')+' <span style="opacity:.6;font-weight:600">· 전체 '+all+'/'+TOTAL_DOLLS+'</span>'; }
+  $('startStats').innerHTML='🏆 최고 연속 <b>'+bestStreak+'</b> · 🧸 누적 <b>'+totalCaught+'</b> · 🎯 목표: 5테마 50종 마스터'; }
 
 // ── 배너광고 ──
 let bannerShown=false;
@@ -412,7 +459,7 @@ async function showBanner(){ const C=window.Capacitor; if(!(C&&C.Plugins&&C.Plug
 async function hideBanner(){ const C=window.Capacitor; if(!(C&&C.Plugins&&C.Plugins.AdMob)||!bannerShown) return; bannerShown=false; try{ await C.Plugins.AdMob.hideBanner(); }catch(e){} }
 
 // ── 공유(바이럴) ──
-function shareGame(){ const txt='모두의 뽑기 🧸 도감 '+dexCount()+'/'+DOLLS.length+' · 최고 연속 '+bestStreak+'회! 나도 도전 👉\nhttps://seungiljang.github.io/games/ppopgi.html';
+function shareGame(){ const txt='모두의 뽑기 🧸 도감 '+totalCaughtDolls()+'/'+TOTAL_DOLLS+' · 최고 연속 '+bestStreak+'회! 나도 도전 👉\nhttps://seungiljang.github.io/games/ppopgi.html';
   try{ if(navigator.share){ navigator.share({title:'모두의 뽑기',text:txt}); return; } }catch(e){}
   try{ navigator.clipboard.writeText(txt); flash('📋 복사됨!','#7cf6ff'); }catch(e){} }
 
@@ -431,6 +478,6 @@ $('heartAdBtn').onclick=()=>{ playAd(()=>{ addHearts(5); flash('❤️ 하트 +5
 $('heartWaitBtn').onclick=toStart;
 // 초기 화면
 (function initAds2(){ setTimeout(showBanner,800); })();
-renderDexGrid(); loadHearts(); renderHearts(); renderStartStats(); $('dex').textContent='도감 '+dexCount()+'/'+DOLLS.length;
+renderDexGrid(); loadHearts(); renderHearts(); renderStartStats(); $('dex').textContent=THEME().ico+' '+THEME().name+' '+themeCaught(THEME())+'/'+THEME().dolls.length+' · 전체 '+totalCaughtDolls()+'/'+TOTAL_DOLLS;
 </script>
 </body></html>
