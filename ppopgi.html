@@ -72,7 +72,7 @@
 <div id="gripWrap" class="hidden"><div id="gripLbl">🔥 탭 연타! 꽉 잡아!</div><div id="gripBar"><div id="gripFill"></div></div></div>
 <div id="goldBar" class="hidden"><div id="goldLbl">⚡ 황금 찬스!</div><div id="goldTrack"><div id="goldFill"></div></div></div>
 <div id="hint"></div>
-<div id="ver">v2.1 · 글로벌 랭킹 준비완료(Firebase URL 연결 시 활성) · 이름설정</div>
+<div id="ver">v2.2 · 글로벌 랭킹(갤로그 Firebase 재사용) · 규칙 허용 시 자동 활성</div>
 
 <div id="start">
   <h1>모두의 뽑기</h1>
@@ -88,7 +88,7 @@
     <button class="btn" id="rankBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:15px 18px">🏅 랭킹</button>
     <button class="btn" id="shareBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:15px 18px">🔗 공유</button>
   </div>
-  <div id="changelog">🆕 <b>v2.0</b> · ⚡황금 찬스 · 📅출석보상 · 🎯일일미션 · 👑칭호 · 🏅랭킹</div>
+  <div id="changelog">🆕 <b>v2.2</b> · 🌐글로벌 랭킹(전 세계 최고 연속 경쟁) · ⚡황금찬스 · 📅출석 · 🎯일일미션 · 👑칭호</div>
 </div>
 
 <div id="rank">
@@ -594,25 +594,28 @@ function rollGolden(isSecret){ isGolden=false; $('goldBar').classList.add('hidde
   if(Math.random()<0.15){ isGolden=true; goldenT=GOLDEN_MAX; $('goldBar').classList.remove('hidden'); $('goldFill').style.width='100%'; } }
 function goldenExpire(){ isGolden=false; $('goldBar').classList.add('hidden'); flash('⏰ 황금 찬스 놓침!','#ffcf66'); tone(160,0.2,'sawtooth',0.1); setTimeout(()=>{ if(state==='aimX'||state==='aimY') newRound(); },700); }
 
-// ── 랭킹(로컬 명예의 전당 + Firebase 글로벌) ──
-// ▼▼▼ 글로벌 랭킹: Firebase Realtime DB URL만 넣으면 자동 활성화 (예: https://xxxx-default-rtdb.firebaseio.com) ▼▼▼
-const PPOPGI_FB_URL = (window.PPOPGI_FB_URL||"").replace(/\/$/,'');
-// ▲▲▲ 비워두면 로컬(내 기록)만 동작 ▲▲▲
-function fbOn(){ return !!PPOPGI_FB_URL; }
+// ── 랭킹(로컬 명예의 전당 + Firebase Firestore 글로벌) ──
+// 갤로그의 귀환과 같은 Firebase 프로젝트 재사용(컬렉션만 ppopgi_lb로 분리)
+const FS_PROJECT = window.PPOPGI_FS_PROJECT || "gallog-return-be90f";
+const FS_KEY = window.PPOPGI_FS_KEY || "AIzaSyDUanex0x7CmvCQxBK2d3a7SkyscuEGzwY";
+const FS_COL = window.PPOPGI_FS_COL || "ppopgi_lb";
+const FS_BASE = "https://firestore.googleapis.com/v1/projects/"+FS_PROJECT+"/databases/(default)/documents";
+function fbOn(){ return !!FS_PROJECT && !!FS_KEY; }
 function myUid(){ let u=localStorage.getItem('ppopgi_uid'); if(!u){ u='u'+Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4); localStorage.setItem('ppopgi_uid',u); } return u; }
 function myName(){ let n=localStorage.getItem('ppopgi_name'); if(!n){ n='뽑기러'+Math.floor(1000+Math.random()*9000); localStorage.setItem('ppopgi_name',n); } return n; }
 function setMyName(n){ n=(n||'').trim().slice(0,12); if(n){ localStorage.setItem('ppopgi_name',n); submitScore(); } }
+function fsVal(f){ if(!f) return undefined; if(f.integerValue!=null) return +f.integerValue; if(f.doubleValue!=null) return +f.doubleValue; if(f.stringValue!=null) return f.stringValue; return undefined; }
 let _submitBusy=false;
 function submitScore(){ if(!fbOn()||_submitBusy) return; _submitBusy=true;
   const sec=THEMES.filter(t=>secretCaught(t)).length;
-  const body={ name:myName(), best:bestStreak, total:totalCaught, dex:totalCaughtDolls(), secret:sec, title:curTitle().n };
-  fetch(PPOPGI_FB_URL+'/ppopgi_lb/'+myUid()+'.json',{method:'PUT',body:JSON.stringify(body)}).catch(()=>{}).finally(()=>{ _submitBusy=false; });
+  const body={ fields:{ name:{stringValue:String(myName()).slice(0,16)}, best:{integerValue:String(bestStreak|0)}, total:{integerValue:String(totalCaught|0)}, dex:{integerValue:String(totalCaughtDolls()|0)}, secret:{integerValue:String(sec|0)}, title:{stringValue:curTitle().n} } };
+  fetch(FS_BASE+'/'+FS_COL+'/'+myUid()+'?key='+FS_KEY,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).catch(()=>{}).finally(()=>{ _submitBusy=false; });
 }
 function fetchGlobalTop(cb){ if(!fbOn()){ cb(null); return; }
-  fetch(PPOPGI_FB_URL+'/ppopgi_lb.json').then(r=>r.json()).then(obj=>{
-    if(!obj){ cb([]); return; }
-    const arr=Object.keys(obj).map(k=>({uid:k,...obj[k]})).filter(x=>x&&typeof x.best==='number');
-    arr.sort((a,b)=> (b.best-a.best) || ((b.total||0)-(a.total||0)) );
+  fetch(FS_BASE+'/'+FS_COL+'?key='+FS_KEY+'&pageSize=300').then(r=>r.ok?r.json():Promise.reject(r.status)).then(j=>{
+    const docs=(j&&j.documents)||[];
+    const arr=docs.map(d=>{ const uid=d.name.split('/').pop(); const f=d.fields||{}; return {uid, name:fsVal(f.name), best:fsVal(f.best)||0, total:fsVal(f.total)||0, dex:fsVal(f.dex)||0, secret:fsVal(f.secret)||0, title:fsVal(f.title)}; }).filter(x=>x.uid && x.uid.indexOf('__')<0);
+    arr.sort((a,b)=> (b.best-a.best) || (b.total-a.total) );
     cb(arr);
   }).catch(()=>cb(null));
 }
@@ -628,7 +631,7 @@ function renderRank(){
     $('rankList').innerHTML='<div class="rkrow"><span>🌐 글로벌 랭킹 불러오는 중…</span></div>';
     $('rankNote').textContent='🌐 전 세계 최고 연속 기록 순위';
     fetchGlobalTop(top=>{
-      if(!top){ $('rankList').innerHTML=localRows.map(r=>'<div class="rkrow"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>').join(''); $('rankNote').textContent='⚠️ 글로벌 연결 실패 — 내 기록만 표시'; bindNameEdit(); return; }
+      if(!top){ $('rankList').innerHTML=localRows.map(r=>'<div class="rkrow"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>').join(''); $('rankNote').textContent='🌐 글로벌 랭킹 준비 중 — 지금은 내 기록'; bindNameEdit(); return; }
       const uid=myUid(); const myIdx=top.findIndex(x=>x.uid===uid);
       let h='';
       top.slice(0,20).forEach((x,i)=>{ const me=x.uid===uid; const medal=['🥇','🥈','🥉'][i]||('<b style="opacity:.6">'+(i+1)+'</b>');
