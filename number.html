@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="ko"><head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
-<title>모두의 숫자</title>
+<title>멈춰라 숫자</title>
 <style>
   html,body{margin:0;height:100%;background:#0a0e1a;overflow:hidden;font-family:system-ui,-apple-system,sans-serif;color:#eef;touch-action:none;user-select:none;-webkit-user-select:none}
   #fx{position:fixed;inset:0;pointer-events:none;z-index:5}
@@ -57,13 +57,13 @@
 </div>
 
 <div id="start">
-  <h1>모두의 숫자</h1>
+  <h1>멈춰라 숫자</h1>
   <div class="sub">숫자가 <b>규칙</b>대로 바뀝니다. 수열을 읽고 <b style="color:#7cf6ff">목표</b>에서 <b>탭</b>!<br/>가끔 <b style="color:#c9a3ff">⚡ 롤링</b>은 초고속 — <b>감으로</b> 멈추세요!</div>
   <div class="sub" style="opacity:.6;font-size:13px;">틀리거나 놓치면 즉시 끝 · 갈수록 빨라짐<br/><b style="color:#ff9a5a">처음 2판만 슬로모로 도와줘요 · 3판부터 실전!</b></div>
   <button class="btn" id="startBtn">시작</button>
   <div class="sub" style="margin-top:6px;">최고 <b id="best2">0</b></div>
   <button class="btn" id="lbBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:11px 24px;font-size:16px;margin-top:10px">🏆 랭킹</button>
-  <div id="changelog">🆕 <b id="clVer">v1.6</b> · <span id="clNote">🌐 전세계 글로벌 랭킹 ON! 최고 점수로 세계 순위 경쟁</span></div>
+  <div id="changelog">🆕 <b id="clVer">v1.7</b> · <span id="clNote">게임 이름이 '멈춰라 숫자'로! 🌐 전세계 글로벌 랭킹도 ON</span></div>
 </div>
 
 <div id="over" class="hidden">
@@ -86,7 +86,7 @@
   <div id="lbList"></div>
   <button class="btn" id="lbClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v1.6 · 글로벌 랭킹(갤로그 Firebase 재사용, number_lb)</div>
+<div id="ver">v1.7 · 이름 변경(멈춰라 숫자) + 글로벌 랭킹</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -193,8 +193,8 @@ async function showLB(){ $('lb').classList.remove('hidden');
 }
 function hideLB(){ $('lb').classList.add('hidden'); }
 function shareScore(){
-  const txt='모두의 숫자 '+score+'점! 🎯 규칙 읽고 목표에서 STOP — 도전해봐!\nhttps://seungiljang.github.io/games/number.html';
-  try{ if(navigator.share){ navigator.share({title:'모두의 숫자', text:txt}); return; } }catch(e){}
+  const txt='멈춰라 숫자 '+score+'점! 🎯 규칙 읽고 목표에서 STOP — 도전해봐!\nhttps://seungiljang.github.io/games/number.html';
+  try{ if(navigator.share){ navigator.share({title:'멈춰라 숫자', text:txt}); return; } }catch(e){}
   try{ navigator.clipboard.writeText(txt); floatText('📋 복사됨!','#7cf6ff'); }catch(e){}
 }
 
