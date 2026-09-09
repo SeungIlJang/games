@@ -64,7 +64,7 @@
   <button class="btn" id="startBtn">시작</button>
   <div class="sub" style="margin-top:6px;">최고 <b id="best2">0</b></div>
   <button class="btn" id="lbBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:11px 24px;font-size:16px;margin-top:10px">🏆 랭킹</button>
-  <div id="changelog">🆕 <b id="clVer">v1.8</b> · <span id="clNote">💛 생명 시스템! ⚡롤링 성공하면 생명 +1, 실수해도 이어가기</span></div>
+  <div id="changelog">🆕 <b id="clVer">v1.9</b> · <span id="clNote">⚡롤링은 이벤트(못맞춰도 페널티X) · 게임 끝나면 랭킹 바로 표시</span></div>
 </div>
 
 <div id="over" class="hidden">
@@ -87,7 +87,7 @@
   <div id="lbList"></div>
   <button class="btn" id="lbClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v1.8 · 💛 생명 시스템(롤링 성공=생명+1, 죽을때 소모하고 이어가기)</div>
+<div id="ver">v1.9 · 롤링 이벤트화(실패 페널티X) + 게임오버 시 랭킹 자동표시</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -299,9 +299,17 @@ function hitOK(){
 }
 function tap(){
   if(state!=='play'){ start(); return; }
-  const ok = curIsRoll ? Math.abs(cur-target)<=1 : cur===target;   // 롤링은 ±1까지 인정(관대)
-  if(ok){ hitOK(); }
-  else { die((curIsRoll?'아깝다! (롤링) ':'아깝다! ')+'목표 '+target+', '+cur+'에서 멈춤 (差 '+Math.abs(target-cur)+')'); }
+  if(curIsRoll){
+    if(Math.abs(cur-target)<=1){ hitOK(); }
+    else { // 롤링은 '이벤트' — 못 맞춰도 페널티 없음(생명·점수·콤보 유지, 다음 라운드로)
+      clearTimeout(timer); clearTimeout(rollTO);
+      floatText('아깝다! (롤링)','#c9a3ff'); tone(220,0.12,'sawtooth',0.07); vib(25);
+      newRound(false); nextTick(Math.max(320, speed()));
+    }
+    return;
+  }
+  if(cur===target){ hitOK(); }
+  else { die('아깝다! 목표 '+target+', '+cur+'에서 멈춤 (差 '+Math.abs(target-cur)+')'); }
 }
 function die(msg){
   clearTimeout(timer); clearTimeout(rollTO);
@@ -330,6 +338,7 @@ function die(msg){
   $('reviveBtn').style.display = canRevive ? 'block' : 'none';
   if(canRevive) $('reviveBtn').textContent = '🎬 광고 보고 이어하기 ('+(MAX_REVIVE-reviveCount)+'회 남음)';
   setTimeout(()=>$('over').classList.remove('hidden'),260);
+  if(score>0) setTimeout(()=>{ if(state==='over' && $('lb').classList.contains('hidden')) showLB(); }, 950);   // 게임 끝나면 랭킹 바로 보이기
 }
 function revive(){
   if(reviveCount>=MAX_REVIVE || state!=='over') return; reviveCount++;
