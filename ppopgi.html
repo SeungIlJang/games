@@ -72,7 +72,7 @@
 <div id="gripWrap" class="hidden"><div id="gripLbl">🔥 탭 연타! 꽉 잡아!</div><div id="gripBar"><div id="gripFill"></div></div></div>
 <div id="goldBar" class="hidden"><div id="goldLbl">⚡ 황금 찬스!</div><div id="goldTrack"><div id="goldFill"></div></div></div>
 <div id="hint"></div>
-<div id="ver">v2.0 · 황금찬스·출석보상·일일미션·칭호·랭킹(명예의전당)</div>
+<div id="ver">v2.1 · 글로벌 랭킹 준비완료(Firebase URL 연결 시 활성) · 이름설정</div>
 
 <div id="start">
   <h1>모두의 뽑기</h1>
@@ -397,6 +397,7 @@ function endResult(win, kind){
       $('overTitle').textContent = soClose?('😭 딱 '+gap+'% 차이!'):(near?'아—! 놓쳤다 😫':'빗나갔다 💨');
       $('overMsg').innerHTML = '정확도 <b style="color:'+(near?'#ffcf66':'#ff8a8a')+'">'+(window.lastAcc||0)+'%</b> <span style="opacity:.7">(성공 '+(window.lastThresh||95)+'%↑, '+(gap>0?gap+'% 부족':'아깝게')+')</span> · 💔 생명 0<br>'+(soClose?'진짜 아까웠어요! 다음엔 꼭 잡아요 🔥':(near?'중앙에서 살짝 벗어나 미끄러졌어요!':'중앙에서 많이 빗나갔어요'))+'<br><b style="color:#ffcf66">'+goal.e+' '+goal.n+'</b> — 🔥복수전이 기다려요!';
       $('overDex').textContent=totalCaughtDolls()+'/'+TOTAL_DOLLS;
+      submitScore();   // 글로벌 랭킹에 이번 판 기록 반영
       setTimeout(()=>$('over').classList.remove('hidden'),700);
     }
   }
@@ -593,14 +594,54 @@ function rollGolden(isSecret){ isGolden=false; $('goldBar').classList.add('hidde
   if(Math.random()<0.15){ isGolden=true; goldenT=GOLDEN_MAX; $('goldBar').classList.remove('hidden'); $('goldFill').style.width='100%'; } }
 function goldenExpire(){ isGolden=false; $('goldBar').classList.add('hidden'); flash('⏰ 황금 찬스 놓침!','#ffcf66'); tone(160,0.2,'sawtooth',0.1); setTimeout(()=>{ if(state==='aimX'||state==='aimY') newRound(); },700); }
 
-// ── 랭킹(로컬 명예의 전당 + 글로벌 훅) ──
+// ── 랭킹(로컬 명예의 전당 + Firebase 글로벌) ──
+// ▼▼▼ 글로벌 랭킹: Firebase Realtime DB URL만 넣으면 자동 활성화 (예: https://xxxx-default-rtdb.firebaseio.com) ▼▼▼
+const PPOPGI_FB_URL = (window.PPOPGI_FB_URL||"").replace(/\/$/,'');
+// ▲▲▲ 비워두면 로컬(내 기록)만 동작 ▲▲▲
+function fbOn(){ return !!PPOPGI_FB_URL; }
+function myUid(){ let u=localStorage.getItem('ppopgi_uid'); if(!u){ u='u'+Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4); localStorage.setItem('ppopgi_uid',u); } return u; }
+function myName(){ let n=localStorage.getItem('ppopgi_name'); if(!n){ n='뽑기러'+Math.floor(1000+Math.random()*9000); localStorage.setItem('ppopgi_name',n); } return n; }
+function setMyName(n){ n=(n||'').trim().slice(0,12); if(n){ localStorage.setItem('ppopgi_name',n); submitScore(); } }
+let _submitBusy=false;
+function submitScore(){ if(!fbOn()||_submitBusy) return; _submitBusy=true;
+  const sec=THEMES.filter(t=>secretCaught(t)).length;
+  const body={ name:myName(), best:bestStreak, total:totalCaught, dex:totalCaughtDolls(), secret:sec, title:curTitle().n };
+  fetch(PPOPGI_FB_URL+'/ppopgi_lb/'+myUid()+'.json',{method:'PUT',body:JSON.stringify(body)}).catch(()=>{}).finally(()=>{ _submitBusy=false; });
+}
+function fetchGlobalTop(cb){ if(!fbOn()){ cb(null); return; }
+  fetch(PPOPGI_FB_URL+'/ppopgi_lb.json').then(r=>r.json()).then(obj=>{
+    if(!obj){ cb([]); return; }
+    const arr=Object.keys(obj).map(k=>({uid:k,...obj[k]})).filter(x=>x&&typeof x.best==='number');
+    arr.sort((a,b)=> (b.best-a.best) || ((b.total||0)-(a.total||0)) );
+    cb(arr);
+  }).catch(()=>cb(null));
+}
 function renderRank(){
   const sec=THEMES.filter(t=>secretCaught(t)).length; const T=curTitle();
-  $('rankMe').innerHTML='👑 <b style="color:#ffd34d">'+T.n+'</b>';
-  const rows=[['🔥 최고 연속',bestStreak+'연속'],['🧸 누적 수집',totalCaught+'마리'],['📖 도감',totalCaughtDolls()+'/'+TOTAL_DOLLS],['✨ 시크릿',sec+'/'+THEMES.length],['📅 출석',attStreak()+'일 연속']];
-  $('rankList').innerHTML=rows.map(r=>'<div class="rkrow"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>').join('');
-  $('rankNote').textContent='🌐 글로벌 랭킹은 서버 연결 시 활성화돼요 (지금은 내 기록).';
+  $('rankMe').innerHTML='👑 <b style="color:#ffd34d">'+T.n+'</b> · <span style="opacity:.8">'+myName()+'</span> <span id="nameEdit" style="cursor:pointer;opacity:.7">✏️</span>';
+  const localRows=[['🔥 최고 연속',bestStreak+'연속'],['🧸 누적 수집',totalCaught+'마리'],['📖 도감',totalCaughtDolls()+'/'+TOTAL_DOLLS],['✨ 시크릿',sec+'/'+THEMES.length],['📅 출석',attStreak()+'일']];
+  if(!fbOn()){
+    $('rankList').innerHTML=localRows.map(r=>'<div class="rkrow"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>').join('');
+    $('rankNote').textContent='🌐 글로벌 랭킹은 서버 연결 시 활성화돼요 (지금은 내 기록).';
+  } else {
+    submitScore();
+    $('rankList').innerHTML='<div class="rkrow"><span>🌐 글로벌 랭킹 불러오는 중…</span></div>';
+    $('rankNote').textContent='🌐 전 세계 최고 연속 기록 순위';
+    fetchGlobalTop(top=>{
+      if(!top){ $('rankList').innerHTML=localRows.map(r=>'<div class="rkrow"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>').join(''); $('rankNote').textContent='⚠️ 글로벌 연결 실패 — 내 기록만 표시'; bindNameEdit(); return; }
+      const uid=myUid(); const myIdx=top.findIndex(x=>x.uid===uid);
+      let h='';
+      top.slice(0,20).forEach((x,i)=>{ const me=x.uid===uid; const medal=['🥇','🥈','🥉'][i]||('<b style="opacity:.6">'+(i+1)+'</b>');
+        h+='<div class="rkrow"'+(me?' style="background:rgba(255,211,77,.18);border:1px solid rgba(255,211,77,.5)"':'')+'><span>'+medal+' '+(x.name||'익명').replace(/[<>]/g,'')+(me?' <b>(나)</b>':'')+'</span><b>🔥'+x.best+' · 🧸'+(x.total||0)+'</b></div>'; });
+      if(myIdx>=20){ h+='<div style="text-align:center;opacity:.5;font-size:12px">⋯</div>'; const x=top[myIdx]; h+='<div class="rkrow" style="background:rgba(255,211,77,.18);border:1px solid rgba(255,211,77,.5)"><span><b>'+(myIdx+1)+'위</b> '+(x.name||'나')+' <b>(나)</b></span><b>🔥'+x.best+'</b></div>'; }
+      $('rankList').innerHTML=h || '<div class="rkrow"><span>아직 기록이 없어요 — 1등 도전!</span></div>';
+      $('rankNote').textContent='🌐 전 세계 '+top.length+'명 중 '+(myIdx>=0?(myIdx+1)+'위':'미등록')+' · 최고 연속 기준';
+      bindNameEdit();
+    });
+  }
+  bindNameEdit();
 }
+function bindNameEdit(){ const e=$('nameEdit'); if(e) e.onclick=()=>{ const n=prompt('랭킹에 표시할 이름 (최대 12자)', myName()); if(n!=null){ setMyName(n); renderRank(); } }; }
 function renderMeta(){
   const T=curTitle(), nx=nextTitle();
   $('titleBadge').innerHTML='👑 '+T.n;
@@ -621,7 +662,7 @@ function shareGame(){ const txt='모두의 뽑기 🧸 도감 '+totalCaughtDolls
   try{ navigator.clipboard.writeText(txt); flash('📋 복사됨!','#7cf6ff'); }catch(e){} }
 
 // ── 화면 전환 ──
-function toStart(){ state='start'; isGolden=false; $('goldBar').classList.add('hidden'); renderLives(); $('combo').textContent=''; $('lastAccTop').textContent=''; $('streak').textContent=''; $('over').classList.add('hidden'); $('noheart').classList.add('hidden'); $('start').classList.remove('hidden'); renderHearts(); renderStartStats(); renderMeta(); renderDexGrid(); showBanner(); }
+function toStart(){ state='start'; isGolden=false; $('goldBar').classList.add('hidden'); renderLives(); $('combo').textContent=''; $('lastAccTop').textContent=''; $('streak').textContent=''; $('over').classList.add('hidden'); $('noheart').classList.add('hidden'); $('start').classList.remove('hidden'); renderHearts(); renderStartStats(); renderMeta(); renderDexGrid(); showBanner(); submitScore(); }
 function showNoHearts(){ state='result'; $('over').classList.add('hidden'); $('start').classList.add('hidden'); $('heartMsg').innerHTML='다음 하트까지 <b>'+heartTimer()+'</b><br>지금 바로 하려면 광고로 하트 +5!'; $('noheart').classList.remove('hidden'); showBanner(); }
 function startRound(goal){ loadHearts(); if(hearts<=0){ showNoHearts(); return; } if(hearts===MAX_HEARTS) heartTs=Date.now(); hearts--; saveHearts(); renderHearts(); lives=MAX_LIVES; renderLives(); $('over').classList.add('hidden'); $('noheart').classList.add('hidden'); hideBanner(); newRound(goal); }
 
