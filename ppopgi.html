@@ -56,6 +56,9 @@
   #goldLbl{font-size:16px;font-weight:900;color:#ffd34d;text-shadow:0 0 12px rgba(255,211,77,.7)}
   #goldTrack{width:70%;max-width:300px;height:12px;margin:5px auto 0;background:rgba(255,255,255,.15);border-radius:8px;overflow:hidden;border:2px solid #ffd34d}
   #goldFill{height:100%;background:linear-gradient(90deg,#ffe066,#ffb04d);width:100%;transition:width .1s linear}
+  #trophyRow{display:flex;gap:6px;justify-content:center;margin:2px 0 4px}
+  .trophy{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;background:rgba(255,255,255,.06);filter:grayscale(1);opacity:.35;border:1px solid transparent}
+  .trophy.master{filter:none;opacity:1;background:linear-gradient(135deg,#ffe066,#ffb04d);border:1px solid #fff2c0;box-shadow:0 0 10px rgba(255,211,77,.8);color:#4a2e00}
 </style></head>
 <body>
 <div id="stage"><canvas id="cv"></canvas></div>
@@ -72,13 +75,14 @@
 <div id="gripWrap" class="hidden"><div id="gripLbl">🔥 탭 연타! 꽉 잡아!</div><div id="gripBar"><div id="gripFill"></div></div></div>
 <div id="goldBar" class="hidden"><div id="goldLbl">⚡ 황금 찬스!</div><div id="goldTrack"><div id="goldFill"></div></div></div>
 <div id="hint"></div>
-<div id="ver">v2.2 · 글로벌 랭킹(갤로그 Firebase 재사용) · 규칙 허용 시 자동 활성</div>
+<div id="ver">v2.3 · 글로벌 랭킹 활성 + 테마 마스터 황금 보상(트로피·황금배경)</div>
 
 <div id="start">
   <h1>모두의 뽑기</h1>
   <div id="titleBadge"></div>
   <div class="sub" style="font-size:14px"><b>탭 2번</b>으로 <b style="color:#7cffb0">정가운데</b>에 멈추면 성공! (초반 크게→갈수록 작게)</div>
   <div class="sub" id="themeHdr" style="font-weight:800;font-size:15px;margin-bottom:4px"></div>
+  <div id="trophyRow"></div>
   <div id="dexGrid"></div>
   <div class="sub" id="startStats" style="font-size:13px;opacity:.85"></div>
   <div id="missionBox"></div>
@@ -88,7 +92,7 @@
     <button class="btn" id="rankBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:15px 18px">🏅 랭킹</button>
     <button class="btn" id="shareBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:15px 18px">🔗 공유</button>
   </div>
-  <div id="changelog">🆕 <b>v2.2</b> · 🌐글로벌 랭킹(전 세계 최고 연속 경쟁) · ⚡황금찬스 · 📅출석 · 🎯일일미션 · 👑칭호</div>
+  <div id="changelog">🆕 <b>v2.3</b> · 🌐글로벌 랭킹 ON · 🏆테마 마스터 황금 보상(트로피 진열+황금 배경) · ⚡황금찬스 · 📅출석 · 🎯미션</div>
 </div>
 
 <div id="rank">
@@ -175,6 +179,9 @@ function dexCount(){ return themeCaught(THEME()); }  // 현재 테마 수집 수
 // ── 시크릿 인형: 테마 기본 10종을 다 모으면 "시크릿 보스"로 등장 ──
 function secretUnlocked(theme){ return !!theme.secret && themeCaught(theme) >= theme.dolls.length; }
 function secretCaught(theme){ return theme.secret && has(theme,theme.secret); }
+function themeMastered(theme){ return themeCaught(theme)>=theme.dolls.length && (!theme.secret || secretCaught(theme)); }  // 기본10+시크릿 = 완전 마스터(황금 보상)
+function masteredCount(){ return THEMES.filter(themeMastered).length; }
+function renderTrophies(){ const el=$('trophyRow'); if(!el) return; el.innerHTML=THEMES.map(t=>'<div class="trophy'+(themeMastered(t)?' master':'')+'" title="'+t.name+(themeMastered(t)?' 마스터! 🏆':' (미완성)')+'">'+(themeMastered(t)?t.ico:'🔒')+'</div>').join(''); }
 function renderDexGrid(){ const g=$('dexGrid'); g.innerHTML='';
   THEME().dolls.forEach(d=>{ const got=has(THEME(),d); const c=document.createElement('div'); c.className='dcell'+(got?'':' lock'); c.textContent=got?d.e:'❔'; c.title=d.n+' '+'★'.repeat(d.r); g.appendChild(c); });
   const T=THEME(); if(T.secret){ const sc=document.createElement('div'); const caught=secretCaught(T), unlocked=secretUnlocked(T);
@@ -368,6 +375,7 @@ function endResult(win, kind){
       if(curTheme < THEMES.length-1){
         const nx=THEMES[curTheme+1];
         setTimeout(()=>{ flash((isSecret?'✨ 시크릿까지 완성! ':'')+T.name+' 테마 마스터!','#ffd34d'); chord(659); setTimeout(()=>chord(988),200); burst(W/2,H*0.4,'#ffd34d',90); screenShake=14; },900);
+        setTimeout(()=>flash('🏆 '+T.ico+' 황금 '+T.name+' 테마 해금!','#ffe066'),1500);
         setTimeout(()=>{ curTheme++; try{localStorage.setItem('ppopgi_theme',curTheme);}catch(e){} flash('🔓 새 테마 해금! '+nx.ico+' '+nx.name,'#7cf6ff'); renderDexGrid(); renderStartStats(); },2100);
         delay=3200;
       } else {
@@ -433,8 +441,13 @@ function draw(){
   let sx=0,sy=0; if(screenShake>0){ sx=(Math.random()-.5)*screenShake; sy=(Math.random()-.5)*screenShake; screenShake*=0.85; if(screenShake<.4)screenShake=0; }
   ctx.save(); ctx.translate(sx,sy);
   const f=field();
-  // 배경 그라데이션
-  const bg=ctx.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#2a1140'); bg.addColorStop(1,'#120e1e'); ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+  // 배경 그라데이션 (마스터한 테마는 황금 배경 보상)
+  const goldBg = (state!=='start') && themeMastered(THEME());
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  if(goldBg){ bg.addColorStop(0,'#4a3410'); bg.addColorStop(1,'#1c1405'); } else { bg.addColorStop(0,'#2a1140'); bg.addColorStop(1,'#120e1e'); }
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+  if(goldBg){ // 은은한 황금 반짝이
+    for(let i=0;i<5;i++){ const t2=performance.now()/1000+i*1.3; const gx=(Math.sin(t2*0.7+i)*0.4+0.5)*W, gy=((t2*0.15+i*0.2)%1)*H; ctx.globalAlpha=0.25+0.15*Math.sin(t2*3); ctx.fillStyle='#ffe066'; ctx.beginPath(); ctx.arc(gx,gy,1.6,0,6.28); ctx.fill(); } ctx.globalAlpha=1; }
   // 유리장
   ctx.fillStyle='rgba(120,80,200,.10)'; roundRect(f.x-8,f.y-46,f.w+16,f.h+70,18); ctx.fill();
   ctx.strokeStyle='rgba(200,150,255,.5)'; ctx.lineWidth=3; roundRect(f.x-8,f.y-46,f.w+16,f.h+70,18); ctx.stroke();
@@ -646,11 +659,12 @@ function renderRank(){
 }
 function bindNameEdit(){ const e=$('nameEdit'); if(e) e.onclick=()=>{ const n=prompt('랭킹에 표시할 이름 (최대 12자)', myName()); if(n!=null){ setMyName(n); renderRank(); } }; }
 function renderMeta(){
-  const T=curTitle(), nx=nextTitle();
-  $('titleBadge').innerHTML='👑 '+T.n;
-  let m='📅 출석 <b>'+attStreak()+'일</b> 연속';
+  const T=curTitle(), nx=nextTitle(); const mc=masteredCount();
+  $('titleBadge').innerHTML = (mc>=THEMES.length?'👑 뽑기 마스터 · ':'')+'👑 '+T.n;
+  let m='📅 출석 <b>'+attStreak()+'일</b> 연속 · 🏆 테마 <b>'+mc+'/'+THEMES.length+'</b> 마스터';
   if(nx) m+=' · 다음 칭호 <b>'+nx.n+'</b>까지 🧸'+(nx.min-totalCaught);
   $('metaBox').innerHTML=m;
+  renderTrophies();
   renderMissions();
 }
 
