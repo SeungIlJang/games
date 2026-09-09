@@ -37,6 +37,10 @@
   @keyframes pulse{from{transform:scale(1)}to{transform:scale(1.08)}}
   #gripBar{width:72%;max-width:300px;height:20px;margin:0 auto;background:rgba(255,255,255,.12);border-radius:12px;overflow:hidden;border:2px solid rgba(255,255,255,.25)}
   #gripFill{height:100%;width:100%;background:#5cffb0;border-radius:10px;transition:width .05s linear}
+  #combo{font-size:22px;font-weight:900;margin-top:3px;min-height:26px;letter-spacing:1px;text-shadow:0 0 14px rgba(255,140,40,.7)}
+  .dcell.secret{background:linear-gradient(135deg,rgba(255,92,225,.18),rgba(124,180,255,.18));border:1.5px solid rgba(255,120,220,.5)}
+  .dcell.secret.ready{animation:secglow 1s ease-in-out infinite alternate;filter:none;opacity:1}
+  @keyframes secglow{from{box-shadow:0 0 4px rgba(255,120,220,.4)}to{box-shadow:0 0 16px rgba(255,120,220,.95)}}
 </style></head>
 <body>
 <div id="stage"><canvas id="cv"></canvas></div>
@@ -46,12 +50,13 @@
   <div id="goal">–</div>
   <div id="dex">도감 0/10</div>
   <div id="lives"></div>
+  <div id="combo"></div>
   <div id="lastAccTop"></div>
   <div id="streak"></div>
 </div>
 <div id="gripWrap" class="hidden"><div id="gripLbl">🔥 탭 연타! 꽉 잡아!</div><div id="gripBar"><div id="gripFill"></div></div></div>
 <div id="hint"></div>
-<div id="ver">v1.8 · 성공 기준 전체 -5%p (더 쉽게, 과녁 커짐)</div>
+<div id="ver">v1.9 · 콤보·니어미스 복수전·시크릿 인형(55종) 추가</div>
 
 <div id="start">
   <h1>모두의 뽑기</h1>
@@ -63,7 +68,7 @@
     <button class="btn" id="startBtn">뽑으러 가기</button>
     <button class="btn" id="shareBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:15px 22px">🏆 공유</button>
   </div>
-  <div id="changelog">🆕 <b>v1.8</b> · 성공 기준을 5%p 낮췄어요 — 과녁이 조금 더 커져서 잡기 편해졌어요</div>
+  <div id="changelog">🆕 <b>v1.9</b> · 🔥콤보(연속성공 배율+하트보너스) · 😤니어미스 복수전(아깝게 놓친 인형 재도전) · ✨시크릿 인형(테마 10종 완성 시 보스 등장, 총 55종)</div>
 </div>
 
 <div id="noheart" class="hidden">
@@ -110,25 +115,25 @@ const THEMES=[
   {key:'animal', name:'동물', ico:'🐻', dolls:[
     {e:'🐻',n:'곰돌이',r:1},{e:'🐰',n:'토끼',r:1},{e:'🐸',n:'개구리',r:1},
     {e:'🐱',n:'냥이',r:2},{e:'🐧',n:'펭귄',r:2},{e:'🐼',n:'판다',r:2},{e:'🐨',n:'코알라',r:2},
-    {e:'🦊',n:'여우',r:3},{e:'🦁',n:'사자',r:3},{e:'🐯',n:'호랑이',r:3} ]},
+    {e:'🦊',n:'여우',r:3},{e:'🦁',n:'사자',r:3},{e:'🐯',n:'호랑이',r:3} ], secret:{e:'🦖',n:'공룡',r:4}},
   {key:'food', name:'음식', ico:'🍔', dolls:[
     {e:'🍔',n:'버거',r:1},{e:'🍕',n:'피자',r:1},{e:'🍟',n:'감자튀김',r:1},
     {e:'🍩',n:'도넛',r:2},{e:'🍰',n:'케이크',r:2},{e:'🍫',n:'초코',r:2},{e:'🍦',n:'아이스크림',r:2},
-    {e:'🍣',n:'초밥',r:3},{e:'🍜',n:'라멘',r:3},{e:'🧁',n:'컵케이크',r:3} ]},
+    {e:'🍣',n:'초밥',r:3},{e:'🍜',n:'라멘',r:3},{e:'🧁',n:'컵케이크',r:3} ], secret:{e:'🍭',n:'왕사탕',r:4}},
   {key:'space', name:'우주', ico:'🚀', dolls:[
     {e:'🚀',n:'로켓',r:1},{e:'🛸',n:'UFO',r:1},{e:'⭐',n:'별',r:1},
     {e:'🌙',n:'달',r:2},{e:'☄️',n:'혜성',r:2},{e:'🪐',n:'토성',r:2},{e:'👽',n:'외계인',r:2},
-    {e:'🌌',n:'은하',r:3},{e:'🌠',n:'유성',r:3},{e:'🔭',n:'망원경',r:3} ]},
+    {e:'🌌',n:'은하',r:3},{e:'🌠',n:'유성',r:3},{e:'🔭',n:'망원경',r:3} ], secret:{e:'🌟',n:'초신성',r:4}},
   {key:'sea', name:'바다', ico:'🐠', dolls:[
     {e:'🐠',n:'물고기',r:1},{e:'🐙',n:'문어',r:1},{e:'🦀',n:'게',r:1},
     {e:'🐬',n:'돌고래',r:2},{e:'🐳',n:'고래',r:2},{e:'🦈',n:'상어',r:2},{e:'🐢',n:'거북',r:2},
-    {e:'🦑',n:'오징어',r:3},{e:'🐡',n:'복어',r:3},{e:'🧜',n:'인어',r:3} ]},
+    {e:'🦑',n:'오징어',r:3},{e:'🐡',n:'복어',r:3},{e:'🧜',n:'인어',r:3} ], secret:{e:'🐋',n:'흰수염고래',r:4}},
   {key:'legend', name:'전설', ico:'🐉', dolls:[
     {e:'🐉',n:'용',r:1},{e:'🦄',n:'유니콘',r:1},{e:'🔥',n:'불사조',r:1},
     {e:'👑',n:'왕관',r:2},{e:'💎',n:'보석',r:2},{e:'🗡️',n:'성검',r:2},{e:'🏆',n:'트로피',r:2},
-    {e:'🌈',n:'무지개',r:3},{e:'💫',n:'정령',r:3},{e:'👾',n:'전설몬',r:3} ]},
+    {e:'🌈',n:'무지개',r:3},{e:'💫',n:'정령',r:3},{e:'👾',n:'전설몬',r:3} ], secret:{e:'🐲',n:'용왕',r:4}},
 ];
-const TOTAL_DOLLS=THEMES.reduce((s,t)=>s+t.dolls.length,0);
+const TOTAL_DOLLS=THEMES.reduce((s,t)=>s+t.dolls.length+(t.secret?1:0),0);  // 기본 50 + 시크릿 5 = 55
 let curTheme=+(localStorage.getItem('ppopgi_theme')||0); if(curTheme>=THEMES.length) curTheme=THEMES.length-1;
 function THEME(){ return THEMES[curTheme]; }
 function did(theme,name){ return theme.key+':'+name; }
@@ -136,10 +141,19 @@ function loadDex(){ try{ return JSON.parse(localStorage.getItem('ppopgi_dex2')||
 function saveDex(a){ try{ localStorage.setItem('ppopgi_dex2',JSON.stringify(a)); }catch(e){} }
 let dex=loadDex();
 function has(theme,d){ return dex.includes(did(theme,d.n)); }
-function themeCaught(theme){ return theme.dolls.filter(d=>has(theme,d)).length; }
+function themeCaught(theme){ return theme.dolls.filter(d=>has(theme,d)).length; }  // 기본 10종 기준(테마 해금은 이걸로)
 function totalCaughtDolls(){ return dex.length; }
 function dexCount(){ return themeCaught(THEME()); }  // 현재 테마 수집 수(하위호환)
-function renderDexGrid(){ const g=$('dexGrid'); g.innerHTML=''; THEME().dolls.forEach(d=>{ const got=has(THEME(),d); const c=document.createElement('div'); c.className='dcell'+(got?'':' lock'); c.textContent=got?d.e:'❔'; c.title=d.n+' '+'★'.repeat(d.r); g.appendChild(c); }); }
+// ── 시크릿 인형: 테마 기본 10종을 다 모으면 "시크릿 보스"로 등장 ──
+function secretUnlocked(theme){ return !!theme.secret && themeCaught(theme) >= theme.dolls.length; }
+function secretCaught(theme){ return theme.secret && has(theme,theme.secret); }
+function renderDexGrid(){ const g=$('dexGrid'); g.innerHTML='';
+  THEME().dolls.forEach(d=>{ const got=has(THEME(),d); const c=document.createElement('div'); c.className='dcell'+(got?'':' lock'); c.textContent=got?d.e:'❔'; c.title=d.n+' '+'★'.repeat(d.r); g.appendChild(c); });
+  const T=THEME(); if(T.secret){ const sc=document.createElement('div'); const caught=secretCaught(T), unlocked=secretUnlocked(T);
+    sc.className='dcell secret'+(caught?'':(unlocked?' ready':' lock'));
+    sc.textContent = caught? T.secret.e : '❔';
+    sc.title = caught? (T.secret.n+' ✨시크릿') : (unlocked? '✨시크릿 등장! 잡아보세요' : '🔒 시크릿 — 기본 10종을 다 모으면 등장');
+    g.appendChild(sc); } }
 
 // ── 캔버스 ──
 const cv=$('cv'), ctx=cv.getContext('2d'); let W=412,H=740,DPR=1, sc=1;
@@ -169,9 +183,10 @@ function confetti(x,y,n){ const cols=['#ff5ce1','#7cffb0','#ffd34d','#5ab0ff','#
 function pickTarget(){
   const T=THEME();
   let pool=T.dolls.filter(d=>!has(T,d));      // 현재 테마 미보유 우선
-  if(!pool.length) pool=T.dolls;              // 다 모았으면(해금 직전) 전체
-  // 희귀도 가중: ★=3, ★★=2, ★★★=1 → ★★★일수록 목표로 덜 나옴(간절함)
-  const weighted=[]; pool.forEach(d=>{ const w=4-d.r; for(let i=0;i<w;i++) weighted.push(d); });
+  if(secretUnlocked(T) && !secretCaught(T)) pool.push(T.secret);  // 시크릿 해금됐고 아직 못잡았으면 목표 후보(희귀)
+  if(!pool.length){ pool=T.dolls.slice(); if(secretUnlocked(T)) pool.push(T.secret); }  // 다 모았으면 전체
+  // 희귀도 가중: ★=3, ★★=2, ★★★=1, 시크릿=1 → 귀할수록 목표로 덜 나옴(간절함)
+  const weighted=[]; pool.forEach(d=>{ const w=Math.max(1,4-d.r); for(let i=0;i<w;i++) weighted.push(d); });
   return weighted[Math.floor(Math.random()*weighted.length)];
 }
 function layoutField(goal){
@@ -182,20 +197,28 @@ function layoutField(goal){
   set.forEach((d,i)=>{ dolls.push({...d, x:f.x+rnd(0.14,0.86)*f.w, y:f.y+rnd(0.32,0.9)*f.h, wob:0, vy:0, held:false, fall:false}); });
   target=0; // goal은 첫 요소
 }
+let revengeId=null, isRevenge=false;   // 니어미스 복수전
 function newRound(keepTarget){
   const goal = keepTarget||pickTarget();
   window._goal=goal;
   layoutField(goal);
-  $('goal').textContent=goal.e+' '+goal.n+' '+('★'.repeat(goal.r));
+  const isSecret = goal.r>=4;
+  $('goal').textContent=(isSecret?'✨ ':'')+goal.e+' '+goal.n+' '+('★'.repeat(goal.r));
+  $('goalLbl').textContent = isSecret ? '✨ 시크릿 인형 등장!' : '🎯 이번 목표';
   $('dex').textContent=THEME().ico+' '+THEME().name+' '+themeCaught(THEME())+'/'+THEME().dolls.length+' · 전체 '+totalCaughtDolls()+'/'+TOTAL_DOLLS;
-  $('streak').textContent = failStreak>=2 ? ('😤 '+failStreak+'연속 실패 — 이번엔 과녁 커짐!') : (successStreak>=2?('🔥 '+successStreak+'연속 성공 중!'):'');
+  isRevenge = !!revengeId && did(THEME(),goal.n)===revengeId;
+  if(isRevenge) $('streak').textContent='🔥 복수전! 이번엔 꼭 잡아요!';
+  else $('streak').textContent = failStreak>=2 ? ('😤 '+failStreak+'연속 실패 — 이번엔 과녁 커짐!') : (successStreak>=2?('🔥 '+successStreak+'연속 성공 중!'):'');
+  renderCombo();
   claw={x:W/2,y:field().y-40,open:1,holding:null,phase:'',sway:0}; timeScale=1;
   state='aimX'; sweep=field().x; sweepDir=1; sweepSpd=1; renderLives();
-  $('hint').textContent='① 좌우 맞춰 탭!';
+  $('hint').textContent = isSecret ? '① 좌우 맞춰 탭! (시크릿, 신중히!)' : '① 좌우 맞춰 탭!';
 }
+function comboMult(){ return successStreak>=2 ? successStreak : 1; }   // 콤보 배율(연속 성공 수)
+function renderCombo(){ const el=$('combo'); if(!el) return; if(successStreak>=2){ const heat=Math.min(successStreak,8); const col=['#ffd34d','#ffb04d','#ff8a4d','#ff5c5c'][Math.min(3,Math.floor((heat-2)/2))]; el.style.color=col; el.textContent='🔥 '+successStreak+' COMBO'+(successStreak>=5?' 🔥':''); } else el.textContent=''; }
 function accRadius(){ return dollSize()*1.35*(1+clawBonus*0.5); }  // 과녁(정확도) 반경 = 인형 크기에 비례 → 인형 크면 과녁도 큼
 // 희귀도 색/이름 (★=초록 / ★★=파랑 / ★★★=골드)
-const RAR=[null,{c:'124,255,176',hex:'#7cffb0',name:'일반'},{c:'110,180,255',hex:'#6eb4ff',name:'레어'},{c:'255,199,80',hex:'#ffc750',name:'★전설★'}];
+const RAR=[null,{c:'124,255,176',hex:'#7cffb0',name:'일반'},{c:'110,180,255',hex:'#6eb4ff',name:'레어'},{c:'255,199,80',hex:'#ffc750',name:'전설'},{c:'255,92,225',hex:'#ff5ce1',name:'✨시크릿'}];
 function rar(r){ return RAR[r]||RAR[1]; }
 function successThreshold(){ const r=(dolls[target]&&dolls[target].r)||1; const rar=(r-1)*0.06; const base=clamp(0.55+playCount*0.022+rar, 0.50, 0.87); return clamp(base - clawBonus*0.1 - Math.min(failStreak,4)*0.025, 0.43, 0.87); } // 초반 과녁 큼(0.55)→판마다 축소(+0.022/판) + 희귀도(★★=+0.06·★★★=+0.12) 후 광고/연속실패로 완화. v1.8: 전체 성공기준 -5%p
 function dollSize(){ return Math.round(56 - Math.min(playCount,12)*1.1); } // 인형 이모지 크기: 초반 56px 크게 → 판마다 축소 → 43px 수렴 (과녁도 이 크기에 비례)
@@ -276,54 +299,71 @@ function endResult(win, kind){
   if(state==='result') return; state='result'; timeScale=1; claw.sway=0; $('gripWrap').classList.add('hidden');
   const goal=window._goal;
   if(win){
-    const id=did(THEME(),goal.n); const wasNew=!dex.includes(id);
+    const T=THEME(); const id=did(T,goal.n); const wasNew=!dex.includes(id);
+    const isSecret = goal.r>=4;
     if(wasNew){ dex.push(id); saveDex(dex); }
     failStreak=0; try{localStorage.setItem('ppopgi_fs',0);}catch(e){}
     clawBonus=0;
     successStreak++; totalCaught++; if(successStreak>bestStreak) bestStreak=successStreak; saveStats();
-    const R=rar(goal.r);
-    // 희귀도 보상: ★=하트0 / ★★=하트+1 / ★★★=하트+2 (귀한 걸 잡으면 실질 보너스 시도권)
-    const heartReward=goal.r-1; if(heartReward>0){ addHearts(heartReward); }
-    const head = goal.r>=3 ? '🌟 레어 GET! 🌟' : (goal.r===2 ? '✨ GET! ' : '🎉 GET! ');
-    flash(head+goal.e+' '+goal.n+' '+('★'.repeat(goal.r))+(successStreak>=3?(' 🔥'+successStreak+'연속!'):'')+(heartReward>0?(' ❤️+'+heartReward):''), R.hex);
-    const conf=50+goal.r*goal.r*35;                    // ★=85 · ★★=190 · ★★★=365 (제곱으로 확 차등)
-    confetti(claw.x,H*0.42,conf); burst(claw.x,H*0.5,'#ffffff',20+goal.r*14);
+    renderCombo();
+    const R=rar(goal.r); const rr=Math.min(goal.r,3);
+    // 보상: 희귀도(★★=1·★★★=2·시크릿=3) + 콤보 마일스톤(3·6·9…연속마다 +1)
+    const comboBonus = (successStreak>=3 && successStreak%3===0) ? 1 : 0;
+    const heartReward = (goal.r-1) + comboBonus; if(heartReward>0){ addHearts(heartReward); }
+    const head = isSecret ? '✨🌟 시크릿 GET! 🌟✨' : (goal.r>=3 ? '🌟 전설 GET! 🌟' : (goal.r===2 ? '✨ GET! ' : '🎉 GET! '));
+    const revTxt = isRevenge ? ' 😤복수성공!' : ''; if(isRevenge) revengeId=null;
+    flash(head+goal.e+' '+goal.n+revTxt+(successStreak>=3?(' 🔥'+successStreak+'연속!'):'')+(heartReward>0?(' ❤️+'+heartReward):''), R.hex);
+    const conf=(50+rr*rr*35)+successStreak*15;          // 희귀도 제곱 + 콤보 가중
+    confetti(claw.x,H*0.42,conf); burst(claw.x,H*0.5,'#ffffff',20+rr*14);
     chord(523); setTimeout(()=>chord(784),150); setTimeout(()=>chord(1046),300);   // 상승 팡파레
-    if(goal.r>=2){ setTimeout(()=>chord(1318),450); }  // ★★+ 추가 음
-    if(goal.r>=3){ setTimeout(()=>chord(1568),600); setTimeout(()=>chord(2093),760); setTimeout(()=>burst(claw.x,H*0.42,R.hex,50),200); }  // ★★★ 전설 팡파레+골드 폭죽
-    vib(goal.r>=3?[20,40,20,40,20,40,120]:[20,40,20,40,90]); screenShake=8+goal.r*goal.r*2; flashA=1; flashCol=R.c;
+    if(goal.r>=2){ setTimeout(()=>chord(1318),450); }
+    if(goal.r>=3){ setTimeout(()=>chord(1568),600); setTimeout(()=>chord(2093),760); setTimeout(()=>burst(claw.x,H*0.42,R.hex,50),200); }
+    if(isSecret){ setTimeout(()=>chord(2637),900); setTimeout(()=>{confetti(W/2,H*0.4,140);burst(W/2,H*0.42,R.hex,60);},300); }
+    if(comboBonus){ setTimeout(()=>flash('🔥 '+successStreak+'콤보! ❤️+1','#ff8a4d'),520); }
+    vib(goal.r>=3?[20,40,20,40,20,40,120]:[20,40,20,40,90]); screenShake=8+rr*rr*2; flashA=1; flashCol=R.c;
     renderDexGrid();
-    const done=themeCaught(THEME());
-    $('dex').textContent=THEME().ico+' '+THEME().name+' '+done+'/'+THEME().dolls.length+' · 전체 '+totalCaughtDolls()+'/'+TOTAL_DOLLS;
+    const done=themeCaught(T);
+    $('dex').textContent=T.ico+' '+T.name+' '+done+'/'+T.dolls.length+(secretCaught(T)?' +✨':'')+' · 전체 '+totalCaughtDolls()+'/'+TOTAL_DOLLS;
     let delay=1200;
-    if(wasNew && done>=THEME().dolls.length){
-      // 테마 완성! → 다음 테마 해금
+    const baseComplete = done>=T.dolls.length;
+    if(baseComplete && T.secret && !secretCaught(T)){
+      // 기본 10종 완성 → 시크릿 보스 등장 예고 (테마 유지, 다음 목표=시크릿)
+      if(wasNew && !isSecret){
+        setTimeout(()=>{ flash('🎊 기본 10종 완성! ✨ 시크릿 '+T.secret.e+' 등장!','#ff5ce1'); chord(880); setTimeout(()=>chord(1174),160); setTimeout(()=>chord(1568),320); burst(W/2,H*0.42,'#ff5ce1',80); screenShake=12; },900);
+        delay=2600;
+      }
+    } else if(baseComplete && (!T.secret || secretCaught(T))){
+      // 테마 완전 마스터(기본10 + 시크릿)
       if(curTheme < THEMES.length-1){
         const nx=THEMES[curTheme+1];
-        setTimeout(()=>{ flash('🎊 '+THEME().name+' 테마 클리어!','#ffd34d'); chord(659); setTimeout(()=>chord(988),200); burst(W/2,H*0.4,'#ffd34d',70); screenShake=12; },900);
-        setTimeout(()=>{ curTheme++; try{localStorage.setItem('ppopgi_theme',curTheme);}catch(e){} flash('🔓 새 테마 해금! '+nx.ico+' '+nx.name,'#7cf6ff'); renderDexGrid(); renderStartStats(); },2000);
-        delay=3000;
+        setTimeout(()=>{ flash((isSecret?'✨ 시크릿까지 완성! ':'')+T.name+' 테마 마스터!','#ffd34d'); chord(659); setTimeout(()=>chord(988),200); burst(W/2,H*0.4,'#ffd34d',90); screenShake=14; },900);
+        setTimeout(()=>{ curTheme++; try{localStorage.setItem('ppopgi_theme',curTheme);}catch(e){} flash('🔓 새 테마 해금! '+nx.ico+' '+nx.name,'#7cf6ff'); renderDexGrid(); renderStartStats(); },2100);
+        delay=3200;
       } else {
-        // 마지막 테마까지 완성 = 전체 마스터
-        setTimeout(()=>{ flash('👑 전체 마스터! 50종 완성!','#ffd34d'); chord(659); setTimeout(()=>chord(988),180); setTimeout(()=>chord(1318),360); burst(W/2,H*0.4,'#ffd34d',100); screenShake=16; },900);
-        delay=2800;
+        setTimeout(()=>{ flash('👑 전체 마스터! 55종 완성!','#ffd34d'); chord(659); setTimeout(()=>chord(988),180); setTimeout(()=>chord(1318),360); setTimeout(()=>chord(1760),540); burst(W/2,H*0.4,'#ffd34d',120); screenShake=18; },900);
+        delay=3000;
       }
     }
     setTimeout(()=>{ startRound(); },delay);
   } else {
+    const brokeCombo = successStreak;   // 끊긴 콤보 수
     failStreak++; try{localStorage.setItem('ppopgi_fs',failStreak);}catch(e){}
-    successStreak=0;
+    successStreak=0; renderCombo();
+    revengeId = did(THEME(),goal.n);    // 이 인형에 복수전 예약
     const near = kind==='near';
-    flash(near?'아—! 놓쳤다 😫':'빗나갔다 💨', '#ff6a7a'); tone(150,0.3,'sawtooth',0.12); setTimeout(()=>tone(100,0.3,'sawtooth',0.1),100);
+    const gap = Math.max(0,(window.lastThresh||0)-(window.lastAcc||0));   // 성공까지 몇 %p 모자랐나
+    const soClose = near && gap>0 && gap<=8;                              // 한 끗 차이
+    flash(soClose?('😭 딱 '+gap+'% 차이!'):(near?'아—! 놓쳤다 😫':'빗나갔다 💨'), '#ff6a7a'); tone(150,0.3,'sawtooth',0.12); setTimeout(()=>tone(100,0.3,'sawtooth',0.1),100);
+    if(brokeCombo>=3) setTimeout(()=>flash('💥 '+brokeCombo+'콤보 끊김!','#ff8a8a'),450);   // 콤보 상실 sting
     vib(200); screenShake=near?14:6;
     lives--; renderLives();
     if(lives>0){ // 생명 남음 → 같은 인형 다시 도전(하트 소모 없음)
-      setTimeout(()=>flash('💗 생명 -1 · 남은 '+lives+'개, 다시!','#ffcf66'),650);
-      setTimeout(()=>{ newRound(window._goal); },1500);
+      setTimeout(()=>flash((soClose?'🔥 한 끗! ':'')+'💗 생명 -1 · 남은 '+lives+'개, 다시!','#ffcf66'),700);
+      setTimeout(()=>{ newRound(window._goal); },1550);
     } else { // 생명 소진 → 진짜 실패
       showBanner();
-      $('overTitle').textContent = near?'아—! 놓쳤다 😫':'빗나갔다 💨';
-      $('overMsg').innerHTML = '정확도 <b style="color:'+(near?'#ffcf66':'#ff8a8a')+'">'+(window.lastAcc||0)+'%</b> <span style="opacity:.7">(성공 '+(window.lastThresh||95)+'%↑)</span> · 💔 생명 0<br>'+(near?'중앙에서 살짝 벗어나 미끄러졌어요!':'중앙에서 많이 빗나갔어요')+'<br><b style="color:#ffcf66">'+goal.e+' '+goal.n+'</b> 조금만 더 정확히!';
+      $('overTitle').textContent = soClose?('😭 딱 '+gap+'% 차이!'):(near?'아—! 놓쳤다 😫':'빗나갔다 💨');
+      $('overMsg').innerHTML = '정확도 <b style="color:'+(near?'#ffcf66':'#ff8a8a')+'">'+(window.lastAcc||0)+'%</b> <span style="opacity:.7">(성공 '+(window.lastThresh||95)+'%↑, '+(gap>0?gap+'% 부족':'아깝게')+')</span> · 💔 생명 0<br>'+(soClose?'진짜 아까웠어요! 다음엔 꼭 잡아요 🔥':(near?'중앙에서 살짝 벗어나 미끄러졌어요!':'중앙에서 많이 빗나갔어요'))+'<br><b style="color:#ffcf66">'+goal.e+' '+goal.n+'</b> — 🔥복수전이 기다려요!';
       $('overDex').textContent=totalCaughtDolls()+'/'+TOTAL_DOLLS;
       setTimeout(()=>$('over').classList.remove('hidden'),700);
     }
@@ -408,6 +448,9 @@ function draw(){
   drawClaw();
   // 파티클
   for(const p of parts){ ctx.globalAlpha=Math.max(0,p.life); ctx.fillStyle=p.c; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.28); ctx.fill(); } ctx.globalAlpha=1;
+  // 콤보 열기(연속 성공 3+): 화면 가장자리가 뜨겁게 맥동
+  if(successStreak>=3 && (state==='aimX'||state==='aimY'||state==='drop')){ const heat=Math.min(successStreak,8); const puls=0.10+0.05*Math.sin(performance.now()/180); const a=(0.10+heat*0.03)+puls;
+    const v=ctx.createRadialGradient(W/2,H*0.5,H*0.30,W/2,H*0.5,H*0.62); v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(1,'rgba(255,'+(140-heat*10)+',40,'+a.toFixed(2)+')'); ctx.fillStyle=v; ctx.fillRect(0,0,W,H); }
   // 슬로모션 비네트(긴장 연출)
   if(timeScale<1){ const v=ctx.createRadialGradient(claw.x,H*0.5,H*0.16,claw.x,H*0.5,H*0.62); v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(1,'rgba(25,0,40,.5)'); ctx.fillStyle=v; ctx.fillRect(0,0,W,H); }
   if(flashA>0){ ctx.fillStyle='rgba('+(flashCol||'124,255,176')+','+(flashA*0.32).toFixed(2)+')'; ctx.fillRect(0,0,W,H); } // 성공 초록 플래시
@@ -463,7 +506,8 @@ function saveStats(){ try{ localStorage.setItem('ppopgi_best',bestStreak); local
 function renderStartStats(){
   const h=$('themeHdr'); if(h){ const done=themeCaught(THEME()); const all=totalCaughtDolls();
     h.innerHTML=THEME().ico+' <b>'+THEME().name+'</b> 테마 '+done+'/'+THEME().dolls.length+(done>=THEME().dolls.length?(curTheme<THEMES.length-1?' ✅':' 👑'):'')+' <span style="opacity:.6;font-weight:600">· 전체 '+all+'/'+TOTAL_DOLLS+'</span>'; }
-  $('startStats').innerHTML='🏆 최고 연속 <b>'+bestStreak+'</b> · 🧸 누적 <b>'+totalCaught+'</b> · 🎯 목표: 5테마 50종 마스터'; }
+  const sec=THEMES.filter(t=>secretCaught(t)).length;
+  $('startStats').innerHTML='🏆 최고 연속 <b>'+bestStreak+'</b> · 🧸 누적 <b>'+totalCaught+'</b> · ✨ 시크릿 <b>'+sec+'/'+THEMES.length+'</b><br><span style="opacity:.75">🎯 목표: 5테마 + 시크릿 = 55종 마스터</span>'; }
 
 // ── 배너광고 ──
 let bannerShown=false;
@@ -476,7 +520,7 @@ function shareGame(){ const txt='모두의 뽑기 🧸 도감 '+totalCaughtDolls
   try{ navigator.clipboard.writeText(txt); flash('📋 복사됨!','#7cf6ff'); }catch(e){} }
 
 // ── 화면 전환 ──
-function toStart(){ state='start'; renderLives(); $('over').classList.add('hidden'); $('noheart').classList.add('hidden'); $('start').classList.remove('hidden'); renderHearts(); renderStartStats(); renderDexGrid(); showBanner(); }
+function toStart(){ state='start'; renderLives(); $('combo').textContent=''; $('lastAccTop').textContent=''; $('streak').textContent=''; $('over').classList.add('hidden'); $('noheart').classList.add('hidden'); $('start').classList.remove('hidden'); renderHearts(); renderStartStats(); renderDexGrid(); showBanner(); }
 function showNoHearts(){ state='result'; $('over').classList.add('hidden'); $('start').classList.add('hidden'); $('heartMsg').innerHTML='다음 하트까지 <b>'+heartTimer()+'</b><br>지금 바로 하려면 광고로 하트 +5!'; $('noheart').classList.remove('hidden'); showBanner(); }
 function startRound(goal){ loadHearts(); if(hearts<=0){ showNoHearts(); return; } if(hearts===MAX_HEARTS) heartTs=Date.now(); hearts--; saveHearts(); renderHearts(); lives=MAX_LIVES; renderLives(); $('over').classList.add('hidden'); $('noheart').classList.add('hidden'); hideBanner(); newRound(goal); }
 
