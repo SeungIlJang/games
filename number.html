@@ -66,7 +66,7 @@
   <button class="btn" id="startBtn">시작</button>
   <div class="sub" style="margin-top:6px;">최고 <b id="best2">0</b></div>
   <button class="btn" id="lbBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:11px 24px;font-size:16px;margin-top:10px">🏆 랭킹</button>
-  <div id="changelog">🆕 <b id="clVer">v1.9.2</b> · <span id="clNote">랭킹 스크롤 + ✕ 닫기 버튼 · ⚡롤링 이벤트화 · 게임오버 시 랭킹 자동표시</span></div>
+  <div id="changelog">🆕 <b id="clVer">v1.9.3</b> · <span id="clNote">판정 더 정확·공정하게! 목표 숫자에서 잠깐 멈춰 잡기 쉽게 · 롤링 정확판정 · 시작 시 💛 1개</span></div>
 </div>
 
 <div id="over" class="hidden">
@@ -90,7 +90,7 @@
   <div id="lbList"></div>
   <button class="btn" id="lbClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v1.9.2 · 랭킹 스크롤 + 우상단 ✕ 닫기 버튼 추가</div>
+<div id="ver">v1.9.3 · 판정 타이밍 공정화(목표서 잠깐 멈춤)·롤링 정확판정·시작 하트1</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -276,7 +276,8 @@ function tick(){
   if(curIsRoll){
     cur++; if(cur>rollHi) cur=rollLo; render(false);
     tone(520+ (cur%9)*30, 0.02, 'square', 0.025);
-    timer=setTimeout(tick, ROLL_MS); return;
+    // 목표 숫자에 딱 걸리면 잠깐 멈춰서 잡을 기회를 줌(정확 판정+공정)
+    timer=setTimeout(tick, cur===target ? 340 : ROLL_MS); return;
   }
   cur+=stepAt(ti); ti++; seq.push(cur); if(seq.length>4) seq.shift();
   const dir=Math.sign(target-(seq[0]));
@@ -285,10 +286,12 @@ function tick(){
   const nv=cur+stepAt(ti), slow=(hits<2 && target-cur!==0 && nv===target);   // 슬로모는 2판까지만(그 뒤엔 실력)
   $('wrap').classList.toggle('slow', slow);
   if(slow) tone(880,0.05,'sine',0.05); else tone(300+Math.min(hits,22)*11, 0.03, 'sine', 0.03);
-  timer=setTimeout(tick, slow ? Math.round(speed()*1.9)+140 : speed());
+  let nd = slow ? Math.round(speed()*1.9)+140 : speed();
+  if(cur===target) nd = Math.max(nd, 400);   // 목표에 정확히 도달 → 최소 400ms 유지(고속에서도 맞게 누르면 성공)
+  timer=setTimeout(tick, nd);
 }
 function nextTick(first){ clearTimeout(timer); timer=setTimeout(tick, curIsRoll?ROLL_MS:first); }
-function start(){ score=0; hits=0; hearts=0; slowEndShown=false; reviveCount=0; hideBanner(); $('start').classList.add('hidden'); $('over').classList.add('hidden'); state='play';
+function start(){ score=0; hits=0; hearts=1; slowEndShown=false; reviveCount=0; hideBanner(); $('start').classList.add('hidden'); $('over').classList.add('hidden'); state='play';
   try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
   renderHearts(); newRound(false); nextTick(560); }
 function hitOK(){
@@ -303,7 +306,7 @@ function hitOK(){
 function tap(){
   if(state!=='play'){ start(); return; }
   if(curIsRoll){
-    if(Math.abs(cur-target)<=1){ hitOK(); }
+    if(cur===target){ hitOK(); }   // 롤링도 정확히 목표일 때만 성공(±1 허용 제거)
     else { // 롤링은 '이벤트' — 못 맞춰도 페널티 없음(생명·점수·콤보 유지, 다음 라운드로)
       clearTimeout(timer); clearTimeout(rollTO);
       floatText('아깝다! (롤링)','#c9a3ff'); tone(220,0.12,'sawtooth',0.07); vib(25);
