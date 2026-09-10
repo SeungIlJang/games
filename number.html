@@ -30,6 +30,8 @@
   @keyframes fl{0%{opacity:0;transform:translate(-50%,10px) scale(.7)}20%{opacity:1;transform:translate(-50%,-4px) scale(1.1)}100%{opacity:0;transform:translate(-50%,-52px) scale(1)}}
   #over,#start,#lb{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,10,22,.92);gap:10px;padding:24px;text-align:center;z-index:10}
   #lb{z-index:12;justify-content:flex-start;padding-top:calc(28px + env(safe-area-inset-top,0px))}
+  #lbX{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:16px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:#cfe;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:50%;cursor:pointer;z-index:13}
+  #lbX:active{background:rgba(255,255,255,.2)}
   #lbList{width:100%;max-width:340px;margin:6px 0;max-height:60vh;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
   .lbrow{display:flex;justify-content:space-between;align-items:center;padding:9px 14px;margin:5px 0;border-radius:10px;font-size:17px;font-weight:700}
   #lbEdit{color:#7cf6ff;text-decoration:underline;margin-left:8px;font-size:13px}
@@ -64,7 +66,7 @@
   <button class="btn" id="startBtn">시작</button>
   <div class="sub" style="margin-top:6px;">최고 <b id="best2">0</b></div>
   <button class="btn" id="lbBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:11px 24px;font-size:16px;margin-top:10px">🏆 랭킹</button>
-  <div id="changelog">🆕 <b id="clVer">v1.9.1</b> · <span id="clNote">⚡롤링 이벤트화 · 게임오버 시 랭킹 바로 표시 · 랭킹 스크롤 처리</span></div>
+  <div id="changelog">🆕 <b id="clVer">v1.9.2</b> · <span id="clNote">랭킹 스크롤 + ✕ 닫기 버튼 · ⚡롤링 이벤트화 · 게임오버 시 랭킹 자동표시</span></div>
 </div>
 
 <div id="over" class="hidden">
@@ -82,12 +84,13 @@
 </div>
 
 <div id="lb" class="hidden">
+  <div id="lbX" role="button" aria-label="닫기">✕</div>
   <h1>🏆 랭킹</h1>
   <div class="sub" id="lbName"></div>
   <div id="lbList"></div>
   <button class="btn" id="lbClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v1.9.1 · 랭킹 목록 스크롤 처리(레이어 넘침 수정)</div>
+<div id="ver">v1.9.2 · 랭킹 스크롤 + 우상단 ✕ 닫기 버튼 추가</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -357,6 +360,7 @@ $('shareBtn').onclick=()=>shareScore();
 $('lbBtn').onclick=()=>showLB();
 $('overLbBtn').onclick=()=>showLB();
 $('lbClose').onclick=()=>hideLB();
+$('lbX').onclick=()=>hideLB();
 $('best2').textContent=best;
 </script>
 </body></html>
