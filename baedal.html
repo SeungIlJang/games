@@ -38,7 +38,7 @@
   <button class="btn d" id="resetBtn">↺ 초기화</button>
   <button class="btn g" id="goBtn" disabled>🛵 출발!</button>
 </div>
-<div id="ver">v0.4 · 잘못 배달하면 게임오버</div>
+<div id="ver">v0.4.1 · 난이도 곡선(1·2판 쉽고 급상승)</div>
 
 <div id="start">
   <h1>🛵 모두의 배달</h1>
@@ -51,7 +51,7 @@
     🛵 <b>출발!</b> → 오토바이 관전 → <b style="color:#ffd34d">별 1~3개</b> (짧을수록 별3!)
   </div>
   <button class="btn g" id="startBtn" style="padding:15px 34px;font-size:20px">시작하기</button>
-  <div id="changelog">🆕 <b>v0.4</b> · 긴장 추가! <b>픽업 안 한 집에 배달 = 게임오버</b> · 순서 신중히 짜기</div>
+  <div id="changelog">🆕 <b>v0.4.1</b> · 난이도 곡선! <b>1·2판 쉽고(2건) → 3판부터 3·4·5·6건 급상승</b> · 잘못 배달=게임오버</div>
 </div>
 
 <div id="over" class="hidden">
@@ -88,20 +88,25 @@ let parts=[], scoot=null;
 let shake=0;
 
 function dist(a,b){ return Math.hypot(a.x-b.x,a.y-b.y); }
-function pairsForStage(s){ return Math.min(2+Math.floor((s-1)/2), 4); }
+// 처음 2판 쉽게(2건), 3판부터 급상승 3→4→5→6건(캡6)
+function pairsForStage(s){ return s<=2 ? 2 : Math.min(s, 6); }
 
 function genStage(){ const f=field(); pairs=pairsForStage(stage); nodes=[]; start={x:f.x+f.w/2, y:f.y+f.h-14};
-  const place=()=>{ let t=0; while(t++<3000){ const p={x:rnd(f.x+36,f.x+f.w-36), y:rnd(f.y+34,f.y+f.h-64)}; if(dist(p,start)<64) continue; if(nodes.some(nd=>dist(nd,p)<56)) continue; return p; } return {x:rnd(f.x+36,f.x+f.w-36), y:rnd(f.y+34,f.y+f.h-64)}; };
+  const minSep=Math.max(44, 56-(pairs-2)*3);   // 노드 많을수록 간격 좁힘
+  const place=()=>{ let t=0; while(t++<4000){ const p={x:rnd(f.x+34,f.x+f.w-34), y:rnd(f.y+32,f.y+f.h-58)}; if(dist(p,start)<60) continue; if(nodes.some(nd=>dist(nd,p)<minSep)) continue; return p; } return {x:rnd(f.x+34,f.x+f.w-34), y:rnd(f.y+32,f.y+f.h-58)}; };
   for(let i=0;i<pairs;i++){ const sp=place(); nodes.push({type:'shop',pair:i,x:sp.x,y:sp.y}); const hp=place(); nodes.push({type:'home',pair:i,x:hp.x,y:hp.y}); }
   order=[]; pickedSet=new Set(); crossPairs=new Set(); optLen=optimalRoute();
 }
 function routeLen(seq){ let L=0,p=start; for(const i of seq){ L+=dist(p,nodes[i]); p=nodes[i]; } return L; }
-// 최적(픽업→드롭 선행제약, 완전탐색·가지치기)
-function optimalRoute(){ const N=nodes.length; let best=Infinity; const used=new Array(N).fill(false); const got=new Array(pairs).fill(false);
-  const rec=(cnt,last,L)=>{ if(L>=best) return; if(cnt===N){ best=Math.min(best,L); return; }
-    for(let i=0;i<N;i++){ if(used[i]) continue; const nd=nodes[i]; if(nd.type==='home' && !got[nd.pair]) continue;
-      used[i]=true; if(nd.type==='shop') got[nd.pair]=true; rec(cnt+1,nd,L+dist(last,nd)); used[i]=false; if(nd.type==='shop') got[nd.pair]=false; } };
-  rec(0,start,0); return best||1;
+// 최적(픽업→드롭 선행제약) — Held-Karp DP로 즉시 계산(건수 많아도 빠름)
+function optimalRoute(){ const N=nodes.length; const INF=Infinity; const shopIdx={}; nodes.forEach((n,i)=>{ if(n.type==='shop') shopIdx[n.pair]=i; });
+  const FULL=(1<<N)-1; const dp=new Array(1<<N); for(let m=0;m<(1<<N);m++){ dp[m]=new Array(N).fill(INF); }
+  for(let i=0;i<N;i++){ if(nodes[i].type==='home') continue; dp[1<<i][i]=dist(start,nodes[i]); }   // 첫 노드는 음식점만
+  for(let mask=1;mask<=FULL;mask++){ for(let i=0;i<N;i++){ if(!(mask&(1<<i))) continue; const cur=dp[mask][i]; if(cur===INF) continue;
+    for(let j=0;j<N;j++){ if(mask&(1<<j)) continue; const nj=nodes[j];
+      if(nj.type==='home' && !(mask&(1<<shopIdx[nj.pair]))) continue;   // 집은 같은 색 음식점 방문 후에만
+      const nm=mask|(1<<j), nc=cur+dist(nodes[i],nodes[j]); if(nc<dp[nm][j]) dp[nm][j]=nc; } } }
+  let best=INF; for(let i=0;i<N;i++) if(dp[FULL][i]<best) best=dp[FULL][i]; return best||1;
 }
 function segCross(a,b,c,d){ const ccw=(p,q,r)=>(r.y-p.y)*(q.x-p.x)-(q.y-p.y)*(r.x-p.x); const d1=ccw(a,b,c),d2=ccw(a,b,d),d3=ccw(c,d,a),d4=ccw(c,d,b); return ((d1>0)!==(d2>0))&&((d3>0)!==(d4>0)); }
 function updateCross(){ crossPairs=new Set(); const pts=[start,...order.map(i=>nodes[i])]; for(let i=0;i<pts.length-1;i++){ for(let j=i+1;j<pts.length-1;j++){ if(j===i||j===i+1||j===i-1) continue; if(segCross(pts[i],pts[i+1],pts[j],pts[j+1])){ crossPairs.add(i); crossPairs.add(j); } } } }
