@@ -38,7 +38,7 @@
   <button class="btn d" id="resetBtn">↺ 초기화</button>
   <button class="btn g" id="goBtn" disabled>🛵 출발!</button>
 </div>
-<div id="ver">v0.4.3 · 배달 오토바이(라이더+배달통) 디자인</div>
+<div id="ver">v0.4.4 · 오토바이 크게·리얼하게(출발점도 실물)</div>
 
 <div id="start">
   <h1>🛵 모두의 배달</h1>
@@ -51,7 +51,7 @@
     🛵 <b>출발!</b> → 오토바이 관전 → <b style="color:#ffd34d">별 1~3개</b> (짧을수록 별3!)
   </div>
   <button class="btn g" id="startBtn" style="padding:15px 34px;font-size:20px">시작하기</button>
-  <div id="changelog">🆕 <b>v0.4.3</b> · <b>배달 오토바이 디자인</b>(라이더+배달통) · 별3 정답 경로 · 난이도 곡선</div>
+  <div id="changelog">🆕 <b>v0.4.4</b> · 오토바이 <b>더 크고 리얼하게</b>(윈드스크린·미러·배기구·스포크휠) · 출발점도 실물 오토바이</div>
 </div>
 
 <div id="over" class="hidden">
@@ -211,8 +211,8 @@ function draw(){ ctx.clearRect(0,0,W,H);
   drawStart();
   if(answer){ ctx.fillStyle='#7cffb0'; ctx.font='bold 15px system-ui'; ctx.textAlign='center'; ctx.fillText('🏆 별3 정답(최단) 경로 · '+Math.round(optLen), W/2, f.y+18); }
   // 오토바이 + 배달통 개수
-  if(scoot){ const b=scoot.path[Math.min(scoot.seg+1,scoot.path.length-1)]; drawScooter(scoot.x,scoot.y, b.x<scoot.x?-1:1);
-    if(scoot.carried>0){ ctx.fillStyle='#ffd34d'; ctx.font='bold 12px system-ui'; ctx.textAlign='center'; ctx.fillText('📦'+scoot.carried, scoot.x, scoot.y-20); } }
+  if(scoot){ const b=scoot.path[Math.min(scoot.seg+1,scoot.path.length-1)]; drawScooter(scoot.x,scoot.y, b.x<scoot.x?-1:1, 1.15);
+    if(scoot.carried>0){ ctx.fillStyle='#ffd34d'; ctx.font='bold 12px system-ui'; ctx.textAlign='center'; ctx.fillText('×'+scoot.carried, scoot.x, scoot.y-30); } }
   for(const p of parts){ ctx.globalAlpha=Math.max(0,p.life); if(p.txt){ ctx.font='22px system-ui'; ctx.textAlign='center'; ctx.fillText(p.txt,p.x,p.y); } else { ctx.fillStyle=p.c; ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,6.28);ctx.fill(); } } ctx.globalAlpha=1;
   ctx.restore();
 }
@@ -233,30 +233,40 @@ function drawHome(n,num,done,picked){ const c=PAIRCOL[n.pair], cd=PAIRDARK[n.pai
   if(num>0) badge(n.x+s,n.y-s,num); ctx.restore();
 }
 function badge(x,y,num){ ctx.globalAlpha=1; ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(x,y,10,0,6.28); ctx.fill(); ctx.strokeStyle='#20140a'; ctx.lineWidth=1.5; ctx.stroke(); ctx.fillStyle='#20140a'; ctx.font='bold 12px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(num,x,y); }
-function drawStart(){ const s=13; ctx.fillStyle='rgba(255,255,255,.14)'; ctx.beginPath(); ctx.arc(start.x,start.y,s+7,0,6.28); ctx.fill();
-  ctx.fillStyle='#e0e6f0'; roundRect(start.x-s,start.y-s*0.6,s*2,s*1.2,4); ctx.fill();
-  ctx.fillStyle='#6a7488'; ctx.font='bold 11px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('🛵',start.x,start.y);
-  ctx.fillStyle='rgba(255,255,255,.6)'; ctx.font='bold 10px system-ui'; ctx.fillText('출발',start.x,start.y+s+8); }
-function drawScooter(x,y,dir){ ctx.save(); ctx.translate(x,y); if(dir<0) ctx.scale(-1,1);
-  ctx.fillStyle='rgba(255,90,90,.25)'; ctx.beginPath(); ctx.arc(0,0,17,0,6.28); ctx.fill();
-  const wheel=(wx)=>{ ctx.fillStyle='#181818'; ctx.beginPath(); ctx.arc(wx,10,5.4,0,6.28); ctx.fill(); ctx.fillStyle='#6a6a6a'; ctx.beginPath(); ctx.arc(wx,10,2.1,0,6.28); ctx.fill(); };
-  wheel(-11); wheel(12);
-  // 차체(빨강 스쿠터)
-  ctx.fillStyle='#ff4d4d'; ctx.beginPath(); ctx.moveTo(-14,8); ctx.lineTo(14,8); ctx.lineTo(12,2); ctx.quadraticCurveTo(2,0,-4,2); ctx.lineTo(-11,5); ctx.closePath(); ctx.fill();
-  // 앞 핸들 + 헤드라이트
-  ctx.strokeStyle='#ff6a6a'; ctx.lineWidth=3.5; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(10,4); ctx.lineTo(16,-7); ctx.stroke();
-  ctx.strokeStyle='#2a2a2a'; ctx.lineWidth=2.5; ctx.beginPath(); ctx.moveTo(16,-7); ctx.lineTo(20,-8); ctx.stroke();
-  ctx.fillStyle='#ffe08a'; ctx.beginPath(); ctx.arc(17,-2,2.4,0,6.28); ctx.fill();
-  ctx.fillStyle='#5a1e1e'; roundRect(-9,-1,10,3,1.5); ctx.fill();                       // 안장
-  // 배달통(뒤, 크게 — 배달 오토바이 느낌)
-  ctx.fillStyle='#16b5a3'; roundRect(-22,-15,16,15,3); ctx.fill();
-  ctx.fillStyle='#0e8d7f'; roundRect(-22,-15,16,4.5,3); ctx.fill();
-  ctx.fillStyle='#eafffb'; roundRect(-16.5,-8,5,5,1); ctx.fill();
-  ctx.fillStyle='#ff7a3a'; ctx.beginPath(); ctx.arc(-14,-5.5,1.4,0,6.28); ctx.fill();
+function drawStart(){ if(scoot) return;   // 주행 중엔 출발 오토바이 숨김
+  drawScooter(start.x, start.y-5, 1, 1.0);
+  ctx.fillStyle='rgba(255,255,255,.65)'; ctx.font='bold 11px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('출발', start.x, start.y+16); }
+function drawScooter(x,y,dir,sc){ sc=sc||1; ctx.save(); ctx.translate(x,y); ctx.scale(dir<0?-sc:sc, sc);
+  // 그림자
+  ctx.fillStyle='rgba(0,0,0,.28)'; ctx.beginPath(); ctx.ellipse(0,18,21,4.5,0,0,6.28); ctx.fill();
+  // 바퀴(스포크 휠)
+  const wheel=(wx)=>{ ctx.fillStyle='#141414'; ctx.beginPath(); ctx.arc(wx,13,7,0,6.28); ctx.fill(); ctx.fillStyle='#3a3a3a'; ctx.beginPath(); ctx.arc(wx,13,4,0,6.28); ctx.fill(); ctx.fillStyle='#9aa0a8'; ctx.beginPath(); ctx.arc(wx,13,1.6,0,6.28); ctx.fill(); };
+  wheel(-15); wheel(16);
+  // 배기구
+  ctx.fillStyle='#9aa0a8'; roundRect(-21,13,9,3,1.5); ctx.fill();
+  // 차체(빨강)
+  ctx.fillStyle='#e63946'; ctx.beginPath(); ctx.moveTo(-16,13); ctx.lineTo(18,13); ctx.quadraticCurveTo(22,11,20,5); ctx.lineTo(12,5); ctx.quadraticCurveTo(3,2,-6,5); ctx.lineTo(-14,9); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#b02a37'; roundRect(-9,10,17,3,1.5); ctx.fill();                       // 발판
+  // 앞 포크 + 윈드스크린
+  ctx.strokeStyle='#c9ccd3'; ctx.lineWidth=3; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(16,11); ctx.lineTo(20,-2); ctx.stroke();
+  ctx.strokeStyle='rgba(180,220,255,.7)'; ctx.lineWidth=2.5; ctx.beginPath(); ctx.moveTo(20,-3); ctx.quadraticCurveTo(27,-9,24,-17); ctx.stroke();
+  // 핸들 + 헤드라이트 + 미러
+  ctx.strokeStyle='#222'; ctx.lineWidth=2.5; ctx.beginPath(); ctx.moveTo(20,-2); ctx.lineTo(25,-4); ctx.stroke();
+  ctx.fillStyle='#ffe08a'; ctx.beginPath(); ctx.arc(22,2,3,0,6.28); ctx.fill();
+  ctx.strokeStyle='#222'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(24,-4); ctx.lineTo(28,-9); ctx.stroke(); ctx.fillStyle='#333'; ctx.beginPath(); ctx.arc(28,-9,2,0,6.28); ctx.fill();
+  ctx.fillStyle='#2a2a2a'; roundRect(-10,1,14,4,2); ctx.fill();                          // 안장
+  // 배달통(뒤, 크게)
+  ctx.fillStyle='#16b5a3'; roundRect(-28,-21,20,21,3); ctx.fill();
+  ctx.fillStyle='#0e8d7f'; roundRect(-28,-21,20,5.5,3); ctx.fill();                      // 뚜껑
+  ctx.strokeStyle='#0b7166'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(-18,-16); ctx.lineTo(-18,0); ctx.stroke();
+  ctx.fillStyle='#eafffb'; roundRect(-24,-12,8,7,1.5); ctx.fill();                       // 로고 패널
+  ctx.fillStyle='#ff7a3a'; ctx.beginPath(); ctx.arc(-20,-8.5,2,0,6.28); ctx.fill();
   // 라이더
-  ctx.fillStyle='#33407a'; roundRect(-4,-12,10,11,3); ctx.fill();
-  ctx.fillStyle='#e23b3b'; ctx.beginPath(); ctx.arc(6,-13,4.2,0,6.28); ctx.fill();      // 헬멧
-  ctx.fillStyle='#ffd9b0'; ctx.beginPath(); ctx.arc(8.6,-12,1.8,0,6.28); ctx.fill();    // 얼굴
+  ctx.fillStyle='#2e3f7e'; roundRect(-6,-17,13,16,4); ctx.fill();                        // 몸(재킷)
+  ctx.strokeStyle='#2e3f7e'; ctx.lineWidth=4; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(4,-7); ctx.lineTo(18,-1); ctx.stroke();  // 팔→핸들
+  ctx.fillStyle='#e23b3b'; ctx.beginPath(); ctx.arc(9,-19,5.5,0,6.28); ctx.fill();       // 헬멧
+  ctx.fillStyle='#b02020'; ctx.beginPath(); ctx.arc(9,-19,5.5,-0.4,1.5); ctx.fill();     // 헬멧 음영
+  ctx.fillStyle='#ffd9b0'; ctx.beginPath(); ctx.arc(13.4,-17,2.4,0,6.28); ctx.fill();    // 얼굴
   ctx.restore(); }
 function roundRect(x,y,w,h,r){ ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath(); }
 resize(); requestAnimationFrame(loop);
