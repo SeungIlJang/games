@@ -38,7 +38,7 @@
   <button class="btn d" id="resetBtn">↺ 초기화</button>
   <button class="btn g" id="goBtn" disabled>🛵 출발!</button>
 </div>
-<div id="ver">v0.4.1 · 난이도 곡선(1·2판 쉽고 급상승)</div>
+<div id="ver">v0.4.2 · 결과에서 별3 정답 경로 보기</div>
 
 <div id="start">
   <h1>🛵 모두의 배달</h1>
@@ -51,18 +51,20 @@
     🛵 <b>출발!</b> → 오토바이 관전 → <b style="color:#ffd34d">별 1~3개</b> (짧을수록 별3!)
   </div>
   <button class="btn g" id="startBtn" style="padding:15px 34px;font-size:20px">시작하기</button>
-  <div id="changelog">🆕 <b>v0.4.1</b> · 난이도 곡선! <b>1·2판 쉽고(2건) → 3판부터 3·4·5·6건 급상승</b> · 잘못 배달=게임오버</div>
+  <div id="changelog">🆕 <b>v0.4.2</b> · 결과 화면에서 <b>🏆 별3 정답(최단) 경로 보기</b> 추가 · 난이도 곡선 · 잘못 배달=게임오버</div>
 </div>
 
 <div id="over" class="hidden">
   <div id="overTitle">배달 완료!</div>
   <div id="stars">⭐⭐⭐</div>
   <div id="overMsg"></div>
-  <div style="display:flex;gap:10px;margin-top:8px">
+  <button class="btn d" id="ansBtn" style="padding:11px 20px;font-size:15px">🏆 별3 정답 경로 보기</button>
+  <div style="display:flex;gap:10px;margin-top:4px">
     <button class="btn" id="retryBtn">🔥 별3 도전</button>
     <button class="btn g" id="nextBtn">다음 →</button>
   </div>
 </div>
+<button class="btn g" id="ansClose" style="position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:11;display:none">✕ 닫기</button>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -83,7 +85,7 @@ const PAIRDARK=['#c0392b','#1c6fb0','#c99a10','#2c9c50','#8e3fb0','#c26418','#0e
 let state='start';   // start|plan|run|result
 let stage=+(localStorage.getItem('baedal_stage')||1);
 let totalStars=+(localStorage.getItem('baedal_stars')||0);
-let pairs=2, nodes=[], order=[], pickedSet=new Set(), start=null, optLen=0, crossPairs=new Set();
+let pairs=2, nodes=[], order=[], pickedSet=new Set(), start=null, optLen=0, optOrder=[], crossPairs=new Set();
 let parts=[], scoot=null;
 let shake=0;
 
@@ -100,13 +102,16 @@ function genStage(){ const f=field(); pairs=pairsForStage(stage); nodes=[]; star
 function routeLen(seq){ let L=0,p=start; for(const i of seq){ L+=dist(p,nodes[i]); p=nodes[i]; } return L; }
 // 최적(픽업→드롭 선행제약) — Held-Karp DP로 즉시 계산(건수 많아도 빠름)
 function optimalRoute(){ const N=nodes.length; const INF=Infinity; const shopIdx={}; nodes.forEach((n,i)=>{ if(n.type==='shop') shopIdx[n.pair]=i; });
-  const FULL=(1<<N)-1; const dp=new Array(1<<N); for(let m=0;m<(1<<N);m++){ dp[m]=new Array(N).fill(INF); }
+  const FULL=(1<<N)-1; const dp=new Array(1<<N), par=new Array(1<<N); for(let m=0;m<(1<<N);m++){ dp[m]=new Array(N).fill(INF); par[m]=new Array(N).fill(-1); }
   for(let i=0;i<N;i++){ if(nodes[i].type==='home') continue; dp[1<<i][i]=dist(start,nodes[i]); }   // 첫 노드는 음식점만
   for(let mask=1;mask<=FULL;mask++){ for(let i=0;i<N;i++){ if(!(mask&(1<<i))) continue; const cur=dp[mask][i]; if(cur===INF) continue;
     for(let j=0;j<N;j++){ if(mask&(1<<j)) continue; const nj=nodes[j];
       if(nj.type==='home' && !(mask&(1<<shopIdx[nj.pair]))) continue;   // 집은 같은 색 음식점 방문 후에만
-      const nm=mask|(1<<j), nc=cur+dist(nodes[i],nodes[j]); if(nc<dp[nm][j]) dp[nm][j]=nc; } } }
-  let best=INF; for(let i=0;i<N;i++) if(dp[FULL][i]<best) best=dp[FULL][i]; return best||1;
+      const nm=mask|(1<<j), nc=cur+dist(nodes[i],nodes[j]); if(nc<dp[nm][j]){ dp[nm][j]=nc; par[nm][j]=i; } } } }
+  let best=INF, end=-1; for(let i=0;i<N;i++) if(dp[FULL][i]<best){ best=dp[FULL][i]; end=i; }
+  // 최적 순서 복원
+  optOrder=[]; let cur=end, mask=FULL; while(cur>=0){ optOrder.push(cur); const pv=par[mask][cur]; mask^=(1<<cur); cur=pv; } optOrder.reverse();
+  return best||1;
 }
 function segCross(a,b,c,d){ const ccw=(p,q,r)=>(r.y-p.y)*(q.x-p.x)-(q.y-p.y)*(r.x-p.x); const d1=ccw(a,b,c),d2=ccw(a,b,d),d3=ccw(c,d,a),d4=ccw(c,d,b); return ((d1>0)!==(d2>0))&&((d3>0)!==(d4>0)); }
 function updateCross(){ crossPairs=new Set(); const pts=[start,...order.map(i=>nodes[i])]; for(let i=0;i<pts.length-1;i++){ for(let j=i+1;j<pts.length-1;j++){ if(j===i||j===i+1||j===i-1) continue; if(segCross(pts[i],pts[i+1],pts[j],pts[j+1])){ crossPairs.add(i); crossPairs.add(j); } } } }
@@ -163,8 +168,11 @@ function finishRun(myLen){ state='result'; const ratio=myLen/optLen; let stars=r
   $('overMsg').innerHTML='내 경로 <b style="color:#7cf6ff">'+Math.round(myLen)+'</b> · 최적 <b style="color:#7cffb0">'+Math.round(optLen)+'</b><br>효율 <b>'+eff+'%</b>'+(stars<3?'<br><span style="color:#ff9a5a">픽업·드롭 순서를 더 짧게!</span>':'<br><span style="color:#7cffb0">최적에 가까운 완벽한 동선!</span>');
   setTimeout(()=>$('over').classList.remove('hidden'),700);
 }
-$('retryBtn').onclick=()=>{ newStage(false); };
-$('nextBtn').onclick=()=>{ stage++; try{localStorage.setItem('baedal_stage',stage);}catch(e){} newStage(true); };
+let ansPrev='result';
+$('ansBtn').onclick=()=>{ ansPrev=state; state='answer'; $('over').classList.add('hidden'); $('ansClose').style.display='block'; $('hint').textContent='🏆 별3 정답(최단) 경로예요'; };
+$('ansClose').onclick=()=>{ state=ansPrev; $('ansClose').style.display='none'; $('hint').textContent=''; $('over').classList.remove('hidden'); };
+$('retryBtn').onclick=()=>{ $('ansClose').style.display='none'; newStage(false); };
+$('nextBtn').onclick=()=>{ $('ansClose').style.display='none'; stage++; try{localStorage.setItem('baedal_stage',stage);}catch(e){} newStage(true); };
 $('startBtn').onclick=()=>{ try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){} $('start').classList.add('hidden'); newStage(true); };
 
 let last=performance.now();
@@ -191,14 +199,17 @@ function draw(){ ctx.clearRect(0,0,W,H);
   const f=field();
   ctx.fillStyle='rgba(90,140,200,.06)'; roundRect(f.x,f.y,f.w,f.h,18); ctx.fill();
   ctx.strokeStyle='rgba(120,170,230,.28)'; ctx.lineWidth=2; roundRect(f.x,f.y,f.w,f.h,18); ctx.stroke();
+  const answer = state==='answer';
+  const activeOrder = answer ? optOrder : order;
   // 경로
-  const pts=[start,...order.map(i=>nodes[i])];
-  for(let i=0;i<pts.length-1;i++){ const bad=crossPairs.has(i); ctx.strokeStyle=bad?'rgba(255,90,110,.9)':'rgba(190,210,235,.55)'; ctx.lineWidth=bad?5:3.5; ctx.setLineDash(state==='run'?[]:[8,7]); ctx.beginPath(); ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[i+1].x,pts[i+1].y); ctx.stroke(); ctx.setLineDash([]); }
+  const pts=[start,...activeOrder.map(i=>nodes[i])];
+  for(let i=0;i<pts.length-1;i++){ const bad=!answer&&crossPairs.has(i); ctx.strokeStyle=answer?'rgba(90,230,150,.95)':(bad?'rgba(255,90,110,.9)':'rgba(190,210,235,.55)'); ctx.lineWidth=answer?4.5:(bad?5:3.5); ctx.setLineDash(state==='run'?[]:[8,7]); ctx.beginPath(); ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[i+1].x,pts[i+1].y); ctx.stroke(); ctx.setLineDash([]); }
   // 노드
-  nodes.forEach((n,i)=>{ const oi=order.indexOf(i); const done=scoot&&oi>=0&&oi<scoot.visited;
+  nodes.forEach((n,i)=>{ const oi=activeOrder.indexOf(i); const done=!answer&&scoot&&oi>=0&&oi<scoot.visited;
     if(n.type==='shop') drawShop(n,oi>=0?oi+1:0,done); else drawHome(n, oi>=0?oi+1:0, done, pickedSet.has(n.pair)); });
   // 출발점
   drawStart();
+  if(answer){ ctx.fillStyle='#7cffb0'; ctx.font='bold 15px system-ui'; ctx.textAlign='center'; ctx.fillText('🏆 별3 정답(최단) 경로 · '+Math.round(optLen), W/2, f.y+18); }
   // 오토바이 + 배달통 개수
   if(scoot){ const b=scoot.path[Math.min(scoot.seg+1,scoot.path.length-1)]; drawScooter(scoot.x,scoot.y, b.x<scoot.x?-1:1);
     if(scoot.carried>0){ ctx.fillStyle='#ffd34d'; ctx.font='bold 12px system-ui'; ctx.textAlign='center'; ctx.fillText('📦'+scoot.carried, scoot.x, scoot.y-20); } }
