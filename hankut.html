@@ -1,0 +1,242 @@
+<!DOCTYPE html><html lang="ko"><head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+<title>모두의 한끗</title>
+<style>
+  html,body{margin:0;height:100%;background:#0c1522;overflow:hidden;font-family:system-ui,-apple-system,sans-serif;color:#fff;touch-action:none;user-select:none;-webkit-user-select:none}
+  canvas{display:block}
+  #top{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:0;right:0;text-align:center;z-index:3;pointer-events:none}
+  #streak{font-size:15px;font-weight:800;color:#ffd34d;min-height:20px}
+  #wind{font-size:14px;font-weight:700;color:#9fd0ff;margin-top:2px;min-height:18px}
+  #result{font-size:16px;font-weight:800;margin-top:3px;min-height:20px}
+  #hint{position:fixed;bottom:calc(14px + env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;z-index:3;font-size:17px;font-weight:800;color:#ffe;pointer-events:none;min-height:24px}
+  #ver{position:fixed;left:8px;bottom:calc(4px + env(safe-area-inset-bottom,0px));font-size:10px;color:#42506a;z-index:4}
+  .flash{position:fixed;left:50%;top:40%;transform:translateX(-50%);font-size:40px;font-weight:900;z-index:8;pointer-events:none;text-align:center;white-space:nowrap;animation:fl 1.1s ease-out forwards}
+  @keyframes fl{0%{opacity:0;transform:translate(-50%,14px) scale(.7)}18%{opacity:1;transform:translate(-50%,-4px) scale(1.12)}100%{opacity:0;transform:translate(-50%,-64px) scale(1)}}
+  .btn{background:#3a7bff;color:#fff;border:none;border-radius:16px;padding:15px 30px;font-size:19px;font-weight:800;box-shadow:0 6px 0 #1f52c0;cursor:pointer}
+  #start,#over{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(10,16,28,.95);z-index:10;text-align:center;padding:24px}
+  .hidden{display:none!important}
+  h1{font-size:42px;margin:0;color:#ffd34d;text-shadow:0 0 22px rgba(255,211,77,.5)}
+  .sub{color:#bcd;opacity:.9;font-size:15px;line-height:1.5}
+  #changelog{margin-top:14px;font-size:12px;color:#9fe;background:rgba(90,246,180,.1);border:1px solid rgba(90,246,180,.3);border-radius:10px;padding:8px 12px;max-width:320px}
+  #overTitle{font-size:38px;font-weight:900}
+  #overMsg{font-size:17px}
+</style></head>
+<body>
+<canvas id="cv"></canvas>
+<div id="top">
+  <div id="streak"></div>
+  <div id="wind"></div>
+  <div id="result"></div>
+</div>
+<div id="hint"></div>
+<div id="ver">v0.1 · 코어 프로토타입(조준·파워·던짐·거리대전·바람·니어미스)</div>
+
+<div id="start">
+  <h1>모두의 한끗</h1>
+  <div class="sub"><b>동전을 던져 목표선에 가장 가까이!</b><br/>① <b style="color:#7cf6ff">좌우 조준</b> 탭 → ② <b style="color:#ffd34d">파워</b> 탭 → 던짐!<br/><span style="opacity:.75;font-size:13px">상대보다 선에 가까우면 승리 · 바람 조심!</span></div>
+  <div class="sub" id="startStats" style="font-size:13px;opacity:.85"></div>
+  <button class="btn" id="startBtn">대결 시작</button>
+  <div id="changelog">🆕 <b>v0.1</b> · 모두의 한끗 첫 프로토타입! 조준+파워 2탭 · 관전 튕김 역전 · 소수점 거리 대결 · 다음: 세계 동전 도감·글로벌 랭킹</div>
+</div>
+
+<div id="over" class="hidden">
+  <div id="overTitle">승리!</div>
+  <div class="sub" id="overMsg"></div>
+  <div class="sub" id="overStreak" style="color:#ffd34d;font-weight:800"></div>
+  <button class="btn" id="reviveBtn" style="background:#2ec77a;box-shadow:0 6px 0 #1a8a52;display:none">🎬 광고 보고 한 번 더 튕기기</button>
+  <div style="display:flex;gap:10px;margin-top:6px">
+    <button class="btn" id="nextBtn">다음 판</button>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+let AC; function tone(f,d,t,g){ try{ if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)(); const o=AC.createOscillator(),v=AC.createGain(); o.type=t||'square'; o.frequency.value=f; v.gain.value=g||0.06; o.connect(v);v.connect(AC.destination); const s=AC.currentTime;o.start(s);v.gain.setValueAtTime(v.gain.value,s);v.gain.exponentialRampToValueAtTime(0.0001,s+(d||0.1));o.stop(s+(d||0.1)); }catch(e){} }
+function chord(b){ [0,4,7].forEach((s,i)=>setTimeout(()=>tone(b*Math.pow(2,s/12),0.14,'triangle',0.06),i*40)); }
+function vib(m){ try{navigator.vibrate&&navigator.vibrate(m);}catch(e){} }
+
+const cv=$('cv'), ctx=cv.getContext('2d'); let W=412,H=740,DPR=1;
+function resize(){ DPR=Math.min(devicePixelRatio||1,2); const vw=innerWidth,vh=innerHeight; W=412; H=Math.round(W*vh/vw); cv.width=W*DPR;cv.height=H*DPR; cv.style.width=vw+'px';cv.style.height=vh+'px'; ctx.setTransform(DPR,0,0,DPR,0,0); }
+addEventListener('resize',resize); resize();
+
+function field(){ return {x:22, y:H*0.10, w:W-44, h:H*0.64}; }
+function lineY(){ const f=field(); return f.y + f.h*0.24; }        // 목표선
+function originY(){ const f=field(); return f.y + f.h*0.92; }       // 동전 출발점
+const CM_H=30;                                                       // 필드 세로 = 30cm 기준
+function toCm(px){ return px * CM_H / field().h; }
+
+let state='start';   // start|aimX|power|mythrow|aithrow|measure|result
+let streak=+(localStorage.getItem('hankut_streak')||0);
+let best=+(localStorage.getItem('hankut_best')||0);
+let wind=0;                     // 바람 (px/s^2, +오른쪽)
+let aimAng=0, aimDir=1;         // 조준 각(라디안)
+let power=0, powDir=1;          // 파워 0..1
+let my=null, ai=null;          // 동전 {x,y,vx,vy,stopped,dist}
+let parts=[], shake=0, trail=[];
+let outcomePlayerWin=false;     // 이번 판 결과(선판정 러버밴드)
+let reviveUsed=false;
+
+function newMatch(){
+  wind = rnd(-140,140); if(Math.abs(wind)<40) wind = wind<0?-40:40;
+  aimAng=-0.34; aimDir=1; power=0; powDir=1;
+  my={x:W/2,y:originY(),vx:0,vy:0,stopped:false,dist:0,bounces:0,mine:true};
+  ai=null; trail=[]; parts=[];
+  reviveUsed=false;
+  // 이번 판 승/패 미리 결정(연승할수록 어려움) — 니어미스 연출용
+  const winProb = clamp(0.64 - streak*0.05, 0.25, 0.7);
+  outcomePlayerWin = Math.random() < winProb;
+  state='aimX';
+  $('result').textContent='';
+  $('streak').textContent = '🔥 '+streak+' 연승'+(best>0?(' · 최고 '+best):'');
+  $('wind').innerHTML = '💨 바람 '+(wind>0?'→':'←')+' '+Math.round(Math.abs(wind)/14)+' ';
+  $('hint').textContent='① 좌우 조준 — 탭!';
+}
+function tap(){
+  if(state==='aimX'){ state='power'; $('hint').textContent='② 파워 — 탭!'; tone(680,0.05,'square',0.09); vib(12); }
+  else if(state==='power'){ throwMy(); }
+}
+addEventListener('pointerdown',e=>{ if(e.target.closest('.btn'))return; if(state==='aimX'||state==='power') tap(); });
+
+function throwMy(){
+  const s0 = 620 + power*1500;                    // 파워 → 초기 속도(px/s)
+  my.vx = Math.sin(aimAng)*s0; my.vy = -Math.cos(aimAng)*s0;
+  my.stopped=false; my.bounces=0;
+  state='mythrow'; $('hint').textContent=''; tone(880,0.08,'square',0.1); vib([10,30]);
+}
+function stepCoin(c,dt){
+  c.x += c.vx*dt; c.y += c.vy*dt;
+  c.vx += wind*dt;                                // 바람
+  const damp=Math.exp(-1.7*dt); c.vx*=damp; c.vy*=damp;   // 마찰 감속
+  const f=field();
+  // 벽 튕김
+  if(c.x < f.x+10){ c.x=f.x+10; c.vx=Math.abs(c.vx)*0.6; c.bounces++; bounceFx(c); }
+  if(c.x > f.x+f.w-10){ c.x=f.x+f.w-10; c.vx=-Math.abs(c.vx)*0.6; c.bounces++; bounceFx(c); }
+  if(c.y < f.y+10){ c.y=f.y+10; c.vy=Math.abs(c.vy)*0.55; c.bounces++; bounceFx(c); }   // 위벽 튕김(역전 긴장)
+  if(c.y > f.y+f.h-10){ c.y=f.y+f.h-10; c.vy=-Math.abs(c.vy)*0.5; c.bounces++; }
+  const sp=Math.hypot(c.vx,c.vy);
+  if(sp<26){ c.vx=0;c.vy=0;c.stopped=true; c.dist=Math.abs(c.y-lineY()); }
+  return sp;
+}
+function bounceFx(c){ tone(300,0.05,'sine',0.08); vib(12); shake=Math.max(shake,5); for(let i=0;i<5;i++){const a=Math.random()*6.28,s=rnd(1,4);parts.push({x:c.x,y:c.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:0.7,c:'#cfe0ff',r:2+Math.random()*2});} }
+
+function throwAi(){
+  // 러버밴드: 미리 정한 승패에 맞춰 상대 거리 결정(니어미스)
+  const myCm=toCm(my.dist);
+  let aiCm;
+  if(outcomePlayerWin) aiCm = myCm + rnd(0.4,1.8);
+  else aiCm = Math.max(0.1, myCm - rnd(0.1,0.4));            // 아슬아슬 패배
+  const aiDistPx = aiCm * field().h / CM_H;
+  // 상대 동전을 선 근처(위/아래 랜덤)로 착지 애니메이션
+  const side = Math.random()<0.5?-1:1;
+  const tx = clamp(my.x + rnd(-70,70), field().x+16, field().x+field().w-16);
+  ai={x:tx, y:originY(), vx:0, vy:0, stopped:false, dist:aiDistPx, mine:false, targetY: lineY()+side*aiDistPx, t:0};
+  const s0=900+Math.random()*400; ai.vy=-s0; ai.vx=rnd(-60,60);
+  state='aithrow';
+}
+function stepAi(dt){
+  // 목표 지점으로 감속 이동 + 살짝 튕김 연출
+  ai.t+=dt;
+  const dy = ai.targetY - ai.y;
+  ai.vy += dy*6*dt; ai.vy*=Math.exp(-3*dt); ai.x+=ai.vx*dt; ai.y+=ai.vy*dt; ai.vx*=Math.exp(-2*dt);
+  if(ai.t>1.1 && Math.abs(dy)<3 && Math.abs(ai.vy)<40){ ai.y=ai.targetY; ai.vy=0; ai.vx=0; ai.stopped=true; ai.dist=Math.abs(ai.y-lineY()); }
+}
+function doMeasure(){
+  state='measure'; setTimeout(finish, 1100);
+}
+function finish(){
+  const myCm=toCm(my.dist), aiCm=toCm(ai.dist);
+  const win = my.dist <= ai.dist;
+  state='result';
+  if(win){ streak++; if(streak>best){best=streak; try{localStorage.setItem('hankut_best',best);}catch(e){}} try{localStorage.setItem('hankut_streak',streak);}catch(e){}
+    $('overTitle').textContent='🏆 승리!'; $('overTitle').style.color='#7cffb0';
+    flash('🏆 승리!','#7cffb0'); chord(523); setTimeout(()=>chord(784),150); vib([20,40,20,40,90]); confetti(W/2,H*0.4,70); shake=10;
+    $('reviveBtn').style.display='none';
+  } else {
+    $('overTitle').textContent='😫 패배!'; $('overTitle').style.color='#ff6a7a';
+    flash(Math.abs(myCm-aiCm)<0.5?('아깝다! '+Math.abs(myCm-aiCm).toFixed(1)+'cm 차이 😭'):'졌다 💨','#ff6a7a');
+    tone(160,0.3,'sawtooth',0.1); vib(200); shake=16;
+    streak=0; try{localStorage.setItem('hankut_streak',0);}catch(e){}
+    $('reviveBtn').style.display = reviveUsed?'none':'block';
+  }
+  $('overMsg').innerHTML = '내 거리 <b style="color:#7cf6ff">'+myCm.toFixed(1)+'cm</b>  ·  상대 <b style="color:#ff9a5a">'+aiCm.toFixed(1)+'cm</b>';
+  $('overStreak').textContent = win?('🔥 '+streak+'연승 중!'+(streak===best&&best>0?' (최고 기록!)':'')):'연승 끊김 · 최고 '+best;
+  setTimeout(()=>$('over').classList.remove('hidden'),700);
+}
+
+// 렌더 루프
+let last=performance.now();
+function loop(now){ requestAnimationFrame(loop); let dt=(now-last)/1000; last=now; if(dt>0.05)dt=0.05;
+  if(state==='aimX'){ aimAng+=aimDir*1.7*dt; if(aimAng>0.34){aimAng=0.34;aimDir=-1;} if(aimAng<-0.34){aimAng=-0.34;aimDir=1;} }
+  else if(state==='power'){ power+=powDir*1.5*dt; if(power>1){power=1;powDir=-1;} if(power<0){power=0;powDir=1;} }
+  else if(state==='mythrow'){ trail.push({x:my.x,y:my.y}); if(trail.length>14)trail.shift(); const sp=stepCoin(my,dt); if(my.stopped){ dustFx(my); throwAi(); } }
+  else if(state==='aithrow'){ stepAi(dt); if(ai.stopped){ dustFx(ai); doMeasure(); } }
+  for(const p of parts){ p.x+=p.vx;p.y+=p.vy;p.vy+=0.12;p.life-=0.022; } parts=parts.filter(p=>p.life>0);
+  draw();
+}
+function dustFx(c){ for(let i=0;i<10;i++){const a=Math.random()*6.28,s=rnd(1,5);parts.push({x:c.x,y:c.y+6,vx:Math.cos(a)*s,vy:-Math.abs(Math.sin(a))*s*0.6,life:0.9,c:'#8a7a5a',r:2+Math.random()*3});} tone(220,0.09,'sine',0.09); }
+function confetti(x,y,n){ const cols=['#ffd34d','#7cffb0','#5ab0ff','#ff8a5a','#c9a3ff','#fff']; for(let i=0;i<n;i++){const a=Math.random()*6.28,s=rnd(2,9);parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-5,life:1.5,c:cols[i%cols.length],r:3+Math.random()*4});} }
+function flash(t,c){ const d=document.createElement('div');d.className='flash';d.textContent=t;d.style.color=c;document.body.appendChild(d);setTimeout(()=>d.remove(),1100); }
+
+function drawCoin(c,label,col){ const r=17;
+  ctx.save(); const g=ctx.createRadialGradient(c.x-5,c.y-6,3,c.x,c.y,r); g.addColorStop(0,col.a); g.addColorStop(1,col.b);
+  ctx.fillStyle='rgba(0,0,0,.28)'; ctx.beginPath(); ctx.ellipse(c.x,c.y+r-2,r*0.9,4,0,0,6.28); ctx.fill();
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(c.x,c.y,r,0,6.28); ctx.fill();
+  ctx.strokeStyle=col.e; ctx.lineWidth=2.5; ctx.beginPath(); ctx.arc(c.x,c.y,r,0,6.28); ctx.stroke();
+  ctx.fillStyle=col.e; ctx.font='bold 17px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(label,c.x,c.y+1);
+  ctx.restore();
+}
+function draw(){ ctx.clearRect(0,0,W,H);
+  let sx=0,sy=0; if(shake>0){sx=(Math.random()-.5)*shake;sy=(Math.random()-.5)*shake;shake*=0.86;if(shake<.4)shake=0;}
+  ctx.save(); ctx.translate(sx,sy);
+  const bg=ctx.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#12233a'); bg.addColorStop(1,'#0a1018'); ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+  const f=field();
+  // 보드(바닥)
+  ctx.fillStyle='rgba(90,140,200,.08)'; roundRect(f.x,f.y,f.w,f.h,16); ctx.fill();
+  ctx.strokeStyle='rgba(120,170,230,.4)'; ctx.lineWidth=3; roundRect(f.x,f.y,f.w,f.h,16); ctx.stroke();
+  // 목표선
+  const ly=lineY(); ctx.strokeStyle='#ffd34d'; ctx.lineWidth=4; ctx.setLineDash([12,8]); ctx.beginPath(); ctx.moveTo(f.x+8,ly); ctx.lineTo(f.x+f.w-8,ly); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle='#ffd34d'; ctx.font='bold 12px system-ui'; ctx.textAlign='left'; ctx.fillText('🎯 목표선',f.x+10,ly-8);
+  // 바람 화살표
+  if(state!=='start'&&state!=='result'){ ctx.save(); ctx.globalAlpha=.6; ctx.strokeStyle='#9fd0ff'; ctx.fillStyle='#9fd0ff'; ctx.lineWidth=3; const wy=f.y+22, wl=clamp(Math.abs(wind)/3,14,70)*(wind<0?-1:1), wcx=W/2; ctx.beginPath();ctx.moveTo(wcx-wl,wy);ctx.lineTo(wcx+wl,wy);ctx.stroke(); ctx.beginPath();ctx.moveTo(wcx+wl,wy);ctx.lineTo(wcx+wl-(wind<0?-8:8),wy-5);ctx.lineTo(wcx+wl-(wind<0?-8:8),wy+5);ctx.closePath();ctx.fill(); ctx.restore(); }
+  // 궤적
+  if(trail.length){ ctx.strokeStyle='rgba(255,211,77,.35)'; ctx.lineWidth=3; ctx.beginPath(); trail.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)); ctx.stroke(); }
+  // 조준 가이드
+  if(state==='aimX'){ const L=90; ctx.strokeStyle='#7cf6ff'; ctx.lineWidth=3; ctx.setLineDash([7,7]); ctx.beginPath(); ctx.moveTo(my.x,my.y); ctx.lineTo(my.x+Math.sin(aimAng)*L, my.y-Math.cos(aimAng)*L); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='#7cf6ff'; ctx.beginPath(); ctx.arc(my.x+Math.sin(aimAng)*L, my.y-Math.cos(aimAng)*L,5,0,6.28); ctx.fill(); }
+  // 파워 게이지
+  if(state==='power'){ const bw=200,bh=18,bx=W/2-bw/2,by=H*0.80; ctx.fillStyle='rgba(255,255,255,.12)'; roundRect(bx,by,bw,bh,9); ctx.fill();
+    const pg=ctx.createLinearGradient(bx,0,bx+bw,0); pg.addColorStop(0,'#7cffb0');pg.addColorStop(0.6,'#ffd34d');pg.addColorStop(1,'#ff5a5a'); ctx.fillStyle=pg; roundRect(bx,by,bw*power,bh,9); ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.3)';ctx.lineWidth=2; roundRect(bx,by,bw,bh,9); ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='bold 13px system-ui';ctx.textAlign='center';ctx.fillText('파워 '+Math.round(power*100)+'%',W/2,by-8); }
+  // 측정 자
+  if((state==='measure'||state==='result')){ measureLine(my,'#7cf6ff'); if(ai&&ai.stopped) measureLine(ai,'#ff9a5a'); }
+  // 동전들
+  if(ai&&(state==='aithrow'||state==='measure'||state==='result')) drawCoin(ai,'AI',{a:'#ffe6a0',b:'#c98a2a',e:'#5a3a10'});
+  if(my) drawCoin(my,'₩',{a:'#fff0b0',b:'#e0a020',e:'#6a4a10'});
+  // 파티클
+  for(const p of parts){ ctx.globalAlpha=Math.max(0,p.life); ctx.fillStyle=p.c; ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,6.28);ctx.fill(); } ctx.globalAlpha=1;
+  ctx.restore();
+}
+function measureLine(c,col){ const ly=lineY(); ctx.save(); ctx.strokeStyle=col; ctx.lineWidth=2; ctx.setLineDash([4,4]); ctx.beginPath(); ctx.moveTo(c.x,c.y); ctx.lineTo(c.x,ly); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle=col; ctx.font='bold 13px system-ui'; ctx.textAlign='center'; ctx.fillText(toCm(Math.abs(c.y-ly)).toFixed(1)+'cm', c.x, (c.y+ly)/2); ctx.restore(); }
+function roundRect(x,y,w,h,r){ ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath(); }
+requestAnimationFrame(loop);
+
+function renderStartStats(){ $('startStats').innerHTML='🔥 최고 연승 <b>'+best+'</b>'; }
+function begin(){ try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){} $('start').classList.add('hidden'); $('over').classList.add('hidden'); newMatch(); }
+function nextMatch(){ $('over').classList.add('hidden'); newMatch(); }
+function revive(){ if(reviveUsed) return; reviveUsed=true; $('over').classList.add('hidden'); $('reviveBtn').style.display='none';
+  // 광고(스텁) — 내 동전을 선에 더 가깝게 재배치 후 재판정
+  flash('🎬 한 번 더 튕겨요!','#2ec77a'); vib([20,40,20]);
+  const ly=lineY(); my.y = ly + (my.y>ly?1:-1)*Math.max(4, Math.abs(my.y-ly)*0.35); my.dist=Math.abs(my.y-ly); my.stopped=true;
+  setTimeout(finish, 500);
+}
+$('startBtn').onclick=begin;
+$('nextBtn').onclick=nextMatch;
+$('reviveBtn').onclick=revive;
+renderStartStats(); $('streak').textContent='';
+</script>
+</body></html>
