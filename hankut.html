@@ -43,22 +43,21 @@
   <div id="wind"></div>
 </div>
 <div id="hint"></div>
-<div id="ver">v0.3 · 세계 여행 + 나라별 동전 수집</div>
+<div id="ver">v0.3.1 · 직선 던지기 집중(좌우 조준 제거)</div>
 
 <div id="start">
   <h1>모두의 한끗</h1>
   <div class="sub"><b>동전을 던져 목표선에 가장 가까이 붙이는 대결!</b></div>
   <div id="howto">
-    🎯 <b>목표</b> — 노란 <b style="color:#ffd34d">골인 라인</b>에 내 동전을 붙여요<br>
-    ① <b style="color:#7cf6ff">좌우 조준</b> — 움직일 때 원하는 방향에서 탭<br>
-    ② <b style="color:#ffd34d">파워</b> — <b>착지 예측 점(●)</b>이 라인에 오면 탭!<br>
-    🏆 <b>상대(AI)보다 라인에 가까우면 승리</b> · 💨 바람 주의
+    🎯 <b>목표</b> — 앞으로 <b>직선</b>으로 던져 노란 <b style="color:#ffd34d">골인 라인</b>에 딱 붙여요<br>
+    👆 <b style="color:#ffd34d">단 한 번의 탭</b> — <b>파워 게이지</b>가 왕복할 때, <b>착지 예측 점(●)</b>이 라인에 오는 순간 탭!<br>
+    🏆 <b>상대(AI)보다 라인에 가까우면 승리</b> · 💨 앞·뒷바람 주의(거리 변함)
   </div>
   <div id="travel"></div>
   <div id="travelBar"><div id="travelFill"></div></div>
   <button class="btn" id="startBtn">대결 시작</button>
   <button class="btn" id="mapBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:12px 24px;font-size:16px">🗺️ 세계 지도(동전 도감)</button>
-  <div id="changelog">🆕 <b>v0.3</b> · 세계 여행! 이기면 그 나라 동전 수집 → 다음 나라로 · 🗺️ 도감</div>
+  <div id="changelog">🆕 <b>v0.3.1</b> · 좌우 조준 제거! <b>직선 던지기 한 방</b>에 집중 · 앞/뒷바람으로 거리 조절</div>
 </div>
 
 <div id="map">
@@ -131,28 +130,28 @@ let collected=[]; try{collected=JSON.parse(localStorage.getItem('hankut_dex')||'
 function CC(){ return COUNTRIES[curCountry]; }
 function saveTravel(){ try{localStorage.setItem('hankut_country',curCountry);localStorage.setItem('hankut_dex',JSON.stringify(collected));}catch(e){} }
 
+function myX(){ return W/2-16; }
+function aiX(){ return W/2+16; }
 function newMatch(){
-  wind=rnd(-75,75); if(Math.abs(wind)<28) wind=wind<0?-28:28;
-  aimAng=-0.32; aimDir=1; power=0; powDir=1;
-  my={x:W/2,y:originY(),vx:0,vy:0,stopped:false,dist:0}; ai=null; trail=[]; parts=[]; ghost=null; reviveUsed=false;
-  state='aimX';
+  // wind = 앞/뒷바람(직선 던지기 거리에 영향). wind<0=순풍(멀리), wind>0=역풍(짧게)
+  wind=rnd(-52,52); if(Math.abs(wind)<18) wind=wind<0?-18:18;
+  aimAng=0; power=0; powDir=1;
+  my={x:myX(),y:originY(),vx:0,vy:0,stopped:false,dist:0}; ai=null; trail=[]; parts=[]; ghost=null; reviveUsed=false;
+  state='power';
   $('country').innerHTML='📍 '+CC().f+' <b>'+CC().n+'</b> — '+CC().c+' 동전 획득 도전!';
   $('streak').textContent='🔥 '+streak+' 연승'+(best>0?(' · 최고 '+best):'');
-  $('wind').innerHTML='💨 바람 '+(wind>0?'▶':'◀')+' 세기 '+Math.round(Math.abs(wind)/13);
+  $('wind').innerHTML=(wind<0?'💨 순풍 ⬆ (멀리)':'💨 역풍 ⬇ (짧게)')+' 세기 '+Math.round(Math.abs(wind)/9);
   $('scoreMe').textContent=scoreMe; $('scoreAi').textContent=scoreAi;
-  $('hint').textContent='① 좌우로 움직이는 조준선을 탭!';
+  $('hint').textContent='👆 예측점(●)이 골인 라인에 오는 순간 탭!';
 }
-function tap(){
-  if(state==='aimX'){ state='power'; $('hint').textContent='② 착지 예측점(●)이 라인에 오면 탭!'; tone(680,0.05,'square',0.09); vib(12); }
-  else if(state==='power'){ throwMy(); }
-}
-addEventListener('pointerdown',e=>{ if(e.target.closest('.btn'))return; if(state==='aimX'||state==='power') tap(); });
+function tap(){ if(state==='power') throwMy(); }
+addEventListener('pointerdown',e=>{ if(e.target.closest('.btn'))return; if(state==='power') tap(); });
 
 function coinSpeed(pw){ return field().h*(0.58 + pw*1.02); }   // 화면 크기에 비례(파워 0.5≈라인)
 // 물리 1스텝(예측/실제 공용)
 function physStep(c,dt){ const f=field(); const sp0=Math.hypot(c.vx,c.vy);
   c.x+=c.vx*dt; c.y+=c.vy*dt;
-  c.vx += wind*dt*clamp(sp0/300,0,1);   // 바람은 빠를 때만 영향(정지 근처엔 X → 무한 드리프트 방지)
+  c.vy += wind*dt*clamp(sp0/300,0,1);   // 앞/뒷바람=수직(거리에 영향)·빠를 때만(정지 근처X → 무한드리프트 방지)
   const d=Math.exp(-1.7*dt); c.vx*=d; c.vy*=d;
   if(c.x<f.x+10){c.x=f.x+10;c.vx=Math.abs(c.vx)*0.6;c._b&&c._b();}
   if(c.x>f.x+f.w-10){c.x=f.x+f.w-10;c.vx=-Math.abs(c.vx)*0.6;c._b&&c._b();}
@@ -160,10 +159,10 @@ function physStep(c,dt){ const f=field(); const sp0=Math.hypot(c.vx,c.vy);
   if(c.y>f.y+f.h-10){c.y=f.y+f.h-10;c.vy=-Math.abs(c.vy)*0.5;}
   return Math.hypot(c.vx,c.vy);
 }
-function computeLanding(ang,pw){ const s0=coinSpeed(pw); let c={x:W/2,y:originY(),vx:Math.sin(ang)*s0,vy:-Math.cos(ang)*s0}; let n=0; while(n++<700){ if(physStep(c,1/60)<24) break; } return {x:c.x,y:c.y}; }
-function updateGhost(){ const pw=(state==='power')?power:PREVIEW_POW; ghost=computeLanding(aimAng,pw); }
+function computeLanding(pw){ const s0=coinSpeed(pw); let c={x:myX(),y:originY(),vx:0,vy:-s0}; let n=0; while(n++<700){ if(physStep(c,1/60)<24) break; } return {x:c.x,y:c.y}; }
+function updateGhost(){ const pw=(state==='power')?power:PREVIEW_POW; ghost=computeLanding(pw); }
 
-function throwMy(){ const s0=coinSpeed(power)*rnd(0.98,1.02); my.vx=Math.sin(aimAng)*s0+rnd(-12,12); my.vy=-Math.cos(aimAng)*s0; my._b=()=>bounceFx(my); my.stopped=false;
+function throwMy(){ const s0=coinSpeed(power)*rnd(0.98,1.02); my.vx=0; my.vy=-s0; my._b=()=>bounceFx(my); my.stopped=false;
   state='mythrow'; $('hint').textContent=''; tone(880,0.08,'square',0.1); vib([10,30]); }
 function bounceFx(c){ tone(300,0.05,'sine',0.08); vib(10); shake=Math.max(shake,5); for(let i=0;i<5;i++){const a=Math.random()*6.28,s=rnd(1,4);parts.push({x:c.x,y:c.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:0.7,c:'#cfe0ff',r:2+Math.random()*2});} }
 function dustFx(c){ for(let i=0;i<9;i++){const a=Math.random()*6.28,s=rnd(1,5);parts.push({x:c.x,y:c.y+6,vx:Math.cos(a)*s,vy:-Math.abs(Math.sin(a))*s*0.6,life:0.9,c:'#8a7a5a',r:2+Math.random()*3});} tone(220,0.09,'sine',0.09); }
@@ -175,8 +174,7 @@ function throwAi(){
   const skill=clamp(0.3+streak*0.1,0.3,0.9);
   let aiCm=clamp(rnd(1.0,5.0)*(1-skill*0.6), 0.4, 5.5);   // 붙일 수 있는 범위(공정)·연승할수록 정확
   const aiDistPx=aiCm*field().h/CM_H; const side=Math.random()<0.5?-1:1;
-  const tx=clamp(my.x+rnd(-60,60), field().x+16, field().x+field().w-16);
-  ai={x:tx,y:originY(),vx:rnd(-50,50),vy:-(900+Math.random()*400),targetY:lineY()+side*aiDistPx,t:0,stopped:false,dist:aiDistPx};
+  ai={x:aiX(),y:originY(),vx:0,vy:-(900+Math.random()*400),targetY:lineY()+side*aiDistPx,t:0,stopped:false,dist:aiDistPx};
   state='aithrow';
 }
 function stepAi(dt){ ai.t+=dt; const dy=ai.targetY-ai.y; ai.vy+=dy*6*dt; ai.vy*=Math.exp(-3*dt); ai.x+=ai.vx*dt; ai.y+=ai.vy*dt; ai.vx*=Math.exp(-2*dt);
@@ -208,8 +206,7 @@ function finish(){ const myCm=toCm(my.dist), aiCm=toCm(ai.dist); const win=my.di
 
 let last=performance.now();
 function loop(now){ requestAnimationFrame(loop); let dt=(now-last)/1000; last=now; if(dt>0.05)dt=0.05;
-  if(state==='aimX'){ aimAng+=aimDir*1.5*dt; if(aimAng>0.32){aimAng=0.32;aimDir=-1;} if(aimAng<-0.32){aimAng=-0.32;aimDir=1;} updateGhost(); }
-  else if(state==='power'){ power+=powDir*1.1*dt; if(power>1){power=1;powDir=-1;} if(power<0){power=0;powDir=1;} updateGhost(); }
+  if(state==='power'){ power+=powDir*1.1*dt; if(power>1){power=1;powDir=-1;} if(power<0){power=0;powDir=1;} updateGhost(); }
   else if(state==='mythrow'){ trail.push({x:my.x,y:my.y}); if(trail.length>16)trail.shift(); if(physStep(my,dt)<26){my.vx=my.vy=0;my.stopped=true;my.dist=Math.abs(my.y-lineY()); dustFx(my); throwAi();} }
   else if(state==='aithrow'){ stepAi(dt); if(ai.stopped){ dustFx(ai); state='measure'; setTimeout(finish,1100);} }
   for(const p of parts){ p.x+=p.vx;p.y+=p.vy;p.vy+=0.12;p.life-=0.022; } parts=parts.filter(p=>p.life>0);
@@ -237,13 +234,17 @@ function draw(){ ctx.clearRect(0,0,W,H);
   ctx.strokeStyle='#ffd34d'; ctx.lineWidth=4; ctx.setLineDash([12,7]); ctx.beginPath(); ctx.moveTo(f.x+8,ly); ctx.lineTo(f.x+f.w-8,ly); ctx.stroke(); ctx.setLineDash([]);
   ctx.fillStyle='#ffd34d'; ctx.font='bold 12px system-ui'; ctx.textAlign='center'; ctx.fillText('🎯 골인 라인 (가까울수록 승리)', W/2, ly-10);
   // 던지는 곳
-  ctx.fillStyle='rgba(255,255,255,.4)'; ctx.font='11px system-ui'; ctx.fillText('▲ 여기서 던짐', W/2, originY()+30);
-  // 바람 화살표
-  if(state==='aimX'||state==='power'){ ctx.save(); ctx.globalAlpha=.6; ctx.strokeStyle='#9fd0ff'; ctx.fillStyle='#9fd0ff'; ctx.lineWidth=3; const wy=f.y+18, wl=clamp(Math.abs(wind)/2.6,14,72)*(wind<0?-1:1), wcx=W/2; ctx.beginPath();ctx.moveTo(wcx-wl,wy);ctx.lineTo(wcx+wl,wy);ctx.stroke(); ctx.beginPath();ctx.moveTo(wcx+wl,wy);ctx.lineTo(wcx+wl-(wind<0?-9:9),wy-5);ctx.lineTo(wcx+wl-(wind<0?-9:9),wy+5);ctx.closePath();ctx.fill(); ctx.restore(); }
-  // 조준 가이드
-  if(state==='aimX'){ const L=80; ctx.strokeStyle='#7cf6ff'; ctx.lineWidth=3; ctx.setLineDash([7,7]); ctx.beginPath(); ctx.moveTo(W/2,originY()); ctx.lineTo(W/2+Math.sin(aimAng)*L, originY()-Math.cos(aimAng)*L); ctx.stroke(); ctx.setLineDash([]); }
-  // 착지 예측 마커 (핵심! 뭘 조준하는지 보여줌)
-  if((state==='aimX'||state==='power')&&ghost){ const pulse=0.55+0.35*Math.sin(performance.now()/180); const near=Math.abs(ghost.y-ly)<f.h*0.05;
+  ctx.fillStyle='rgba(255,255,255,.4)'; ctx.font='11px system-ui'; ctx.textAlign='center'; ctx.fillText('▲ 여기서 던짐', myX(), originY()+30);
+  // 직선 던지기 레인 가이드 (내 동전이 곧게 나아갈 경로)
+  if(state==='power'){ ctx.save(); ctx.globalAlpha=.5; ctx.strokeStyle='#7cf6ff'; ctx.lineWidth=2; ctx.setLineDash([6,8]); ctx.beginPath(); ctx.moveTo(myX(),originY()); ctx.lineTo(myX(),f.y+14); ctx.stroke(); ctx.setLineDash([]); ctx.restore(); }
+  // 앞/뒷바람 화살표 (수직 — 거리에 영향)
+  if(state==='power'){ ctx.save(); ctx.globalAlpha=.8; const up=wind<0; const wcol=up?'#7cffb0':'#ff9a9a'; ctx.strokeStyle=wcol; ctx.fillStyle=wcol; ctx.lineWidth=3;
+    const wx=f.x+f.w-20, wy0=ly+8, wl=clamp(Math.abs(wind)/2.0,18,58), dir=up?-1:1, yEnd=wy0+dir*wl;
+    ctx.beginPath();ctx.moveTo(wx,wy0);ctx.lineTo(wx,yEnd);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(wx,yEnd);ctx.lineTo(wx-6,yEnd-dir*10);ctx.lineTo(wx+6,yEnd-dir*10);ctx.closePath();ctx.fill();
+    ctx.font='bold 10px system-ui'; ctx.textAlign='center'; ctx.fillText(up?'순풍':'역풍', wx, wy0+dir*wl+dir*14); ctx.restore(); }
+  // 착지 예측 마커 (핵심! 어디 떨어질지 보여줌)
+  if(state==='power'&&ghost){ const pulse=0.55+0.35*Math.sin(performance.now()/180); const near=Math.abs(ghost.y-ly)<f.h*0.05;
     ctx.save(); ctx.globalAlpha=pulse; ctx.strokeStyle=near?'#7cffb0':'#ff5ce1'; ctx.lineWidth=2.5; ctx.setLineDash([5,4]);
     ctx.beginPath(); ctx.arc(ghost.x,ghost.y,14,0,6.28); ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle=near?'#7cffb0':'#ff5ce1'; ctx.beginPath(); ctx.arc(ghost.x,ghost.y,4,0,6.28); ctx.fill();
