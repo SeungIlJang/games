@@ -8,22 +8,22 @@
   #top{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:0;right:0;text-align:center;z-index:3;pointer-events:none}
   #stage{font-size:16px;font-weight:800;color:#ffd34d;min-height:20px}
   #info{font-size:14px;font-weight:700;color:#9fe6c0;margin-top:2px;min-height:18px}
-  #hint{position:fixed;bottom:calc(150px + env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;z-index:3;font-size:15px;font-weight:800;color:#ffe;pointer-events:none;min-height:22px;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+  #hint{position:fixed;bottom:calc(150px + env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;z-index:3;font-size:15px;font-weight:800;color:#ffe;pointer-events:none;min-height:22px;text-shadow:0 2px 8px rgba(0,0,0,.6);padding:0 16px}
   #bar{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:0;right:0;z-index:4;display:flex;gap:10px;justify-content:center;padding:0 16px}
   .btn{background:#ff7a3a;color:#fff;border:none;border-radius:16px;padding:14px 22px;font-size:18px;font-weight:800;box-shadow:0 5px 0 #c2521f;cursor:pointer}
   .btn.g{background:#2ec77a;box-shadow:0 5px 0 #1c8a52}
   .btn.d{background:#31405e;box-shadow:0 5px 0 #1b243a}
   .btn:disabled{opacity:.4}
   #ver{position:fixed;left:8px;bottom:calc(2px + env(safe-area-inset-bottom,0px));font-size:10px;color:#42506a;z-index:6}
-  .flash{position:fixed;left:50%;top:34%;transform:translateX(-50%);font-size:34px;font-weight:900;z-index:8;pointer-events:none;text-align:center;white-space:nowrap;animation:fl 1.1s ease-out forwards}
+  .flash{position:fixed;left:50%;top:34%;transform:translateX(-50%);font-size:32px;font-weight:900;z-index:8;pointer-events:none;text-align:center;white-space:nowrap;animation:fl 1.1s ease-out forwards}
   @keyframes fl{0%{opacity:0;transform:translate(-50%,14px) scale(.7)}18%{opacity:1;transform:translate(-50%,-4px) scale(1.12)}100%{opacity:0;transform:translate(-50%,-60px) scale(1)}}
   #start,#over{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(10,16,28,.95);z-index:10;text-align:center;padding:24px}
   .hidden{display:none!important}
-  h1{font-size:40px;margin:0;color:#ff9a3a;text-shadow:0 0 22px rgba(255,154,58,.5)}
+  h1{font-size:38px;margin:0;color:#ff9a3a;text-shadow:0 0 22px rgba(255,154,58,.5)}
   .sub{color:#bcd;opacity:.92;font-size:15px;line-height:1.55}
-  #howto{background:rgba(124,180,255,.1);border:1px solid rgba(124,180,255,.3);border-radius:12px;padding:12px 16px;max-width:330px;font-size:14px;text-align:left;line-height:1.7}
-  #changelog{margin-top:4px;font-size:12px;color:#9fe;background:rgba(90,246,180,.1);border:1px solid rgba(90,246,180,.3);border-radius:10px;padding:8px 12px;max-width:330px}
-  #overTitle{font-size:38px;font-weight:900}
+  #howto{background:rgba(124,180,255,.1);border:1px solid rgba(124,180,255,.3);border-radius:12px;padding:12px 16px;max-width:335px;font-size:14px;text-align:left;line-height:1.7}
+  #changelog{margin-top:4px;font-size:12px;color:#9fe;background:rgba(90,246,180,.1);border:1px solid rgba(90,246,180,.3);border-radius:10px;padding:8px 12px;max-width:335px}
+  #overTitle{font-size:36px;font-weight:900}
   #stars{font-size:44px;letter-spacing:4px}
   #overMsg{font-size:16px;line-height:1.5}
 </style></head>
@@ -38,20 +38,20 @@
   <button class="btn d" id="resetBtn">↺ 초기화</button>
   <button class="btn g" id="goBtn" disabled>🛵 출발!</button>
 </div>
-<div id="ver">v0.2 · 집·음식점 마커 확실히 보이게(벡터)</div>
+<div id="ver">v0.3 · 짝 맞추기(픽업→드롭)</div>
 
 <div id="start">
   <h1>🛵 모두의 배달</h1>
-  <div class="sub"><b>가장 빠른 순서로 배달하고 별 3개 받자!</b></div>
+  <div class="sub"><b>같은 색 음식점에서 픽업 → 그 집에 배달!</b></div>
   <div id="howto">
-    🍔 <b>음식점</b>에서 출발해 🏠 <b>집들</b>에 배달해요<br>
-    👆 <b style="color:#7cf6ff">집을 탭한 순서</b>대로 배달 경로가 그려져요<br>
-    ✅ 경로가 <b style="color:#ff6a7a">빨갛게 꼬이면</b> 돌아가는 길 = 음식이 식어요<br>
-    🛵 <b>출발!</b> → 오토바이가 달리고 → <b style="color:#ffd34d">별 1~3개</b> 판정<br>
-    🔥 최적에 가까울수록 <b>뜨끈한 배달 = 별 3개!</b>
+    🍔 <b>음식점</b>과 🏠 <b>집</b>이 <b>색깔 짝</b>으로 놓여 있어요<br>
+    👆 방문할 순서대로 탭 — <b style="color:#7cf6ff">같은 색 음식점을 먼저</b> 들러 픽업!<br>
+    🔒 픽업 안 한 집은 잠겨 있어요 (음식점 먼저)<br>
+    🔴 경로가 <b style="color:#ff6a7a">빨갛게 꼬이면</b> 돌아가는 길 = 음식이 식어요<br>
+    🛵 <b>출발!</b> → 오토바이 관전 → <b style="color:#ffd34d">별 1~3개</b> (짧을수록 별3!)
   </div>
   <button class="btn g" id="startBtn" style="padding:15px 34px;font-size:20px">시작하기</button>
-  <div id="changelog">🆕 <b>v0.2</b> · 집·음식점이 확실히 보이게(벡터 마커) · 출발지=음식점 표시</div>
+  <div id="changelog">🆕 <b>v0.3</b> · 짝 맞추기! 색깔별 음식점↔집, 픽업 먼저→드롭 나중 · 순서 짜기</div>
 </div>
 
 <div id="over" class="hidden">
@@ -73,106 +73,93 @@ function chord(b){ [0,4,7,12].forEach((s,i)=>setTimeout(()=>tone(b*Math.pow(2,s/
 function vib(m){ try{navigator.vibrate&&navigator.vibrate(m);}catch(e){} }
 
 const cv=$('cv'), ctx=cv.getContext('2d'); let W=412,H=740,DPR=1;
-function resize(){ DPR=Math.min(devicePixelRatio||1,2); const vw=innerWidth,vh=innerHeight; W=412; H=Math.round(W*vh/vw); cv.width=W*DPR;cv.height=H*DPR; cv.style.width=vw+'px';cv.style.height=vh+'px'; ctx.setTransform(DPR,0,0,DPR,0,0); if(shop) layout(); }
+function resize(){ DPR=Math.min(devicePixelRatio||1,2); const vw=innerWidth,vh=innerHeight; W=412; H=Math.round(W*vh/vw); cv.width=W*DPR;cv.height=H*DPR; cv.style.width=vw+'px';cv.style.height=vh+'px'; ctx.setTransform(DPR,0,0,DPR,0,0); }
 addEventListener('resize',resize);
+function field(){ return {x:20, y:H*0.13, w:W-40, h:H*0.62}; }
 
-// 놀이 필드(HUD 위/버튼 아래 제외)
-function field(){ return {x:20, y:H*0.14, w:W-40, h:H*0.60}; }
+const PAIRCOL=['#ff6b6b','#4dabf7','#ffd43b','#51cf66','#cc5de8','#ff922b','#22d3ee','#f472b6'];
+const PAIRDARK=['#c0392b','#1c6fb0','#c99a10','#2c9c50','#8e3fb0','#c26418','#0e8ea0','#b83a7e'];
 
 let state='start';   // start|plan|run|result
 let stage=+(localStorage.getItem('baedal_stage')||1);
 let totalStars=+(localStorage.getItem('baedal_stars')||0);
-let shop=null, houses=[], order=[], optLen=0, crossPairs=new Set();
-let parts=[], flashQ=[], shake=0;
-let scoot=null;   // {seg,t,x,y,path,delivered}
+let pairs=2, nodes=[], order=[], pickedSet=new Set(), start=null, optLen=0, crossPairs=new Set();
+let parts=[], scoot=null;
+let shake=0;
 
 function dist(a,b){ return Math.hypot(a.x-b.x,a.y-b.y); }
-function housesForStage(s){ return Math.min(3+Math.floor((s-1)/2), 8); }
+function pairsForStage(s){ return Math.min(2+Math.floor((s-1)/2), 4); }
 
-function genHouses(){
-  const f=field(), n=housesForStage(stage); houses=[];
-  shop={x:f.x+f.w/2, y:f.y+f.h-24};   // 음식점: 필드 하단 중앙
-  let tries=0;
-  while(houses.length<n && tries<4000){ tries++;
-    const p={x:rnd(f.x+34,f.x+f.w-34), y:rnd(f.y+34,f.y+f.h-90)};
-    if(dist(p,shop)<70) continue;
-    if(houses.some(h=>dist(h,p)<64)) continue;
-    houses.push(p);
-  }
-  order=[]; crossPairs=new Set();
-  optLen=optimalLen();
+function genStage(){ const f=field(); pairs=pairsForStage(stage); nodes=[]; start={x:f.x+f.w/2, y:f.y+f.h-14};
+  const place=()=>{ let t=0; while(t++<3000){ const p={x:rnd(f.x+36,f.x+f.w-36), y:rnd(f.y+34,f.y+f.h-64)}; if(dist(p,start)<64) continue; if(nodes.some(nd=>dist(nd,p)<56)) continue; return p; } return {x:rnd(f.x+36,f.x+f.w-36), y:rnd(f.y+34,f.y+f.h-64)}; };
+  for(let i=0;i<pairs;i++){ const sp=place(); nodes.push({type:'shop',pair:i,x:sp.x,y:sp.y}); const hp=place(); nodes.push({type:'home',pair:i,x:hp.x,y:hp.y}); }
+  order=[]; pickedSet=new Set(); crossPairs=new Set(); optLen=optimalRoute();
 }
-function layout(){ /* 화면 리사이즈 시 위치 비율 유지 생략(프로토) */ }
-
-// 현재 순서 경로 길이(음식점→순서대로)
-function routeLen(seq){ let L=0,p=shop; for(const i of seq){ L+=dist(p,houses[i]); p=houses[i]; } return L; }
-// 최적(모든 순열 완전탐색, n<=8)
-function optimalLen(){ const idx=houses.map((_,i)=>i); let best=Infinity;
-  const perm=(arr,cur,L,p)=>{ if(L>=best) return; if(arr.length===0){ best=Math.min(best,L); return; }
-    for(let i=0;i<arr.length;i++){ const h=houses[arr[i]]; const rest=arr.slice(0,i).concat(arr.slice(i+1)); perm(rest,null,L+dist(p,h),h); } };
-  perm(idx,[],0,shop); return best||1;
+function routeLen(seq){ let L=0,p=start; for(const i of seq){ L+=dist(p,nodes[i]); p=nodes[i]; } return L; }
+// 최적(픽업→드롭 선행제약, 완전탐색·가지치기)
+function optimalRoute(){ const N=nodes.length; let best=Infinity; const used=new Array(N).fill(false); const got=new Array(pairs).fill(false);
+  const rec=(cnt,last,L)=>{ if(L>=best) return; if(cnt===N){ best=Math.min(best,L); return; }
+    for(let i=0;i<N;i++){ if(used[i]) continue; const nd=nodes[i]; if(nd.type==='home' && !got[nd.pair]) continue;
+      used[i]=true; if(nd.type==='shop') got[nd.pair]=true; rec(cnt+1,nd,L+dist(last,nd)); used[i]=false; if(nd.type==='shop') got[nd.pair]=false; } };
+  rec(0,start,0); return best||1;
 }
-// 선분 교차 판정
 function segCross(a,b,c,d){ const ccw=(p,q,r)=>(r.y-p.y)*(q.x-p.x)-(q.y-p.y)*(r.x-p.x); const d1=ccw(a,b,c),d2=ccw(a,b,d),d3=ccw(c,d,a),d4=ccw(c,d,b); return ((d1>0)!==(d2>0))&&((d3>0)!==(d4>0)); }
-function updateCross(){ crossPairs=new Set(); const pts=[shop,...order.map(i=>houses[i])]; for(let i=0;i<pts.length-1;i++){ for(let j=i+1;j<pts.length-1;j++){ if(j===i||j===i+1||j===i-1) continue; if(segCross(pts[i],pts[i+1],pts[j],pts[j+1])){ crossPairs.add(i); crossPairs.add(j); } } } }
+function updateCross(){ crossPairs=new Set(); const pts=[start,...order.map(i=>nodes[i])]; for(let i=0;i<pts.length-1;i++){ for(let j=i+1;j<pts.length-1;j++){ if(j===i||j===i+1||j===i-1) continue; if(segCross(pts[i],pts[i+1],pts[j],pts[j+1])){ crossPairs.add(i); crossPairs.add(j); } } } }
 
-function newStage(regen){ if(regen) genHouses(); order=[]; crossPairs=new Set(); scoot=null; state='plan'; parts=[];
-  $('over').classList.add('hidden'); updateHUD(); refreshBtns(); $('hint').textContent='👆 배달 갈 집을 순서대로 탭하세요'; }
-function updateHUD(){ $('stage').textContent='🗺️ '+stage+'단계 · 집 '+houses.length+'곳'; $('info').textContent='⭐ 누적 '+totalStars+'개';
-  if(order.length){ const L=routeLen(order); const eff=optLen/L; $('info').textContent='⭐ 누적 '+totalStars+' · 예상 신선도 '+Math.round(clamp(eff,0,1)*100)+'%'+(crossPairs.size?'  ⚠️경로 꼬임':''); } }
-function refreshBtns(){ $('goBtn').disabled = !(state==='plan' && order.length===houses.length); }
+function newStage(regen){ if(regen) genStage(); order=[]; pickedSet=new Set(); crossPairs=new Set(); scoot=null; parts=[]; state='plan';
+  $('over').classList.add('hidden'); updateHUD(); refreshBtns(); $('hint').textContent='👆 같은 색 음식점→집 순서로 탭 (음식점 먼저!)'; }
+function updateHUD(){ $('stage').textContent='🗺️ '+stage+'단계 · 배달 '+pairs+'건';
+  if(order.length){ const L=routeLen(order); const eff=optLen/L; $('info').textContent='⭐ 누적 '+totalStars+' · 예상 효율 '+Math.round(clamp(eff,0,1)*100)+'%'+(crossPairs.size?'  ⚠️경로 꼬임':''); }
+  else $('info').textContent='⭐ 누적 '+totalStars+'개'; }
+function refreshBtns(){ $('goBtn').disabled = !(state==='plan' && order.length===nodes.length); }
 
-// 입력
 addEventListener('pointerdown',e=>{ if(e.target&&e.target.closest&&e.target.closest('.btn'))return; if(state!=='plan')return;
   const r=cv.getBoundingClientRect(); const x=(e.clientX-r.left)*(W/r.width), y=(e.clientY-r.top)*(H/r.height);
-  let hit=-1,bd=34; houses.forEach((h,i)=>{ const d=Math.hypot(h.x-x,h.y-y); if(d<bd){bd=d;hit=i;} });
-  if(hit>=0 && !order.includes(hit)){ order.push(hit); updateCross(); tone(560+order.length*40,0.05,'square',0.08); vib(10); updateHUD(); refreshBtns();
-    if(order.length===houses.length) $('hint').textContent='🛵 출발!을 눌러 배달 시작'; }
+  let hit=-1,bd=32; nodes.forEach((n,i)=>{ const d=Math.hypot(n.x-x,n.y-y); if(d<bd){bd=d;hit=i;} });
+  if(hit<0) return; if(order.includes(hit)) return;
+  const nd=nodes[hit];
+  if(nd.type==='home' && !pickedSet.has(nd.pair)){ $('hint').textContent='🔒 먼저 같은 색 음식점에서 픽업하세요!'; tone(180,0.14,'sawtooth',0.09); vib(30); shake=Math.max(shake,6); return; }
+  order.push(hit); if(nd.type==='shop') pickedSet.add(nd.pair); updateCross(); tone(nd.type==='shop'?520:760,0.05,'square',0.08); vib(10); updateHUD(); refreshBtns();
+  if(order.length===nodes.length) $('hint').textContent='🛵 출발!을 눌러 배달 시작';
 });
-$('resetBtn').onclick=()=>{ if(state!=='plan')return; order=[]; crossPairs=new Set(); tone(320,0.06,'sine',0.07); updateHUD(); refreshBtns(); $('hint').textContent='👆 배달 갈 집을 순서대로 탭하세요'; };
-$('goBtn').onclick=()=>{ if(state==='plan'&&order.length===houses.length) startRun(); };
+$('resetBtn').onclick=()=>{ if(state!=='plan')return; order=[]; pickedSet=new Set(); crossPairs=new Set(); tone(320,0.06,'sine',0.07); updateHUD(); refreshBtns(); $('hint').textContent='👆 같은 색 음식점→집 순서로 탭 (음식점 먼저!)'; };
+$('goBtn').onclick=()=>{ if(state==='plan'&&order.length===nodes.length) startRun(); };
 
 function startRun(){ state='run'; $('hint').textContent=''; refreshBtns();
-  const path=[shop,...order.map(i=>houses[i])];
-  scoot={path,seg:0,t:0,x:shop.x,y:shop.y,delivered:0,myLen:routeLen(order),dist0:0};
+  scoot={path:[start,...order.map(i=>nodes[i])], seg:0, t:0, x:start.x, y:start.y, dist0:0, visited:0, carried:0, pickupDist:{}, myLen:routeLen(order)};
   tone(700,0.1,'sawtooth',0.09); vib([10,30]);
 }
-function deliverFx(p,fresh){ const em=fresh>0.66?'🔥':fresh>0.4?'😋':'🥶';
-  flashSmall(em,p.x,p.y-26); tone(fresh>0.5?900:300,0.12,fresh>0.5?'triangle':'sine',0.09); vib(fresh>0.5?[10,20]:30); shake=Math.max(shake,5);
+function pickFx(p,col){ flashSmall('📦',p.x,p.y-24); tone(660,0.08,'square',0.08); vib(12); for(let i=0;i<7;i++){const a=Math.random()*6.28,s=rnd(1,4);parts.push({x:p.x,y:p.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-1,life:0.7,c:col,r:2+Math.random()*2});} }
+function dropFx(p,fresh){ const em=fresh>0.66?'🔥':fresh>0.4?'😋':'🥶'; flashSmall(em,p.x,p.y-24); tone(fresh>0.5?900:280,0.12,fresh>0.5?'triangle':'sine',0.09); vib(fresh>0.5?[10,20]:30); shake=Math.max(shake,5);
   const col=fresh>0.5?'#ffd34d':'#9fb0c0'; for(let i=0;i<10;i++){const a=Math.random()*6.28,s=rnd(2,6);parts.push({x:p.x,y:p.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-2,life:0.9,c:col,r:2+Math.random()*3});} }
-function flashSmall(t,x,y){ parts.push({txt:t,x,y,vy:-0.7,life:1.1,r:0}); }
+function flashSmall(t,x,y){ parts.push({txt:t,x,y,vy:-0.7,life:1.1}); }
 function flash(t,c){ const d=document.createElement('div');d.className='flash';d.textContent=t;d.style.color=c||'#fff';document.body.appendChild(d);setTimeout(()=>d.remove(),1100); }
 function confetti(x,y,n){ const cols=['#ffd34d','#7cffb0','#5ab0ff','#ff8a5a','#c9a3ff','#fff']; for(let i=0;i<n;i++){const a=Math.random()*6.28,s=rnd(2,9);parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-5,life:1.5,c:cols[i%cols.length],r:3+Math.random()*4});} }
+function freshOf(carryDist){ return clamp(1 - carryDist/(optLen*0.85), 0, 1); }
 
-function freshAt(d){ return clamp(1 - d/(optLen*1.9), 0, 1); }
-
-function finishRun(myLen){ state='result'; const ratio=myLen/optLen;
-  let stars = ratio<=1.10?3 : ratio<=1.30?2 : 1;
-  const fresh=freshAt(myLen*0.5);
+function finishRun(myLen){ state='result'; const ratio=myLen/optLen; let stars=ratio<=1.10?3:ratio<=1.30?2:1;
   totalStars+=stars; try{localStorage.setItem('baedal_stars',totalStars);}catch(e){}
   $('stars').textContent='⭐'.repeat(stars)+'☆'.repeat(3-stars);
   if(stars===3){ $('overTitle').textContent='🔥 완벽 배달!'; $('overTitle').style.color='#7cffb0'; flash('🔥 별 3개!','#7cffb0'); chord(523); confetti(W/2,H*0.4,80); shake=12; $('retryBtn').style.display='none'; }
   else { $('overTitle').textContent=stars===2?'😋 배달 완료':'🥶 음식이 식었어요'; $('overTitle').style.color=stars===2?'#ffd34d':'#9fb0c0'; tone(stars===2?520:200,0.25,'sine',0.09); $('retryBtn').style.display='block'; }
   const eff=Math.round(optLen/myLen*100);
-  $('overMsg').innerHTML='내 경로 <b style="color:#7cf6ff">'+Math.round(myLen)+'</b> · 최적 <b style="color:#7cffb0">'+Math.round(optLen)+'</b><br>효율 <b>'+eff+'%</b>'+(stars<3?'<br><span style="color:#ff9a5a">별 3개까지 조금만 더 짧게!</span>':'<br><span style="color:#7cffb0">최적에 가까운 완벽한 루트!</span>');
-  $('nextBtn').textContent = stage>=1 ? '다음 단계 →' : '다음 →';
+  $('overMsg').innerHTML='내 경로 <b style="color:#7cf6ff">'+Math.round(myLen)+'</b> · 최적 <b style="color:#7cffb0">'+Math.round(optLen)+'</b><br>효율 <b>'+eff+'%</b>'+(stars<3?'<br><span style="color:#ff9a5a">픽업·드롭 순서를 더 짧게!</span>':'<br><span style="color:#7cffb0">최적에 가까운 완벽한 동선!</span>');
   setTimeout(()=>$('over').classList.remove('hidden'),700);
 }
-
-$('retryBtn').onclick=()=>{ newStage(false); };            // 같은 배치 재도전
+$('retryBtn').onclick=()=>{ newStage(false); };
 $('nextBtn').onclick=()=>{ stage++; try{localStorage.setItem('baedal_stage',stage);}catch(e){} newStage(true); };
 $('startBtn').onclick=()=>{ try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){} $('start').classList.add('hidden'); newStage(true); };
 
-// 루프
 let last=performance.now();
 function loop(now){ requestAnimationFrame(loop); let dt=(now-last)/1000; last=now; if(dt>0.05)dt=0.05;
-  if(state==='run'&&scoot){ const spd=field().h*0.9; // 화면비례 속도
-    let move=spd*dt; while(move>0 && scoot.seg<scoot.path.length-1){ const a=scoot.path[scoot.seg], b=scoot.path[scoot.seg+1]; const segLen=dist(a,b); const rem=segLen*(1-scoot.t);
+  if(state==='run'&&scoot){ const spd=field().h*0.95; let move=spd*dt;
+    while(move>0 && scoot.seg<scoot.path.length-1){ const a=scoot.path[scoot.seg], b=scoot.path[scoot.seg+1]; const segLen=dist(a,b), rem=segLen*(1-scoot.t);
       if(move<rem){ scoot.t+=move/segLen; move=0; }
-      else { move-=rem; scoot.dist0+=rem; scoot.seg++; scoot.t=0; scoot.delivered++;
-        const hp=scoot.path[scoot.seg]; deliverFx(hp, freshAt(scoot.dist0)); }
+      else { move-=rem; scoot.dist0+=rem; scoot.seg++; scoot.t=0; scoot.visited=scoot.seg; const nd=nodes[order[scoot.seg-1]];
+        if(nd.type==='shop'){ scoot.carried++; scoot.pickupDist[nd.pair]=scoot.dist0; pickFx(nd,PAIRCOL[nd.pair]); }
+        else { scoot.carried=Math.max(0,scoot.carried-1); const cd=scoot.dist0-(scoot.pickupDist[nd.pair]||0); dropFx(nd,freshOf(cd)); } }
     }
-    const a=scoot.path[scoot.seg]; const b=scoot.path[Math.min(scoot.seg+1,scoot.path.length-1)]; scoot.x=a.x+(b.x-a.x)*scoot.t; scoot.y=a.y+(b.y-a.y)*scoot.t;
+    const a=scoot.path[scoot.seg], b=scoot.path[Math.min(scoot.seg+1,scoot.path.length-1)]; scoot.x=a.x+(b.x-a.x)*scoot.t; scoot.y=a.y+(b.y-a.y)*scoot.t;
     if(scoot.seg>=scoot.path.length-1){ const ml=scoot.myLen; scoot=null; setTimeout(()=>finishRun(ml),350); }
   }
   for(const p of parts){ p.x+=p.vx||0; p.y+=p.vy||0; if(p.vx!==undefined)p.vy+=0.12; p.life-=0.02; } parts=parts.filter(p=>p.life>0);
@@ -184,45 +171,49 @@ function draw(){ ctx.clearRect(0,0,W,H);
   const bg=ctx.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#16233c'); bg.addColorStop(1,'#0b1220'); ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
   if(state==='start'){ ctx.restore(); return; }
   const f=field();
-  // 동네 보드
   ctx.fillStyle='rgba(90,140,200,.06)'; roundRect(f.x,f.y,f.w,f.h,18); ctx.fill();
   ctx.strokeStyle='rgba(120,170,230,.28)'; ctx.lineWidth=2; roundRect(f.x,f.y,f.w,f.h,18); ctx.stroke();
   // 경로
-  const pts=[shop,...order.map(i=>houses[i])];
-  for(let i=0;i<pts.length-1;i++){ const bad=crossPairs.has(i); ctx.strokeStyle=bad?'rgba(255,90,110,.9)':'rgba(124,200,255,.75)'; ctx.lineWidth=bad?5:4; ctx.setLineDash(state==='run'?[]:[9,7]); ctx.beginPath(); ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[i+1].x,pts[i+1].y); ctx.stroke(); ctx.setLineDash([]); }
-  // 집 (벡터 마커 — 이모지 미지원 기기에서도 확실히 보임)
-  houses.forEach((h,i)=>{ const oi=order.indexOf(i); const done=scoot&&oi>=0&&oi<scoot.delivered; drawHouseMark(h,oi>=0?oi+1:0,done); });
-  // 음식점(출발지)
-  drawShopMark();
-  // 오토바이
-  if(scoot){ const b=scoot.path[Math.min(scoot.seg+1,scoot.path.length-1)]; drawScooterMark(scoot.x,scoot.y, b.x<scoot.x?-1:1); }
-  // 파티클/이모지
-  for(const p of parts){ ctx.globalAlpha=Math.max(0,p.life); if(p.txt){ ctx.font='24px system-ui'; ctx.textAlign='center'; ctx.fillText(p.txt,p.x,p.y); } else { ctx.fillStyle=p.c; ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,6.28);ctx.fill(); } } ctx.globalAlpha=1;
+  const pts=[start,...order.map(i=>nodes[i])];
+  for(let i=0;i<pts.length-1;i++){ const bad=crossPairs.has(i); ctx.strokeStyle=bad?'rgba(255,90,110,.9)':'rgba(190,210,235,.55)'; ctx.lineWidth=bad?5:3.5; ctx.setLineDash(state==='run'?[]:[8,7]); ctx.beginPath(); ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[i+1].x,pts[i+1].y); ctx.stroke(); ctx.setLineDash([]); }
+  // 노드
+  nodes.forEach((n,i)=>{ const oi=order.indexOf(i); const done=scoot&&oi>=0&&oi<scoot.visited;
+    if(n.type==='shop') drawShop(n,oi>=0?oi+1:0,done); else drawHome(n, oi>=0?oi+1:0, done, pickedSet.has(n.pair)); });
+  // 출발점
+  drawStart();
+  // 오토바이 + 배달통 개수
+  if(scoot){ const b=scoot.path[Math.min(scoot.seg+1,scoot.path.length-1)]; drawScooter(scoot.x,scoot.y, b.x<scoot.x?-1:1);
+    if(scoot.carried>0){ ctx.fillStyle='#ffd34d'; ctx.font='bold 12px system-ui'; ctx.textAlign='center'; ctx.fillText('📦'+scoot.carried, scoot.x, scoot.y-20); } }
+  for(const p of parts){ ctx.globalAlpha=Math.max(0,p.life); if(p.txt){ ctx.font='22px system-ui'; ctx.textAlign='center'; ctx.fillText(p.txt,p.x,p.y); } else { ctx.fillStyle=p.c; ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,6.28);ctx.fill(); } } ctx.globalAlpha=1;
   ctx.restore();
 }
-function drawHouseMark(h,num,done){ const s=15;
-  ctx.fillStyle= done?'rgba(90,220,140,.22)':'rgba(120,190,255,.16)'; ctx.beginPath(); ctx.arc(h.x,h.y,s+9,0,6.28); ctx.fill();   // 가시성 글로우
-  ctx.fillStyle= done?'#38c274':'#5aa2ea'; roundRect(h.x-s,h.y-s*0.35,s*2,s*1.35,4); ctx.fill();                              // 몸체
-  ctx.fillStyle= done?'#289a58':'#3a6fb2'; ctx.beginPath(); ctx.moveTo(h.x-s-3,h.y-s*0.35); ctx.lineTo(h.x,h.y-s*1.45); ctx.lineTo(h.x+s+3,h.y-s*0.35); ctx.closePath(); ctx.fill();  // 지붕
-  ctx.fillStyle='rgba(255,255,255,.9)'; roundRect(h.x-4,h.y+s*0.2,8,s*0.75,2); ctx.fill();                                  // 문
-  if(done){ ctx.fillStyle='#fff'; ctx.font='bold 16px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('✓',h.x,h.y+s*0.55); }
-  if(num>0){ ctx.fillStyle='#ffd34d'; ctx.beginPath(); ctx.arc(h.x+s,h.y-s,11,0,6.28); ctx.fill(); ctx.strokeStyle='#20140a'; ctx.lineWidth=1.5; ctx.stroke(); ctx.fillStyle='#20140a'; ctx.font='bold 13px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(num,h.x+s,h.y-s); }
+function drawShop(n,num,done){ const c=PAIRCOL[n.pair], cd=PAIRDARK[n.pair], s=17; ctx.save(); if(done)ctx.globalAlpha=.45;
+  ctx.fillStyle=c+'33'; ctx.beginPath(); ctx.arc(n.x,n.y,s+9,0,6.28); ctx.fill();
+  ctx.fillStyle=c; roundRect(n.x-s,n.y-s*0.4,s*2,s*1.3,5); ctx.fill();
+  ctx.fillStyle=cd; roundRect(n.x-s,n.y-s*0.7,s*2,7,3); ctx.fill();                 // 차양
+  ctx.fillStyle='rgba(255,255,255,.92)'; ctx.font='bold 13px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('🍔',n.x,n.y);
+  ctx.fillStyle=c; ctx.font='bold 10px system-ui'; ctx.fillText('픽업',n.x,n.y+s+8);
+  if(num>0) badge(n.x+s,n.y-s,num); ctx.restore();
 }
-function drawShopMark(){ const s=19;
-  ctx.fillStyle='rgba(255,150,60,.22)'; ctx.beginPath(); ctx.arc(shop.x,shop.y,s+11,0,6.28); ctx.fill();
-  ctx.fillStyle='#ff8a3a'; roundRect(shop.x-s,shop.y-s*0.45,s*2,s*1.25,5); ctx.fill();          // 가게 몸체
-  ctx.fillStyle='#ffd0a0'; roundRect(shop.x-s,shop.y-s*0.75,s*2,7,3); ctx.fill();                // 차양
-  ctx.fillStyle='#7a3a10'; roundRect(shop.x-6,shop.y+s*0.15,12,s*0.65,2); ctx.fill();            // 출입문
-  ctx.fillStyle='#fff'; ctx.font='bold 13px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('🍔',shop.x,shop.y-s*0.05);
-  ctx.fillStyle='#ffd34d'; ctx.font='bold 12px system-ui'; ctx.fillText('음식점 (출발)',shop.x,shop.y+s+9);
+function drawHome(n,num,done,picked){ const c=PAIRCOL[n.pair], cd=PAIRDARK[n.pair], s=15; ctx.save(); if(done)ctx.globalAlpha=.45;
+  ctx.fillStyle=c+'2e'; ctx.beginPath(); ctx.arc(n.x,n.y,s+8,0,6.28); ctx.fill();
+  ctx.fillStyle=c; roundRect(n.x-s,n.y-s*0.35,s*2,s*1.35,4); ctx.fill();
+  ctx.fillStyle=cd; ctx.beginPath(); ctx.moveTo(n.x-s-3,n.y-s*0.35); ctx.lineTo(n.x,n.y-s*1.45); ctx.lineTo(n.x+s+3,n.y-s*0.35); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.9)'; roundRect(n.x-4,n.y+s*0.2,8,s*0.75,2); ctx.fill();
+  if(done){ ctx.globalAlpha=1; ctx.fillStyle='#fff'; ctx.font='bold 15px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('✓',n.x,n.y+s*0.5); }
+  else if(num===0 && !picked){ ctx.fillStyle='rgba(0,0,0,.5)'; ctx.font='14px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('🔒',n.x,n.y+s*0.3); }
+  if(num>0) badge(n.x+s,n.y-s,num); ctx.restore();
 }
-function drawScooterMark(x,y,dir){ ctx.save(); ctx.translate(x,y); if(dir<0) ctx.scale(-1,1);
-  ctx.fillStyle='rgba(255,90,90,.3)'; ctx.beginPath(); ctx.arc(0,0,14,0,6.28); ctx.fill();
-  ctx.fillStyle='#222'; ctx.beginPath(); ctx.arc(-6,6,4,0,6.28); ctx.arc(7,6,4,0,6.28); ctx.fill();   // 바퀴
-  ctx.fillStyle='#ff4d4d'; roundRect(-9,-4,16,8,3); ctx.fill();                                        // 몸체
-  ctx.fillStyle='#ffd34d'; roundRect(3,-9,5,6,1); ctx.fill();                                          // 배달통
-  ctx.restore();
-}
+function badge(x,y,num){ ctx.globalAlpha=1; ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(x,y,10,0,6.28); ctx.fill(); ctx.strokeStyle='#20140a'; ctx.lineWidth=1.5; ctx.stroke(); ctx.fillStyle='#20140a'; ctx.font='bold 12px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(num,x,y); }
+function drawStart(){ const s=13; ctx.fillStyle='rgba(255,255,255,.14)'; ctx.beginPath(); ctx.arc(start.x,start.y,s+7,0,6.28); ctx.fill();
+  ctx.fillStyle='#e0e6f0'; roundRect(start.x-s,start.y-s*0.6,s*2,s*1.2,4); ctx.fill();
+  ctx.fillStyle='#6a7488'; ctx.font='bold 11px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('🛵',start.x,start.y);
+  ctx.fillStyle='rgba(255,255,255,.6)'; ctx.font='bold 10px system-ui'; ctx.fillText('출발',start.x,start.y+s+8); }
+function drawScooter(x,y,dir){ ctx.save(); ctx.translate(x,y); if(dir<0) ctx.scale(-1,1);
+  ctx.fillStyle='rgba(255,90,90,.3)'; ctx.beginPath(); ctx.arc(0,0,13,0,6.28); ctx.fill();
+  ctx.fillStyle='#222'; ctx.beginPath(); ctx.arc(-6,6,4,0,6.28); ctx.arc(7,6,4,0,6.28); ctx.fill();
+  ctx.fillStyle='#ff4d4d'; roundRect(-9,-4,16,8,3); ctx.fill();
+  ctx.fillStyle='#ffd34d'; roundRect(3,-9,5,6,1); ctx.fill(); ctx.restore(); }
 function roundRect(x,y,w,h,r){ ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath(); }
 resize(); requestAnimationFrame(loop);
 </script>
