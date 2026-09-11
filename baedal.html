@@ -38,7 +38,7 @@
   <button class="btn d" id="resetBtn">↺ 초기화</button>
   <button class="btn g" id="goBtn" disabled>🛵 출발!</button>
 </div>
-<div id="ver">v0.3 · 짝 맞추기(픽업→드롭)</div>
+<div id="ver">v0.4 · 잘못 배달하면 게임오버</div>
 
 <div id="start">
   <h1>🛵 모두의 배달</h1>
@@ -46,12 +46,12 @@
   <div id="howto">
     🍔 <b>음식점</b>과 🏠 <b>집</b>이 <b>색깔 짝</b>으로 놓여 있어요<br>
     👆 방문할 순서대로 탭 — <b style="color:#7cf6ff">같은 색 음식점을 먼저</b> 들러 픽업!<br>
-    🔒 픽업 안 한 집은 잠겨 있어요 (음식점 먼저)<br>
+    ⚠️ 픽업 안 한 집에 배달하면 <b style="color:#ff6a7a">배달 실수 = 게임오버!</b><br>
     🔴 경로가 <b style="color:#ff6a7a">빨갛게 꼬이면</b> 돌아가는 길 = 음식이 식어요<br>
     🛵 <b>출발!</b> → 오토바이 관전 → <b style="color:#ffd34d">별 1~3개</b> (짧을수록 별3!)
   </div>
   <button class="btn g" id="startBtn" style="padding:15px 34px;font-size:20px">시작하기</button>
-  <div id="changelog">🆕 <b>v0.3</b> · 짝 맞추기! 색깔별 음식점↔집, 픽업 먼저→드롭 나중 · 순서 짜기</div>
+  <div id="changelog">🆕 <b>v0.4</b> · 긴장 추가! <b>픽업 안 한 집에 배달 = 게임오버</b> · 순서 신중히 짜기</div>
 </div>
 
 <div id="over" class="hidden">
@@ -118,15 +118,16 @@ addEventListener('pointerdown',e=>{ if(e.target&&e.target.closest&&e.target.clos
   let hit=-1,bd=32; nodes.forEach((n,i)=>{ const d=Math.hypot(n.x-x,n.y-y); if(d<bd){bd=d;hit=i;} });
   if(hit<0) return; if(order.includes(hit)) return;
   const nd=nodes[hit];
-  if(nd.type==='home' && !pickedSet.has(nd.pair)){ $('hint').textContent='🔒 먼저 같은 색 음식점에서 픽업하세요!'; tone(180,0.14,'sawtooth',0.09); vib(30); shake=Math.max(shake,6); return; }
+  const badHome = nd.type==='home' && !pickedSet.has(nd.pair);   // 픽업 전 집 → 이대로면 실패
   order.push(hit); if(nd.type==='shop') pickedSet.add(nd.pair); updateCross(); tone(nd.type==='shop'?520:760,0.05,'square',0.08); vib(10); updateHUD(); refreshBtns();
-  if(order.length===nodes.length) $('hint').textContent='🛵 출발!을 눌러 배달 시작';
+  if(badHome){ $('hint').textContent='⚠️ 아직 픽업 안 한 집! 이대로 출발하면 배달 실수(게임오버)'; tone(300,0.1,'sawtooth',0.07); }
+  else if(order.length===nodes.length) $('hint').textContent='🛵 출발!을 눌러 배달 시작';
 });
 $('resetBtn').onclick=()=>{ if(state!=='plan')return; order=[]; pickedSet=new Set(); crossPairs=new Set(); tone(320,0.06,'sine',0.07); updateHUD(); refreshBtns(); $('hint').textContent='👆 같은 색 음식점→집 순서로 탭 (음식점 먼저!)'; };
 $('goBtn').onclick=()=>{ if(state==='plan'&&order.length===nodes.length) startRun(); };
 
 function startRun(){ state='run'; $('hint').textContent=''; refreshBtns();
-  scoot={path:[start,...order.map(i=>nodes[i])], seg:0, t:0, x:start.x, y:start.y, dist0:0, visited:0, carried:0, pickupDist:{}, myLen:routeLen(order)};
+  scoot={path:[start,...order.map(i=>nodes[i])], seg:0, t:0, x:start.x, y:start.y, dist0:0, visited:0, carried:0, pickupDist:{}, carriedPairs:new Set(), myLen:routeLen(order)};
   tone(700,0.1,'sawtooth',0.09); vib([10,30]);
 }
 function pickFx(p,col){ flashSmall('📦',p.x,p.y-24); tone(660,0.08,'square',0.08); vib(12); for(let i=0;i<7;i++){const a=Math.random()*6.28,s=rnd(1,4);parts.push({x:p.x,y:p.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-1,life:0.7,c:col,r:2+Math.random()*2});} }
@@ -137,8 +138,19 @@ function flash(t,c){ const d=document.createElement('div');d.className='flash';d
 function confetti(x,y,n){ const cols=['#ffd34d','#7cffb0','#5ab0ff','#ff8a5a','#c9a3ff','#fff']; for(let i=0;i<n;i++){const a=Math.random()*6.28,s=rnd(2,9);parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-5,life:1.5,c:cols[i%cols.length],r:3+Math.random()*4});} }
 function freshOf(carryDist){ return clamp(1 - carryDist/(optLen*0.85), 0, 1); }
 
+function failRun(node){ state='fail'; const col=PAIRCOL[node.pair]; const nx=node.x, ny=node.y; scoot=null;
+  flash('❌ 배달 실수!','#ff5a6e'); tone(150,0.4,'sawtooth',0.1); vib([40,60,40]); shake=18;
+  for(let i=0;i<16;i++){const a=Math.random()*6.28,s=rnd(2,7);parts.push({x:nx,y:ny,vx:Math.cos(a)*s,vy:Math.sin(a)*s-2,life:1.1,c:'#ff5a6e',r:2+Math.random()*3});}
+  flashSmall('❌',nx,ny-24);
+  $('overTitle').textContent='❌ 배달 실수!'; $('overTitle').style.color='#ff6a7a';
+  $('stars').textContent='💥';
+  $('overMsg').innerHTML='이 <b style="color:'+col+'">집</b>의 음식을 <b>아직 픽업하지 않았어요!</b><br><span style="color:#ff9a5a">같은 색 음식점을 먼저 들러야 해요</span>';
+  $('retryBtn').style.display='block'; $('retryBtn').textContent='↺ 다시 도전'; $('nextBtn').style.display='none';
+  setTimeout(()=>$('over').classList.remove('hidden'),650);
+}
 function finishRun(myLen){ state='result'; const ratio=myLen/optLen; let stars=ratio<=1.10?3:ratio<=1.30?2:1;
   totalStars+=stars; try{localStorage.setItem('baedal_stars',totalStars);}catch(e){}
+  $('nextBtn').style.display='block'; $('retryBtn').textContent='🔥 별3 도전';
   $('stars').textContent='⭐'.repeat(stars)+'☆'.repeat(3-stars);
   if(stars===3){ $('overTitle').textContent='🔥 완벽 배달!'; $('overTitle').style.color='#7cffb0'; flash('🔥 별 3개!','#7cffb0'); chord(523); confetti(W/2,H*0.4,80); shake=12; $('retryBtn').style.display='none'; }
   else { $('overTitle').textContent=stars===2?'😋 배달 완료':'🥶 음식이 식었어요'; $('overTitle').style.color=stars===2?'#ffd34d':'#9fb0c0'; tone(stars===2?520:200,0.25,'sine',0.09); $('retryBtn').style.display='block'; }
@@ -152,15 +164,16 @@ $('startBtn').onclick=()=>{ try{if(!AC)AC=new(window.AudioContext||window.webkit
 
 let last=performance.now();
 function loop(now){ requestAnimationFrame(loop); let dt=(now-last)/1000; last=now; if(dt>0.05)dt=0.05;
-  if(state==='run'&&scoot){ const spd=field().h*0.95; let move=spd*dt;
+  if(state==='run'&&scoot){ const spd=field().h*0.95; let move=spd*dt; let failed=null;
     while(move>0 && scoot.seg<scoot.path.length-1){ const a=scoot.path[scoot.seg], b=scoot.path[scoot.seg+1]; const segLen=dist(a,b), rem=segLen*(1-scoot.t);
       if(move<rem){ scoot.t+=move/segLen; move=0; }
       else { move-=rem; scoot.dist0+=rem; scoot.seg++; scoot.t=0; scoot.visited=scoot.seg; const nd=nodes[order[scoot.seg-1]];
-        if(nd.type==='shop'){ scoot.carried++; scoot.pickupDist[nd.pair]=scoot.dist0; pickFx(nd,PAIRCOL[nd.pair]); }
-        else { scoot.carried=Math.max(0,scoot.carried-1); const cd=scoot.dist0-(scoot.pickupDist[nd.pair]||0); dropFx(nd,freshOf(cd)); } }
+        if(nd.type==='shop'){ scoot.carried++; scoot.carriedPairs.add(nd.pair); scoot.pickupDist[nd.pair]=scoot.dist0; pickFx(nd,PAIRCOL[nd.pair]); }
+        else { if(!scoot.carriedPairs.has(nd.pair)){ failed=nd; break; } scoot.carriedPairs.delete(nd.pair); scoot.carried=Math.max(0,scoot.carried-1); const cd=scoot.dist0-(scoot.pickupDist[nd.pair]||0); dropFx(nd,freshOf(cd)); } }
     }
-    const a=scoot.path[scoot.seg], b=scoot.path[Math.min(scoot.seg+1,scoot.path.length-1)]; scoot.x=a.x+(b.x-a.x)*scoot.t; scoot.y=a.y+(b.y-a.y)*scoot.t;
-    if(scoot.seg>=scoot.path.length-1){ const ml=scoot.myLen; scoot=null; setTimeout(()=>finishRun(ml),350); }
+    if(failed){ scoot.x=failed.x; scoot.y=failed.y; failRun(failed); }
+    else { const a=scoot.path[scoot.seg], b=scoot.path[Math.min(scoot.seg+1,scoot.path.length-1)]; scoot.x=a.x+(b.x-a.x)*scoot.t; scoot.y=a.y+(b.y-a.y)*scoot.t;
+      if(scoot.seg>=scoot.path.length-1){ const ml=scoot.myLen; scoot=null; setTimeout(()=>finishRun(ml),350); } }
   }
   for(const p of parts){ p.x+=p.vx||0; p.y+=p.vy||0; if(p.vx!==undefined)p.vy+=0.12; p.life-=0.02; } parts=parts.filter(p=>p.life>0);
   draw();
@@ -201,7 +214,6 @@ function drawHome(n,num,done,picked){ const c=PAIRCOL[n.pair], cd=PAIRDARK[n.pai
   ctx.fillStyle=cd; ctx.beginPath(); ctx.moveTo(n.x-s-3,n.y-s*0.35); ctx.lineTo(n.x,n.y-s*1.45); ctx.lineTo(n.x+s+3,n.y-s*0.35); ctx.closePath(); ctx.fill();
   ctx.fillStyle='rgba(255,255,255,.9)'; roundRect(n.x-4,n.y+s*0.2,8,s*0.75,2); ctx.fill();
   if(done){ ctx.globalAlpha=1; ctx.fillStyle='#fff'; ctx.font='bold 15px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('✓',n.x,n.y+s*0.5); }
-  else if(num===0 && !picked){ ctx.fillStyle='rgba(0,0,0,.5)'; ctx.font='14px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('🔒',n.x,n.y+s*0.3); }
   if(num>0) badge(n.x+s,n.y-s,num); ctx.restore();
 }
 function badge(x,y,num){ ctx.globalAlpha=1; ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(x,y,10,0,6.28); ctx.fill(); ctx.strokeStyle='#20140a'; ctx.lineWidth=1.5; ctx.stroke(); ctx.fillStyle='#20140a'; ctx.font='bold 12px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(num,x,y); }
