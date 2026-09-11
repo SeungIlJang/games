@@ -22,16 +22,28 @@
   #changelog{margin-top:6px;font-size:12px;color:#9fe;background:rgba(90,246,180,.1);border:1px solid rgba(90,246,180,.3);border-radius:10px;padding:8px 12px;max-width:330px}
   #overTitle{font-size:38px;font-weight:900}
   #overMsg{font-size:17px}
+  #country{font-size:15px;font-weight:800;color:#ffe;min-height:20px}
+  #travel{font-size:13px;color:#cfe;opacity:.9}
+  #travelBar{width:86%;max-width:320px;height:14px;background:rgba(255,255,255,.09);border-radius:8px;overflow:hidden;border:1px solid rgba(255,211,77,.35);margin:2px auto 0}
+  #travelFill{height:100%;background:linear-gradient(90deg,#ffd34d,#7cffb0);width:0%}
+  #map{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(10,16,28,.97);z-index:12;padding:24px;text-align:center}
+  #map.show{display:flex}
+  #mapGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;max-width:340px}
+  .mcell{width:52px;height:60px;border-radius:10px;background:rgba(255,255,255,.06);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:22px;gap:1px}
+  .mcell.got{background:linear-gradient(135deg,rgba(255,211,77,.22),rgba(124,255,176,.16));border:1px solid rgba(255,211,77,.5)}
+  .mcell.lock{filter:grayscale(1);opacity:.32}
+  .mcell .mn{font-size:9px;color:#cfe;font-weight:700}
 </style></head>
 <body>
 <canvas id="cv"></canvas>
 <div id="top">
+  <div id="country"></div>
   <div id="vs">나 <b id="scoreMe" style="color:#7cf6ff">0</b> : <b id="scoreAi" style="color:#ff9a5a">0</b> AI</div>
   <div id="streak"></div>
   <div id="wind"></div>
 </div>
 <div id="hint"></div>
-<div id="ver">v0.2 · 착지 예측 마커·골인존·라벨로 조작 명확화</div>
+<div id="ver">v0.3 · 세계 여행 + 나라별 동전 수집</div>
 
 <div id="start">
   <h1>모두의 한끗</h1>
@@ -42,8 +54,18 @@
     ② <b style="color:#ffd34d">파워</b> — <b>착지 예측 점(●)</b>이 라인에 오면 탭!<br>
     🏆 <b>상대(AI)보다 라인에 가까우면 승리</b> · 💨 바람 주의
   </div>
+  <div id="travel"></div>
+  <div id="travelBar"><div id="travelFill"></div></div>
   <button class="btn" id="startBtn">대결 시작</button>
-  <div id="changelog">🆕 <b>v0.2</b> · 착지 예측 마커 추가! 뭘 조준하는지 한눈에 · 골인존·라벨·튜토리얼</div>
+  <button class="btn" id="mapBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:12px 24px;font-size:16px">🗺️ 세계 지도(동전 도감)</button>
+  <div id="changelog">🆕 <b>v0.3</b> · 세계 여행! 이기면 그 나라 동전 수집 → 다음 나라로 · 🗺️ 도감</div>
+</div>
+
+<div id="map">
+  <h1 style="font-size:30px">🗺️ 세계 동전 도감</h1>
+  <div class="sub" id="mapInfo"></div>
+  <div id="mapGrid"></div>
+  <button class="btn" id="mapClose" style="margin-top:8px">닫기</button>
 </div>
 
 <div id="over" class="hidden">
@@ -81,11 +103,40 @@ let my=null, ai=null, parts=[], shake=0, trail=[], ghost=null;
 let reviveUsed=false;
 const PREVIEW_POW=0.6;
 
+// 🌍 세계 여행 — 이기면 그 나라 동전 수집 → 다음 나라로 (베팅 없음, 획득만)
+const COUNTRIES=[
+  {f:'🇰🇷',n:'한국',c:'₩',a:'#fff0b0',b:'#e0a020',e:'#6a4a10',bg:'#1c2b1a'},
+  {f:'🇯🇵',n:'일본',c:'¥',a:'#ffdede',b:'#d05a5a',e:'#5a1a1a',bg:'#2a1620'},
+  {f:'🇺🇸',n:'미국',c:'$',a:'#d6f5c8',b:'#4a9a5a',e:'#153a20',bg:'#0f2a1c'},
+  {f:'🇬🇧',n:'영국',c:'£',a:'#cfd6ff',b:'#5a6ad0',e:'#1a2050',bg:'#161a2e'},
+  {f:'🇪🇺',n:'유럽',c:'€',a:'#cfe0ff',b:'#4a7ad0',e:'#12285a',bg:'#122036'},
+  {f:'🇨🇳',n:'중국',c:'元',a:'#ffd0d0',b:'#d04040',e:'#4a1010',bg:'#2a1414'},
+  {f:'🇮🇳',n:'인도',c:'₹',a:'#ffdcb0',b:'#e08030',e:'#5a2e08',bg:'#2a1e10'},
+  {f:'🇷🇺',n:'러시아',c:'₽',a:'#e0d0ff',b:'#8a6ad0',e:'#2a1a5a',bg:'#1e1630'},
+  {f:'🇧🇷',n:'브라질',c:'R$',a:'#c8f5d6',b:'#3aa060',e:'#0f3a22',bg:'#0f2a1e'},
+  {f:'🇨🇭',n:'스위스',c:'₣',a:'#ffd0d0',b:'#d05050',e:'#4a1414',bg:'#2a1616'},
+  {f:'🇹🇭',n:'태국',c:'฿',a:'#f5d0ec',b:'#c060a0',e:'#4a1a3a',bg:'#28162a'},
+  {f:'🇻🇳',n:'베트남',c:'₫',a:'#ffecb0',b:'#d0a040',e:'#4a3608',bg:'#2a2410'},
+  {f:'🇹🇷',n:'튀르키예',c:'₺',a:'#ffd0d0',b:'#d04a4a',e:'#4a1414',bg:'#2a1616'},
+  {f:'🇸🇦',n:'사우디',c:'﷼',a:'#c8f5dc',b:'#3a9a6a',e:'#0f3a26',bg:'#0f2a20'},
+  {f:'🇵🇭',n:'필리핀',c:'₱',a:'#cfe0ff',b:'#4a7ad0',e:'#12285a',bg:'#122036'},
+  {f:'🇲🇽',n:'멕시코',c:'$',a:'#c8f5d6',b:'#3aa060',e:'#0f3a22',bg:'#0f2a1e'},
+  {f:'🇮🇩',n:'인니',c:'Rp',a:'#ffd0d0',b:'#d05a5a',e:'#4a1414',bg:'#2a1616'},
+  {f:'🇦🇺',n:'호주',c:'$',a:'#cfe6ff',b:'#5a9ad0',e:'#123a5a',bg:'#12283a'},
+  {f:'🇿🇦',n:'남아공',c:'R',a:'#ffecb0',b:'#d0a040',e:'#4a3608',bg:'#2a2410'},
+  {f:'🐉',n:'전설',c:'龍',a:'#fff0b0',b:'#ffb020',e:'#6a3a00',bg:'#2a1e08'},
+];
+let curCountry=clamp(+(localStorage.getItem('hankut_country')||0),0,COUNTRIES.length-1);
+let collected=[]; try{collected=JSON.parse(localStorage.getItem('hankut_dex')||'[]');}catch(e){collected=[];}
+function CC(){ return COUNTRIES[curCountry]; }
+function saveTravel(){ try{localStorage.setItem('hankut_country',curCountry);localStorage.setItem('hankut_dex',JSON.stringify(collected));}catch(e){} }
+
 function newMatch(){
   wind=rnd(-75,75); if(Math.abs(wind)<28) wind=wind<0?-28:28;
   aimAng=-0.32; aimDir=1; power=0; powDir=1;
   my={x:W/2,y:originY(),vx:0,vy:0,stopped:false,dist:0}; ai=null; trail=[]; parts=[]; ghost=null; reviveUsed=false;
   state='aimX';
+  $('country').innerHTML='📍 '+CC().f+' <b>'+CC().n+'</b> — '+CC().c+' 동전 획득 도전!';
   $('streak').textContent='🔥 '+streak+' 연승'+(best>0?(' · 최고 '+best):'');
   $('wind').innerHTML='💨 바람 '+(wind>0?'▶':'◀')+' 세기 '+Math.round(Math.abs(wind)/13);
   $('scoreMe').textContent=scoreMe; $('scoreAi').textContent=scoreAi;
@@ -130,13 +181,27 @@ function throwAi(){
 }
 function stepAi(dt){ ai.t+=dt; const dy=ai.targetY-ai.y; ai.vy+=dy*6*dt; ai.vy*=Math.exp(-3*dt); ai.x+=ai.vx*dt; ai.y+=ai.vy*dt; ai.vx*=Math.exp(-2*dt);
   if(ai.t>1.0 && Math.abs(dy)<3 && Math.abs(ai.vy)<40){ ai.y=ai.targetY; ai.vx=ai.vy=0; ai.stopped=true; ai.dist=Math.abs(ai.y-lineY()); } }
+function accLabel(cm){ return cm<0.5?'🎯 명중!':cm<1.5?'👍 굿!':cm<3?'세이프':''; }
 function finish(){ const myCm=toCm(my.dist), aiCm=toCm(ai.dist); const win=my.dist<=ai.dist; state='result';
+  let travelMsg='';
   if(win){ scoreMe++; streak++; if(streak>best){best=streak;try{localStorage.setItem('hankut_best',best);}catch(e){}} try{localStorage.setItem('hankut_streak',streak);}catch(e){}
-    $('overTitle').textContent='🏆 승리!'; $('overTitle').style.color='#7cffb0'; flash('🏆 승리!','#7cffb0'); chord(523); setTimeout(()=>chord(784),150); vib([20,40,20,40,90]); confetti(W/2,H*0.4,70); shake=10; $('reviveBtn').style.display='none';
+    // 🌍 현재 나라 동전 수집 + 다음 나라로 (베팅 없음, 획득만)
+    const won=CC(); const isNew=!collected.includes(curCountry); if(isNew) collected.push(curCountry);
+    const master=collected.length>=COUNTRIES.length;
+    curCountry=(curCountry+1)%COUNTRIES.length; saveTravel();
+    $('overTitle').textContent='🏆 승리!'; $('overTitle').style.color='#7cffb0';
+    flash(won.f+' '+won.c+' 획득!','#ffd34d'); chord(523); setTimeout(()=>chord(784),150); vib([20,40,20,40,90]); confetti(W/2,H*0.4,70); shake=10; $('reviveBtn').style.display='none';
+    travelMsg = master ? ('🌟 세계 정복! 전 '+COUNTRIES.length+'개국 동전 수집 완료!')
+      : (isNew?('🪙 '+won.f+' '+won.n+' '+won.c+' 동전 수집! ('+collected.length+'/'+COUNTRIES.length+'개국)<br>다음 목적지 → '+CC().f+' '+CC().n)
+              :('▶ 다음 목적지 → '+CC().f+' '+CC().n));
   } else { scoreAi++;
     $('overTitle').textContent='😫 패배!'; $('overTitle').style.color='#ff6a7a'; flash(Math.abs(myCm-aiCm)<0.6?('아깝다! '+Math.abs(myCm-aiCm).toFixed(1)+'cm 차이 😭'):'졌다 💨','#ff6a7a'); tone(160,0.3,'sawtooth',0.1); vib(200); shake=16; streak=0; try{localStorage.setItem('hankut_streak',0);}catch(e){}
+    travelMsg='📍 '+CC().f+' '+CC().n+' 재도전! '+CC().c+' 동전이 눈앞이에요';
     $('reviveBtn').style.display=reviveUsed?'none':'block'; }
-  $('overMsg').innerHTML='🎯 목표선까지<br>내 동전 <b style="color:#7cf6ff">'+myCm.toFixed(1)+'cm</b>  vs  상대 <b style="color:#ff9a5a">'+aiCm.toFixed(1)+'cm</b>';
+  const acc=accLabel(myCm);
+  $('overMsg').innerHTML=(acc?('<div style="color:#ffd34d;font-weight:800;margin-bottom:4px">'+acc+'</div>'):'')
+    +'🎯 목표선까지<br>내 동전 <b style="color:#7cf6ff">'+myCm.toFixed(1)+'cm</b>  vs  상대 <b style="color:#ff9a5a">'+aiCm.toFixed(1)+'cm</b>'
+    +'<div style="margin-top:8px;font-size:14px;color:#cfe">'+travelMsg+'</div>';
   $('overStreak').textContent=win?('🔥 '+streak+'연승 중!'+(streak===best&&best>0?' (최고 기록!)':'')):('연승 끊김 · 최고 '+best);
   setTimeout(()=>$('over').classList.remove('hidden'),750);
 }
@@ -150,18 +215,18 @@ function loop(now){ requestAnimationFrame(loop); let dt=(now-last)/1000; last=no
   for(const p of parts){ p.x+=p.vx;p.y+=p.vy;p.vy+=0.12;p.life-=0.022; } parts=parts.filter(p=>p.life>0);
   draw();
 }
-function drawCoin(c,label,lcol,col){ const r=17;
+function drawCoin(c,label,lcol,col,sym){ const r=17;
   ctx.fillStyle='rgba(0,0,0,.30)'; ctx.beginPath(); ctx.ellipse(c.x,c.y+r-2,r*0.9,4,0,0,6.28); ctx.fill();
   const g=ctx.createRadialGradient(c.x-5,c.y-6,3,c.x,c.y,r); g.addColorStop(0,col.a); g.addColorStop(1,col.b);
   ctx.fillStyle=g; ctx.beginPath(); ctx.arc(c.x,c.y,r,0,6.28); ctx.fill();
   ctx.strokeStyle=col.e; ctx.lineWidth=2.5; ctx.beginPath(); ctx.arc(c.x,c.y,r,0,6.28); ctx.stroke();
-  ctx.fillStyle=col.e; ctx.font='bold 15px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('₩',c.x,c.y+1);
+  const s=sym||'₩'; ctx.fillStyle=col.e; ctx.font='bold '+(s.length>1?11:15)+'px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(s,c.x,c.y+1);
   ctx.fillStyle=lcol; ctx.font='bold 12px system-ui'; ctx.fillText(label,c.x,c.y-r-8);
 }
 function draw(){ ctx.clearRect(0,0,W,H);
   let sx=0,sy=0; if(shake>0){sx=(Math.random()-.5)*shake;sy=(Math.random()-.5)*shake;shake*=0.86;if(shake<.4)shake=0;}
   ctx.save(); ctx.translate(sx,sy);
-  const bg=ctx.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#12233a'); bg.addColorStop(1,'#0a1018'); ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+  const bg=ctx.createLinearGradient(0,0,0,H); bg.addColorStop(0,CC().bg); bg.addColorStop(1,'#0a1018'); ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
   const f=field(), ly=lineY();
   // 레인(보드)
   ctx.fillStyle='rgba(90,140,200,.08)'; roundRect(f.x,f.y,f.w,f.h,16); ctx.fill();
@@ -193,8 +258,8 @@ function draw(){ ctx.clearRect(0,0,W,H);
   // 측정 자
   if(state==='measure'||state==='result'){ measureLine(my,'#7cf6ff'); if(ai&&ai.stopped) measureLine(ai,'#ff9a5a'); }
   // 동전
-  if(ai&&(state==='aithrow'||state==='measure'||state==='result')) drawCoin(ai,'AI','#ff9a5a',{a:'#ffe6a0',b:'#c98a2a',e:'#5a3a10'});
-  if(my) drawCoin(my,'나','#7cf6ff',{a:'#fff0b0',b:'#e0a020',e:'#6a4a10'});
+  if(ai&&(state==='aithrow'||state==='measure'||state==='result')) drawCoin(ai,'AI','#ff9a5a',{a:'#ffe6a0',b:'#c98a2a',e:'#5a3a10'},'?');
+  if(my) drawCoin(my,'나','#7cf6ff',{a:CC().a,b:CC().b,e:CC().e},CC().c);
   for(const p of parts){ ctx.globalAlpha=Math.max(0,p.life); ctx.fillStyle=p.c; ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,6.28);ctx.fill(); } ctx.globalAlpha=1;
   ctx.restore();
 }
@@ -207,7 +272,19 @@ function begin(){ try{if(!AC)AC=new(window.AudioContext||window.webkitAudioConte
 function nextMatch(){ $('over').classList.add('hidden'); newMatch(); }
 function revive(){ if(reviveUsed)return; reviveUsed=true; $('over').classList.add('hidden'); $('reviveBtn').style.display='none'; flash('🎬 한 번 더 튕겨요!','#2ec77a'); vib([20,40,20]);
   const ly=lineY(); my.y=ly+(my.y>ly?1:-1)*Math.max(4,Math.abs(my.y-ly)*0.35); my.dist=Math.abs(my.y-ly); setTimeout(finish,500); }
+function renderTravel(){
+  $('travel').innerHTML='🌍 세계 여행 <b style="color:#ffd34d">'+collected.length+'/'+COUNTRIES.length+'</b>개국 수집 · 다음 → '+CC().f+' <b>'+CC().n+'</b>';
+  $('travelFill').style.width=Math.round(collected.length/COUNTRIES.length*100)+'%';
+}
+function renderMap(){
+  $('mapInfo').innerHTML='이긴 나라의 동전을 수집해요 · <b style="color:#ffd34d">'+collected.length+'/'+COUNTRIES.length+'</b>개국';
+  $('mapGrid').innerHTML=COUNTRIES.map((c,i)=>{ const got=collected.includes(i);
+    return '<div class="mcell '+(got?'got':'lock')+'">'+c.f+'<div style="font-size:15px">'+(got?c.c:'🔒')+'</div><div class="mn">'+c.n+'</div></div>'; }).join('');
+}
+$('mapBtn').onclick=()=>{ renderMap(); $('map').classList.add('show'); };
+$('mapClose').onclick=()=>$('map').classList.remove('show');
 $('startBtn').onclick=begin; $('nextBtn').onclick=nextMatch; $('reviveBtn').onclick=revive;
 $('streak').textContent='';
+renderTravel();
 </script>
 </body></html>
