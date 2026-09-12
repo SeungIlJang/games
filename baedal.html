@@ -42,7 +42,7 @@
   <button class="btn d" id="resetBtn">↺ 초기화</button>
   <button class="btn g" id="goBtn" disabled>🛵 출발!</button>
 </div>
-<div id="ver">v0.4.7 · 60초 제한 타이머(긴장감)</div>
+<div id="ver">v0.4.8 · 음식 식으면 통과 실패</div>
 
 <div id="start">
   <h1>🛵 모두의 배달</h1>
@@ -52,12 +52,12 @@
     👆 방문할 순서대로 탭 — <b style="color:#7cf6ff">같은 색 음식점을 먼저</b> 들러 픽업!<br>
     ⚠️ 픽업 안 한 집에 배달하면 <b style="color:#ff6a7a">배달 실수 = 게임오버!</b><br>
     🔴 경로가 <b style="color:#ff6a7a">빨갛게 꼬이면</b> 돌아가는 길 = 음식이 식어요<br>
-    🛵 <b>출발!</b> → 오토바이 관전 → <b style="color:#ffd34d">별 1~3개</b> (짧을수록 별3!)<br>
+    🛵 <b>출발!</b> → 관전 → <b style="color:#ff8a5a">너무 돌아가면 음식이 식어서 실패!</b> (최적 130%↑)<br>
     ↩️ 선택한 곳을 <b>다시 누르면 취소</b> (이후 경로도 리셋)<br>
     ⏱️ <b style="color:#ff8a5a">제한 시간 60초!</b> 안에 출발하세요
   </div>
   <button class="btn g" id="startBtn" style="padding:15px 34px;font-size:20px">시작하기</button>
-  <div id="changelog">🆕 <b>v0.4.7</b> · <b>60초 제한 타이머</b>! 시간 안에 출발 못 하면 실패 · 다시 누르면 취소</div>
+  <div id="changelog">🆕 <b>v0.4.8</b> · <b>음식 식으면 통과 실패</b>(최적 130% 초과 = 별1 = 식음) · 60초 타이머</div>
 </div>
 
 <div id="over" class="hidden">
@@ -180,14 +180,18 @@ function failRun(node){ state='fail'; const col=PAIRCOL[node.pair]; const nx=nod
   $('retryBtn').style.display='block'; $('retryBtn').textContent='↺ 다시 도전'; $('nextBtn').style.display='none';
   setTimeout(()=>$('over').classList.remove('hidden'),650);
 }
-function finishRun(myLen){ state='result'; const ratio=myLen/optLen; let stars=ratio<=1.10?3:ratio<=1.30?2:1;
-  totalStars+=stars; try{localStorage.setItem('baedal_stars',totalStars);}catch(e){}
-  $('nextBtn').style.display='block'; $('retryBtn').textContent='🔥 별3 도전';
-  $('stars').textContent='⭐'.repeat(stars)+'☆'.repeat(3-stars);
-  if(stars===3){ $('overTitle').textContent='🔥 완벽 배달!'; $('overTitle').style.color='#7cffb0'; flash('🔥 별 3개!','#7cffb0'); chord(523); confetti(W/2,H*0.4,80); shake=12; $('retryBtn').style.display='none'; }
-  else { $('overTitle').textContent=stars===2?'😋 배달 완료':'🥶 음식이 식었어요'; $('overTitle').style.color=stars===2?'#ffd34d':'#9fb0c0'; tone(stars===2?520:200,0.25,'sine',0.09); $('retryBtn').style.display='block'; }
+function finishRun(myLen){ const ratio=myLen/optLen; let stars=ratio<=1.10?3:ratio<=1.30?2:1; const passed=stars>=2; state=passed?'result':'fail';
   const eff=Math.round(optLen/myLen*100);
-  $('overMsg').innerHTML='내 경로 <b style="color:#7cf6ff">'+Math.round(myLen)+'</b> · 최적 <b style="color:#7cffb0">'+Math.round(optLen)+'</b><br>효율 <b>'+eff+'%</b>'+(stars<3?'<br><span style="color:#ff9a5a">픽업·드롭 순서를 더 짧게!</span>':'<br><span style="color:#7cffb0">최적에 가까운 완벽한 동선!</span>');
+  if(passed){ totalStars+=stars; try{localStorage.setItem('baedal_stars',totalStars);}catch(e){}
+    $('stars').textContent='⭐'.repeat(stars)+'☆'.repeat(3-stars); $('nextBtn').style.display='block'; $('retryBtn').textContent='🔥 별3 도전';
+    if(stars===3){ $('overTitle').textContent='🔥 완벽 배달!'; $('overTitle').style.color='#7cffb0'; flash('🔥 별 3개!','#7cffb0'); chord(523); confetti(W/2,H*0.4,80); shake=12; $('retryBtn').style.display='none'; }
+    else { $('overTitle').textContent='😋 따끈하게 배달!'; $('overTitle').style.color='#ffd34d'; tone(520,0.2,'sine',0.09); $('retryBtn').style.display='block'; }
+    $('overMsg').innerHTML='내 경로 <b style="color:#7cf6ff">'+Math.round(myLen)+'</b> · 최적 <b style="color:#7cffb0">'+Math.round(optLen)+'</b><br>효율 <b>'+eff+'%</b>'+(stars<3?'<br><span style="color:#ff9a5a">더 짧게 = 별 3개!</span>':'<br><span style="color:#7cffb0">최적에 가까운 완벽한 동선!</span>');
+  } else { // 별1 = 음식 식음 = 통과 실패
+    $('overTitle').textContent='🥶 음식이 식었어요!'; $('overTitle').style.color='#9fd0ff'; $('stars').textContent='🥶'; flash('🥶 배달 실패','#9fd0ff'); tone(200,0.32,'sine',0.09); vib(120); shake=10;
+    $('retryBtn').style.display='block'; $('retryBtn').textContent='↺ 다시 도전'; $('nextBtn').style.display='none';
+    $('overMsg').innerHTML='동선이 너무 길어 <b>음식이 식었어요</b> (효율 '+eff+'%)<br><span style="color:#ff9a5a">최적 대비 130% 이내로 배달해야 통과!</span>';
+  }
   setTimeout(()=>$('over').classList.remove('hidden'),700);
 }
 let ansPrev='result';
