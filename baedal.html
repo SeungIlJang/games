@@ -18,6 +18,9 @@
   .btn.d{background:#31405e;box-shadow:0 5px 0 #1b243a}
   .btn:disabled{opacity:.4}
   #ver{position:fixed;left:8px;bottom:calc(2px + env(safe-area-inset-bottom,0px));font-size:10px;color:#42506a;z-index:6}
+  body.has-banner #bar{bottom:calc(72px + env(safe-area-inset-bottom,0px))}
+  body.has-banner #hint{bottom:calc(206px + env(safe-area-inset-bottom,0px))}
+  body.has-banner #start,body.has-banner #over{padding-bottom:calc(70px + env(safe-area-inset-bottom,0px))}
   .flash{position:fixed;left:50%;top:34%;transform:translateX(-50%);font-size:32px;font-weight:900;z-index:8;pointer-events:none;text-align:center;white-space:nowrap;animation:fl 1.1s ease-out forwards}
   @keyframes fl{0%{opacity:0;transform:translate(-50%,14px) scale(.7)}18%{opacity:1;transform:translate(-50%,-4px) scale(1.12)}100%{opacity:0;transform:translate(-50%,-60px) scale(1)}}
   #start,#over{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(10,16,28,.95);z-index:10;text-align:center;padding:24px}
@@ -42,7 +45,7 @@
   <button class="btn d" id="resetBtn">↺ 초기화</button>
   <button class="btn g" id="goBtn" disabled>🛵 출발!</button>
 </div>
-<div id="ver">v0.4.8 · 음식 식으면 통과 실패</div>
+<div id="ver">v0.5.0 · 동네·콤보·최고기록·광고(AdMob)</div>
 
 <div id="start">
   <h1>🛵 모두의 배달</h1>
@@ -56,8 +59,9 @@
     ↩️ 선택한 곳을 <b>다시 누르면 취소</b> (이후 경로도 리셋)<br>
     ⏱️ <b style="color:#ff8a5a">제한 시간 60초!</b> 안에 출발하세요
   </div>
+  <div id="rec" class="sub" style="color:#ffd34d;font-weight:800"></div>
   <button class="btn g" id="startBtn" style="padding:15px 34px;font-size:20px">시작하기</button>
-  <div id="changelog">🆕 <b>v0.4.8</b> · <b>음식 식으면 통과 실패</b>(최적 130% 초과 = 별1 = 식음) · 60초 타이머</div>
+  <div id="changelog">🆕 <b>v0.5.0</b> · <b>동네 테마</b>(6종 로테이션)·<b>연속 별3 콤보</b>(+보너스)·<b>최고기록</b>·별3 니어미스·후반 7건</div>
 </div>
 
 <div id="over" class="hidden">
@@ -80,6 +84,15 @@ let AC; function tone(f,d,t,g){ try{ if(!AC)AC=new(window.AudioContext||window.w
 function chord(b){ [0,4,7,12].forEach((s,i)=>setTimeout(()=>tone(b*Math.pow(2,s/12),0.16,'triangle',0.06),i*70)); }
 function vib(m){ try{navigator.vibrate&&navigator.vibrate(m);}catch(e){} }
 
+// ===== AdMob (Capacitor 앱에서만 동작, 웹/터널은 무시) =====
+const AD_USE_TEST=true;
+const AD_BANNER = AD_USE_TEST ? 'ca-app-pub-3940256099942544/6300978111' : '';
+const AD_INTER  = AD_USE_TEST ? 'ca-app-pub-3940256099942544/1033173712' : '';
+let admobReady=false, bannerShown=false, interCount=0;
+(async function(){ try{ const C=window.Capacitor; if(C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.AdMob){ await C.Plugins.AdMob.initialize({initializeForTesting:AD_USE_TEST}); admobReady=true; showBanner(); } }catch(e){} })();
+async function showBanner(){ const C=window.Capacitor; if(!(C&&C.Plugins&&C.Plugins.AdMob)||bannerShown) return; bannerShown=true; try{document.body.classList.add('has-banner');}catch(e){} try{ await C.Plugins.AdMob.showBanner({adId:AD_BANNER,adSize:'BANNER',position:'BOTTOM_CENTER',margin:0,isTesting:AD_USE_TEST}); }catch(e){ bannerShown=false; try{document.body.classList.remove('has-banner');}catch(e2){} } }
+async function showInterstitial(){ const C=window.Capacitor; if(!(admobReady&&C&&C.Plugins&&C.Plugins.AdMob)) return; try{ await C.Plugins.AdMob.prepareInterstitial({adId:AD_INTER,isTesting:AD_USE_TEST}); await C.Plugins.AdMob.showInterstitial(); }catch(e){} }
+
 const cv=$('cv'), ctx=cv.getContext('2d'); let W=412,H=740,DPR=1;
 function resize(){ DPR=Math.min(devicePixelRatio||1,2); const vw=innerWidth,vh=innerHeight; W=412; H=Math.round(W*vh/vw); cv.width=W*DPR;cv.height=H*DPR; cv.style.width=vw+'px';cv.style.height=vh+'px'; ctx.setTransform(DPR,0,0,DPR,0,0); }
 addEventListener('resize',resize);
@@ -87,10 +100,22 @@ function field(){ return {x:20, y:H*0.13, w:W-40, h:H*0.62}; }
 
 const PAIRCOL=['#ff6b6b','#4dabf7','#ffd43b','#51cf66','#cc5de8','#ff922b','#22d3ee','#f472b6'];
 const PAIRDARK=['#c0392b','#1c6fb0','#c99a10','#2c9c50','#8e3fb0','#c26418','#0e8ea0','#b83a7e'];
+// 동네 테마 로테이션(버라이어티) — 3단계마다 새 동네
+const DISTRICTS=[
+  {n:'🏙️ 강남동', a:'#16233c', b:'#0b1220'},
+  {n:'🌊 해변동', a:'#123246', b:'#08161e'},
+  {n:'🌃 야시장', a:'#2a1636', b:'#140a1e'},
+  {n:'🌸 벚꽃동', a:'#331824', b:'#1a0c12'},
+  {n:'🏔️ 산동네', a:'#14261c', b:'#0a140e'},
+  {n:'🎡 놀이동', a:'#2e2410', b:'#161006'},
+];
+function district(){ return DISTRICTS[Math.floor((stage-1)/3)%DISTRICTS.length]; }
 
 let state='start';   // start|plan|run|result
 let stage=+(localStorage.getItem('baedal_stage')||1);
 let totalStars=+(localStorage.getItem('baedal_stars')||0);
+let bestStage=+(localStorage.getItem('baedal_best')||1);
+let combo=0, bestCombo=+(localStorage.getItem('baedal_combo')||0);
 let pairs=2, nodes=[], order=[], pickedSet=new Set(), start=null, optLen=0, optOrder=[], crossPairs=new Set();
 let parts=[], scoot=null;
 let shake=0;
@@ -98,8 +123,8 @@ const STAGE_TIME=60;
 let timeLeft=STAGE_TIME, lastTick=999;
 
 function dist(a,b){ return Math.hypot(a.x-b.x,a.y-b.y); }
-// 처음 2판 쉽게(2건), 3판부터 급상승 3→4→5→6건(캡6)
-function pairsForStage(s){ return s<=2 ? 2 : Math.min(s, 6); }
+// 처음 2판 쉽게(2건), 3판부터 급상승 → 후반 7건까지(캡7)
+function pairsForStage(s){ return s<=2 ? 2 : Math.min(s, 7); }
 
 function genStage(){ const f=field(); pairs=pairsForStage(stage); nodes=[]; start={x:f.x+f.w/2, y:f.y+f.h-14};
   const minSep=Math.max(44, 56-(pairs-2)*3);   // 노드 많을수록 간격 좁힘
@@ -125,17 +150,19 @@ function segCross(a,b,c,d){ const ccw=(p,q,r)=>(r.y-p.y)*(q.x-p.x)-(q.y-p.y)*(r.
 function updateCross(){ crossPairs=new Set(); const pts=[start,...order.map(i=>nodes[i])]; for(let i=0;i<pts.length-1;i++){ for(let j=i+1;j<pts.length-1;j++){ if(j===i||j===i+1||j===i-1) continue; if(segCross(pts[i],pts[i+1],pts[j],pts[j+1])){ crossPairs.add(i); crossPairs.add(j); } } } }
 
 function newStage(regen){ if(regen) genStage(); order=[]; pickedSet=new Set(); crossPairs=new Set(); scoot=null; parts=[]; state='plan';
+  if(stage>bestStage){ bestStage=stage; try{localStorage.setItem('baedal_best',bestStage);}catch(e){} }
   timeLeft=STAGE_TIME; lastTick=999; updateTimer();
   $('over').classList.add('hidden'); updateHUD(); refreshBtns(); $('hint').textContent='👆 같은 색 음식점→집 순서로 탭 (음식점 먼저!)'; }
 function updateTimer(){ const t=Math.max(0,Math.ceil(timeLeft)); const m=Math.floor(t/60), s=t%60; $('timer').textContent='⏱️ '+m+':'+(s<10?'0':'')+s; $('timer').classList.toggle('warn', timeLeft<=10 && (state==='plan')); }
-function failTime(){ state='fail'; flash('⏰ 시간 초과!','#ff5a6e'); tone(150,0.4,'sawtooth',0.1); vib([40,60,40]); shake=16; $('timer').classList.remove('warn');
+function failTime(){ state='fail'; combo=0; flash('⏰ 시간 초과!','#ff5a6e'); tone(150,0.4,'sawtooth',0.1); vib([40,60,40]); shake=16; $('timer').classList.remove('warn');
   $('overTitle').textContent='⏰ 시간 초과!'; $('overTitle').style.color='#ff6a7a'; $('stars').textContent='⌛';
   $('overMsg').innerHTML='제한 시간 <b>'+STAGE_TIME+'초</b> 안에 출발하지 못했어요!<br><span style="color:#ff9a5a">더 빠르게 순서를 짜보세요</span>';
   $('retryBtn').style.display='block'; $('retryBtn').textContent='↺ 다시 도전'; $('nextBtn').style.display='none';
   setTimeout(()=>$('over').classList.remove('hidden'),650); }
-function updateHUD(){ $('stage').textContent='🗺️ '+stage+'단계 · 배달 '+pairs+'건';
-  if(order.length){ const L=routeLen(order); const eff=optLen/L; $('info').textContent='⭐ 누적 '+totalStars+' · 예상 효율 '+Math.round(clamp(eff,0,1)*100)+'%'+(crossPairs.size?'  ⚠️경로 꼬임':''); }
-  else $('info').textContent='⭐ 누적 '+totalStars+'개'; }
+function updateHUD(){ $('stage').textContent=district().n+' · '+stage+'단계 · 배달 '+pairs+'건';
+  const comboTxt = combo>=2 ? '  🔥콤보 '+combo : '';
+  if(order.length){ const L=routeLen(order); const eff=optLen/L; $('info').textContent='⭐'+totalStars+' · 예상 효율 '+Math.round(clamp(eff,0,1)*100)+'%'+(crossPairs.size?' ⚠️꼬임':'')+comboTxt; }
+  else $('info').textContent='⭐ 누적 '+totalStars+comboTxt; }
 function refreshBtns(){ $('goBtn').disabled = !(state==='plan' && order.length===nodes.length); }
 
 addEventListener('pointerdown',e=>{ if(e.target&&e.target.closest&&e.target.closest('.btn'))return; if(state!=='plan')return;
@@ -170,7 +197,7 @@ function flash(t,c){ const d=document.createElement('div');d.className='flash';d
 function confetti(x,y,n){ const cols=['#ffd34d','#7cffb0','#5ab0ff','#ff8a5a','#c9a3ff','#fff']; for(let i=0;i<n;i++){const a=Math.random()*6.28,s=rnd(2,9);parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-5,life:1.5,c:cols[i%cols.length],r:3+Math.random()*4});} }
 function freshOf(carryDist){ return clamp(1 - carryDist/(optLen*0.85), 0, 1); }
 
-function failRun(node){ state='fail'; const col=PAIRCOL[node.pair]; const nx=node.x, ny=node.y; scoot=null;
+function failRun(node){ state='fail'; combo=0; const col=PAIRCOL[node.pair]; const nx=node.x, ny=node.y; scoot=null;
   flash('❌ 배달 실수!','#ff5a6e'); tone(150,0.4,'sawtooth',0.1); vib([40,60,40]); shake=18;
   for(let i=0;i<16;i++){const a=Math.random()*6.28,s=rnd(2,7);parts.push({x:nx,y:ny,vx:Math.cos(a)*s,vy:Math.sin(a)*s-2,life:1.1,c:'#ff5a6e',r:2+Math.random()*3});}
   flashSmall('❌',nx,ny-24);
@@ -182,12 +209,18 @@ function failRun(node){ state='fail'; const col=PAIRCOL[node.pair]; const nx=nod
 }
 function finishRun(myLen){ const ratio=myLen/optLen; let stars=ratio<=1.10?3:ratio<=1.30?2:1; const passed=stars>=2; state=passed?'result':'fail';
   const eff=Math.round(optLen/myLen*100);
-  if(passed){ totalStars+=stars; try{localStorage.setItem('baedal_stars',totalStars);}catch(e){}
+  if(passed){ let bonus=0;
+    if(stars===3){ combo++; if(combo>bestCombo){bestCombo=combo;try{localStorage.setItem('baedal_combo',bestCombo);}catch(e){}} if(combo>=3) bonus=1; }
+    else { combo=0; }
+    totalStars+=stars+bonus; try{localStorage.setItem('baedal_stars',totalStars);}catch(e){}
     $('stars').textContent='⭐'.repeat(stars)+'☆'.repeat(3-stars); $('nextBtn').style.display='block'; $('retryBtn').textContent='🔥 별3 도전';
-    if(stars===3){ $('overTitle').textContent='🔥 완벽 배달!'; $('overTitle').style.color='#7cffb0'; flash('🔥 별 3개!','#7cffb0'); chord(523); confetti(W/2,H*0.4,80); shake=12; $('retryBtn').style.display='none'; }
+    if(stars===3){ $('overTitle').textContent = combo>=2 ? ('🔥 '+combo+'연속 별3!') : '🔥 완벽 배달!'; $('overTitle').style.color='#7cffb0'; flash(combo>=2?('🔥 콤보 '+combo+'!'):'🔥 별 3개!','#7cffb0'); chord(523); if(combo>=3)setTimeout(()=>chord(784),160); confetti(W/2,H*0.4,combo>=3?120:80); shake=combo>=3?16:12; $('retryBtn').style.display='none'; }
     else { $('overTitle').textContent='😋 따끈하게 배달!'; $('overTitle').style.color='#ffd34d'; tone(520,0.2,'sine',0.09); $('retryBtn').style.display='block'; }
-    $('overMsg').innerHTML='내 경로 <b style="color:#7cf6ff">'+Math.round(myLen)+'</b> · 최적 <b style="color:#7cffb0">'+Math.round(optLen)+'</b><br>효율 <b>'+eff+'%</b>'+(stars<3?'<br><span style="color:#ff9a5a">더 짧게 = 별 3개!</span>':'<br><span style="color:#7cffb0">최적에 가까운 완벽한 동선!</span>');
-  } else { // 별1 = 음식 식음 = 통과 실패
+    const nearGap=Math.round(myLen-optLen*1.10);
+    $('overMsg').innerHTML='내 경로 <b style="color:#7cf6ff">'+Math.round(myLen)+'</b> · 최적 <b style="color:#7cffb0">'+Math.round(optLen)+'</b> · 효율 <b>'+eff+'%</b>'
+      +(bonus?'<br><span style="color:#ffd34d">🔥 콤보 보너스 +1⭐</span>':'')
+      +(stars<3?('<br><span style="color:#ff9a5a">😖 아깝다! '+Math.max(1,nearGap)+'만 더 짧으면 별 3개!</span>'):'<br><span style="color:#7cffb0">최적에 가까운 완벽한 동선!</span>');
+  } else { combo=0; // 별1 = 음식 식음 = 통과 실패
     $('overTitle').textContent='🥶 음식이 식었어요!'; $('overTitle').style.color='#9fd0ff'; $('stars').textContent='🥶'; flash('🥶 배달 실패','#9fd0ff'); tone(200,0.32,'sine',0.09); vib(120); shake=10;
     $('retryBtn').style.display='block'; $('retryBtn').textContent='↺ 다시 도전'; $('nextBtn').style.display='none';
     $('overMsg').innerHTML='동선이 너무 길어 <b>음식이 식었어요</b> (효율 '+eff+'%)<br><span style="color:#ff9a5a">최적 대비 130% 이내로 배달해야 통과!</span>';
@@ -198,7 +231,7 @@ let ansPrev='result';
 $('ansBtn').onclick=()=>{ ansPrev=state; state='answer'; $('over').classList.add('hidden'); $('ansClose').style.display='block'; $('hint').textContent='🏆 별3 정답(최단) 경로예요'; };
 $('ansClose').onclick=()=>{ state=ansPrev; $('ansClose').style.display='none'; $('hint').textContent=''; $('over').classList.remove('hidden'); };
 $('retryBtn').onclick=()=>{ $('ansClose').style.display='none'; newStage(false); };
-$('nextBtn').onclick=()=>{ $('ansClose').style.display='none'; stage++; try{localStorage.setItem('baedal_stage',stage);}catch(e){} newStage(true); };
+$('nextBtn').onclick=()=>{ $('ansClose').style.display='none'; interCount++; if(interCount%3===0) showInterstitial(); stage++; try{localStorage.setItem('baedal_stage',stage);}catch(e){} newStage(true); };
 $('startBtn').onclick=()=>{ try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){} $('start').classList.add('hidden'); newStage(true); };
 
 let last=performance.now();
@@ -223,7 +256,7 @@ function loop(now){ requestAnimationFrame(loop); let dt=(now-last)/1000; last=no
 function draw(){ ctx.clearRect(0,0,W,H);
   let sx=0,sy=0; if(shake>0){sx=(Math.random()-.5)*shake;sy=(Math.random()-.5)*shake;shake*=0.86;if(shake<.4)shake=0;}
   ctx.save(); ctx.translate(sx,sy);
-  const bg=ctx.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#16233c'); bg.addColorStop(1,'#0b1220'); ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+  const dc=district(); const bg=ctx.createLinearGradient(0,0,0,H); bg.addColorStop(0,dc.a); bg.addColorStop(1,dc.b); ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
   if(state==='start'){ ctx.restore(); return; }
   const f=field();
   ctx.fillStyle='rgba(90,140,200,.06)'; roundRect(f.x,f.y,f.w,f.h,18); ctx.fill();
@@ -296,6 +329,8 @@ function drawScooter(x,y,dir,sc){ sc=sc||1; ctx.save(); ctx.translate(x,y); ctx.
   ctx.fillStyle='#20263c'; roundRect(-7,-17,14,6,3); ctx.fill();                         // 바이저(정면 어두운 띠)
   ctx.restore(); }
 function roundRect(x,y,w,h,r){ ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath(); }
+$('rec').innerHTML='🏆 최고 <b>'+bestStage+'단계</b> · 🔥 최고 콤보 <b>'+bestCombo+'</b> · ⭐ '+totalStars
+  + (stage>1?('<br>▶ <b>'+stage+'단계</b>부터 이어서 시작'):'');
 resize(); requestAnimationFrame(loop);
 </script>
 </body></html>
