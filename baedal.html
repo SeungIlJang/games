@@ -8,6 +8,9 @@
   #top{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:0;right:0;text-align:center;z-index:3;pointer-events:none}
   #stage{font-size:16px;font-weight:800;color:#ffd34d;min-height:20px}
   #info{font-size:14px;font-weight:700;color:#9fe6c0;margin-top:2px;min-height:18px}
+  #timer{font-size:22px;font-weight:900;color:#ffd34d;margin-top:3px;min-height:26px;letter-spacing:1px}
+  #timer.warn{color:#ff5a6e;animation:tk .5s ease-in-out infinite}
+  @keyframes tk{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
   #hint{position:fixed;bottom:calc(150px + env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;z-index:3;font-size:15px;font-weight:800;color:#ffe;pointer-events:none;min-height:22px;text-shadow:0 2px 8px rgba(0,0,0,.6);padding:0 16px}
   #bar{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:0;right:0;z-index:4;display:flex;gap:10px;justify-content:center;padding:0 16px}
   .btn{background:#ff7a3a;color:#fff;border:none;border-radius:16px;padding:14px 22px;font-size:18px;font-weight:800;box-shadow:0 5px 0 #c2521f;cursor:pointer}
@@ -32,13 +35,14 @@
 <div id="top">
   <div id="stage"></div>
   <div id="info"></div>
+  <div id="timer"></div>
 </div>
 <div id="hint"></div>
 <div id="bar">
   <button class="btn d" id="resetBtn">↺ 초기화</button>
   <button class="btn g" id="goBtn" disabled>🛵 출발!</button>
 </div>
-<div id="ver">v0.4.6 · 다시 누르면 선택 취소</div>
+<div id="ver">v0.4.7 · 60초 제한 타이머(긴장감)</div>
 
 <div id="start">
   <h1>🛵 모두의 배달</h1>
@@ -49,10 +53,11 @@
     ⚠️ 픽업 안 한 집에 배달하면 <b style="color:#ff6a7a">배달 실수 = 게임오버!</b><br>
     🔴 경로가 <b style="color:#ff6a7a">빨갛게 꼬이면</b> 돌아가는 길 = 음식이 식어요<br>
     🛵 <b>출발!</b> → 오토바이 관전 → <b style="color:#ffd34d">별 1~3개</b> (짧을수록 별3!)<br>
-    ↩️ 선택한 곳을 <b>다시 누르면 취소</b> (이후 경로도 리셋)
+    ↩️ 선택한 곳을 <b>다시 누르면 취소</b> (이후 경로도 리셋)<br>
+    ⏱️ <b style="color:#ff8a5a">제한 시간 60초!</b> 안에 출발하세요
   </div>
   <button class="btn g" id="startBtn" style="padding:15px 34px;font-size:20px">시작하기</button>
-  <div id="changelog">🆕 <b>v0.4.6</b> · 선택한 곳 <b>다시 누르면 취소</b>(경로 리셋) · 정면 배달 오토바이</div>
+  <div id="changelog">🆕 <b>v0.4.7</b> · <b>60초 제한 타이머</b>! 시간 안에 출발 못 하면 실패 · 다시 누르면 취소</div>
 </div>
 
 <div id="over" class="hidden">
@@ -89,6 +94,8 @@ let totalStars=+(localStorage.getItem('baedal_stars')||0);
 let pairs=2, nodes=[], order=[], pickedSet=new Set(), start=null, optLen=0, optOrder=[], crossPairs=new Set();
 let parts=[], scoot=null;
 let shake=0;
+const STAGE_TIME=60;
+let timeLeft=STAGE_TIME, lastTick=999;
 
 function dist(a,b){ return Math.hypot(a.x-b.x,a.y-b.y); }
 // 처음 2판 쉽게(2건), 3판부터 급상승 3→4→5→6건(캡6)
@@ -118,7 +125,14 @@ function segCross(a,b,c,d){ const ccw=(p,q,r)=>(r.y-p.y)*(q.x-p.x)-(q.y-p.y)*(r.
 function updateCross(){ crossPairs=new Set(); const pts=[start,...order.map(i=>nodes[i])]; for(let i=0;i<pts.length-1;i++){ for(let j=i+1;j<pts.length-1;j++){ if(j===i||j===i+1||j===i-1) continue; if(segCross(pts[i],pts[i+1],pts[j],pts[j+1])){ crossPairs.add(i); crossPairs.add(j); } } } }
 
 function newStage(regen){ if(regen) genStage(); order=[]; pickedSet=new Set(); crossPairs=new Set(); scoot=null; parts=[]; state='plan';
+  timeLeft=STAGE_TIME; lastTick=999; updateTimer();
   $('over').classList.add('hidden'); updateHUD(); refreshBtns(); $('hint').textContent='👆 같은 색 음식점→집 순서로 탭 (음식점 먼저!)'; }
+function updateTimer(){ const t=Math.max(0,Math.ceil(timeLeft)); const m=Math.floor(t/60), s=t%60; $('timer').textContent='⏱️ '+m+':'+(s<10?'0':'')+s; $('timer').classList.toggle('warn', timeLeft<=10 && (state==='plan')); }
+function failTime(){ state='fail'; flash('⏰ 시간 초과!','#ff5a6e'); tone(150,0.4,'sawtooth',0.1); vib([40,60,40]); shake=16; $('timer').classList.remove('warn');
+  $('overTitle').textContent='⏰ 시간 초과!'; $('overTitle').style.color='#ff6a7a'; $('stars').textContent='⌛';
+  $('overMsg').innerHTML='제한 시간 <b>'+STAGE_TIME+'초</b> 안에 출발하지 못했어요!<br><span style="color:#ff9a5a">더 빠르게 순서를 짜보세요</span>';
+  $('retryBtn').style.display='block'; $('retryBtn').textContent='↺ 다시 도전'; $('nextBtn').style.display='none';
+  setTimeout(()=>$('over').classList.remove('hidden'),650); }
 function updateHUD(){ $('stage').textContent='🗺️ '+stage+'단계 · 배달 '+pairs+'건';
   if(order.length){ const L=routeLen(order); const eff=optLen/L; $('info').textContent='⭐ 누적 '+totalStars+' · 예상 효율 '+Math.round(clamp(eff,0,1)*100)+'%'+(crossPairs.size?'  ⚠️경로 꼬임':''); }
   else $('info').textContent='⭐ 누적 '+totalStars+'개'; }
@@ -144,7 +158,7 @@ addEventListener('pointerdown',e=>{ if(e.target&&e.target.closest&&e.target.clos
 $('resetBtn').onclick=()=>{ if(state!=='plan')return; order=[]; pickedSet=new Set(); crossPairs=new Set(); tone(320,0.06,'sine',0.07); updateHUD(); refreshBtns(); $('hint').textContent='👆 같은 색 음식점→집 순서로 탭 (음식점 먼저!)'; };
 $('goBtn').onclick=()=>{ if(state==='plan'&&order.length===nodes.length) startRun(); };
 
-function startRun(){ state='run'; $('hint').textContent=''; refreshBtns();
+function startRun(){ state='run'; $('hint').textContent=''; $('timer').classList.remove('warn'); refreshBtns();
   scoot={path:[start,...order.map(i=>nodes[i])], seg:0, t:0, x:start.x, y:start.y, dist0:0, visited:0, carried:0, pickupDist:{}, carriedPairs:new Set(), myLen:routeLen(order)};
   tone(700,0.1,'sawtooth',0.09); vib([10,30]);
 }
@@ -185,6 +199,9 @@ $('startBtn').onclick=()=>{ try{if(!AC)AC=new(window.AudioContext||window.webkit
 
 let last=performance.now();
 function loop(now){ requestAnimationFrame(loop); let dt=(now-last)/1000; last=now; if(dt>0.05)dt=0.05;
+  if(state==='plan'){ timeLeft-=dt; const sec=Math.ceil(timeLeft);
+    if(timeLeft<=10 && timeLeft>0 && sec!==lastTick){ lastTick=sec; tone(880,0.06,'square',0.08); vib(15); }
+    updateTimer(); if(timeLeft<=0){ timeLeft=0; updateTimer(); failTime(); } }
   if(state==='run'&&scoot){ const spd=field().h*0.95; let move=spd*dt; let failed=null;
     while(move>0 && scoot.seg<scoot.path.length-1){ const a=scoot.path[scoot.seg], b=scoot.path[scoot.seg+1]; const segLen=dist(a,b), rem=segLen*(1-scoot.t);
       if(move<rem){ scoot.t+=move/segLen; move=0; }
