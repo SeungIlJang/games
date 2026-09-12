@@ -38,7 +38,7 @@
   <button class="btn d" id="resetBtn">↺ 초기화</button>
   <button class="btn g" id="goBtn" disabled>🛵 출발!</button>
 </div>
-<div id="ver">v0.4.5 · 오토바이 정면 뷰(앞을 바라봄)</div>
+<div id="ver">v0.4.6 · 다시 누르면 선택 취소</div>
 
 <div id="start">
   <h1>🛵 모두의 배달</h1>
@@ -48,10 +48,11 @@
     👆 방문할 순서대로 탭 — <b style="color:#7cf6ff">같은 색 음식점을 먼저</b> 들러 픽업!<br>
     ⚠️ 픽업 안 한 집에 배달하면 <b style="color:#ff6a7a">배달 실수 = 게임오버!</b><br>
     🔴 경로가 <b style="color:#ff6a7a">빨갛게 꼬이면</b> 돌아가는 길 = 음식이 식어요<br>
-    🛵 <b>출발!</b> → 오토바이 관전 → <b style="color:#ffd34d">별 1~3개</b> (짧을수록 별3!)
+    🛵 <b>출발!</b> → 오토바이 관전 → <b style="color:#ffd34d">별 1~3개</b> (짧을수록 별3!)<br>
+    ↩️ 선택한 곳을 <b>다시 누르면 취소</b> (이후 경로도 리셋)
   </div>
   <button class="btn g" id="startBtn" style="padding:15px 34px;font-size:20px">시작하기</button>
-  <div id="changelog">🆕 <b>v0.4.5</b> · 오토바이 <b>정면 뷰</b>(라이더가 앞을 바라봄) · 크고 리얼한 배달 오토바이</div>
+  <div id="changelog">🆕 <b>v0.4.6</b> · 선택한 곳 <b>다시 누르면 취소</b>(경로 리셋) · 정면 배달 오토바이</div>
 </div>
 
 <div id="over" class="hidden">
@@ -126,7 +127,14 @@ function refreshBtns(){ $('goBtn').disabled = !(state==='plan' && order.length==
 addEventListener('pointerdown',e=>{ if(e.target&&e.target.closest&&e.target.closest('.btn'))return; if(state!=='plan')return;
   const r=cv.getBoundingClientRect(); const x=(e.clientX-r.left)*(W/r.width), y=(e.clientY-r.top)*(H/r.height);
   let hit=-1,bd=32; nodes.forEach((n,i)=>{ const d=Math.hypot(n.x-x,n.y-y); if(d<bd){bd=d;hit=i;} });
-  if(hit<0) return; if(order.includes(hit)) return;
+  if(hit<0) return;
+  const already=order.indexOf(hit);
+  if(already>=0){ // 다시 누르면 취소 — 그 지점부터 이후 경로 리셋
+    order=order.slice(0,already); pickedSet=new Set(); order.forEach(i=>{ if(nodes[i].type==='shop') pickedSet.add(nodes[i].pair); });
+    updateCross(); tone(300,0.07,'sine',0.07); vib(14); updateHUD(); refreshBtns();
+    $('hint').textContent = order.length ? '↩️ 취소됨 · 이어서 탭하세요' : '👆 같은 색 음식점→집 순서로 탭 (음식점 먼저!)';
+    return;
+  }
   const nd=nodes[hit];
   const badHome = nd.type==='home' && !pickedSet.has(nd.pair);   // 픽업 전 집 → 이대로면 실패
   order.push(hit); if(nd.type==='shop') pickedSet.add(nd.pair); updateCross(); tone(nd.type==='shop'?520:760,0.05,'square',0.08); vib(10); updateHUD(); refreshBtns();
