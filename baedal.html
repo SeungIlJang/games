@@ -38,7 +38,7 @@
   <button class="btn d" id="resetBtn">↺ 초기화</button>
   <button class="btn g" id="goBtn" disabled>🛵 출발!</button>
 </div>
-<div id="ver">v0.4.4 · 오토바이 크게·리얼하게(출발점도 실물)</div>
+<div id="ver">v0.4.5 · 오토바이 정면 뷰(앞을 바라봄)</div>
 
 <div id="start">
   <h1>🛵 모두의 배달</h1>
@@ -51,7 +51,7 @@
     🛵 <b>출발!</b> → 오토바이 관전 → <b style="color:#ffd34d">별 1~3개</b> (짧을수록 별3!)
   </div>
   <button class="btn g" id="startBtn" style="padding:15px 34px;font-size:20px">시작하기</button>
-  <div id="changelog">🆕 <b>v0.4.4</b> · 오토바이 <b>더 크고 리얼하게</b>(윈드스크린·미러·배기구·스포크휠) · 출발점도 실물 오토바이</div>
+  <div id="changelog">🆕 <b>v0.4.5</b> · 오토바이 <b>정면 뷰</b>(라이더가 앞을 바라봄) · 크고 리얼한 배달 오토바이</div>
 </div>
 
 <div id="over" class="hidden">
@@ -236,37 +236,35 @@ function badge(x,y,num){ ctx.globalAlpha=1; ctx.fillStyle='#fff'; ctx.beginPath(
 function drawStart(){ if(scoot) return;   // 주행 중엔 출발 오토바이 숨김
   drawScooter(start.x, start.y-5, 1, 1.0);
   ctx.fillStyle='rgba(255,255,255,.65)'; ctx.font='bold 11px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('출발', start.x, start.y+16); }
-function drawScooter(x,y,dir,sc){ sc=sc||1; ctx.save(); ctx.translate(x,y); ctx.scale(dir<0?-sc:sc, sc);
+function drawScooter(x,y,dir,sc){ sc=sc||1; ctx.save(); ctx.translate(x,y); ctx.scale(sc,sc);   // 정면 뷰(앞을 바라봄) — 대칭이라 방향 무관
   // 그림자
-  ctx.fillStyle='rgba(0,0,0,.28)'; ctx.beginPath(); ctx.ellipse(0,18,21,4.5,0,0,6.28); ctx.fill();
-  // 바퀴(스포크 휠)
-  const wheel=(wx)=>{ ctx.fillStyle='#141414'; ctx.beginPath(); ctx.arc(wx,13,7,0,6.28); ctx.fill(); ctx.fillStyle='#3a3a3a'; ctx.beginPath(); ctx.arc(wx,13,4,0,6.28); ctx.fill(); ctx.fillStyle='#9aa0a8'; ctx.beginPath(); ctx.arc(wx,13,1.6,0,6.28); ctx.fill(); };
-  wheel(-15); wheel(16);
-  // 배기구
-  ctx.fillStyle='#9aa0a8'; roundRect(-21,13,9,3,1.5); ctx.fill();
-  // 차체(빨강)
-  ctx.fillStyle='#e63946'; ctx.beginPath(); ctx.moveTo(-16,13); ctx.lineTo(18,13); ctx.quadraticCurveTo(22,11,20,5); ctx.lineTo(12,5); ctx.quadraticCurveTo(3,2,-6,5); ctx.lineTo(-14,9); ctx.closePath(); ctx.fill();
-  ctx.fillStyle='#b02a37'; roundRect(-9,10,17,3,1.5); ctx.fill();                       // 발판
-  // 앞 포크 + 윈드스크린
-  ctx.strokeStyle='#c9ccd3'; ctx.lineWidth=3; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(16,11); ctx.lineTo(20,-2); ctx.stroke();
-  ctx.strokeStyle='rgba(180,220,255,.7)'; ctx.lineWidth=2.5; ctx.beginPath(); ctx.moveTo(20,-3); ctx.quadraticCurveTo(27,-9,24,-17); ctx.stroke();
-  // 핸들 + 헤드라이트 + 미러
-  ctx.strokeStyle='#222'; ctx.lineWidth=2.5; ctx.beginPath(); ctx.moveTo(20,-2); ctx.lineTo(25,-4); ctx.stroke();
-  ctx.fillStyle='#ffe08a'; ctx.beginPath(); ctx.arc(22,2,3,0,6.28); ctx.fill();
-  ctx.strokeStyle='#222'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(24,-4); ctx.lineTo(28,-9); ctx.stroke(); ctx.fillStyle='#333'; ctx.beginPath(); ctx.arc(28,-9,2,0,6.28); ctx.fill();
-  ctx.fillStyle='#2a2a2a'; roundRect(-10,1,14,4,2); ctx.fill();                          // 안장
-  // 배달통(뒤, 크게)
-  ctx.fillStyle='#16b5a3'; roundRect(-28,-21,20,21,3); ctx.fill();
-  ctx.fillStyle='#0e8d7f'; roundRect(-28,-21,20,5.5,3); ctx.fill();                      // 뚜껑
-  ctx.strokeStyle='#0b7166'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(-18,-16); ctx.lineTo(-18,0); ctx.stroke();
-  ctx.fillStyle='#eafffb'; roundRect(-24,-12,8,7,1.5); ctx.fill();                       // 로고 패널
-  ctx.fillStyle='#ff7a3a'; ctx.beginPath(); ctx.arc(-20,-8.5,2,0,6.28); ctx.fill();
-  // 라이더
-  ctx.fillStyle='#2e3f7e'; roundRect(-6,-17,13,16,4); ctx.fill();                        // 몸(재킷)
-  ctx.strokeStyle='#2e3f7e'; ctx.lineWidth=4; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(4,-7); ctx.lineTo(18,-1); ctx.stroke();  // 팔→핸들
-  ctx.fillStyle='#e23b3b'; ctx.beginPath(); ctx.arc(9,-19,5.5,0,6.28); ctx.fill();       // 헬멧
-  ctx.fillStyle='#b02020'; ctx.beginPath(); ctx.arc(9,-19,5.5,-0.4,1.5); ctx.fill();     // 헬멧 음영
-  ctx.fillStyle='#ffd9b0'; ctx.beginPath(); ctx.arc(13.4,-17,2.4,0,6.28); ctx.fill();    // 얼굴
+  ctx.fillStyle='rgba(0,0,0,.28)'; ctx.beginPath(); ctx.ellipse(0,24,16,4.5,0,0,6.28); ctx.fill();
+  // 배달통(뒤 — 어깨 위로 보임)
+  ctx.fillStyle='#16b5a3'; roundRect(-12,-26,24,21,4); ctx.fill();
+  ctx.fillStyle='#0e8d7f'; roundRect(-12,-26,24,5.5,4); ctx.fill();
+  ctx.fillStyle='#eafffb'; roundRect(-6,-19,12,8,2); ctx.fill();
+  ctx.fillStyle='#ff7a3a'; ctx.beginPath(); ctx.arc(0,-15,2.6,0,6.28); ctx.fill();
+  // 핸들바 + 미러(좌우로 벌어짐)
+  ctx.strokeStyle='#2a2a2a'; ctx.lineWidth=3.2; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(-22,4); ctx.lineTo(22,4); ctx.stroke();
+  ctx.fillStyle='#3a3a3a'; ctx.beginPath(); ctx.arc(-22,0,2.6,0,6.28); ctx.fill(); ctx.beginPath(); ctx.arc(22,0,2.6,0,6.28); ctx.fill();
+  // 앞바퀴(정면=세로 타이어)
+  ctx.fillStyle='#141414'; roundRect(-5.5,15,11,12,3.5); ctx.fill();
+  ctx.fillStyle='#3a3a3a'; roundRect(-2.6,17.5,5.2,7,2); ctx.fill();
+  // 앞 카울(빨강)
+  ctx.fillStyle='#e63946'; roundRect(-14,3,28,15,7); ctx.fill();
+  ctx.fillStyle='#c62f3b'; roundRect(-14,3,28,5,6); ctx.fill();
+  // 헤드라이트
+  ctx.fillStyle='#ffe08a'; ctx.beginPath(); ctx.ellipse(0,12,5,6,0,0,6.28); ctx.fill();
+  ctx.fillStyle='#fff6cf'; ctx.beginPath(); ctx.ellipse(-1,11,2,2.8,0,0,6.28); ctx.fill();
+  // 라이더 팔 → 핸들
+  ctx.strokeStyle='#2e3f7e'; ctx.lineWidth=5.5; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(-7,-4); ctx.lineTo(-20,4); ctx.moveTo(7,-4); ctx.lineTo(20,4); ctx.stroke();
+  // 라이더 몸(재킷, 정면)
+  ctx.fillStyle='#33407a'; roundRect(-10,-12,20,15,6); ctx.fill();
+  ctx.fillStyle='#3d4d96'; roundRect(-10,-12,20,4.5,5); ctx.fill();
+  // 헬멧(정면)
+  ctx.fillStyle='#e23b3b'; ctx.beginPath(); ctx.arc(0,-16,9,0,6.28); ctx.fill();
+  ctx.fillStyle='#ff6b6b'; ctx.beginPath(); ctx.arc(-2.5,-19,3,0,6.28); ctx.fill();      // 상단 하이라이트
+  ctx.fillStyle='#20263c'; roundRect(-7,-17,14,6,3); ctx.fill();                         // 바이저(정면 어두운 띠)
   ctx.restore(); }
 function roundRect(x,y,w,h,r){ ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath(); }
 resize(); requestAnimationFrame(loop);
