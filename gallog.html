@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.86 · 발사 깜빡임 해결(그림자 최적화) · 무기표시 아이콘 복원</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.87 · FPS 표시(진단용) · 발사 깜빡임 최적화</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">한국어</button>
       <button data-lang="en" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">English</button>
@@ -541,6 +541,7 @@ function renderClasses(){
 
 // ---- Game State ----
 let state = 'start'; // start | play | levelup | over
+let fps=60, _fpsPrev=0;   // 진단용 FPS 표시
 let player, enemies, bullets, gems, particles, texts, heals, ebullets;
 let flashT=0, hurtFlash=0, lastEarned=0, lastEndBonus=0, runGold=0, goldDoubled=false, reviveCount=0;
 const MAX_REVIVE=5; // 광고 부활 판당 최대 횟수
@@ -1219,11 +1220,15 @@ function render(){
   // joystick
   if(dragging){ ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(origin.x,origin.y,60,0,Math.PI*2); ctx.stroke();
     ctx.fillStyle='rgba(255,255,255,.4)'; ctx.beginPath(); ctx.arc(origin.x+moveDir.x*40*(moveDir.mag||1),origin.y+moveDir.y*40*(moveDir.mag||1),22,0,Math.PI*2); ctx.fill(); }
+  // 진단용 FPS 표시(임시)
+  ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(6,64,84,22);
+  ctx.fillStyle = fps<40 ? '#ff5a6e' : (fps<52?'#ffd25c':'#7cff9a'); ctx.font='bold 14px system-ui'; ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText('FPS '+Math.round(fps), 12, 75); ctx.textBaseline='alphabetic';
 }
 
 // ---- Loop ----
 function loop(ts){
   requestAnimationFrame(loop);
+  if(_fpsPrev){ const rdt=ts-_fpsPrev; if(rdt>0) fps=fps*0.88+(1000/rdt)*0.12; } _fpsPrev=ts;
   if(adPlaying || state!=='play'){ lastTs=ts; if(state!=='start' && state!=='tutorial') render(); return; }
   let dt=(ts-lastTs)/1000; lastTs=ts; if(dt>0.05)dt=0.05;
   if(stage<catchUpStage) dt*=catchUpSpeed;   // 이전 최고 스테이지 전까지 가속(최고스테이지별 1.2~1.5배)
