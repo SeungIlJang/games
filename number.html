@@ -85,7 +85,7 @@
   <button class="btn" id="startBtn">시작</button>
   <div class="sub" style="margin-top:6px;">최고 <b id="best2">0</b></div>
   <button class="btn" id="lbBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:11px 24px;font-size:16px;margin-top:10px">🏆 랭킹</button>
-  <div id="changelog">🆕 <b id="clVer">v1.10.0</b> · <span id="clNote">🔢 <b>선택형 라운드 추가</b>! 수열 다음 숫자를 보기에서 고르기(5초) · 롤링은 그대로</span></div>
+  <div id="changelog">🆕 <b id="clVer">v1.10.1</b> · <span id="clNote">🔢 <b>선택형 라운드</b>(수열 다음 숫자 5초) · NaN 표시 버그 수정</span></div>
 </div>
 
 <div id="over" class="hidden">
@@ -109,7 +109,7 @@
   <div id="lbList"></div>
   <button class="btn" id="lbClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v1.10.0 · 선택형 라운드 추가(수열 다음 숫자 5초)</div>
+<div id="ver">v1.10.1 · 선택형 라운드 + NaN 버그 수정</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -259,7 +259,7 @@ function makeRule(){
   const q=Math.random();
   return q<0.4? {type:'add', s:pick([-4,-3,3,4,5,6,7,8])} : q<0.78? {type:'alt', a:pick([2,3,4,5]), b:pick([1,2,3,4])} : {type:'add', s:pick([6,7,8,9])};
 }
-function stepAt(i){ return rule.type==='add'? rule.s : (i%2===0? rule.a : rule.b); }
+function stepAt(i){ return rule.type==='add'? rule.s : rule.type==='alt'? (i%2===0? rule.a : rule.b) : 0; }
 function speed(){ return Math.max(195, 640 - hits*23); }
 
 function newRound(keepCur){
@@ -273,7 +273,7 @@ function newRound(keepCur){
     banner('⚡ 롤링! 감으로 STOP','#c9a3ff'); vib(30);
     // 롤링은 누를 때까지 여유있게 대기 (제한시간 없음)
   } else {
-    if(!keepCur) cur = hits<2 ? 1 : rnd(4,16);
+    if(!keepCur || !isFinite(cur)) cur = hits<2 ? 1 : rnd(4,16);   // cur 손상(NaN) 시 복구
     const k=rnd(3,5); let t=cur; for(let i=0;i<k;i++) t+=stepAt(i); target=t; seq=[cur];
     if(hits>=2 && !slowEndShown){ slowEndShown=true; banner('🔥 슬로모 끝! 이제 실전','#ff9a5a'); vib([20,40,20]); }
   }
@@ -297,6 +297,7 @@ function render(pulse){
   $('vig').style.boxShadow='inset 0 0 '+(120-heat*40)+'px 10px rgba('+Math.round(60*heat)+',0,0,'+(0.5+heat*0.35).toFixed(2)+')';
 }
 function tick(){
+  if(inChoice || rule.type==='choice') return;   // 선택형 라운드에선 롤링 tick 금지(NaN 방지)
   if(curIsRoll){
     cur++; if(cur>rollHi) cur=rollLo; render(false);
     tone(520+ (cur%9)*30, 0.02, 'square', 0.025);
