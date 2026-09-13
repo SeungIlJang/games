@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="ko"><head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
-<title>모두의 숫자</title>
+<title>멈춰라 숫자</title>
 <style>
   html,body{margin:0;height:100%;background:#0a0e1a;overflow:hidden;font-family:system-ui,-apple-system,sans-serif;color:#eef;touch-action:none;user-select:none;-webkit-user-select:none}
   #fx{position:fixed;inset:0;pointer-events:none;z-index:5}
@@ -9,23 +9,26 @@
     padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
   #vig{position:fixed;inset:0;pointer-events:none;z-index:1;box-shadow:inset 0 0 120px 10px rgba(0,0,0,.5)}
   #flash{position:fixed;inset:0;pointer-events:none;z-index:4;opacity:0;transition:opacity .16s ease-out}
-  #target{font-size:16px;color:#8fa;letter-spacing:1px;margin-bottom:4px;font-weight:700}
-  #targetN{font-size:78px;font-weight:900;color:#7cf6ff;text-shadow:0 0 24px rgba(124,246,255,.55);line-height:1;letter-spacing:2px}
-  #tbar{width:70%;max-width:280px;height:10px;background:rgba(255,255,255,.1);border-radius:6px;overflow:hidden;margin:16px 0 24px}
-  #tfill{height:100%;width:100%;background:linear-gradient(90deg,#5cffb0,#ffd34d,#ff5a6e);border-radius:6px}
-  #choices{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;max-width:360px}
-  .choice{background:#20304e;color:#fff;border:2px solid rgba(124,246,255,.4);border-radius:18px;padding:20px 26px;font-size:40px;font-weight:900;min-width:118px;cursor:pointer;box-shadow:0 6px 0 #12203a;transition:transform .05s}
-  .choice:active{transform:translateY(3px);box-shadow:0 3px 0 #12203a}
-  .choice.ok{background:#1f7a4d;border-color:#5cffb0;box-shadow:0 6px 0 #0e4a2c}
-  .choice.bad{background:#7a2432;border-color:#ff5a6e;box-shadow:0 6px 0 #4a1420}
-  #hint{font-size:14px;color:#8892b0;margin-top:16px;height:20px;font-weight:700}
-  #banner{position:fixed;top:20%;left:0;right:0;text-align:center;font-size:26px;font-weight:900;z-index:6;pointer-events:none;opacity:0}
+  #wrap.slow #cur{transition:transform .12s ease-out;transform:scale(1.14)}
+  #target{font-size:15px;color:#8fa;letter-spacing:1px;margin-bottom:2px}
+  #targetN{font-size:46px;font-weight:900;color:#7cf6ff;text-shadow:0 0 20px rgba(124,246,255,.55);line-height:1}
+  #cur{font-size:126px;font-weight:900;line-height:1;margin:16px 0}
+  #cur.miss{color:#ff5a6e!important;text-shadow:0 0 26px rgba(255,90,110,.7)!important}
+  #cur.hit{color:#5cffb0!important;text-shadow:0 0 26px rgba(92,255,176,.7)!important}
+  #cur.roll{color:#c9a3ff!important;text-shadow:0 0 4px #c9a3ff, 0 -14px 16px rgba(201,163,255,.5), 0 14px 16px rgba(201,163,255,.5)}
+  #seq{font-size:21px;color:#5a6684;letter-spacing:1px;min-height:26px;font-weight:700}
+  #hint{font-size:14px;color:#8892b0;margin-top:8px;height:20px;font-weight:700}
+  #banner{position:fixed;top:24%;left:0;right:0;text-align:center;font-size:26px;font-weight:900;z-index:6;pointer-events:none;opacity:0}
   #banner.show{animation:bn .9s ease-out}
   @keyframes bn{0%{opacity:0;transform:scale(.6)}18%{opacity:1;transform:scale(1.1)}82%{opacity:1}100%{opacity:0;transform:scale(1)}}
   #hud{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:0;right:0;display:flex;justify-content:space-between;padding:0 16px;font-weight:800;font-size:15px;z-index:3}
   #combo{color:#ffd34d;font-weight:900}
   #ver{position:absolute;left:8px;bottom:calc(6px + env(safe-area-inset-bottom,0px));font-size:10px;color:#3a4560;z-index:3}
-  .float{position:fixed;left:50%;top:44%;transform:translateX(-50%);font-size:34px;font-weight:900;z-index:7;pointer-events:none;animation:fl .7s ease-out forwards}
+  .big{animation:pop .13s ease-out}
+  @keyframes pop{0%{transform:scale(1.42)}55%{transform:scale(.94)}100%{transform:scale(1)}}
+  .near{animation:near .18s ease-in-out infinite alternate}
+  @keyframes near{0%{transform:scale(1)}100%{transform:scale(1.09)}}
+  .float{position:fixed;left:50%;top:46%;transform:translateX(-50%);font-size:34px;font-weight:900;z-index:7;pointer-events:none;animation:fl .7s ease-out forwards}
   @keyframes fl{0%{opacity:0;transform:translate(-50%,10px) scale(.7)}20%{opacity:1;transform:translate(-50%,-4px) scale(1.1)}100%{opacity:0;transform:translate(-50%,-52px) scale(1)}}
   #over,#start,#lb{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,10,22,.92);gap:10px;padding:24px;text-align:center;z-index:10}
   #lb{z-index:12;justify-content:flex-start;padding-top:calc(28px + env(safe-area-inset-top,0px))}
@@ -50,22 +53,22 @@
 <div id="banner"></div>
 <div id="hud"><div>점수 <span id="score">0</span> <span id="hearts" style="color:#ffd34d;font-weight:900"></span></div><div id="combo"></div><div>최고 <span id="best">0</span></div></div>
 <div id="wrap">
-  <div id="target">🎯 같은 숫자를 고르세요!</div>
+  <div id="target">🎯 이 숫자에서 멈춰!</div>
   <div id="targetN">–</div>
-  <div id="tbar"><div id="tfill"></div></div>
-  <div id="choices"></div>
+  <div id="cur">–</div>
+  <div id="seq"></div>
   <div id="hint"></div>
 </div>
 
 <div id="start">
-  <h1>모두의 숫자</h1>
-  <div class="sub">위에 나온 <b style="color:#7cf6ff">목표 숫자</b>와 <b>같은 수</b>를 보기에서 <b>빠르게 탭</b>!</div>
-  <div class="sub" style="opacity:.85;font-size:13.5px;">난이도가 오르면 보기가 <b>2 → 3 → 4개</b>, 숫자도 길어지고 <b style="color:#ff9a5a">비슷한 숫자</b>로 헷갈려요</div>
-  <div class="sub" style="opacity:.6;font-size:13px;"><b style="color:#ffd34d">💛 8연속마다 생명 +1</b> · 틀리거나 <b>시간초과</b>면 끝(생명 0)<br/>갈수록 제한시간 짧아짐 — 순발력 승부!</div>
+  <h1>멈춰라 숫자</h1>
+  <div class="sub">숫자가 <b>규칙</b>대로 바뀝니다. 수열을 읽고 <b style="color:#7cf6ff">목표</b>에서 <b>탭</b>!<br/>가끔 <b style="color:#c9a3ff">⚡ 롤링</b>은 초고속 — <b>감으로</b> 멈추세요!</div>
+  <div class="sub" style="opacity:.85;font-size:13.5px;"><b style="color:#ffd34d">⚡ 롤링 성공 = 💛 생명 +1!</b> 실수해도 생명이 있으면 계속 이어가요</div>
+  <div class="sub" style="opacity:.6;font-size:13px;">틀리거나 놓치면 끝(생명 0일 때) · 갈수록 빨라짐<br/><b style="color:#ff9a5a">처음 2판만 슬로모로 도와줘요 · 3판부터 실전!</b></div>
   <button class="btn" id="startBtn">시작</button>
   <div class="sub" style="margin-top:6px;">최고 <b id="best2">0</b></div>
   <button class="btn" id="lbBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:11px 24px;font-size:16px;margin-top:10px">🏆 랭킹</button>
-  <div id="changelog">🆕 <b id="clVer">v2.0.0</b> · <span id="clNote">멈추기 → <b>고르기</b>로 대변신! 목표와 같은 수를 빠르게 선택 · 보기 2→3→4개</span></div>
+  <div id="changelog">🆕 <b id="clVer">v1.9.4</b> · <span id="clNote">성공/실패가 확실히 보여요! 멈춘 숫자(빨강)↔목표 표시 · 결과 명확 · 목표서 잠깐 멈춤</span></div>
 </div>
 
 <div id="over" class="hidden">
@@ -89,12 +92,13 @@
   <div id="lbList"></div>
   <button class="btn" id="lbClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v2.0.0 · 선택형(목표와 같은 수 고르기)</div>
+<div id="ver">v1.9.4 · 성공/실패 판정 명확화(멈춘 숫자↔목표 색·크게)</div>
 
 <script>
 const $=id=>document.getElementById(id);
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const ROLL_MS=70;
 
 let AC; function tone(f,d,type,g){ try{ if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)(); const o=AC.createOscillator(),v=AC.createGain(); o.type=type||'square'; o.frequency.value=f; v.gain.value=g||0.06; o.connect(v); v.connect(AC.destination); const t=AC.currentTime; o.start(t); v.gain.setValueAtTime(v.gain.value,t); v.gain.exponentialRampToValueAtTime(0.0001,t+(d||0.1)); o.stop(t+(d||0.1)); }catch(e){} }
 function chord(base){ [0,4,7].forEach((s,i)=>setTimeout(()=>tone(base*Math.pow(2,s/12),0.14,'triangle',0.06),i*35)); }
@@ -102,15 +106,22 @@ function vib(ms){ try{ navigator.vibrate&&navigator.vibrate(ms); }catch(e){} }
 
 // ── 광고(AdMob) — 폰(AAB)=실광고, 웹=시뮬. ⚠️ AD_USE_TEST=true 유지(실광고 직접 클릭시 계정정지). 출시 때만 false ──
 const AD_USE_TEST=true;
-const AD_REWARD_TEST='ca-app-pub-3940256099942544/5224354917';
-const AD_INTER_TEST ='ca-app-pub-3940256099942544/1033173712';
-const AD_BANNER_TEST='ca-app-pub-3940256099942544/6300978111';
-const AD_REWARD_REAL=''; const AD_INTER_REAL=''; const AD_BANNER_REAL='';
+const AD_REWARD_TEST='ca-app-pub-3940256099942544/5224354917';   // 구글 공식 테스트 리워드
+const AD_INTER_TEST ='ca-app-pub-3940256099942544/1033173712';   // 구글 공식 테스트 전면
+const AD_BANNER_TEST='ca-app-pub-3940256099942544/6300978111';   // 구글 공식 테스트 배너
+const AD_REWARD_REAL=''; const AD_INTER_REAL=''; const AD_BANNER_REAL='';   // 출시 시 실제 광고단위 ID 입력
 let admobReady=false, adPlaying=false;
 (async function initAdMob(){ try{ const C=window.Capacitor; if(C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.AdMob){ await C.Plugins.AdMob.initialize({initializeForTesting:AD_USE_TEST}); admobReady=true; if(state==='start') showBanner(); } }catch(e){ admobReady=false; } })();
-async function playAd(onReward){
-  if(adPlaying) return; adPlaying=true;
-  const _done=(cb)=>{ adPlaying=false; if(cb) cb(); };
+function adLoading(on){ let el=document.getElementById('adLoading');
+  if(!el){ if(!document.getElementById('adSpKf')){ const st=document.createElement('style'); st.id='adSpKf'; st.textContent='@keyframes sp{to{transform:rotate(360deg)}}'; document.head.appendChild(st); }
+    el=document.createElement('div'); el.id='adLoading';
+    el.innerHTML='<div class="sp" style="width:38px;height:38px;border:5px solid rgba(255,255,255,.15);border-top-color:#7cf6ff;border-radius:50%;animation:sp .8s linear infinite;margin-bottom:14px;"></div><div>🎬 광고 준비중…</div>';
+    el.style.cssText='position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:99;background:rgba(8,10,22,.82);color:#fff;font-size:19px;font-weight:800;';
+    document.body.appendChild(el); }
+  el.style.display=on?'flex':'none'; }
+async function playAd(onReward){   // 리워드 광고 (부활)
+  if(adPlaying) return; adPlaying=true; adLoading(true);
+  const _done=(cb)=>{ adPlaying=false; adLoading(false); if(cb) cb(); };
   const C=window.Capacitor;
   if(admobReady && C && C.Plugins && C.Plugins.AdMob){
     const AdMob=C.Plugins.AdMob; let lr=null, ld=null, lf=null;
@@ -125,20 +136,41 @@ async function playAd(onReward){
       _done(onReward); return;
     }catch(e){ if(lr&&lr.remove)lr.remove(); if(ld&&ld.remove)ld.remove(); _done(onReward); return; }
   }
-  setTimeout(()=>{ _done(onReward); }, 700);
+  setTimeout(()=>{ _done(onReward); }, 700);   // 웹 시뮬
+}
+async function playInterstitial(done){   // 전면 광고 (라운드 사이)
+  const C=window.Capacitor;
+  if(admobReady && C && C.Plugins && C.Plugins.AdMob){
+    const AdMob=C.Plugins.AdMob; let ld=null, lf=null;
+    try{
+      await AdMob.prepareInterstitial({ adId: AD_USE_TEST?AD_INTER_TEST:AD_INTER_REAL });
+      await new Promise((resolve)=>{ let d=false; const fin=()=>{ if(d)return; d=true; resolve(); };
+        AdMob.addListener('interstitialAdDismissed',fin).then(l=>{ ld=l; });
+        AdMob.addListener('interstitialAdFailedToShow',fin).then(l=>{ lf=l; });
+        AdMob.showInterstitial().catch(fin); setTimeout(fin,30000); });
+      if(ld&&ld.remove)ld.remove(); if(lf&&lf.remove)lf.remove();
+    }catch(e){}
+  }
+  if(done) done();
 }
 let bannerShown=false;
-async function showBanner(){ const C=window.Capacitor; if(!admobReady || !(C&&C.Plugins&&C.Plugins.AdMob) || bannerShown) return; bannerShown=true;
-  try{ await C.Plugins.AdMob.showBanner({ adId: AD_USE_TEST?AD_BANNER_TEST:AD_BANNER_REAL, adSize:'BANNER', position:'BOTTOM_CENTER', margin:0, isTesting:AD_USE_TEST }); }catch(e){ bannerShown=false; } }
+async function showBanner(){   // 배너 — 메뉴/결과 화면에만(플레이 중 숨김 → 오탭 방지)
+  const C=window.Capacitor;
+  if(!admobReady || !(C&&C.Plugins&&C.Plugins.AdMob) || bannerShown) return; bannerShown=true;
+  try{ await C.Plugins.AdMob.showBanner({ adId: AD_USE_TEST?AD_BANNER_TEST:AD_BANNER_REAL, adSize:'BANNER', position:'BOTTOM_CENTER', margin:0, isTesting:AD_USE_TEST }); }catch(e){ bannerShown=false; }
+}
 async function hideBanner(){ const C=window.Capacitor; if(!admobReady || !(C&&C.Plugins&&C.Plugins.AdMob) || !bannerShown) return; bannerShown=false; try{ await C.Plugins.AdMob.hideBanner(); }catch(e){} }
-
-// ── 랭킹 (갤로그의 귀환과 같은 Firebase 재사용, 컬렉션 number_lb) ──
+// ── 랭킹 ──
+// 🌐 전세계 랭킹: 아래 FB_CONFIG를 Firebase 콘솔 값으로 채우면 자동 활성화(비어있으면 로컬 Top-10로 동작)
+// 갤로그의 귀환과 같은 Firebase 프로젝트 재사용(컬렉션은 number_lb)
 window.FB_CONFIG = window.FB_CONFIG || { apiKey:"AIzaSyDUanex0x7CmvCQxBK2d3a7SkyscuEGzwY", authDomain:"gallog-return-be90f.firebaseapp.com", projectId:"gallog-return-be90f", appId:"1:317854999265:web:c78708adabdef449a08da0" };
 let myName = (function(){ try{ return localStorage.getItem('num_name')||'나'; }catch(e){ return '나'; } })();
 function esc(s){ return String(s).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c])); }
+// 로컬 저장
 function loadLB(){ try{ return JSON.parse(localStorage.getItem('num_lb')||'[]'); }catch(e){ return []; } }
 function saveLB(a){ try{ localStorage.setItem('num_lb', JSON.stringify(a)); }catch(e){} }
 function insertScore(sc){ let a=loadLB(); a.forEach(e=>e.me=false); const entry={name:myName,score:sc,me:true}; a.push(entry); a.sort((x,y)=>y.score-x.score); a=a.slice(0,10); saveLB(a); return a.findIndex(e=>e.me)+1; }
+// Firebase(글로벌) — config 있으면 CDN 동적로드
 let fbReady=false, fbDb=null, fbApi=null;
 (async function initFB(){ try{
   if(!window.FB_CONFIG || !FB_CONFIG.apiKey) return;
@@ -148,6 +180,7 @@ let fbReady=false, fbDb=null, fbApi=null;
 }catch(e){ fbReady=false; } })();
 async function fbSubmit(name,sc){ if(!fbReady) return; try{ await fbApi.addDoc(fbApi.collection(fbDb,'number_lb'),{ name:String(name).slice(0,16), score:Math.floor(sc), ts:fbApi.serverTimestamp() }); }catch(e){} }
 async function fbTop(){ if(!fbReady) return null; try{ const q=fbApi.query(fbApi.collection(fbDb,'number_lb'), fbApi.orderBy('score','desc'), fbApi.limit(20)); const s=await fbApi.getDocs(q); return s.docs.map(d=>d.data()); }catch(e){ return null; } }
+// 공통 렌더
 function renderList(a, mineFn){ const box=$('lbList');
   if(!a || !a.length){ box.innerHTML='<div class="sub" style="opacity:.6;padding:24px">아직 기록이 없어요.<br/>첫 주인공이 되어보세요! 🎯</div>'; return; }
   box.innerHTML=a.map((e,i)=>{ const me=mineFn?mineFn(e,i):e.me; const medal=['🥇','🥈','🥉'][i]||('<span style="opacity:.55;display:inline-block;width:1.4em">'+(i+1)+'</span>');
@@ -156,7 +189,7 @@ function renderList(a, mineFn){ const box=$('lbList');
 function lbHeader(mode){ $('lbName').innerHTML=mode+' · 닉네임: <b>'+esc(myName)+'</b><span id="lbEdit">✏️ 변경</span>'; $('lbEdit').onclick=editName; }
 function renderLB(){ lbHeader('📱 내 기기'); renderList(loadLB(), e=>e.me); }
 function editName(){ const n=prompt('닉네임 (최대 8자)', myName); if(n && n.trim()){ myName=n.trim().slice(0,8); try{localStorage.setItem('num_name',myName);}catch(e){} showLB(); } }
-let _mineMark=null;
+let _mineMark=null;   // 방금 올린 내 기록 {name,score}
 async function showLB(){ $('lb').classList.remove('hidden');
   if(fbReady){ lbHeader('🌐 전세계'); $('lbList').innerHTML='<div class="sub" style="opacity:.6;padding:24px">🌐 전세계 순위 불러오는 중…</div>';
     const arr=await fbTop();
@@ -166,8 +199,8 @@ async function showLB(){ $('lb').classList.remove('hidden');
 }
 function hideLB(){ $('lb').classList.add('hidden'); }
 function shareScore(){
-  const txt='모두의 숫자 '+score+'점! 🔢 목표와 같은 숫자 빠르게 고르기 — 도전해봐!\nhttps://seungiljang.github.io/games/number.html';
-  try{ if(navigator.share){ navigator.share({title:'모두의 숫자', text:txt}); return; } }catch(e){}
+  const txt='멈춰라 숫자 '+score+'점! 🎯 규칙 읽고 목표에서 STOP — 도전해봐!\nhttps://seungiljang.github.io/games/number.html';
+  try{ if(navigator.share){ navigator.share({title:'멈춰라 숫자', text:txt}); return; } }catch(e){}
   try{ navigator.clipboard.writeText(txt); floatText('📋 복사됨!','#7cf6ff'); }catch(e){}
 }
 
@@ -175,7 +208,7 @@ const fx=$('fx'), fc=fx.getContext('2d'); let FW,FH,DPR=1, parts=[], shake=0;
 function fxresize(){ DPR=Math.min(devicePixelRatio||1,2); FW=innerWidth; FH=innerHeight; fx.width=FW*DPR; fx.height=FH*DPR; fc.setTransform(DPR,0,0,DPR,0,0); }
 addEventListener('resize',fxresize); fxresize();
 function burst(x,y,col,n,spd){ for(let i=0;i<n;i++){ const a=Math.random()*6.283,s=spd*(0.4+Math.random()); parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-1,life:1,col,r:2+Math.random()*3}); } }
-function centerXY(){ const r=$('targetN').getBoundingClientRect(); return [r.left+r.width/2, r.top+r.height/2]; }
+function centerXY(){ const r=$('cur').getBoundingClientRect(); return [r.left+r.width/2, r.top+r.height/2]; }
 function fxloop(){ requestAnimationFrame(fxloop);
   fc.clearRect(0,0,FW,FH);
   for(const p of parts){ p.x+=p.vx; p.y+=p.vy; p.vy+=0.18; p.life-=0.022; }
@@ -187,94 +220,149 @@ function fxloop(){ requestAnimationFrame(fxloop);
 }
 fxloop();
 function floatText(txt,col){ const d=document.createElement('div'); d.className='float'; d.textContent=txt; d.style.color=col; document.body.appendChild(d); setTimeout(()=>d.remove(),720); }
-function hitFlash(col){ const f=$('flash'); f.style.background='radial-gradient(circle at 50% 42%,'+col+'66,transparent 62%)'; f.style.opacity='1'; setTimeout(()=>{ f.style.opacity='0'; },120); }
+function hitFlash(col){ const f=$('flash'); f.style.background='radial-gradient(circle at 50% 46%,'+col+'66,transparent 62%)'; f.style.opacity='1'; setTimeout(()=>{ f.style.opacity='0'; },120); }
 function banner(txt,col){ const b=$('banner'); b.textContent=txt; b.style.color=col||'#fff'; b.classList.remove('show'); void b.offsetWidth; b.classList.add('show'); }
 
-// ===== 선택형 코어 =====
 let best=+(localStorage.getItem('num_best')||0);
 $('best').textContent=best; $('best2').textContent=best; $('overBest').textContent=best;
-let state='start', score=0, hits=0, hearts=0;
-let target=0, choices=[], answerIdx=-1, qDur=0, qTO=null, locked=false;
-let reviveCount=0; const MAX_REVIVE=5;
+let state='start', cur=0, target=0, score=0, hits=0, rule=null, ti=0, seq=[], timer=null;
+let hearts=0;   // ⚡롤링 성공 시 적립되는 생명(죽을 때 1개 소모하고 이어감)
 function renderHearts(){ const e=$('hearts'); if(e) e.textContent = hearts>0 ? ('💛×'+hearts) : ''; }
+let curIsRoll=false, rollLo=0, rollHi=0, rollTO=null, slowEndShown=false;
+let reviveCount=0, deathCount=0; const MAX_REVIVE=5;   // 부활 판당 5회, 전면광고 주기 카운터
 
-function numChoices(){ return hits<3?2 : hits<8?3 : 4; }
-function numDigits(){ return hits<5?2 : hits<12?3 : (hits<22?4:5); }
-function qTime(){ return Math.max(1100, 3200 - hits*95); }   // 제한시간 점점 짧게
-function makeDecoy(t,digits,lo,hi){
-  if(Math.random()<0.5){ const s=String(t).split(''); if(s.length>=2){ let i=rnd(0,s.length-1),j=rnd(0,s.length-1),g=0; while(j===i&&g++<6)j=rnd(0,s.length-1); const tmp=s[i];s[i]=s[j];s[j]=tmp; const v=+s.join(''); if(v!==t && v>=lo && v<=hi) return v; } }
-  const off=pick([-3,-2,-1,1,2,3,10,-10,11,-11,-1,1]); let v=t+off; if(v<lo)v+=20; if(v>hi)v-=20; if(v===t)v=(t<hi?t+1:t-1); return v;
+function makeRule(){
+  if(hits<2) return {type:'add',s:1};                         // 온보딩 2판
+  const r=Math.random();
+  if(hits>=4 && r<0.22) return {type:'roll'};                 // ⚡ 감 롤링 라운드
+  if(hits<6)  return {type:'add', s:pick([2,3,4,5])};
+  if(hits<11) return Math.random()<0.62? {type:'add', s:pick([2,3,4,5,6,7])} : {type:'alt', a:pick([2,3,4]), b:pick([1,2,3])};
+  const q=Math.random();
+  return q<0.4? {type:'add', s:pick([-4,-3,3,4,5,6,7,8])} : q<0.78? {type:'alt', a:pick([2,3,4,5]), b:pick([1,2,3,4])} : {type:'add', s:pick([6,7,8,9])};
 }
-function newQuestion(){
-  locked=false; const nc=numChoices(), digits=numDigits(), lo=Math.pow(10,digits-1), hi=Math.pow(10,digits)-1;
-  target=rnd(lo,hi);
-  const set=new Set([target]), arr=[target]; let guard=0;
-  while(arr.length<nc && guard++<300){ const d=makeDecoy(target,digits,lo,hi); if(!set.has(d)){ set.add(d); arr.push(d); } }
-  while(arr.length<nc){ const d=rnd(lo,hi); if(!set.has(d)){ set.add(d); arr.push(d); } }
-  for(let i=arr.length-1;i>0;i--){ const j=rnd(0,i); const t=arr[i];arr[i]=arr[j];arr[j]=t; }
-  choices=arr; answerIdx=arr.indexOf(target); qDur=qTime();
-  renderQ(); startQTimer();
+function stepAt(i){ return rule.type==='add'? rule.s : (i%2===0? rule.a : rule.b); }
+function speed(){ return Math.max(195, 640 - hits*23); }
+
+function newRound(keepCur){
+  clearTimeout(rollTO); rule=makeRule(); ti=0; curIsRoll = rule.type==='roll';
+  $('cur').classList.remove('miss'); $('cur').classList.remove('hit');
+  $('cur').classList.toggle('roll', curIsRoll); $('wrap').classList.remove('slow');
+  if(curIsRoll){
+    target = rnd(8,40); rollLo=target-6; rollHi=target+2; cur=rollLo; seq=[];
+    banner('⚡ 롤링! 감으로 STOP','#c9a3ff'); vib(30);
+    // 롤링은 누를 때까지 여유있게 대기 (제한시간 없음)
+  } else {
+    if(!keepCur) cur = hits<2 ? 1 : rnd(4,16);
+    const k=rnd(3,5); let t=cur; for(let i=0;i<k;i++) t+=stepAt(i); target=t; seq=[cur];
+    if(hits>=2 && !slowEndShown){ slowEndShown=true; banner('🔥 슬로모 끝! 이제 실전','#ff9a5a'); vib([20,40,20]); }
+  }
+  render(false);
 }
-function renderQ(){
-  $('targetN').textContent=target; $('score').textContent=score; $('best').textContent=best;
-  $('combo').textContent=hits>=2?('🔥 '+hits+' 연속'):''; $('hint').textContent='';
-  const box=$('choices'); box.innerHTML='';
-  choices.forEach((v,i)=>{ const b=document.createElement('button'); b.className='choice'; b.textContent=v; b.onclick=(e)=>{ e.stopPropagation(); onChoice(i,b); }; box.appendChild(b); });
-  const heat=Math.min(1,hits/16); $('vig').style.boxShadow='inset 0 0 '+(120-heat*40)+'px 10px rgba('+Math.round(60*heat)+',0,0,'+(0.5+heat*0.3).toFixed(2)+')';
+function render(pulse){
+  $('targetN').textContent=target;
+  const c=$('cur'); c.textContent=cur;
+  if(curIsRoll){
+    $('seq').textContent=''; $('hint').textContent='⚡ 감으로 멈춰!'; $('combo').textContent=hits>=2?('🔥 '+hits+' 연속'):''; $('score').textContent=score;
+    $('vig').style.boxShadow='inset 0 0 90px 10px rgba(90,50,160,.55)';
+    return;
+  }
+  const heat=Math.min(1,hits/14); c.style.color='rgb('+Math.round(238+17*heat)+','+Math.round(238-130*heat)+','+Math.round(255-210*heat)+')';
+  const nextVal=cur+stepAt(ti); const near=hits<2 && (target-cur)!==0 && nextVal===target;   // 텔레그래프도 2판까지만
+  c.classList.toggle('near', !!near);
+  if(pulse && !near){ c.classList.remove('big'); void c.offsetWidth; c.classList.add('big'); }
+  $('seq').textContent=seq.join('  →  ');
+  $('score').textContent=score; $('combo').textContent=hits>=2?('🔥 '+hits+' 연속'):'';
+  $('hint').textContent = hits<2 ? (near?'⚡ 다음이 목표! 탭!' : (cur===target?'👆 지금!':'')) : '';
+  $('vig').style.boxShadow='inset 0 0 '+(120-heat*40)+'px 10px rgba('+Math.round(60*heat)+',0,0,'+(0.5+heat*0.35).toFixed(2)+')';
 }
-function startQTimer(){ clearTimeout(qTO); const f=$('tfill'); f.style.transition='none'; f.style.width='100%'; void f.offsetWidth;
-  f.style.transition='width '+qDur+'ms linear'; f.style.width='0%';
-  qTO=setTimeout(()=>{ if(!locked && state==='play'){ locked=true; if(answerIdx>=0){ const ok=$('choices').children[answerIdx]; if(ok)ok.classList.add('ok'); } die('timeout'); } }, qDur);
+function tick(){
+  if(curIsRoll){
+    cur++; if(cur>rollHi) cur=rollLo; render(false);
+    tone(520+ (cur%9)*30, 0.02, 'square', 0.025);
+    // 목표 숫자에 딱 걸리면 잠깐 멈춰서 잡을 기회를 줌(정확 판정+공정)
+    timer=setTimeout(tick, cur===target ? 340 : ROLL_MS); return;
+  }
+  cur+=stepAt(ti); ti++; seq.push(cur); if(seq.length>4) seq.shift();
+  const dir=Math.sign(target-(seq[0]));
+  if((dir>=0 && cur>target) || (dir<0 && cur<target)){ die('놓쳤다! '+target+' 지나감'); return; }
+  render(true);
+  const nv=cur+stepAt(ti), slow=(hits<2 && target-cur!==0 && nv===target);   // 슬로모는 2판까지만(그 뒤엔 실력)
+  $('wrap').classList.toggle('slow', slow);
+  if(slow) tone(880,0.05,'sine',0.05); else tone(300+Math.min(hits,22)*11, 0.03, 'sine', 0.03);
+  let nd = slow ? Math.round(speed()*1.9)+140 : speed();
+  if(cur===target) nd = Math.max(nd, 400);   // 목표에 정확히 도달 → 최소 400ms 유지(고속에서도 맞게 누르면 성공)
+  timer=setTimeout(tick, nd);
 }
-function onChoice(i,btn){ if(locked || state!=='play') return; locked=true; clearTimeout(qTO);
-  const f=$('tfill'); const w=getComputedStyle(f).width; f.style.transition='none'; f.style.width=w;
-  if(i===answerIdx){ if(btn)btn.classList.add('ok'); correct(); }
-  else { if(btn)btn.classList.add('bad'); const ok=$('choices').children[answerIdx]; if(ok)ok.classList.add('ok'); die('wrong', choices[i]); }
-}
-function correct(){
-  hits++; score += 10 + (hits-1)*2;
+function nextTick(first){ clearTimeout(timer); timer=setTimeout(tick, curIsRoll?ROLL_MS:first); }
+function start(){ score=0; hits=0; hearts=1; slowEndShown=false; reviveCount=0; hideBanner(); $('start').classList.add('hidden'); $('over').classList.add('hidden'); state='play';
+  try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
+  renderHearts(); newRound(false); nextTick(560); }
+function hitOK(){
+  const wasRoll=curIsRoll; clearTimeout(rollTO);
+  $('cur').classList.remove('miss'); $('cur').classList.add('hit'); setTimeout(()=>$('cur').classList.remove('hit'),220);  // 성공=초록 확실히
+  hits++; score += (wasRoll?25:10) + (hits-1)*2;
   const [x,y]=centerXY();
-  if(hits%8===0){ hearts++; renderHearts(); burst(x,y,'#ffd34d',50,8); hitFlash('#ffd34d'); floatText('💛 생명 +1! ('+hits+'연속)','#ffd34d'); chord(523); setTimeout(()=>chord(784),120); vib([20,40,20,40,60]); shake=7; }
-  else if(hits%5===0){ burst(x,y,'#ffd34d',42,8); hitFlash('#ffd34d'); floatText('🔥 '+hits+' 연속!','#ffd34d'); chord(440); vib([15,30,15]); shake=6; }
-  else { burst(x,y,'#5cffb0',24,6); hitFlash('#5cffb0'); floatText(pick(['정답!','NICE!','좋아!','굿!']),'#5cffb0'); tone(720+Math.min(hits,20)*8,0.07,'square',0.07); vib(16); }
-  $('score').textContent=score;
-  setTimeout(newQuestion, 230);
+  if(wasRoll){ hearts++; renderHearts(); burst(x,y,'#ffd34d',52,9); hitFlash('#ffd34d'); floatText('⚡ 롤링 성공! 💛 생명 +1','#ffd34d'); chord(523); setTimeout(()=>chord(784),120); vib([20,40,20,40,60]); shake=6; }
+  else if(hits%5===0){ burst(x,y,'#ffd34d',48,8); hitFlash('#ffd34d'); floatText('🔥 '+hits+' 연속!','#ffd34d'); chord(440); vib([15,30,15]); shake=8; }
+  else { burst(x,y,'#5cffb0',28,6); hitFlash('#5cffb0'); floatText(pick(['PERFECT!','NICE!','좋아!','정확!']),'#5cffb0'); tone(720+hits*8,0.07,'square',0.07); vib(18); }
+  newRound(true); nextTick(Math.max(220, speed()));
 }
-function die(reason, picked){
-  clearTimeout(qTO); locked=true;
-  const correctVal=target;
-  hitFlash('#ff5a6e'); shake=16; vib(120); tone(200,0.16,'sawtooth',0.09);
-  const msg = reason==='timeout' ? ('⏰ 시간 초과! 정답 <b style="color:#5cffb0">'+correctVal+'</b>')
-    : ('❌ 틀림! 정답 <b style="color:#5cffb0">'+correctVal+'</b>'+(picked!=null?(' <span style="opacity:.7">(고른 값 '+picked+')</span>'):''));
-  banner(reason==='timeout'?'⏰ 시간 초과!':'❌ 틀렸어요','#ff5a6e');
+function tap(){
+  if(state!=='play'){ start(); return; }
+  if(curIsRoll){
+    if(cur===target){ hitOK(); }   // 롤링도 정확히 목표일 때만 성공(±1 허용 제거)
+    else { // 롤링은 '이벤트' — 못 맞춰도 페널티 없음(생명·점수·콤보 유지, 다음 라운드로)
+      clearTimeout(timer); clearTimeout(rollTO);
+      floatText('아깝다! (롤링)','#c9a3ff'); tone(220,0.12,'sawtooth',0.07); vib(25);
+      newRound(false); nextTick(Math.max(320, speed()));
+    }
+    return;
+  }
+  if(cur===target){ hitOK(); }
+  else { die('아깝다! 목표 '+target+', '+cur+'에서 멈춤 (差 '+Math.abs(target-cur)+')'); }
+}
+function die(msg){
+  clearTimeout(timer); clearTimeout(rollTO);
+  const stopped=cur, tgt=target, diff=Math.abs(tgt-stopped);
+  $('wrap').classList.remove('slow');
+  // 판정 명확화: 멈춘 숫자를 빨갛게 + "❌ 멈춘 곳 → 목표" 크게
+  $('cur').classList.remove('hit'); $('cur').classList.add('miss'); $('cur').textContent=stopped;
+  banner('❌ '+stopped+'  →  목표 '+tgt,'#ff5a6e');
+  const [x,y]=centerXY(); hitFlash('#ff5a6e'); shake=16; vib(120); tone(200,0.16,'sawtooth',0.09);
+  // 💛 생명이 있으면: 판정 보여준 뒤 소모하고 이어감(콤보 유지)
   if(hearts>0 && state==='play'){ hearts--; renderHearts();
-    setTimeout(()=>{ banner('💛 생명 사용! 계속 GO!','#ffd34d'); tone(660,0.12,'sine',0.09); setTimeout(()=>tone(880,0.12,'sine',0.08),110); newQuestion(); }, 900);
+    setTimeout(()=>{ $('cur').classList.remove('miss'); banner('💛 생명 사용! 계속 GO!','#ffd34d'); tone(660,0.12,'sine',0.09); setTimeout(()=>tone(880,0.12,'sine',0.08),110); newRound(false); nextTick(Math.max(320, speed())); }, 950);
     return;
   }
   state='over';
-  const [x,y]=centerXY(); burst(x,y,'#ff5a6e',54,9); shake=24; vib(200); setTimeout(()=>tone(110,0.3,'sawtooth',0.08),90);
+  burst(x,y,'#ff5a6e',54,9); shake=24; vib(200); setTimeout(()=>tone(110,0.3,'sawtooth',0.08),90);
   let rec=false; if(score>best){ best=score; try{localStorage.setItem('num_best',best);}catch(e){} rec=true; }
   $('best').textContent=best; $('overBest').textContent=best;
   $('overTitle').textContent = rec?'🏆 신기록!':'❌ 실패!';
-  $('overMsg').innerHTML = msg;
+  $('overMsg').innerHTML = '멈춘 곳 <b style="color:#ff5a6e">'+stopped+'</b> · 목표 <b style="color:#7cf6ff">'+tgt+'</b> <span style="opacity:.7">(差 '+diff+')</span>';
   $('overScore').textContent=score;
   $('overRec').innerHTML = rec?'<span class="rec">최고 갱신!</span>' : (best>0?('(최고까지 '+(best-score)+'점!)'):'');
   const rank = score>0 ? insertScore(score) : 0;
   if(score>0 && fbReady){ _mineMark={name:myName,score:Math.floor(score)}; fbSubmit(myName,score); $('overRank').textContent='🌐 전세계 랭킹 등록! (랭킹 보기)'; }
   else $('overRank').textContent = rank>0 ? ('🏆 랭킹 '+rank+'위'+(rank===1?' — 1등!':(rank<=3?' 진입!':''))) : '';
-  showBanner();
+  deathCount++;
+  showBanner();   // 결과 화면에 배너
   const canRevive = reviveCount<MAX_REVIVE && score>0;
   $('reviveBtn').style.display = canRevive ? 'block' : 'none';
   if(canRevive) $('reviveBtn').textContent = '🎬 광고 보고 이어하기 ('+(MAX_REVIVE-reviveCount)+'회 남음)';
-  setTimeout(()=>{ $('over').classList.remove('hidden'); },750);
-  if(score>0) setTimeout(()=>{ if(state==='over' && $('lb').classList.contains('hidden')) showLB(); }, 2100);
+  setTimeout(()=>{ $('cur').classList.remove('miss'); $('over').classList.remove('hidden'); },750);   // 판정 먼저 보여주고 결과창
+  if(score>0) setTimeout(()=>{ if(state==='over' && $('lb').classList.contains('hidden')) showLB(); }, 2100);   // 랭킹은 판정 읽을 시간 후에
 }
-function start(){ score=0; hits=0; hearts=1; reviveCount=0; hideBanner(); $('start').classList.add('hidden'); $('over').classList.add('hidden'); state='play';
-  try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
-  renderHearts(); newQuestion(); }
-function revive(){ if(reviveCount>=MAX_REVIVE || state!=='over') return; reviveCount++;
-  playAd(()=>{ $('over').classList.add('hidden'); $('reviveBtn').style.display='none'; state='play'; hideBanner(); floatText('🔥 이어하기!','#2ec77a'); vib([20,40,20]); newQuestion(); }); }
-function retryGame(){ start(); }
+function revive(){
+  if(reviveCount>=MAX_REVIVE || state!=='over') return; reviveCount++;
+  playAd(()=>{
+    $('over').classList.add('hidden'); $('reviveBtn').style.display='none'; state='play'; hideBanner();
+    floatText('🔥 이어하기!','#2ec77a'); vib([20,40,20]);
+    newRound(true); nextTick(curIsRoll?ROLL_MS:Math.max(220,speed()));
+  });
+}
+function retryGame(){ start(); }   // 전면광고 제거(승일님 요청) — 보상형·배너만 유지
+addEventListener('pointerdown', e=>{ if(e.target.closest('.btn')) return; if(state!=='play') return; tap(); });
 $('startBtn').onclick=()=>start();
 $('retryBtn').onclick=()=>retryGame();
 $('reviveBtn').onclick=()=>revive();
@@ -283,5 +371,6 @@ $('lbBtn').onclick=()=>showLB();
 $('overLbBtn').onclick=()=>showLB();
 $('lbClose').onclick=()=>hideLB();
 $('lbX').onclick=()=>hideLB();
+$('best2').textContent=best;
 </script>
 </body></html>
