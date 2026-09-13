@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.87 · FPS 표시(진단용) · 발사 깜빡임 최적화</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.88 · 볼트/산탄 발사 안보임 수정(점블랭크 즉시소멸→1프레임 렌더)</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">한국어</button>
       <button data-lang="en" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">English</button>
@@ -741,7 +741,7 @@ function gameWin(){ won=true; banner=t('bnWin'); bannerT=4; flashT=0.8; shake=14
 
 // ---- Combat ----
 function nearestEnemy(){ let best=null,bd=player.range*player.range; for(const e of enemies){const d=dist2(player,e); if(d<bd){bd=d;best=e;}} return best; }
-function spawnBolt(ang,dmg,speed,pierce,size,color){ bullets.push({x:player.x,y:player.y,vx:Math.cos(ang)*speed,vy:Math.sin(ang)*speed,dmg,life:1.3,pierce,size:size||3,color:color||'#ffe066'}); }
+function spawnBolt(ang,dmg,speed,pierce,size,color){ const off=(player.r||12)+3; bullets.push({x:player.x+Math.cos(ang)*off,y:player.y+Math.sin(ang)*off,vx:Math.cos(ang)*speed,vy:Math.sin(ang)*speed,dmg,life:1.3,pierce,size:size||3,color:color||'#ffe066',fresh:true}); }
 // 적 데미지 + 처치 처리(공용)
 function hurtEnemy(e,dmg,color){
   if(e.dead) return; e.flash=0.06; e.hp-=dmg;
@@ -798,7 +798,7 @@ const WEAPONS = {
     interval:(p,l)=>Math.max(0.55,1.3-0.11*(l-1)),
     fire:(p,l)=>{ const e=nearestEnemy(); const base=e?Math.atan2(e.y-p.y,e.x-p.x):-Math.PI/2;
       const cnt=1+(p.evolved.homing?1:0);
-      for(let i=0;i<cnt;i++){ const a=base+(i-(cnt-1)/2)*0.3; bullets.push({x:p.x,y:p.y,vx:Math.cos(a)*250,vy:Math.sin(a)*250,dmg:p.dmg*(1.4+0.3*(l-1)),life:2.4,pierce:0,size:5,color:'#ffd25c',homing:true,blast:(46+8*l)*(p.evolved.homing?1.4:1)}); }
+      for(let i=0;i<cnt;i++){ const a=base+(i-(cnt-1)/2)*0.3; bullets.push({x:p.x,y:p.y,vx:Math.cos(a)*250,vy:Math.sin(a)*250,dmg:p.dmg*(1.4+0.3*(l-1)),life:2.4,pierce:0,size:5,color:'#ffd25c',homing:true,fresh:true,blast:(46+8*l)*(p.evolved.homing?1.4:1)}); }
       sfx.shoot(); } },
   santoryu:{ name:'삼도류', icon:'🗡️', desc:'검 3자루로 3방향 근접 참격. 진화=전방위 회전베기(타츠마키)', max:6,
     interval:(p,l)=>Math.max(0.5,1.15-0.09*(l-1)),
@@ -810,7 +810,7 @@ const WEAPONS = {
   blackhole:{ name:'블랙홀', icon:'🌀', desc:'탄을 쏴 착탄지에 회오리 생성 → 적을 빨아들임 (스테이지 10+)', max:6,
     interval:(p,l)=>Math.max(3.0, 6.5-0.55*(l-1)),
     fire:(p,l)=>{ const e=nearestEnemy(); const base=e?Math.atan2(e.y-p.y,e.x-p.x):-Math.PI/2;
-      bullets.push({x:p.x,y:p.y,vx:Math.cos(base)*380,vy:Math.sin(base)*380,dmg:0,life:0.5,pierce:99,size:6,color:'#c9a3ff',bhSeed:true,bhLevel:l,bhEvo:!!p.evolved.blackhole});
+      bullets.push({x:p.x,y:p.y,vx:Math.cos(base)*380,vy:Math.sin(base)*380,dmg:0,life:0.5,pierce:99,size:6,color:'#c9a3ff',bhSeed:true,fresh:true,bhLevel:l,bhEvo:!!p.evolved.blackhole});
       tone(78,0.14,'sine',0.16,40); } },
 };
 // 블랙홀 씨앗탄이 착탄한 자리에 회오리 생성(아주 작게 시작 → 점점 커짐)
@@ -975,6 +975,7 @@ function update(dt){
   }
   // bullet-enemy collision
   for(const b of bullets){
+    if(b.fresh){ b.fresh=false; continue; }   // 생성 프레임엔 피격 스킵 → 최소 1프레임 그려짐(발사 보이게)
     for(const e of enemies){
       if(e.dead) continue; const rr=e.r+(b.size||4);
       if(dist2(b,e)<rr*rr){
