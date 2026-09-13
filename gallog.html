@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.83 · 진화무기 발사 안되던 버그 수정(타이머 유실 복구)</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.84 · 무기 표시 깜빡임 수정(이모지→색상칩+레벨, 기기 호환)</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">한국어</button>
       <button data-lang="en" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">English</button>
@@ -1207,12 +1207,16 @@ function render(){
     ctx.fillText('⏸ 좌상단 버튼 = 일시정지 / 상점', W/2, TY+26);
     ctx.globalAlpha=1; ctx.restore(); ctx.textAlign='left'; }
   // 무기 빌드 표시 (하단). 7개째부터는 윗줄(좌측)로 → 골드와 겹침 방지
-  let wx=14, wx2=14, wi=0; ctx.font='15px system-ui';
-  for(const k in player.weapons){ const lv=player.weapons[k], ev=player.evolved[k]; ctx.fillStyle=ev?'#ffd25c':'#cfe3ff';
-    const label=WEAPONS[k].icon+lv; // 레벨 숫자(0~6) 항상 표시 → 어떤 무기도 안 보이는 일 없음. 진화=금색, 일반=연파랑으로 구분(★ 글리프 미표시 기기 대응)
-    if(wi<6){ ctx.fillText(label, wx, H-16-B); wx+=46; }
-    else { ctx.fillText(label, wx2, H-16-B-26); wx2+=46; }
-    wi++; }
+  // 이모지 미표시/깜빡임 기기 대응: 이모지 대신 색상 칩 + 레벨 숫자(항상 확실히 보임)
+  const WCOL={bolt:'#7cc4ff',spread:'#ff9a5a',nova:'#c9a3ff',orbit:'#ffe08a',slash:'#7effea',homing:'#ffb44a',santoryu:'#ff8a8a',blackhole:'#b78aff'};
+  let wx=14, wx2=14, wi=0;
+  for(const k in player.weapons){ const lv=player.weapons[k], ev=player.evolved[k];
+    const top=wi>=6, bx=top?wx2:wx, by=(H-16-B)-(top?26:0)-13;
+    ctx.fillStyle=WCOL[k]||'#88aadd'; ctx.fillRect(bx,by,36,20);
+    if(ev){ ctx.strokeStyle='#ffd25c'; ctx.lineWidth=2.5; ctx.strokeRect(bx-1,by-1,38,22); }
+    ctx.fillStyle='#0a0e1a'; ctx.font='bold 14px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(String(lv), bx+18, by+10);
+    if(top) wx2+=42; else wx+=42; wi++; }
+  ctx.textAlign='left'; ctx.textBaseline='alphabetic';
   // 보유 골드 (우측 하단, 무기 라인과 동일한 줄)
   ctx.textAlign='right'; ctx.fillStyle='#ffd25c'; ctx.font='bold 16px system-ui'; ctx.fillText('🪙 '+meta.gold, W-14, H-16-B); ctx.textAlign='left';
   // boss HP 바
