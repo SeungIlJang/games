@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.89 · 발사 안보임 진짜원인 수정(카메라 이동 시 총알 컬링 버그)</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.90 · 화면에 버전+FPS 표시(캐시 확인용) · 카메라 총알 컬링 수정</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">한국어</button>
       <button data-lang="en" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">English</button>
@@ -1221,9 +1221,9 @@ function render(){
   // joystick
   if(dragging){ ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(origin.x,origin.y,60,0,Math.PI*2); ctx.stroke();
     ctx.fillStyle='rgba(255,255,255,.4)'; ctx.beginPath(); ctx.arc(origin.x+moveDir.x*40*(moveDir.mag||1),origin.y+moveDir.y*40*(moveDir.mag||1),22,0,Math.PI*2); ctx.fill(); }
-  // 진단용 FPS 표시(임시)
-  ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(6,64,84,22);
-  ctx.fillStyle = fps<40 ? '#ff5a6e' : (fps<52?'#ffd25c':'#7cff9a'); ctx.font='bold 14px system-ui'; ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText('FPS '+Math.round(fps), 12, 75); ctx.textBaseline='alphabetic';
+  // 진단용 버전+FPS 표시(임시)
+  ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(6,62,128,24);
+  ctx.fillStyle = fps<40 ? '#ff5a6e' : (fps<52?'#ffd25c':'#7cff9a'); ctx.font='bold 13px system-ui'; ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText('v6.90 · FPS '+Math.round(fps), 11, 74); ctx.textBaseline='alphabetic';
 }
 
 // ---- Loop ----
