@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.84 · 무기 표시 깜빡임 수정(이모지→색상칩+레벨, 기기 호환)</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.85 · 모바일 최적화(그림자 제거)로 발사 깜빡임 해결 · 무기표시 색상칩</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">한국어</button>
       <button data-lang="en" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">English</button>
@@ -1070,8 +1070,8 @@ function render(){
       ctx.globalAlpha=0.9; ctx.lineWidth=1.5;
       ctx.beginPath(); ctx.arc(g.x,by,r+3,0,Math.PI*2); ctx.stroke();
       ctx.globalAlpha=1;
-      ctx.shadowColor=col; ctx.shadowBlur=16; poly(g.x,by,r,4,rot,col);
-      ctx.shadowBlur=0; ctx.lineWidth=2; ctx.strokeStyle='#ffffff'; ctx.stroke();
+      poly(g.x,by,r,4,rot,col);
+      ctx.lineWidth=2; ctx.strokeStyle='#ffffff'; ctx.stroke();
       ctx.fillStyle='#ffffff'; poly(g.x,by,3.8,4,rot); poly(g.x,by,3.8,4,rot+Math.PI/4); // 흰 별
     } else if(g.v>1){
       // 중간 젬: r5, 단일 링, 밝은 시안, 작은 흰 다이아 코어
@@ -1079,8 +1079,8 @@ function render(){
       ctx.globalAlpha=0.24+0.30*pulse; ctx.strokeStyle=col; ctx.lineWidth=2;
       ctx.beginPath(); ctx.arc(g.x,by,r+4+pulse*2,0,Math.PI*2); ctx.stroke();
       ctx.globalAlpha=1;
-      ctx.shadowColor=col; ctx.shadowBlur=12; poly(g.x,by,r,4,rot,col);
-      ctx.shadowBlur=0; ctx.lineWidth=1.5; ctx.strokeStyle='#eafcff'; ctx.stroke();
+      poly(g.x,by,r,4,rot,col);
+      ctx.lineWidth=1.5; ctx.strokeStyle='#eafcff'; ctx.stroke();
       ctx.fillStyle='#ffffff'; poly(g.x,by,1.9,4,rot); // 흰 다이아 코어
     } else {
       // 작은 젬: r3, 얇은 링, 점 코어
@@ -1088,8 +1088,8 @@ function render(){
       ctx.globalAlpha=0.20+0.28*pulse; ctx.strokeStyle=col; ctx.lineWidth=1.4;
       ctx.beginPath(); ctx.arc(g.x,by,r+3+pulse*1.5,0,Math.PI*2); ctx.stroke();
       ctx.globalAlpha=1;
-      ctx.shadowColor=col; ctx.shadowBlur=8; poly(g.x,by,r,4,rot,col);
-      ctx.shadowBlur=0; ctx.lineWidth=1; ctx.strokeStyle='#eafcff'; ctx.stroke();
+      poly(g.x,by,r,4,rot,col);
+      ctx.lineWidth=1; ctx.strokeStyle='#eafcff'; ctx.stroke();
       ctx.fillStyle='#ffffff'; ctx.beginPath(); ctx.arc(g.x,by,1.2,0,Math.PI*2); ctx.fill();
     }
     ctx.restore();
@@ -1104,7 +1104,7 @@ function render(){
   // 블랙홀: 무수한 얇은 빛줄기가 중심으로 빨려드는 회오리(중력렌즈 느낌) + 어두운 중심 void
   for(const h of player.holes){ const a=Math.max(0,h.life/h.max), void_=h.r*0.30;
     ctx.save(); ctx.translate(h.x,h.y);
-    const arms=24;
+    const arms=14;
     ctx.strokeStyle='#e6dcff'; ctx.lineWidth=1;
     for(let k=0;k<arms;k++){
       const rStart=void_ + (h.r-void_)*(0.45+0.55*((k*53%100)/100));   // 줄기마다 바깥 시작반경 다양
@@ -1116,14 +1116,14 @@ function render(){
     }
     // 어두운 중심 void + 보라 테두리 글로우
     ctx.globalAlpha=a; ctx.fillStyle='#050109'; ctx.beginPath(); ctx.arc(0,0,void_,0,Math.PI*2); ctx.fill();
-    ctx.strokeStyle='rgba(200,150,255,'+(0.55*a).toFixed(2)+')'; ctx.lineWidth=2; ctx.shadowColor='#b06bff'; ctx.shadowBlur=12; ctx.beginPath(); ctx.arc(0,0,void_,0,Math.PI*2); ctx.stroke(); ctx.shadowBlur=0;
+    ctx.strokeStyle='rgba(200,150,255,'+(0.55*a).toFixed(2)+')'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(0,0,void_,0,Math.PI*2); ctx.stroke();
     ctx.restore(); }
   // 참격 찌릿찌릿 — 슬래시 반경에 약하게 흐르는 전기 크래클 (은은)
   for(const s of player.slashFx){ const k=Math.min(1,s.t/s.max), a=1-k;
-    const rr=s.r, N=10;
-    ctx.save(); ctx.lineCap='round'; ctx.strokeStyle='#e2f7ff'; ctx.shadowColor='#7cf6ff'; ctx.shadowBlur=7; ctx.lineWidth=1.7;
+    const rr=s.r, N=6;
+    ctx.save(); ctx.lineCap='round'; ctx.strokeStyle='#e2f7ff'; ctx.lineWidth=1.7;
     for(let i=0;i<N;i++){ const ca=s.ang0 + i*(6.283/N) + k*0.4;
-      ctx.globalAlpha=a*0.82*(0.6+Math.random()*0.4); // 살짝 더 찐하게 깜빡(찌릿)
+      ctx.globalAlpha=a*0.7;
       const tx=Math.cos(ca+1.5708), ty=Math.sin(ca+1.5708);
       let x0=player.x+Math.cos(ca)*rr, y0=player.y+Math.sin(ca)*rr;
       ctx.beginPath(); ctx.moveTo(x0,y0);
@@ -1139,7 +1139,6 @@ function render(){
     const hR=bl.r*0.30, gR=bl.r*0.46, tR=bl.r*0.78; // 손잡이 / 가드 / 칼끝 — 짧은 근접검
     const hx=player.x+cs*hR, hy=player.y+sn*hR, gx=player.x+cs*gR, gy=player.y+sn*gR, tx=player.x+cs*tR, ty=player.y+sn*tR;
     const hw=bl.r*0.045; // 칼날 밑변 반폭 (더 얇게)
-    ctx.shadowColor=bl.evo?'#8affc0':'#dfffe8'; ctx.shadowBlur=8;
     // 칼날(뾰족한 삼각형)
     ctx.fillStyle=col; ctx.beginPath(); ctx.moveTo(gx+px*hw,gy+py*hw); ctx.lineTo(tx,ty); ctx.lineTo(gx-px*hw,gy-py*hw); ctx.closePath(); ctx.fill();
     // 십자 가드
@@ -1172,9 +1171,7 @@ function render(){
   if(player.awakened){ ctx.strokeStyle='rgba(255,210,92,'+(0.5+0.3*Math.sin(time*6)).toFixed(2)+')'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(player.x,player.y,pr+17,0,Math.PI*2); ctx.stroke(); }
   if(player.invuln>0){ ctx.strokeStyle='rgba(120,220,255,'+(0.45+0.35*Math.sin(time*14)).toFixed(2)+')'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(player.x,player.y,pr+14,0,Math.PI*2); ctx.stroke(); ctx.fillStyle='rgba(120,220,255,.12)'; ctx.fill(); }
   // 본체 (밝은 청록 + 글로우)
-  ctx.save(); ctx.shadowColor=player.awakened?'#ffd25c':'#5ce1ff'; ctx.shadowBlur=16;
   poly(player.x,player.y,pr, sides, aim, player.awakened?'#ffe08a':'#5ce1ff');
-  ctx.restore();
   // 흰 외곽선(적 도형과 대비 강화 — 용사만 흰 테두리)
   ctx.lineWidth=3; ctx.strokeStyle='#ffffff'; ctx.beginPath();
   for(let i=0;i<sides;i++){ const a=aim+i/sides*Math.PI*2, px=player.x+Math.cos(a)*pr, py=player.y+Math.sin(a)*pr; i?ctx.lineTo(px,py):ctx.moveTo(px,py); } ctx.closePath(); ctx.stroke();
