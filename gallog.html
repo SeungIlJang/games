@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.88 · 볼트/산탄 발사 안보임 수정(점블랭크 즉시소멸→1프레임 렌더)</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.89 · 발사 안보임 진짜원인 수정(카메라 이동 시 총알 컬링 버그)</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">한국어</button>
       <button data-lang="en" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">English</button>
@@ -1009,7 +1009,7 @@ function update(dt){
   // 적 탄막
   for(const b of ebullets){ b.x+=b.vx*dt; b.y+=b.vy*dt; b.life-=dt;
     const rr=b.r+player.r; if(player.invuln<=0 && dist2(b,player)<rr*rr){ player.hp-=b.dmg*player.dmgReduce; b.life=0; hurtFlash=0.3; shake=Math.min(shake+1,8); if(hurtSfxCd<=0){sfx.hurt();hurtSfxCd=0.35;} } }
-  ebullets=ebullets.filter(b=>b.life>0 && b.x>-40&&b.x<W+40&&b.y>-40&&b.y<H+40);
+  ebullets=ebullets.filter(b=>b.life>0 && b.x>cam.x-40&&b.x<cam.x+W+40&&b.y>cam.y-40&&b.y<cam.y+H+40);   // 카메라 기준
   // particles
   for(const p of particles){ p.x+=p.vx*dt; p.y+=p.vy*dt; p.vx*=.9; p.vy*=.9; p.life-=dt; }
   // floating texts + 이펙트 타이머
@@ -1020,7 +1020,7 @@ function update(dt){
   if(comboTimer>0){ comboTimer-=dt; if(comboTimer<=0) combo=0; }
   // cull
   enemies=enemies.filter(e=>!e.dead);
-  bullets=bullets.filter(b=>b.life>0 && b.x>-30&&b.x<W+30&&b.y>-30&&b.y<H+30);
+  bullets=bullets.filter(b=>b.life>0 && b.x>cam.x-60&&b.x<cam.x+W+60&&b.y>cam.y-60&&b.y<cam.y+H+60);   // 카메라 기준(월드좌표) — 화면좌표로 잘못 컬링해 총알이 사라지던 버그 수정
   gems=gems.filter(g=>!g.got);
   particles=particles.filter(p=>p.life>0);
   if(shake>0) shake=Math.max(0,shake-dt*18);
