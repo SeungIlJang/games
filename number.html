@@ -106,7 +106,7 @@
     <button class="btn" id="lbBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:11px 22px;font-size:16px">🏆 랭킹</button>
     <button class="btn" id="shopBtn" style="background:#2a2109;box-shadow:0 6px 0 #141005;padding:11px 22px;font-size:16px">🎨 상점</button>
   </div>
-  <div id="changelog">🆕 <b id="clVer">v1.11.1</b> · <span id="clNote">🏆 종료화면에 <b>랭킹 바로 표시</b> · ⏱️ 라운드 전환 <b>1초 텀</b>(급전환 완화)</span></div>
+  <div id="changelog">🆕 <b id="clVer">v1.11.2</b> · <span id="clNote">🐛 선택형 <b>틀렸을 때 낡은 숫자 깜빡임</b> 수정 · 결과창까지 정답 하이라이트 유지</span></div>
 </div>
 
 <div id="over" class="hidden">
@@ -140,7 +140,7 @@
   <div id="shopList"></div>
   <button class="btn" id="shopClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v1.11.1 · 종료랭킹내장·전환1초텀</div>
+<div id="ver">v1.11.2 · 선택형 낡은숫자 깜빡임 수정</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -481,7 +481,7 @@ function die(msg, fromChoice){
   const choiceMode = fromChoice || inChoice; inChoice=false;
   $('wrap').classList.remove('slow');
   let overHtml; const [x,y] = choiceMode ? [innerWidth/2, innerHeight*0.4] : centerXY();
-  if(choiceMode){ banner('❌ 틀렸어요','#ff5a6e'); overHtml = msg || '틀렸어요'; }
+  if(choiceMode){ banner('❌ 틀렸어요','#ff5a6e'); overHtml = msg || '틀렸어요'; $('cur').classList.remove('miss','hit','ontarget'); $('cur').textContent=''; }   // 낡은 숫자 노출 방지
   else {
     const stopped=cur, tgt=target, diff=Math.abs(tgt-stopped);
     $('cur').classList.remove('hit'); $('cur').classList.add('miss'); $('cur').textContent=stopped;
@@ -494,7 +494,7 @@ function die(msg, fromChoice){
     setTimeout(()=>{ $('cur').classList.remove('miss'); $('wrap').classList.remove('choice'); banner('💛 생명 사용! 계속 GO!','#ffd34d'); tone(660,0.12,'sine',0.09); setTimeout(()=>tone(880,0.12,'sine',0.08),110); newRound(false); if(rule.type!=='choice') nextTick(Math.max(320, speed())); }, 950);
     return;
   }
-  state='over'; $('wrap').classList.remove('choice');
+  state='over';   // choice 클래스는 결과창 뜰 때 제거(낡은 #cur 노출/깜빡임 방지)
   burst(x,y,'#ff5a6e',54,9); shake=24; vib(200); setTimeout(()=>tone(110,0.3,'sawtooth',0.08),90);
   let rec=false; if(score>best){ best=score; try{localStorage.setItem('num_best',best);}catch(e){} rec=true; }
   $('best').textContent=best; $('overBest').textContent=best;
@@ -511,7 +511,7 @@ function die(msg, fromChoice){
   const canRevive = reviveCount<MAX_REVIVE && score>0;
   $('reviveBtn').style.display = canRevive ? 'block' : 'none';
   if(canRevive) $('reviveBtn').textContent = '🎬 광고 보고 이어하기 ('+(MAX_REVIVE-reviveCount)+'회 남음)';
-  setTimeout(()=>{ $('cur').classList.remove('miss'); $('over').classList.remove('hidden'); renderOverLB(); },750);   // 판정 먼저 보여주고 결과창(랭킹 바로 내장)
+  setTimeout(()=>{ $('cur').classList.remove('miss'); $('wrap').classList.remove('choice'); $('over').classList.remove('hidden'); renderOverLB(); },750);   // 판정 먼저 보여주고 결과창(랭킹 바로 내장)
 }
 function revive(){
   if(reviveCount>=MAX_REVIVE || state!=='over') return; reviveCount++;
