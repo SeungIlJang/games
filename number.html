@@ -40,6 +40,7 @@
   #lbX{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:16px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:#cfe;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:50%;cursor:pointer;z-index:13}
   #lbX:active{background:rgba(255,255,255,.2)}
   #lbList{width:100%;max-width:340px;margin:6px 0;max-height:60vh;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+  #overLbList{width:100%;max-width:320px;margin:2px 0 4px;max-height:32vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
   .lbrow{display:flex;justify-content:space-between;align-items:center;padding:9px 14px;margin:5px 0;border-radius:10px;font-size:17px;font-weight:700}
   #lbEdit{color:#7cf6ff;text-decoration:underline;margin-left:8px;font-size:13px}
   .hidden{display:none!important}
@@ -105,7 +106,7 @@
     <button class="btn" id="lbBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:11px 22px;font-size:16px">🏆 랭킹</button>
     <button class="btn" id="shopBtn" style="background:#2a2109;box-shadow:0 6px 0 #141005;padding:11px 22px;font-size:16px">🎨 상점</button>
   </div>
-  <div id="changelog">🆕 <b id="clVer">v1.11.0</b> · <span id="clNote">✨ <b>PERFECT 정밀판정+콤보배수(×5)</b> · 💰코인·🎨테마상점 · ✖️곱하기·🌟골든라운드(×2)</span></div>
+  <div id="changelog">🆕 <b id="clVer">v1.11.1</b> · <span id="clNote">🏆 종료화면에 <b>랭킹 바로 표시</b> · ⏱️ 라운드 전환 <b>1초 텀</b>(급전환 완화)</span></div>
 </div>
 
 <div id="over" class="hidden">
@@ -115,12 +116,13 @@
   <div class="sub" id="overCoin" style="min-height:20px"></div>
   <div class="sub" id="overRank" style="color:#ffd34d;font-weight:800;min-height:20px"></div>
   <div class="sub" style="opacity:.7">최고 <b id="overBest">0</b></div>
+  <div class="sub" id="overLbTitle" style="margin-top:6px;font-weight:800;color:#ffd34d">🏆 랭킹</div>
+  <div id="overLbList"></div>
   <button class="btn" id="reviveBtn" style="background:#2ec77a;box-shadow:0 6px 0 #1a8a52;display:none">🎬 광고 보고 이어하기</button>
   <div style="display:flex;gap:10px;margin-top:8px">
     <button class="btn" id="retryBtn" style="padding:14px 22px;font-size:18px">한 판 더</button>
     <button class="btn" id="shareBtn" style="padding:14px 22px;font-size:18px;background:#20263c;box-shadow:0 6px 0 #10131f">🏆 공유</button>
   </div>
-  <div id="overLbBtn" style="margin-top:12px;color:#7cf6ff;font-size:15px;text-decoration:underline">🏆 랭킹 보기</div>
 </div>
 
 <div id="lb" class="hidden">
@@ -138,7 +140,7 @@
   <div id="shopList"></div>
   <button class="btn" id="shopClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v1.11.0 · 정밀판정·상점·곱하기·골든</div>
+<div id="ver">v1.11.1 · 종료랭킹내장·전환1초텀</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -244,6 +246,18 @@ async function showLB(){ $('lb').classList.remove('hidden');
   } else { renderLB(); }
 }
 function hideLB(){ $('lb').classList.add('hidden'); }
+// 종료화면 내장 랭킹(상위 6) — 별도 팝업 없이 바로 표시
+async function renderOverLB(){
+  const box=$('overLbList'); if(!box) return;
+  box.innerHTML='<div class="sub" style="opacity:.6;font-size:13px;padding:6px">순위 불러오는 중…</div>';
+  let arr=null, mineFn=null;
+  if(fbReady){ arr=await fbTop(); if(arr){ let marked=false; mineFn=(e)=>{ if(marked||!_mineMark) return false; if(e.name===_mineMark.name && e.score===_mineMark.score){ marked=true; return true; } return false; }; } }
+  if(!arr){ arr=loadLB(); mineFn=(e)=>e.me; }
+  const top=(arr||[]).slice(0,6);
+  box.innerHTML = top.length ? top.map((e,i)=>{ const me=mineFn&&mineFn(e,i); const medal=['🥇','🥈','🥉'][i]||('<span style="opacity:.5;display:inline-block;width:1.3em">'+(i+1)+'</span>');
+      return '<div class="lbrow" style="padding:6px 12px;margin:3px 0;font-size:15px;background:'+(me?'rgba(124,246,255,.18)':'rgba(255,255,255,.045)')+';border:1px solid '+(me?'rgba(124,246,255,.55)':'transparent')+'"><span>'+medal+' '+esc(e.name)+'</span><b style="color:#7cf6ff">'+e.score+'</b></div>'; }).join('')
+    : '<div class="sub" style="opacity:.6;font-size:13px;padding:6px">아직 기록이 없어요 · 첫 주인공이 되어보세요 🎯</div>';
+}
 function shareScore(){
   const txt='멈춰라 숫자 '+score+'점! 🎯 규칙 읽고 목표에서 STOP — 도전해봐!\nhttps://seungiljang.github.io/games/number.html';
   try{ if(navigator.share){ navigator.share({title:'멈춰라 숫자', text:txt}); return; } }catch(e){}
@@ -305,7 +319,8 @@ function renderShop(){ $('shopCoins').textContent=coins; const box=$('shopList')
 }
 applyTheme(curTheme); renderCoins();
 let state='start', cur=0, target=0, score=0, hits=0, rule=null, ti=0, seq=[], timer=null;
-let mult=1, targetShownAt=0;   // 콤보 배수 · 목표 표시 시각(정밀 판정용)
+let mult=1, targetShownAt=0, inGap=false;   // 콤보 배수 · 목표 표시 시각 · 라운드 전환 텀
+const GAP_MS=1000;   // 스테이지 전환 텀(성공 후 다음 라운드까지)
 const now=()=>{ try{ return performance.now(); }catch(e){ return 0; } };
 function showMult(){ const m=$('mult'); if(mult>1){ m.textContent='×'+mult; m.classList.add('show'); m.classList.remove('bump'); void m.offsetWidth; m.classList.add('bump'); } else { m.classList.remove('show'); } }
 function judge(){ if(!targetShownAt) return 'GOOD'; return (now()-targetShownAt) < 190 ? 'PERFECT' : 'GOOD'; }
@@ -335,6 +350,7 @@ function advance(c,i){ return rule.type==='mul'? c*(rule.m||2) : c + stepAt(i); 
 function speed(){ return Math.max(195, 640 - hits*23); }
 
 function newRound(keepCur){
+  inGap=false;   // 새 라운드 시작 → 입력 허용
   clearTimeout(rollTO); clearTimeout(cTO); rule=makeRule(); ti=0; curIsRoll = rule.type==='roll';
   $('cur').classList.remove('miss'); $('cur').classList.remove('hit');
   $('cur').classList.toggle('roll', curIsRoll); $('wrap').classList.remove('slow');
@@ -392,7 +408,7 @@ function tick(){
   timer=setTimeout(tick, nd);
 }
 function nextTick(first){ clearTimeout(timer); timer=setTimeout(tick, curIsRoll?ROLL_MS:first); }
-function start(){ score=0; hits=0; hearts=1; mult=1; runCoins=0; showMult(); slowEndShown=false; reviveCount=0; hideBanner(); $('start').classList.add('hidden'); $('over').classList.add('hidden'); state='play';
+function start(){ score=0; hits=0; hearts=1; mult=1; runCoins=0; inGap=false; showMult(); slowEndShown=false; reviveCount=0; hideBanner(); $('start').classList.add('hidden'); $('over').classList.add('hidden'); state='play';
   try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
   renderHearts(); newRound(false); if(rule.type!=='choice') nextTick(560); }
 function hitOK(){
@@ -408,17 +424,19 @@ function hitOK(){
   else if(grade==='PERFECT'){ burst(x,y,'#ffe14d',46,9); hitFlash('#ffe14d'); floatText('PERFECT!'+(mult>1?('  ×'+mult):''),'#ffe14d'); chord(660); setTimeout(()=>tone(990,0.08,'triangle',0.06),90); vib([12,26,12]); shake=8; }
   else if(hits%5===0){ burst(x,y,'#ffd34d',48,8); hitFlash('#ffd34d'); floatText('🔥 '+hits+' 연속!','#ffd34d'); chord(440); vib([15,30,15]); shake=8; }
   else { burst(x,y,'#5cffb0',28,6); hitFlash('#5cffb0'); floatText(pick(['GOOD!','NICE!','좋아!','정확!']),'#5cffb0'); tone(720+hits*8,0.07,'square',0.07); vib(18); }
-  newRound(true); if(rule.type!=='choice') nextTick(Math.max(220, speed()));
+  inGap=true; clearTimeout(timer); clearTimeout(rollTO);   // 전환 텀(약 1초) — 그 사이 입력 무시
+  setTimeout(()=>{ if(state!=='play') return; newRound(true); if(rule.type!=='choice') nextTick(Math.max(220, speed())); }, GAP_MS);
 }
 function tap(){
   if(state!=='play'){ start(); return; }
+  if(inGap) return;      // 라운드 전환 텀 중에는 입력 무시(중복 성공 방지)
   if(inChoice) return;   // 선택형은 버튼으로만
   if(curIsRoll){
     if(cur===target){ hitOK(); }   // 롤링도 정확히 목표일 때만 성공(±1 허용 제거)
     else { // 롤링은 '이벤트' — 못 맞춰도 페널티 없음(생명·점수·콤보 유지, 다음 라운드로)
-      clearTimeout(timer); clearTimeout(rollTO);
+      inGap=true; clearTimeout(timer); clearTimeout(rollTO);
       floatText('아깝다! (롤링)','#c9a3ff'); tone(220,0.12,'sawtooth',0.07); vib(25);
-      newRound(false); nextTick(Math.max(320, speed()));
+      setTimeout(()=>{ if(state!=='play') return; newRound(false); nextTick(Math.max(320, speed())); }, GAP_MS);
     }
     return;
   }
@@ -450,11 +468,12 @@ function onChoice(i,btn){ if(!inChoice || state!=='play') return; inChoice=false
   else { if(btn)btn.classList.add('bad'); const ok=$('cchoices').children[choiceAns]; if(ok)ok.classList.add('ok'); die('정답은 <b style="color:#5cffb0">'+cChoices[choiceAns]+'</b> (고른 값 '+cChoices[i]+')', true); }
 }
 function chooseWin(){
-  hits++; score += 15 + (hits-1)*2; const x=innerWidth/2, y=innerHeight*0.4;
+  hits++; const base=15 + (hits-1)*2; score += base; addCoins(base); const x=innerWidth/2, y=innerHeight*0.4;
   if(hits%5===0){ burst(x,y,'#ffd34d',44,8); hitFlash('#ffd34d'); floatText('🔥 '+hits+' 연속!','#ffd34d'); chord(440); vib([15,30,15]); shake=7; }
   else { burst(x,y,'#5cffb0',28,6); hitFlash('#5cffb0'); floatText(pick(['정답!','NICE!','좋아!']),'#5cffb0'); tone(760,0.07,'square',0.07); vib(18); }
   $('score').textContent=score;
-  setTimeout(()=>{ $('wrap').classList.remove('choice'); newRound(true); if(rule.type!=='choice') nextTick(Math.max(220, speed())); }, 280);
+  inGap=true;   // 전환 텀
+  setTimeout(()=>{ if(state!=='play') return; $('wrap').classList.remove('choice'); newRound(true); if(rule.type!=='choice') nextTick(Math.max(220, speed())); }, GAP_MS);
 }
 function die(msg, fromChoice){
   clearTimeout(timer); clearTimeout(rollTO); clearTimeout(cTO);
@@ -492,8 +511,7 @@ function die(msg, fromChoice){
   const canRevive = reviveCount<MAX_REVIVE && score>0;
   $('reviveBtn').style.display = canRevive ? 'block' : 'none';
   if(canRevive) $('reviveBtn').textContent = '🎬 광고 보고 이어하기 ('+(MAX_REVIVE-reviveCount)+'회 남음)';
-  setTimeout(()=>{ $('cur').classList.remove('miss'); $('over').classList.remove('hidden'); },750);   // 판정 먼저 보여주고 결과창
-  if(score>0) setTimeout(()=>{ if(state==='over' && $('lb').classList.contains('hidden')) showLB(); }, 2100);   // 랭킹은 판정 읽을 시간 후에
+  setTimeout(()=>{ $('cur').classList.remove('miss'); $('over').classList.remove('hidden'); renderOverLB(); },750);   // 판정 먼저 보여주고 결과창(랭킹 바로 내장)
 }
 function revive(){
   if(reviveCount>=MAX_REVIVE || state!=='over') return; reviveCount++;
@@ -510,7 +528,6 @@ $('retryBtn').onclick=()=>retryGame();
 $('reviveBtn').onclick=()=>revive();
 $('shareBtn').onclick=()=>shareScore();
 $('lbBtn').onclick=()=>showLB();
-$('overLbBtn').onclick=()=>showLB();
 $('lbClose').onclick=()=>hideLB();
 $('lbX').onclick=()=>hideLB();
 $('shopBtn').onclick=()=>openShop();
