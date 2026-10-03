@@ -1308,8 +1308,8 @@ document.getElementById('tutStartBtn').onclick=()=>{ try{localStorage.setItem('s
 document.getElementById('retryBtn').onclick=startGame;
 document.getElementById('homeBtn').onclick=()=>{ document.getElementById('over').classList.add('hidden'); document.getElementById('ingameShop').classList.add('hidden'); document.getElementById('pauseBtn').style.display='none'; document.getElementById('playShopBtn').style.display='none'; renderClasses(); renderShop(); document.getElementById('start').classList.remove('hidden'); state='start'; };
 // 광고 보상 (부활 / 골드 2배) — AdMob 리워드 광고. 폰(APK)=실광고, 웹=시뮬레이션.
-// ⚠️ AD_USE_TEST=true 유지: 내 실광고를 직접 누르면 애드몹 계정 정지. 출시 시점에만 false.
-const AD_USE_TEST=true;
+// ⚠️ 실광고 ON (2026-10-03, 프로덕션 승인). 본인 실광고 클릭 금지(애드몹 계정 정지 위험).
+const AD_USE_TEST=false;
 const AD_REWARD_REAL='ca-app-pub-9017259597860535/2171653136';
 const AD_REWARD_TEST='ca-app-pub-3940256099942544/5224354917';
 const AD_BANNER_TEST='ca-app-pub-3940256099942544/6300978111'; // 구글 공식 테스트 배너
@@ -1352,7 +1352,7 @@ async function playAd(cb){
 }
 // 배너광고 — 메뉴/결과 화면에만(플레이 중 숨김 → 오탭 방지)
 let bannerShown=false;
-async function showBanner(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)||bannerShown) return; bannerShown=true; try{ await C.Plugins.AdMob.showBanner({ adId: AD_USE_TEST?AD_BANNER_TEST:AD_BANNER_REAL, adSize:'BANNER', position:'BOTTOM_CENTER', margin:0, isTesting:AD_USE_TEST }); }catch(e){ bannerShown=false; } }
+async function showBanner(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)||bannerShown) return; const bannerId=AD_USE_TEST?AD_BANNER_TEST:AD_BANNER_REAL; if(!bannerId) return; bannerShown=true; try{ await C.Plugins.AdMob.showBanner({ adId: bannerId, adSize:'BANNER', position:'BOTTOM_CENTER', margin:0, isTesting:AD_USE_TEST }); }catch(e){ bannerShown=false; } }
 async function hideBanner(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)||!bannerShown) return; bannerShown=false; try{ await C.Plugins.AdMob.hideBanner(); }catch(e){} }
 document.getElementById('reviveBtn').onclick=()=>{ if(reviveCount>=MAX_REVIVE||state!=='over') return; reviveCount++; document.getElementById('reviveBtn').style.display='none';
   playAd(()=>{ meta.gold=Math.max(0, meta.gold-lastEndBonus); saveMeta(); // 부활: 마감 보너스 회수(이미 썼으면 0까지만 — 마이너스 방지)
