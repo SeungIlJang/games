@@ -133,10 +133,10 @@ async function renderLB(){
   if(myRank>=7) html+='<div style="opacity:.4">⋯</div><div style="color:#ffd34d;font-weight:800">'+(myRank+1)+'. '+esc(getName())+' — '+(rows[myRank].score||0)+' (나)</div>';
   el.innerHTML=html;
 }
-// 광고(AdMob 리워드) — 폰(AAB)=실광고, 웹=시뮬. ⚠️ AD_USE_TEST=true 유지(실광고 직접 클릭시 계정정지). 출시 때만 false.
-const AD_USE_TEST=true;
+// 광고(AdMob 리워드) — 실광고 ON (2026-10-03 프로덕션). ⚠️ 본인 실광고 직접 클릭 금지(계정정지).
+const AD_USE_TEST=false;
 const AD_REWARD_TEST='ca-app-pub-3940256099942544/5224354917'; // 구글 공식 테스트 리워드
-const AD_REWARD_REAL=''; // 출시 시 실제 리워드 광고단위 ID 입력
+const AD_REWARD_REAL='ca-app-pub-9017259597860535/3081347454'; // 모두의 한방 실 리워드 광고단위
 const AD_BANNER_TEST='ca-app-pub-3940256099942544/6300978111'; // 구글 공식 테스트 배너
 const AD_BANNER_REAL=''; // 출시 시 실제 배너 광고단위 ID 입력
 let admobReady=false;
@@ -170,7 +170,7 @@ async function playAd(onReward){
 }
 // 배너광고 — 메뉴/결과 화면에만(플레이 중 숨김 → 오탭 방지)
 let bannerShown=false;
-async function showBanner(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)||bannerShown) return; bannerShown=true; try{ await C.Plugins.AdMob.showBanner({ adId: AD_USE_TEST?AD_BANNER_TEST:AD_BANNER_REAL, adSize:'BANNER', position:'BOTTOM_CENTER', margin:0, isTesting:AD_USE_TEST }); }catch(e){ bannerShown=false; } }
+async function showBanner(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)||bannerShown) return; const bannerId=AD_USE_TEST?AD_BANNER_TEST:AD_BANNER_REAL; if(!bannerId) return; bannerShown=true; try{ await C.Plugins.AdMob.showBanner({ adId: bannerId, adSize:'BANNER', position:'BOTTOM_CENTER', margin:0, isTesting:AD_USE_TEST }); }catch(e){ bannerShown=false; } }
 async function hideBanner(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)||!bannerShown) return; bannerShown=false; try{ await C.Plugins.AdMob.hideBanner(); }catch(e){} }
 function gunUnlocked(g){ return best>=g.unlock; }
 function renderGunSelect(){
