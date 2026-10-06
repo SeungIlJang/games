@@ -152,12 +152,12 @@ let AC; function tone(f,d,type,g){ try{ if(!AC)AC=new(window.AudioContext||windo
 function chord(base){ [0,4,7].forEach((s,i)=>setTimeout(()=>tone(base*Math.pow(2,s/12),0.14,'triangle',0.06),i*35)); }
 function vib(ms){ try{ navigator.vibrate&&navigator.vibrate(ms); }catch(e){} }
 
-// ── 광고(AdMob) — 폰(AAB)=실광고, 웹=시뮬. ⚠️ AD_USE_TEST=true 유지(실광고 직접 클릭시 계정정지). 출시 때만 false ──
-const AD_USE_TEST=true;
+// ── 광고(AdMob) — 실광고 ON (2026-10-06 프로덕션). ⚠️ 본인 실광고 직접 클릭 금지(계정정지) ──
+const AD_USE_TEST=false;
 const AD_REWARD_TEST='ca-app-pub-3940256099942544/5224354917';   // 구글 공식 테스트 리워드
 const AD_INTER_TEST ='ca-app-pub-3940256099942544/1033173712';   // 구글 공식 테스트 전면
 const AD_BANNER_TEST='ca-app-pub-3940256099942544/6300978111';   // 구글 공식 테스트 배너
-const AD_REWARD_REAL=''; const AD_INTER_REAL=''; const AD_BANNER_REAL='';   // 출시 시 실제 광고단위 ID 입력
+const AD_REWARD_REAL='ca-app-pub-9017259597860535/8831447716'; const AD_INTER_REAL=''; const AD_BANNER_REAL='';   // 멈춰라 숫자 실 리워드(전면·배너는 미생성)
 let admobReady=false, adPlaying=false;
 (async function initAdMob(){ try{ const C=window.Capacitor; if(C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.AdMob){ await C.Plugins.AdMob.initialize({initializeForTesting:AD_USE_TEST}); admobReady=true; if(state==='start') showBanner(); } }catch(e){ admobReady=false; } })();
 function adLoading(on){ let el=document.getElementById('adLoading');
@@ -204,8 +204,8 @@ async function playInterstitial(done){   // 전면 광고 (라운드 사이)
 let bannerShown=false;
 async function showBanner(){   // 배너 — 메뉴/결과 화면에만(플레이 중 숨김 → 오탭 방지)
   const C=window.Capacitor;
-  if(!admobReady || !(C&&C.Plugins&&C.Plugins.AdMob) || bannerShown) return; bannerShown=true;
-  try{ await C.Plugins.AdMob.showBanner({ adId: AD_USE_TEST?AD_BANNER_TEST:AD_BANNER_REAL, adSize:'BANNER', position:'BOTTOM_CENTER', margin:0, isTesting:AD_USE_TEST }); }catch(e){ bannerShown=false; }
+  if(!admobReady || !(C&&C.Plugins&&C.Plugins.AdMob) || bannerShown) return; const bannerId=AD_USE_TEST?AD_BANNER_TEST:AD_BANNER_REAL; if(!bannerId) return; bannerShown=true;
+  try{ await C.Plugins.AdMob.showBanner({ adId: bannerId, adSize:'BANNER', position:'BOTTOM_CENTER', margin:0, isTesting:AD_USE_TEST }); }catch(e){ bannerShown=false; }
 }
 async function hideBanner(){ const C=window.Capacitor; if(!admobReady || !(C&&C.Plugins&&C.Plugins.AdMob) || !bannerShown) return; bannerShown=false; try{ await C.Plugins.AdMob.hideBanner(); }catch(e){} }
 // ── 랭킹 ──
