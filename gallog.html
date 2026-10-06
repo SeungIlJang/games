@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.94 · 화면뒤덮던 거대 충격파/블랙홀 크기 축소(가독성) · 관통수정 · 적밀도70% · 전직트리 심플화</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.95 · 다국어 누락 수정(레벨업·게임오버·리더보드·광고 문구 일/영 번역) · AOE크기축소 · 관통수정</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">한국어</button>
       <button data-lang="en" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">English</button>
@@ -116,7 +116,7 @@
   </div>
   <div id="levelup" class="center hidden">
     <h1 style="font-size:26px;" data-i18n="levelup">레벨 업! ▲</h1>
-    <p class="sub">업그레이드를 선택하세요</p>
+    <p class="sub" data-i18n="lvSub">업그레이드를 선택하세요</p>
     <div class="cards" id="cards"></div>
   </div>
   <div id="over" class="center hidden" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
@@ -125,16 +125,16 @@
     <button class="btn" id="reviveBtn" style="background:#c0392b;box-shadow:0 6px 0 #7d2419;margin-bottom:10px;">🎬 광고 보고 부활</button>
     <button class="btn" id="dblBtn" style="background:#c9a227;box-shadow:0 6px 0 #8a6f16;margin-bottom:16px;">🎬 광고 보고 골드 2배</button>
     <div style="display:flex;gap:12px;">
-      <button class="btn" id="retryBtn">다시하기</button>
-      <button class="btn" id="shopBtn" style="background:#2b3350;box-shadow:0 6px 0 #161a2c;">🪙 상점</button>
+      <button class="btn" id="retryBtn" data-i18n="retry">다시하기</button>
+      <button class="btn" id="shopBtn" data-i18n="ovShop" style="background:#2b3350;box-shadow:0 6px 0 #161a2c;">🪙 상점</button>
     </div>
-    <button class="btn" id="homeBtn" style="margin-top:12px;background:#3a4568;box-shadow:0 6px 0 #222a44;">🏠 첫 화면 · 직업 선택</button>
+    <button class="btn" id="homeBtn" data-i18n="ovHome" style="margin-top:12px;background:#3a4568;box-shadow:0 6px 0 #222a44;">🏠 첫 화면 · 직업 선택</button>
     <div id="rankBox" style="width:min(90vw,420px);margin:16px 0 4px;background:rgba(22,26,44,.55);border:1px solid #2b3350;border-radius:12px;padding:12px;">
-      <div style="font-weight:800;margin-bottom:8px;">🏆 리더보드</div>
+      <div style="font-weight:800;margin-bottom:8px;" data-i18n="leaderboard">🏆 리더보드</div>
       <div style="display:flex;gap:6px;justify-content:center;margin-bottom:10px;flex-wrap:wrap;">
-        <button id="rankTabGStage" class="ranktab on">🌍 스테이지</button>
-        <button id="rankTabGKills" class="ranktab">🌍 처치</button>
-        <button id="rankTabLocal" class="ranktab">📱 내 기록</button>
+        <button id="rankTabGStage" class="ranktab on" data-i18n="rkStage">🌍 스테이지</button>
+        <button id="rankTabGKills" class="ranktab" data-i18n="rkKills">🌍 처치</button>
+        <button id="rankTabLocal" class="ranktab" data-i18n="rkLocal">📱 내 기록</button>
       </div>
       <div id="rankList" style="font-size:13px;line-height:1.75;text-align:left;min-height:40px;max-height:34vh;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;"></div>
     </div>
@@ -180,7 +180,9 @@ const I18N = {
     lblStartPow:'시작강도', lblBest:'🏆 최고 생존', sec:'초', bestSuffix:'초',
     pauseTitle:'⏸ 일시정지', resume:'계속하기', pauseShop:'🪙 상점', quit:'포기하고 상점으로',
     shopTitle:'🏪 영구 강화', shopApply:'⚡ 지금 강화하면 즉시 적용돼요!', potion:'❤️ 체력 물약 · 30% 회복 (🪙 100)', close:'닫기',
-    levelup:'레벨 업! ▲', gameover:'GAME OVER', hudKills:'처치',
+    levelup:'레벨 업! ▲', lvSub:'업그레이드를 선택하세요', gameover:'GAME OVER', hudKills:'처치',
+    retry:'다시하기', ovShop:'🪙 상점', ovHome:'🏠 첫 화면 · 직업 선택', leaderboard:'🏆 리더보드', rkStage:'🌍 스테이지', rkKills:'🌍 처치', rkLocal:'📱 내 기록', revive:'🎬 광고 보고 부활', dblGold:'🎬 광고 보고 골드 2배',
+    lbOffline:'리더보드 연결 안 됨 (오프라인)', loading:'불러오는 중…', loadFail:'불러오기 실패 (네트워크 확인)', noRecords:'아직 기록이 없어요 · 1등에 도전!', adPrep:'광고 준비 중…', adWait:'잠시만 기다려주세요', adPlaying:'광고 재생 중…', dblDone:'✓ 골드 2배 완료', resetConfirm:'모든 기록(골드·강화)을 초기화할까요? 되돌릴 수 없어요.',
     bnBoss:'보스 처치!', bnAwaken:'각성', bnDash:'돌진!', bnRevive:'부활! ▲', bnWin:'🏆 100 스테이지 클리어! 승리!', bnStage:'스테이지' },
   en:{ start:'START', reset:'🔄 Reset (wipe progress)', nickEdit:'✏️ Rename', nickPh:'New name',
     tabShop:'🏪 Upgrades', tabClasses:'🎭 Class Tree', tagline:'The more you upgrade, the faster & fiercer it starts',
@@ -188,7 +190,9 @@ const I18N = {
     lblStartPow:'Start Power', lblBest:'🏆 Best', sec:'s', bestSuffix:'s',
     pauseTitle:'⏸ Paused', resume:'Resume', pauseShop:'🪙 Shop', quit:'Quit to shop',
     shopTitle:'🏪 Upgrades', shopApply:'⚡ Upgrades apply instantly!', potion:'❤️ Health Potion · Heal 30% (🪙 100)', close:'Close',
-    levelup:'LEVEL UP! ▲', gameover:'GAME OVER', hudKills:'Kills',
+    levelup:'LEVEL UP! ▲', lvSub:'Choose an upgrade', gameover:'GAME OVER', hudKills:'Kills',
+    retry:'Retry', ovShop:'🪙 Shop', ovHome:'🏠 Home · Class', leaderboard:'🏆 Leaderboard', rkStage:'🌍 Stage', rkKills:'🌍 Kills', rkLocal:'📱 My records', revive:'🎬 Watch ad to Revive', dblGold:'🎬 Watch ad · Double gold',
+    lbOffline:'Leaderboard offline', loading:'Loading…', loadFail:'Failed to load (check network)', noRecords:'No records yet · Be #1!', adPrep:'Preparing ad…', adWait:'Please wait', adPlaying:'Playing ad…', dblDone:'✓ Gold doubled', resetConfirm:'Reset all progress (gold & upgrades)? This cannot be undone.',
     bnBoss:'Defeat the boss!', bnAwaken:'Awaken', bnDash:'Charge!', bnRevive:'Revived! ▲', bnWin:'🏆 Stage 100 cleared! You win!', bnStage:'STAGE' },
   ja:{ start:'スタート', reset:'🔄 最初から (記録リセット)', nickEdit:'✏️ 名前変更', nickPh:'新しい名前',
     tabShop:'🏪 永久強化', tabClasses:'🎭 転職ツリー', tagline:'強化するほど序盤から速く激しくなる',
@@ -196,7 +200,9 @@ const I18N = {
     lblStartPow:'開始強度', lblBest:'🏆 最高生存', sec:'秒', bestSuffix:'秒',
     pauseTitle:'⏸ 一時停止', resume:'続ける', pauseShop:'🪙 ショップ', quit:'あきらめてショップへ',
     shopTitle:'🏪 永久強化', shopApply:'⚡ 今強化すると即適用！', potion:'❤️ 回復ポーション · 30%回復 (🪙 100)', close:'閉じる',
-    levelup:'レベルアップ！▲', gameover:'GAME OVER', hudKills:'撃破',
+    levelup:'レベルアップ！▲', lvSub:'アップグレードを選択', gameover:'GAME OVER', hudKills:'撃破',
+    retry:'もう一度', ovShop:'🪙 ショップ', ovHome:'🏠 ホーム · 職業選択', leaderboard:'🏆 リーダーボード', rkStage:'🌍 ステージ', rkKills:'🌍 撃破', rkLocal:'📱 自分の記録', revive:'🎬 広告を見て復活', dblGold:'🎬 広告を見てゴールド2倍',
+    lbOffline:'リーダーボード未接続（オフライン）', loading:'読み込み中…', loadFail:'読み込み失敗（ネットワーク確認）', noRecords:'まだ記録がありません · 1位に挑戦！', adPrep:'広告準備中…', adWait:'お待ちください', adPlaying:'広告再生中…', dblDone:'✓ ゴールド2倍完了', resetConfirm:'全ての記録（ゴールド·強化）をリセットしますか？元に戻せません。',
     bnBoss:'ボスを倒せ！', bnAwaken:'覚醒', bnDash:'突進！', bnRevive:'復活！▲', bnWin:'🏆 100ステージ クリア！勝利！', bnStage:'ステージ' }
 };
 // 언어 저장/복원 — localStorage + window.name 이중화(WebView localStorage 유실 대비)
@@ -1243,8 +1249,8 @@ function gameOver(){ state='over'; sfx.over(); showBanner();
   lastEndBonus=Math.floor((time*0.4 + maxCombo) * goldMult()); // 마감 보너스(생존·콤보)
   meta.gold+=lastEndBonus; lastEarned=runGold+lastEndBonus; saveMeta(); renderShop();
   document.getElementById('overStats').innerHTML=`STAGE <b>${stage}</b> · ${t('goSurv')} <b>${surv}${t('sec')}</b>${rec} · ${t('hudKills')} <b>${kills}</b> · ${t('goCombo')} <b>${maxCombo}</b><br/>🏆 ${t('goBest')} ${best}${t('sec')} &nbsp;·&nbsp; 🪙 ${t('goRun')} <b>+${lastEarned}</b> (${t('goHave')} ${meta.gold})`;
-  const rb=document.getElementById('reviveBtn'); const canRevive=!won&&reviveCount<MAX_REVIVE; rb.style.display=canRevive?'block':'none'; if(canRevive) rb.textContent=`🎬 광고 보고 부활 (${reviveCount+1}/${MAX_REVIVE})`;
-  const db=document.getElementById('dblBtn'); db.disabled=false; db.style.opacity=1; db.textContent='🎬 광고 보고 골드 2배'; goldDoubled=false;
+  const rb=document.getElementById('reviveBtn'); const canRevive=!won&&reviveCount<MAX_REVIVE; rb.style.display=canRevive?'block':'none'; if(canRevive) rb.textContent=t('revive')+` (${reviveCount+1}/${MAX_REVIVE})`;
+  const db=document.getElementById('dblBtn'); db.disabled=false; db.style.opacity=1; db.textContent=t('dblGold'); goldDoubled=false;
   lastRunTs=Date.now(); saveRun({stage,time:surv,kills,gold:lastEarned,ts:lastRunTs}); rankMode='gstage'; renderRank();
   // 최고기록 갱신 + 글로벌 리더보드 업로드
   if(stage>meta.bestStage) meta.bestStage=stage; if(kills>meta.bestKills) meta.bestKills=kills; saveMeta();
@@ -1263,12 +1269,12 @@ function renderLocal(){ const runs=loadRuns();
 }
 async function renderGlobal(field){
   const el=document.getElementById('rankList'); if(!el) return;
-  if(!window.LB||!window.LB.ready){ el.innerHTML='<div style="opacity:.6;text-align:center;">리더보드 연결 안 됨 (오프라인)</div>'; return; }
-  el.innerHTML='<div style="opacity:.6;text-align:center;">불러오는 중…</div>';
+  if(!window.LB||!window.LB.ready){ el.innerHTML='<div style="opacity:.6;text-align:center;">'+t('lbOffline')+'</div>'; return; }
+  el.innerHTML='<div style="opacity:.6;text-align:center;">'+t('loading')+'</div>';
   const rows=await window.LB.top(field);
   if(rankMode!==(field==='stage'?'gstage':'gkills')) return; // 탭이 바뀌면 무시
-  if(!rows){ el.innerHTML='<div style="opacity:.6;text-align:center;">불러오기 실패 (네트워크 확인)</div>'; return; }
-  if(!rows.length){ el.innerHTML='<div style="opacity:.6;text-align:center;">아직 기록이 없어요 · 1등에 도전!</div>'; return; }
+  if(!rows){ el.innerHTML='<div style="opacity:.6;text-align:center;">'+t('loadFail')+'</div>'; return; }
+  if(!rows.length){ el.innerHTML='<div style="opacity:.6;text-align:center;">'+t('noRecords')+'</div>'; return; }
   let html=''; rows.slice(0,50).forEach((r,i)=>{ const mine=r.name===displayName();
     const main=field==='stage'?('STAGE '+(r.stage|0)):((r.kills|0)+' 처치');
     const sub =field==='stage'?((r.kills|0)+'처치'):('STAGE '+(r.stage|0));
@@ -1320,9 +1326,9 @@ const _adOv=document.getElementById('adOverlay');
 const _adTitle=_adOv.querySelector('h1');
 const _adCount=document.getElementById('adCount');
 let _adDots=null;
-function showAdWait(title){ _adTitle.textContent=title||'광고 준비 중…'; _adOv.classList.remove('hidden'); let n=0; _adCount.textContent='잠시만 기다려주세요'; clearInterval(_adDots); _adDots=setInterval(()=>{ n=(n+1)%4; _adCount.textContent='잠시만 기다려주세요'+'.'.repeat(n); },350); }
+function showAdWait(title){ _adTitle.textContent=title||t('adPrep'); _adOv.classList.remove('hidden'); let n=0; _adCount.textContent=t('adWait'); clearInterval(_adDots); _adDots=setInterval(()=>{ n=(n+1)%4; _adCount.textContent=t('adWait')+'.'.repeat(n); },350); }
 function hideAdWait(){ clearInterval(_adDots); _adDots=null; _adOv.classList.add('hidden'); }
-function simulateAd(cb){ _adTitle.textContent='광고 재생 중…'; clearInterval(_adDots); _adDots=null; let t=3; _adCount.textContent='잠시만 기다려요 ('+t+')'; _adOv.classList.remove('hidden'); const iv=setInterval(()=>{ t--; if(t>0){ _adCount.textContent='잠시만 기다려요 ('+t+')'; } else { clearInterval(iv); hideAdWait(); cb(); } },700); }
+function simulateAd(cb){ _adTitle.textContent=t('adPlaying'); clearInterval(_adDots); _adDots=null; let cnt=3; _adCount.textContent=t('adWait')+' ('+cnt+')'; _adOv.classList.remove('hidden'); const iv=setInterval(()=>{ cnt--; if(cnt>0){ _adCount.textContent=t('adWait')+' ('+cnt+')'; } else { clearInterval(iv); hideAdWait(); cb(); } },700); }
 async function playAd(cb){
   adPlaying=true; // 광고 중엔 게임 진행 정지(뒤에서 게임 돌아가는 것 방지)
   const C=window.Capacitor;
@@ -1361,12 +1367,12 @@ document.getElementById('reviveBtn').onclick=()=>{ if(reviveCount>=MAX_REVIVE||s
     bossAlive=false; bossSpawned=false; bossQueue=[];
     stageTime=Math.max(0, STAGE_BOSS_DELAY-10); // 부활 후 10초 뒤 보스 재등장(숨 돌릴 시간 — 즉사 방지)
     document.getElementById('over').classList.add('hidden'); document.getElementById('pauseBtn').style.display='block'; document.getElementById('playShopBtn').style.display='block'; hideBanner(); banner=t('bnRevive'); bannerT=1.6; resize(); state='play'; lastTs=performance.now(); }); };
-document.getElementById('dblBtn').onclick=(e)=>{ if(goldDoubled) return; goldDoubled=true; const b=e.currentTarget; b.disabled=true; b.style.opacity=.5; b.textContent='광고 재생 중…';
-  playAd(()=>{ meta.gold+=lastEarned; saveMeta(); renderShop(); b.textContent='✓ 골드 2배 완료'; tone(1046,0.12,'square',0.14,1568); }); };
+document.getElementById('dblBtn').onclick=(e)=>{ if(goldDoubled) return; goldDoubled=true; const b=e.currentTarget; b.disabled=true; b.style.opacity=.5; b.textContent=t('adPlaying');
+  playAd(()=>{ meta.gold+=lastEarned; saveMeta(); renderShop(); b.textContent=t('dblDone'); tone(1046,0.12,'square',0.14,1568); }); };
 document.getElementById('muteBtn').onclick=(e)=>{ e.stopPropagation(); muted=!muted; if(!muted) initAudio(); e.currentTarget.textContent=muted?'🔇':'🔊'; };
 let shopReturnTo='paused'; // 상점을 어디서 열었는지(닫을 때 복귀용)
 document.getElementById('shopBtn').onclick=()=>{ shopReturnTo='over'; document.getElementById('over').classList.add('hidden'); document.getElementById('potionBtn').style.display='none'; document.getElementById('ingameShop').classList.remove('hidden'); renderShop(); };
-document.getElementById('resetBtn').onclick=()=>{ if(confirm('모든 기록(골드·강화)을 초기화할까요? 되돌릴 수 없어요.')){ meta=ensureMeta({gold:0,lvls:{},cls:{hero:true},sel:'hero',uid:meta.uid,name:meta.name}); saveMeta(); renderShop(); renderClasses(); tone(200,0.2,'sawtooth',0.15,80); } };
+document.getElementById('resetBtn').onclick=()=>{ if(confirm(t('resetConfirm'))){ meta=ensureMeta({gold:0,lvls:{},cls:{hero:true},sel:'hero',uid:meta.uid,name:meta.name}); saveMeta(); renderShop(); renderClasses(); tone(200,0.2,'sawtooth',0.15,80); } };
 // 일시정지
 document.getElementById('pauseBtn').onclick=()=>{ if(state!=='play') return; state='paused'; document.getElementById('paused').classList.remove('hidden'); };
 document.getElementById('playShopBtn').onclick=()=>{ if(state!=='play') return; state='paused'; shopReturnTo='play'; document.getElementById('potionBtn').style.display='block'; document.getElementById('ingameShop').classList.remove('hidden'); renderShop(); };
