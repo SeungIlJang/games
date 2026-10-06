@@ -1324,8 +1324,6 @@ let _adDots=null;
 function showAdWait(title){ _adTitle.textContent=title||'광고 준비 중…'; _adOv.classList.remove('hidden'); let n=0; _adCount.textContent='잠시만 기다려주세요'; clearInterval(_adDots); _adDots=setInterval(()=>{ n=(n+1)%4; _adCount.textContent='잠시만 기다려주세요'+'.'.repeat(n); },350); }
 function hideAdWait(){ clearInterval(_adDots); _adDots=null; _adOv.classList.add('hidden'); }
 function simulateAd(cb){ _adTitle.textContent='광고 재생 중…'; clearInterval(_adDots); _adDots=null; let t=3; _adCount.textContent='잠시만 기다려요 ('+t+')'; _adOv.classList.remove('hidden'); const iv=setInterval(()=>{ t--; if(t>0){ _adCount.textContent='잠시만 기다려요 ('+t+')'; } else { clearInterval(iv); hideAdWait(); cb(); } },700); }
-// [DEBUG 임시] 리워드 광고 실패 원인 추적 — 확인 후 제거 예정
-function __adDebug(m){ try{ window.__adErr=m; var el=document.getElementById('adDebug'); if(!el){ el=document.createElement('div'); el.id='adDebug'; el.style.cssText='position:fixed;left:4px;right:4px;bottom:4px;z-index:99999;font:11px/1.35 monospace;color:#ffd24a;background:rgba(0,0,0,.82);padding:5px 7px;border-radius:5px;word-break:break-all;pointer-events:none'; document.body.appendChild(el);} el.textContent='AD DEBUG · '+m; }catch(_){} }
 async function playAd(cb){
   adPlaying=true; // 광고 중엔 게임 진행 정지(뒤에서 게임 돌아가는 것 방지)
   const C=window.Capacitor;
@@ -1347,7 +1345,7 @@ async function playAd(cb){
       lastTs=performance.now(); adPlaying=false; // 광고 종료 → 시간 점프 방지 후 재개
       if(got) cb();             // 끝까지 봐야 보상
       return;
-    }catch(e){ if(lr&&lr.remove) lr.remove(); if(ld&&ld.remove) ld.remove(); __adDebug('EXC '+((e&&(e.message||e.errorMessage||e.code))||e)); }
+    }catch(e){ if(lr&&lr.remove) lr.remove(); if(ld&&ld.remove) ld.remove(); console.warn('[ad] rewarded failed:', e); /* 로드 실패 시 아래 폴백 */ }
   }
   // 웹/개발/광고실패 폴백 — 대기 연출(카운트다운) 후 보상
   simulateAd(()=>{ lastTs=performance.now(); adPlaying=false; cb(); });
