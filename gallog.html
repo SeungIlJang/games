@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.93 · 관통 수정(같은 적 중복타격 방지 → 서로 다른 적 관통) · 적밀도70% · 전직트리 심플화</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.94 · 화면뒤덮던 거대 충격파/블랙홀 크기 축소(가독성) · 관통수정 · 적밀도70% · 전직트리 심플화</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">한국어</button>
       <button data-lang="en" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">English</button>
@@ -780,7 +780,7 @@ const WEAPONS = {
       for(let i=0;i<n;i++){ const a=base+(i/(n-1)-0.5)*sp; spawnBolt(a, p.dmg*0.7, p.bulletSpeed*0.9, p.pierce, 3, '#ffd6a0'); } sfx.shoot(); } },
   nova:{ name:'충격파', icon:'🟣', desc:'주변으로 퍼지는 파동 (전방위)', max:6,
     interval:(p,l)=>(p.evolved.nova?0.55:1)*Math.max(1.4,3.2-0.3*(l-1)),
-    fire:(p,l)=>{ const evo=p.evolved.nova; p.novas.push({x:p.x,y:p.y,r:12,maxr:(110+30*l)*(evo?1.8:1),dmg:p.dmg*(1.2+0.35*l)*(evo?1.7:1),hit:new Set(),evo}); noise(0.2,0.22); tone(evo?90:120,0.24,'sine',0.22,45); } },
+    fire:(p,l)=>{ const evo=p.evolved.nova; p.novas.push({x:p.x,y:p.y,r:12,maxr:Math.min(210,(85+15*l)*(evo?1.3:1)),dmg:p.dmg*(1.2+0.35*l)*(evo?1.7:1),hit:new Set(),evo}); noise(0.2,0.22); tone(evo?90:120,0.24,'sine',0.22,45); } },
   orbit:{ name:'궤도', icon:'🟡', desc:'몸을 도는 도형이 적을 갈아버림', max:6,
     interval:()=>Infinity, fire:()=>{} },
   slash:{ name:'참격', icon:'〰️', desc:'주변 적을 근접 참격 (범위)', max:6,
@@ -811,7 +811,7 @@ const WEAPONS = {
 };
 // 블랙홀 씨앗탄이 착탄한 자리에 회오리 생성(아주 작게 시작 → 점점 커짐)
 function plantHole(x,y,l,evo){
-  player.holes.push({x,y, r:2, maxr:(64+13*l)*(evo?1.5:1), pull:(150+22*l)*(evo?1.4:1), dmg:player.dmg*(0.45+0.11*l)*(evo?1.8:1), life:(3.0+0.2*l)*(evo?1.4:1), max:(3.0+0.2*l)*(evo?1.4:1), spin:0});
+  player.holes.push({x,y, r:2, maxr:(56+10*l)*(evo?1.3:1), pull:(150+22*l)*(evo?1.4:1), dmg:player.dmg*(0.45+0.11*l)*(evo?1.8:1), life:(3.0+0.2*l)*(evo?1.4:1), max:(3.0+0.2*l)*(evo?1.4:1), spin:0});
   tone(52,0.5,'sine',0.2,24); noise(0.35,0.16);
 }
 function weaponFireTick(dt){
@@ -1100,7 +1100,7 @@ function render(){
   for(const p of particles){ ctx.globalAlpha=Math.max(0,p.life*2); ctx.fillStyle=p.color; ctx.fillRect(p.x-2,p.y-2,4,4); }
   ctx.globalAlpha=1;
   // nova rings (확장 파동)
-  for(const nv of player.novas){ const al=Math.max(0,1-nv.r/nv.maxr).toFixed(2); ctx.strokeStyle=(nv.evo?'rgba(255,92,225,':'rgba(201,163,255,')+al+')'; ctx.lineWidth=nv.evo?10:6; ctx.beginPath(); ctx.arc(nv.x,nv.y,nv.r,0,Math.PI*2); ctx.stroke(); }
+  for(const nv of player.novas){ const al=Math.max(0,1-nv.r/nv.maxr).toFixed(2); ctx.strokeStyle=(nv.evo?'rgba(255,92,225,':'rgba(201,163,255,')+al+')'; ctx.lineWidth=nv.evo?7:5; ctx.beginPath(); ctx.arc(nv.x,nv.y,nv.r,0,Math.PI*2); ctx.stroke(); }
   // 블랙홀: 무수한 얇은 빛줄기가 중심으로 빨려드는 회오리(중력렌즈 느낌) + 어두운 중심 void
   for(const h of player.holes){ const a=Math.max(0,h.life/h.max), void_=h.r*0.30;
     ctx.save(); ctx.translate(h.x,h.y);
