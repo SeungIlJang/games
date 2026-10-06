@@ -1330,7 +1330,6 @@ async function playAd(cb){
   adPlaying=true; // 광고 중엔 게임 진행 정지(뒤에서 게임 돌아가는 것 방지)
   const C=window.Capacitor;
   showAdWait('광고 준비 중…');   // 광고 로드 대기 즉시 표시(프리즈 느낌 제거)
-  __adDebug('gate ready='+admobReady+' plugin='+!!(C&&C.Plugins&&C.Plugins.AdMob)+' unit='+(AD_USE_TEST?AD_REWARD_TEST:AD_REWARD_REAL));
   if(admobReady && C && C.Plugins && C.Plugins.AdMob){
     const AdMob=C.Plugins.AdMob; let got=false, lr=null, ld=null;
     try{
@@ -1340,8 +1339,8 @@ async function playAd(cb){
       // ⚠️ 광고가 "닫힐 때"까지 대기 → 닫힌 뒤에만 보상·게임 재개 (광고 중 게임 조기시작 방지)
       await new Promise((resolve)=>{
         let done=false; const fin=()=>{ if(done)return; done=true; resolve(); };
-        AdMob.addListener('onRewardedVideoAdDismissed',fin).then(l=>{ ld=l; if(done&&ld&&ld.remove) ld.remove(); });
-        AdMob.showRewardVideoAd().catch(fin);
+        Promise.resolve(AdMob.addListener('onRewardedVideoAdDismissed',fin)).then(l=>{ ld=l; if(done&&ld&&ld.remove) ld.remove(); }).catch(()=>{});
+        Promise.resolve(AdMob.showRewardVideoAd()).catch(fin);
         setTimeout(fin, 120000); // 안전장치: 닫힘 이벤트 누락 시
       });
       if(lr&&lr.remove) lr.remove(); if(ld&&ld.remove) ld.remove();
