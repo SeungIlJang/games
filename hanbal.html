@@ -138,7 +138,7 @@ const AD_USE_TEST=false;
 const AD_REWARD_TEST='ca-app-pub-3940256099942544/5224354917'; // 구글 공식 테스트 리워드
 const AD_REWARD_REAL='ca-app-pub-9017259597860535/3081347454'; // 모두의 한방 실 리워드 광고단위
 const AD_BANNER_TEST='ca-app-pub-3940256099942544/6300978111'; // 구글 공식 테스트 배너
-const AD_BANNER_REAL=''; // 출시 시 실제 배너 광고단위 ID 입력
+const AD_BANNER_REAL='ca-app-pub-9017259597860535/6637217576'; // 출시 시 실제 배너 광고단위 ID 입력
 let admobReady=false;
 (async function initAdMob(){ try{ const C=window.Capacitor; if(C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.AdMob){ await C.Plugins.AdMob.initialize({initializeForTesting:AD_USE_TEST}); admobReady=true; if(typeof state==='undefined'||state!=='play') showBanner(); } }catch(e){ admobReady=false; } })();
 function adLoading(on){ let el=document.getElementById('adLoading');
