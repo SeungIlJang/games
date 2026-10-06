@@ -162,8 +162,8 @@ async function playAd(cb){ if(adPlaying)return; adPlaying=true; const C=window.C
   if(admobReady&&C&&C.Plugins&&C.Plugins.AdMob){ const A=C.Plugins.AdMob; let ld=null,lf=null;
     try{ await A.prepareRewardVideoAd({adId:AD_USE_TEST?AD_REWARD_TEST:AD_REWARD_REAL});
       await new Promise(res=>{let d=false;const fin=()=>{if(d)return;d=true;res();};
-        A.addListener('onRewardedVideoAdDismissed',fin).then(l=>ld=l); A.addListener('onRewardedVideoAdFailedToShow',fin).then(l=>lf=l);
-        A.showRewardVideoAd().catch(fin); setTimeout(fin,40000);});
+        Promise.resolve(A.addListener('onRewardedVideoAdDismissed',fin)).then(l=>ld=l).catch(()=>{}); Promise.resolve(A.addListener('onRewardedVideoAdFailedToShow',fin)).then(l=>lf=l).catch(()=>{});
+        Promise.resolve(A.showRewardVideoAd()).catch(fin); setTimeout(fin,40000);});
       if(ld&&ld.remove)ld.remove(); if(lf&&lf.remove)lf.remove(); adPlaying=false; cb(); return;
     }catch(e){ adPlaying=false; cb(); return; } }
   setTimeout(()=>{ adPlaying=false; cb(); },700); // 웹 시뮬
