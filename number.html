@@ -157,7 +157,7 @@ const AD_USE_TEST=false;
 const AD_REWARD_TEST='ca-app-pub-3940256099942544/5224354917';   // 구글 공식 테스트 리워드
 const AD_INTER_TEST ='ca-app-pub-3940256099942544/1033173712';   // 구글 공식 테스트 전면
 const AD_BANNER_TEST='ca-app-pub-3940256099942544/6300978111';   // 구글 공식 테스트 배너
-const AD_REWARD_REAL='ca-app-pub-9017259597860535/8831447716'; const AD_INTER_REAL=''; const AD_BANNER_REAL='';   // 멈춰라 숫자 실 리워드(전면·배너는 미생성)
+const AD_REWARD_REAL='ca-app-pub-9017259597860535/8831447716'; const AD_INTER_REAL=''; const AD_BANNER_REAL='ca-app-pub-9017259597860535/8765008265';   // 멈춰라 숫자 실 리워드+배너(전면 미생성)
 let admobReady=false, adPlaying=false;
 (async function initAdMob(){ try{ const C=window.Capacitor; if(C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.AdMob){ await C.Plugins.AdMob.initialize({initializeForTesting:AD_USE_TEST}); admobReady=true; if(state==='start') showBanner(); } }catch(e){ admobReady=false; } })();
 function adLoading(on){ let el=document.getElementById('adLoading');
