@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.91 · 발사 안보임 완전수정(카메라 컬링) · FPS표시 제거 · 유도미사일 🚀</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.92 · 적 밀도 70%로 완화 · 전직트리 심플화(열린것+다음단계만)</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">한국어</button>
       <button data-lang="en" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">English</button>
@@ -244,7 +244,7 @@ const TR={
   '돌격병':'Charger','소환술사':'Summoner','포격수':'Gunner','나선체':'Spiral','폭렬구':'Blast Orb','저격수':'Sniper','광란자':'Frenzy','군단장':'Legion Commander','중포병':'Heavy Gunner',
   '관문왕 (10)':'Gatekeeper (10)','대공 (20)':'Skylord (20)','군주 (30)':'Overlord (30)','폭군 (40)':'Tyrant (40)','심연군주 (50)':'Abyss Lord (50)','마왕 (60)':'Demon King (60)','파괴자 (70)':'Destroyer (70)','종말 (80)':'Apocalypse (80)','공허 (90)':'Void (90)','★최종보스★ (100)':'★FINAL BOSS★ (100)',
   '무기가 상위 형태로 각성!':'Weapon awakens to a higher form!',
-  '✓ 선택됨':'✓ Selected','▶ 선택':'▶ Select','🔒 선행필요':'🔒 Locked' },
+  '✓ 선택됨':'✓ Selected','▶ 선택':'▶ Select','🔒 선행필요':'🔒 Locked','다음 전직':'Next' },
  ja:{
   '가까운 적에게 발사 (강화 시 다발)':'近い敵に発射（強化で多発）',
   '부채꼴로 여러 발 (근접 강함)':'扇状に複数発（近接に強い）',
@@ -260,7 +260,7 @@ const TR={
   '돌격병':'突撃兵','소환술사':'召喚師','포격수':'砲撃手','나선체':'螺旋体','폭렬구':'爆裂球','저격수':'狙撃手','광란자':'狂乱者','군단장':'軍団長','중포병':'重砲兵',
   '관문왕 (10)':'関門王 (10)','대공 (20)':'大空 (20)','군주 (30)':'君主 (30)','폭군 (40)':'暴君 (40)','심연군주 (50)':'深淵君主 (50)','마왕 (60)':'魔王 (60)','파괴자 (70)':'破壊者 (70)','종말 (80)':'終末 (80)','공허 (90)':'虚無 (90)','★최종보스★ (100)':'★最終ボス★ (100)',
   '무기가 상위 형태로 각성!':'武器が上位形態に覚醒！',
-  '✓ 선택됨':'✓ 選択中','▶ 선택':'▶ 選択','🔒 선행필요':'🔒 前提必要' }
+  '✓ 선택됨':'✓ 選択中','▶ 선택':'▶ 選択','🔒 선행필요':'🔒 前提必要','다음 전직':'次の転職' }
 };
 function trDesc(s){ if(s==null) return s; if(LANG==='ko') return s;
   if(TR[LANG]&&TR[LANG][s]!=null) return TR[LANG][s];
@@ -514,23 +514,20 @@ function renderClasses(){
   const order=[]; function walk(n){ order.push(n); (CLASS_CHILDREN[n.key]||[]).forEach(walk); } CLASS_ROOTS.forEach(walk);
   order.forEach(n=>{
     const owned=!!meta.cls[n.key], sel=meta.sel===n.key, parentOwned=!n.parent||!!meta.cls[n.parent];
-    const buyable=!owned&&parentOwned&&meta.gold>=n.cost, locked=!owned&&!parentOwned;
+    // 심플화: 열린(보유) 전직 + 바로 아래 해금 가능한 단계만 노출 (더 깊은 트리는 부모 해금 후 등장)
+    if(!(owned||parentOwned)) return;
+    const buyable=!owned&&parentOwned&&meta.gold>=n.cost;
     const el=document.createElement('div'); el.className='card';
     el.style.marginLeft=((n.tier-1)*11)+'px';
-    const hidden = n.tier>=3 && !owned; // L3·L4는 소유 전까지 비공개
     const price = n.cost.toLocaleString();
-    if(sel) el.style.borderColor='#5ce1ff'; el.style.opacity = owned?1:(locked?0.4:(buyable?0.9:0.55));
-    const badge = sel?'✓ 선택됨' : (owned?'▶ 선택' : (locked?'🔒 선행필요' : ('🪙'+price+(meta.gold<n.cost?' 부족':''))));
+    if(sel) el.style.borderColor='#5ce1ff'; el.style.opacity = owned?1:(buyable?0.95:0.7);
+    const badge = sel?'✓ 선택됨' : (owned?'▶ 선택' : ('🪙'+price+(meta.gold<n.cost?' 부족':'')));
     const idw=IDENTITY_WEAPON[n.base], wn=(WEAPONS[idw]&&WEAPONS[idw].name)||idw||'';
-    if(hidden){
-      el.style.borderStyle='dashed'; el.style.borderColor='#6b5cff';
-      el.innerHTML=`<div class="t">${n.icon} <span style="letter-spacing:3px;">？？？</span> <span style="font-size:11px;color:#b98cff;font-weight:700;">${trDesc('비공개')} · L${n.tier+1}</span> <span style="font-size:12px;color:${buyable?'#ffd25c':'#8892b0'};">${trDesc(badge)}</span></div><div class="d" style="opacity:.65;">${trDesc('🔒 소문 속의 상위 전직 — 막대한 골드로만 개방')}</div>`;
-    } else {
-      el.innerHTML=`<div class="t">${n.icon} ${dispName(n)} <span style="font-size:12px;color:#7cf6ff;font-weight:700;">${trDesc(wn)}L${idLevelFor(n)}</span> <span style="opacity:.45;font-size:11px;">${LANG==='ko'?n.en:''}</span> <span style="font-size:12px;color:${sel?'#5ce1ff':(owned?'#9dffbf':(buyable?'#ffd25c':'#8892b0'))};">${trDesc(badge)}</span></div><div class="d">${trDesc(n.desc)}</div>`;
-    }
+    const nextTag = (!owned&&n.tier>1) ? ` <span style="font-size:11px;color:#ffd25c;font-weight:700;">▲ ${trDesc('다음 전직')}</span>` : '';
+    el.innerHTML=`<div class="t">${n.icon} ${dispName(n)}${nextTag} <span style="font-size:12px;color:#7cf6ff;font-weight:700;">${trDesc(wn)}L${idLevelFor(n)}</span> <span style="opacity:.45;font-size:11px;">${LANG==='ko'?n.en:''}</span> <span style="font-size:12px;color:${sel?'#5ce1ff':(owned?'#9dffbf':(buyable?'#ffd25c':'#8892b0'))};">${trDesc(badge)}</span></div><div class="d">${trDesc(n.desc)}</div>`;
     el.onclick=()=>{ initAudio();
       if(owned){ meta.sel=n.key; tone(700,0.08,'square',0.12); }
-      else if(!parentOwned){ alert(t('needClass').replace('%', CLASS_BY_KEY[n.parent]?dispName(CLASS_BY_KEY[n.parent]):'')); return; }
+      else if(!parentOwned){ return; }
       else if(meta.gold>=n.cost){ meta.gold-=n.cost; meta.cls[n.key]=true; meta.sel=n.key; tone(880,0.12,'square',0.16,1300); }
       else { alert(t('noGold').replace('%',n.cost.toLocaleString())); return; }
       saveMeta(); renderClasses(); renderShop();
@@ -649,7 +646,7 @@ const ETYPE={
   tank:    {r:23,hp:75, spd:[38,52],  dmg:24, color:'#ff8a5c', gem:7, big:true, shape:'core6', tier:'e'}, // 육각코어
   twin:    {r:20,hp:95, spd:[42,56],  dmg:28, color:'#ff6bd0', gem:8, big:true, shape:'core8', tier:'e'}, // 팔각코어
 };
-const ENEMY_CAP=60;       // 화면 동시 적 수 상한(잡몹 2배 반영)
+const ENEMY_CAP=42;       // 화면 동시 적 수 상한(기존60→42, 출현율 70%로 완화: 피할 공간 확보)
 const ELITE_CAP=3;        // 동시 정예 수 상한
 const FODDER=['normal','fast','shard'], MID=['weaver','spiker','splitter'], ELITE=['ringed','tank','twin'];
 const pick=a=>a[Math.floor(Math.random()*a.length)];
