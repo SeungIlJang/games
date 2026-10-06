@@ -159,9 +159,9 @@ async function playAd(onReward){
       await AdMob.prepareRewardVideoAd({ adId: AD_USE_TEST?AD_REWARD_TEST:AD_REWARD_REAL });
       let lf=null;
       await new Promise((resolve)=>{ let done=false; const fin=()=>{ if(done)return; done=true; resolve(); };
-        AdMob.addListener('onRewardedVideoAdDismissed',fin).then(l=>{ ld=l; });
-        AdMob.addListener('onRewardedVideoAdFailedToShow',fin).then(l=>{ lf=l; });
-        AdMob.showRewardVideoAd().catch(fin); setTimeout(fin,40000); });
+        Promise.resolve(AdMob.addListener('onRewardedVideoAdDismissed',fin)).then(l=>{ ld=l; }).catch(()=>{});
+        Promise.resolve(AdMob.addListener('onRewardedVideoAdFailedToShow',fin)).then(l=>{ lf=l; }).catch(()=>{});
+        Promise.resolve(AdMob.showRewardVideoAd()).catch(fin); setTimeout(fin,40000); });
       if(lr&&lr.remove) lr.remove(); if(ld&&ld.remove) ld.remove(); if(lf&&lf.remove) lf.remove();
       _done(onReward); return;   // 광고 흐름 종료 후 부활(이벤트 유실·행오프 방지)
     }catch(e){ if(lr&&lr.remove)lr.remove(); if(ld&&ld.remove)ld.remove(); _done(onReward); return; }
