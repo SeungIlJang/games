@@ -177,9 +177,9 @@ async function playAd(onReward){   // 리워드 광고 (부활)
       lr=await AdMob.addListener('onRewardedVideoAdReward',()=>{});
       await AdMob.prepareRewardVideoAd({ adId: AD_USE_TEST?AD_REWARD_TEST:AD_REWARD_REAL });
       await new Promise((resolve)=>{ let done=false; const fin=()=>{ if(done)return; done=true; resolve(); };
-        AdMob.addListener('onRewardedVideoAdDismissed',fin).then(l=>{ ld=l; });
-        AdMob.addListener('onRewardedVideoAdFailedToShow',fin).then(l=>{ lf=l; });
-        AdMob.showRewardVideoAd().catch(fin); setTimeout(fin,40000); });
+        Promise.resolve(AdMob.addListener('onRewardedVideoAdDismissed',fin)).then(l=>{ ld=l; }).catch(()=>{});
+        Promise.resolve(AdMob.addListener('onRewardedVideoAdFailedToShow',fin)).then(l=>{ lf=l; }).catch(()=>{});
+        Promise.resolve(AdMob.showRewardVideoAd()).catch(fin); setTimeout(fin,40000); });
       if(lr&&lr.remove)lr.remove(); if(ld&&ld.remove)ld.remove(); if(lf&&lf.remove)lf.remove();
       _done(onReward); return;
     }catch(e){ if(lr&&lr.remove)lr.remove(); if(ld&&ld.remove)ld.remove(); _done(onReward); return; }
@@ -193,9 +193,9 @@ async function playInterstitial(done){   // 전면 광고 (라운드 사이)
     try{
       await AdMob.prepareInterstitial({ adId: AD_USE_TEST?AD_INTER_TEST:AD_INTER_REAL });
       await new Promise((resolve)=>{ let d=false; const fin=()=>{ if(d)return; d=true; resolve(); };
-        AdMob.addListener('interstitialAdDismissed',fin).then(l=>{ ld=l; });
-        AdMob.addListener('interstitialAdFailedToShow',fin).then(l=>{ lf=l; });
-        AdMob.showInterstitial().catch(fin); setTimeout(fin,30000); });
+        Promise.resolve(AdMob.addListener('interstitialAdDismissed',fin)).then(l=>{ ld=l; }).catch(()=>{});
+        Promise.resolve(AdMob.addListener('interstitialAdFailedToShow',fin)).then(l=>{ lf=l; }).catch(()=>{});
+        Promise.resolve(AdMob.showInterstitial()).catch(fin); setTimeout(fin,30000); });
       if(ld&&ld.remove)ld.remove(); if(lf&&lf.remove)lf.remove();
     }catch(e){}
   }
