@@ -175,7 +175,7 @@ async function playAd(onReward){   // 리워드 광고 (부활)
     const AdMob=C.Plugins.AdMob; let lr=null, ld=null, lf=null;
     try{
       lr=await AdMob.addListener('onRewardedVideoAdReward',()=>{});
-      await AdMob.prepareRewardVideoAd({ adId: AD_USE_TEST?AD_REWARD_TEST:AD_REWARD_REAL });
+      await Promise.race([ Promise.resolve(AdMob.prepareRewardVideoAd({ adId: AD_USE_TEST?AD_REWARD_TEST:AD_REWARD_REAL })), new Promise((_,rj)=>setTimeout(()=>rj(new Error('ad load timeout')),10000)) ]);
       await new Promise((resolve)=>{ let done=false; const fin=()=>{ if(done)return; done=true; resolve(); };
         Promise.resolve(AdMob.addListener('onRewardedVideoAdDismissed',fin)).then(l=>{ ld=l; }).catch(()=>{});
         Promise.resolve(AdMob.addListener('onRewardedVideoAdFailedToShow',fin)).then(l=>{ lf=l; }).catch(()=>{});
@@ -191,7 +191,7 @@ async function playInterstitial(done){   // 전면 광고 (라운드 사이)
   if(admobReady && C && C.Plugins && C.Plugins.AdMob){
     const AdMob=C.Plugins.AdMob; let ld=null, lf=null;
     try{
-      await AdMob.prepareInterstitial({ adId: AD_USE_TEST?AD_INTER_TEST:AD_INTER_REAL });
+      await Promise.race([ Promise.resolve(AdMob.prepareInterstitial({ adId: AD_USE_TEST?AD_INTER_TEST:AD_INTER_REAL })), new Promise((_,rj)=>setTimeout(()=>rj(new Error('ad load timeout')),10000)) ]);
       await new Promise((resolve)=>{ let d=false; const fin=()=>{ if(d)return; d=true; resolve(); };
         Promise.resolve(AdMob.addListener('interstitialAdDismissed',fin)).then(l=>{ ld=l; }).catch(()=>{});
         Promise.resolve(AdMob.addListener('interstitialAdFailedToShow',fin)).then(l=>{ lf=l; }).catch(()=>{});
@@ -201,11 +201,11 @@ async function playInterstitial(done){   // 전면 광고 (라운드 사이)
   }
   if(done) done();
 }
-let bannerShown=false;
+let bannerShown=false, bannerCreated=false;
 async function showBanner(){   // 배너 — 메뉴/결과 화면에만(플레이 중 숨김 → 오탭 방지)
   const C=window.Capacitor;
   if(!admobReady || !(C&&C.Plugins&&C.Plugins.AdMob) || bannerShown) return; const bannerId=AD_USE_TEST?AD_BANNER_TEST:AD_BANNER_REAL; if(!bannerId) return; bannerShown=true;
-  try{ await C.Plugins.AdMob.showBanner({ adId: bannerId, adSize:'BANNER', position:'BOTTOM_CENTER', margin:0, isTesting:AD_USE_TEST }); }catch(e){ bannerShown=false; }
+  const _A=C.Plugins.AdMob; const _opt={ adId: bannerId, adSize:'BANNER', position:'BOTTOM_CENTER', margin:0, isTesting:AD_USE_TEST }; try{ if(bannerCreated){ try{ await _A.resumeBanner(); }catch(_e){ await _A.showBanner(_opt); } } else { await _A.showBanner(_opt); bannerCreated=true; } }catch(e){ bannerShown=false; }
 }
 async function hideBanner(){ const C=window.Capacitor; if(!admobReady || !(C&&C.Plugins&&C.Plugins.AdMob) || !bannerShown) return; bannerShown=false; try{ await C.Plugins.AdMob.hideBanner(); }catch(e){} }
 // ── 랭킹 ──
