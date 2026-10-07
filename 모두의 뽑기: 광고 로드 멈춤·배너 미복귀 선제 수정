@@ -160,7 +160,7 @@ let admobReady=false, adPlaying=false;
 (async function(){ try{ const C=window.Capacitor; if(C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.AdMob){ await C.Plugins.AdMob.initialize({initializeForTesting:AD_USE_TEST}); admobReady=true; } }catch(e){} })();
 async function playAd(cb){ if(adPlaying)return; adPlaying=true; const C=window.Capacitor;
   if(admobReady&&C&&C.Plugins&&C.Plugins.AdMob){ const A=C.Plugins.AdMob; let ld=null,lf=null;
-    try{ await A.prepareRewardVideoAd({adId:AD_USE_TEST?AD_REWARD_TEST:AD_REWARD_REAL});
+    try{ await Promise.race([ Promise.resolve(A.prepareRewardVideoAd({adId:AD_USE_TEST?AD_REWARD_TEST:AD_REWARD_REAL})), new Promise((_,rj)=>setTimeout(()=>rj(new Error('ad load timeout')),10000)) ]);
       await new Promise(res=>{let d=false;const fin=()=>{if(d)return;d=true;res();};
         Promise.resolve(A.addListener('onRewardedVideoAdDismissed',fin)).then(l=>ld=l).catch(()=>{}); Promise.resolve(A.addListener('onRewardedVideoAdFailedToShow',fin)).then(l=>lf=l).catch(()=>{});
         Promise.resolve(A.showRewardVideoAd()).catch(fin); setTimeout(fin,40000);});
@@ -698,8 +698,8 @@ function renderMeta(){
 }
 
 // ── 배너광고 ──
-let bannerShown=false;
-async function showBanner(){ const C=window.Capacitor; if(!(C&&C.Plugins&&C.Plugins.AdMob)||bannerShown) return; bannerShown=true; try{document.body.classList.add('has-banner');}catch(e){} try{ await C.Plugins.AdMob.showBanner({adId:'ca-app-pub-3940256099942544/6300978111',adSize:'BANNER',position:'BOTTOM_CENTER',margin:0,isTesting:true}); }catch(e){ bannerShown=false; try{document.body.classList.remove('has-banner');}catch(e2){} } }
+let bannerShown=false, bannerCreated=false;
+async function showBanner(){ const C=window.Capacitor; if(!(C&&C.Plugins&&C.Plugins.AdMob)||bannerShown) return; bannerShown=true; try{document.body.classList.add('has-banner');}catch(e){} const _A=C.Plugins.AdMob; const _opt={adId:'ca-app-pub-3940256099942544/6300978111',adSize:'BANNER',position:'BOTTOM_CENTER',margin:0,isTesting:true}; try{ if(bannerCreated){ try{ await _A.resumeBanner(); }catch(_e){ await _A.showBanner(_opt); } } else { await _A.showBanner(_opt); bannerCreated=true; } }catch(e){ bannerShown=false; try{document.body.classList.remove('has-banner');}catch(e2){} } }
 async function hideBanner(){ const C=window.Capacitor; if(!(C&&C.Plugins&&C.Plugins.AdMob)||!bannerShown) return; bannerShown=false; try{document.body.classList.remove('has-banner');}catch(e){} try{ await C.Plugins.AdMob.hideBanner(); }catch(e){} }
 
 // ── 공유(바이럴) ──
