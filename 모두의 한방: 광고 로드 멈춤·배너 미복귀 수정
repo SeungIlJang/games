@@ -156,7 +156,7 @@ async function playAd(onReward){
     const AdMob=C.Plugins.AdMob; let got=false, lr=null, ld=null;
     try{
       lr=await AdMob.addListener('onRewardedVideoAdReward',()=>{ got=true; });
-      await AdMob.prepareRewardVideoAd({ adId: AD_USE_TEST?AD_REWARD_TEST:AD_REWARD_REAL });
+      await Promise.race([ Promise.resolve(AdMob.prepareRewardVideoAd({ adId: AD_USE_TEST?AD_REWARD_TEST:AD_REWARD_REAL })), new Promise((_,rj)=>setTimeout(()=>rj(new Error('ad load timeout')),10000)) ]);
       let lf=null;
       await new Promise((resolve)=>{ let done=false; const fin=()=>{ if(done)return; done=true; resolve(); };
         Promise.resolve(AdMob.addListener('onRewardedVideoAdDismissed',fin)).then(l=>{ ld=l; }).catch(()=>{});
@@ -169,8 +169,8 @@ async function playAd(onReward){
   setTimeout(()=>{ _done(onReward); }, 800);   // 웹 시뮬레이션
 }
 // 배너광고 — 메뉴/결과 화면에만(플레이 중 숨김 → 오탭 방지)
-let bannerShown=false;
-async function showBanner(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)||bannerShown) return; const bannerId=AD_USE_TEST?AD_BANNER_TEST:AD_BANNER_REAL; if(!bannerId) return; bannerShown=true; try{ await C.Plugins.AdMob.showBanner({ adId: bannerId, adSize:'BANNER', position:'BOTTOM_CENTER', margin:0, isTesting:AD_USE_TEST }); }catch(e){ bannerShown=false; } }
+let bannerShown=false, bannerCreated=false;
+async function showBanner(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)||bannerShown) return; const bannerId=AD_USE_TEST?AD_BANNER_TEST:AD_BANNER_REAL; if(!bannerId) return; bannerShown=true; const _A=C.Plugins.AdMob; const _opt={ adId: bannerId, adSize:'BANNER', position:'BOTTOM_CENTER', margin:0, isTesting:AD_USE_TEST }; try{ if(bannerCreated){ try{ await _A.resumeBanner(); }catch(_e){ await _A.showBanner(_opt); } } else { await _A.showBanner(_opt); bannerCreated=true; } }catch(e){ bannerShown=false; } }
 async function hideBanner(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)||!bannerShown) return; bannerShown=false; try{ await C.Plugins.AdMob.hideBanner(); }catch(e){} }
 function gunUnlocked(g){ return best>=g.unlock; }
 function renderGunSelect(){
