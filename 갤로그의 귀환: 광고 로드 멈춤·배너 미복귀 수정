@@ -1337,7 +1337,7 @@ async function playAd(cb){
     const AdMob=C.Plugins.AdMob; let got=false, lr=null, ld=null;
     try{
       lr=await AdMob.addListener('onRewardedVideoAdReward',()=>{ got=true; });
-      await AdMob.prepareRewardVideoAd({ adId: AD_USE_TEST?AD_REWARD_TEST:AD_REWARD_REAL });
+      await Promise.race([ Promise.resolve(AdMob.prepareRewardVideoAd({ adId: AD_USE_TEST?AD_REWARD_TEST:AD_REWARD_REAL })), new Promise((_,rj)=>setTimeout(()=>rj(new Error('ad load timeout')),10000)) ]);
       hideAdWait();             // 실제 광고가 화면을 덮기 직전 대기표시 제거
       // ⚠️ 광고가 "닫힐 때"까지 대기 → 닫힌 뒤에만 보상·게임 재개 (광고 중 게임 조기시작 방지)
       await new Promise((resolve)=>{
@@ -1356,8 +1356,8 @@ async function playAd(cb){
   simulateAd(()=>{ lastTs=performance.now(); adPlaying=false; cb(); });
 }
 // 배너광고 — 메뉴/결과 화면에만(플레이 중 숨김 → 오탭 방지)
-let bannerShown=false;
-async function showBanner(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)||bannerShown) return; const bannerId=AD_USE_TEST?AD_BANNER_TEST:AD_BANNER_REAL; if(!bannerId) return; bannerShown=true; try{ await C.Plugins.AdMob.showBanner({ adId: bannerId, adSize:'BANNER', position:'BOTTOM_CENTER', margin:0, isTesting:AD_USE_TEST }); }catch(e){ bannerShown=false; } }
+let bannerShown=false, bannerCreated=false;
+async function showBanner(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)||bannerShown) return; const bannerId=AD_USE_TEST?AD_BANNER_TEST:AD_BANNER_REAL; if(!bannerId) return; bannerShown=true; const _A=C.Plugins.AdMob; const _opt={ adId: bannerId, adSize:'BANNER', position:'BOTTOM_CENTER', margin:0, isTesting:AD_USE_TEST }; try{ if(bannerCreated){ try{ await _A.resumeBanner(); }catch(_e){ await _A.showBanner(_opt); } } else { await _A.showBanner(_opt); bannerCreated=true; } }catch(e){ bannerShown=false; } }
 async function hideBanner(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)||!bannerShown) return; bannerShown=false; try{ await C.Plugins.AdMob.hideBanner(); }catch(e){} }
 document.getElementById('reviveBtn').onclick=()=>{ if(reviveCount>=MAX_REVIVE||state!=='over') return; reviveCount++; document.getElementById('reviveBtn').style.display='none';
   playAd(()=>{ meta.gold=Math.max(0, meta.gold-lastEndBonus); saveMeta(); // 부활: 마감 보너스 회수(이미 썼으면 0까지만 — 마이너스 방지)
