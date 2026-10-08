@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.95 · 다국어 누락 수정(레벨업·게임오버·리더보드·광고 문구 일/영 번역) · AOE크기축소 · 관통수정</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.96 · 각성 외형 이름 다국어 추가(대마법사 등 한글고정 버그 수정)</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">한국어</button>
       <button data-lang="en" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">English</button>
@@ -477,12 +477,12 @@ function idLevelFor(node){
 }
 // 각성(스테이지5) — 4대 기본직 계열별
 const AWAKEN={
-  hero:    {name:'각성 용사 ✨', apply:p=>{ p.dmg*=1.4; p.maxhp*=1.15; }},
-  warrior: {name:'광휘의 용사 🛡️', apply:p=>{ p.dmg*=1.4; p.maxhp*=1.2; p.dmgReduce*=0.8; }},
-  mage:    {name:'대마법사 🔮', apply:p=>{ p.dmg*=1.5; }}, // + 주기적 자동 초신성
-  archer:  {name:'천공저격수 🎯', apply:p=>{ p.pierce+=2; p.dmg*=1.4; p.fireRate*=1.2; }},
-  rogue:   {name:'그림자검성 ⚔️', apply:p=>{ p.dmg*=1.45; p.speed*=1.08; p.lifesteal+=1; }},
-  swordsman:{name:'검신 ⚔️', apply:p=>{ p.dmg*=1.45; p.speed*=1.06; gainW(p,'slash',1); }},
+  hero:    {name:'각성 용사 ✨', en:'Awakened Hero ✨', ja:'覚醒勇者 ✨', apply:p=>{ p.dmg*=1.4; p.maxhp*=1.15; }},
+  warrior: {name:'광휘의 용사 🛡️', en:'Radiant Hero 🛡️', ja:'光輝の勇者 🛡️', apply:p=>{ p.dmg*=1.4; p.maxhp*=1.2; p.dmgReduce*=0.8; }},
+  mage:    {name:'대마법사 🔮', en:'Archmage 🔮', ja:'大魔法使い 🔮', apply:p=>{ p.dmg*=1.5; }}, // + 주기적 자동 초신성
+  archer:  {name:'천공저격수 🎯', en:'Sky Sniper 🎯', ja:'天空狙撃手 🎯', apply:p=>{ p.pierce+=2; p.dmg*=1.4; p.fireRate*=1.2; }},
+  rogue:   {name:'그림자검성 ⚔️', en:'Shadow Blademaster ⚔️', ja:'影の剣聖 ⚔️', apply:p=>{ p.dmg*=1.45; p.speed*=1.08; p.lifesteal+=1; }},
+  swordsman:{name:'검신 ⚔️', en:'Sword God ⚔️', ja:'剣神 ⚔️', apply:p=>{ p.dmg*=1.45; p.speed*=1.06; gainW(p,'slash',1); }},
 };
 function awaken(){
   player.awakened=true; player.awakenCount=(player.awakenCount||0)+1;
