@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.96 · 각성 외형 이름 다국어 추가(대마법사 등 한글고정 버그 수정)</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.97 · 3스테이지마다 전면광고 추가</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">한국어</button>
       <button data-lang="en" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">English</button>
@@ -859,6 +859,7 @@ function buildChoices(){
 }
 function stageClear(){
   bossAlive=false; stage++; stageTime=0; bossSpawned=false; bossQueue=[];
+  interCount++; if(interCount%3===0) showInterstitial();   // 3스테이지 클리어마다 전면광고
   if(stage>MAX_STAGE){ gameWin(); return; }
   banner=t('bnStage')+' '+stage+' / '+MAX_STAGE+' ▲'; bannerT=2.6; sfx.levelup(); flashT=0.5; shake=Math.min(shake+6,14);
   // 남은 적·탄막 전부 소멸 (화면 정리)
@@ -1319,7 +1320,9 @@ const AD_REWARD_REAL='ca-app-pub-9017259597860535/2171653136';
 const AD_REWARD_TEST='ca-app-pub-3940256099942544/5224354917';
 const AD_BANNER_TEST='ca-app-pub-3940256099942544/6300978111'; // 구글 공식 테스트 배너
 const AD_BANNER_REAL='ca-app-pub-9017259597860535/2060833263'; // 출시 시 실제 배너 광고단위 ID 입력
-let admobReady=false;
+const AD_INTER_TEST='ca-app-pub-3940256099942544/1033173712';   // 구글 공식 테스트 전면
+const AD_INTER_REAL='ca-app-pub-9017259597860535/5264108929';   // 갤로그 실 전면 광고단위
+let admobReady=false, interCount=0;
 (async function initAdMob(){ try{ const C=window.Capacitor; if(C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.AdMob){ await C.Plugins.AdMob.initialize({initializeForTesting:AD_USE_TEST}); admobReady=true; if(typeof state==='undefined'||state!=='play') showBanner(); } }catch(e){ admobReady=false; } })();
 // 광고 대기/재생 오버레이 (멈춘 느낌 방지 — 준비 중 스피너·점 애니메이션 표시)
 const _adOv=document.getElementById('adOverlay');
@@ -1359,6 +1362,7 @@ async function playAd(cb){
 let bannerShown=false, bannerCreated=false;
 async function showBanner(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)||bannerShown) return; const bannerId=AD_USE_TEST?AD_BANNER_TEST:AD_BANNER_REAL; if(!bannerId) return; bannerShown=true; const _A=C.Plugins.AdMob; const _opt={ adId: bannerId, adSize:'BANNER', position:'BOTTOM_CENTER', margin:0, isTesting:AD_USE_TEST }; try{ if(bannerCreated){ try{ await _A.resumeBanner(); }catch(_e){ await _A.showBanner(_opt); } } else { await _A.showBanner(_opt); bannerCreated=true; } }catch(e){ bannerShown=false; } }
 async function hideBanner(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)||!bannerShown) return; bannerShown=false; try{ await C.Plugins.AdMob.hideBanner(); }catch(e){} }
+async function showInterstitial(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)) return; const interId=AD_USE_TEST?AD_INTER_TEST:AD_INTER_REAL; if(!interId) return; const A=C.Plugins.AdMob; try{ await A.prepareInterstitial({ adId:interId, isTesting:AD_USE_TEST }); await A.showInterstitial(); }catch(e){} }
 document.getElementById('reviveBtn').onclick=()=>{ if(reviveCount>=MAX_REVIVE||state!=='over') return; reviveCount++; document.getElementById('reviveBtn').style.display='none';
   playAd(()=>{ meta.gold=Math.max(0, meta.gold-lastEndBonus); saveMeta(); // 부활: 마감 보너스 회수(이미 썼으면 0까지만 — 마이너스 방지)
     player.hp=player.maxhp; player.xp=Math.min(player.xpNeed-1, Math.floor(player.xpNeed*TUNE.reviveXp)); enemies.length=0; bullets.length=0; ebullets.length=0; // 부활: 체력100% + 경험치(TUNE) 채워 시작
