@@ -83,7 +83,7 @@
   <button id="dexClose">닫기</button>
 </div>
 <div id="adov" class="hidden"><div class="sp"></div><div id="adovTxt">광고 보는 중…</div></div>
-<div id="ver">v0.4 · 딱지 강화(엽전 상점)</div>
+<div id="ver">v0.5 · 연출 강화(슬로모·완벽타·임팩트)</div>
 <div id="start">
   <h1>딱! 딱지치기</h1>
   <p>초록 구간에서 <b>탭</b>해서 딱지를 내리쳐요.<br/>상대 딱지가 <b>90°를 넘기면</b> 뒤집혀서 따먹어요!<br/>스테이지 올라갈수록 <b>초록은 좁아지고 파워바는 빨라져요</b> 🟫<br/><span id="bstage" style="color:#ffcf5c;font-weight:800"></span></p>
@@ -122,6 +122,7 @@ function applyDifficulty(){ const s=stage;
 let theta=0, omega=0, maxTheta=0;   // 뒤집기 물리(라디안, 0=평평, PI=뒤집힘)
 let Gcur=9.0;                       // 중력 토크(=딱지 무게). 스테이지↑ = 무거워짐 = 더 센 힘 필요
 let slamT=0, resultT=0, shake=0, flash=0, gt=0;
+let lastPower=0, perfectHit=false, teetering=false, teetDeg=0;
 let parts=[];                       // 먼지/파편
 let dropY=0;                        // 내리치는 딱지 낙하
 // ---- 딱지 도감(레어도) ----
@@ -191,7 +192,8 @@ function doImpact(){
   for(let i=0;i<16;i++){ const a=Math.random()*Math.PI*2, sp=1+Math.random()*3; parts.push({x:0,y:0,vx:Math.cos(a)*sp,vy:-Math.random()*4-1,life:0.5,r:2+Math.random()*3}); }
   // 파워 → 초기 각속도(ω0). 임계값 sqrt(2G)=~4.24 를 넘겨야 90° 통과
   omega = 1.5 + power*4.6 + powBonus();   // 힘 강화 시 더 잘 넘어감
-  theta=0.001; maxTheta=0; state='flip';
+  lastPower=power; perfectHit = power >= Math.min(0.97, GREEN[0] + (1-GREEN[0])*0.68);  // 초록 상단부 명중 = 완벽타
+  theta=0.001; maxTheta=0; teetering=false; state='flip';
 }
 
 function setReward(txt){ const b=$('rewardBtn'); b.textContent=txt; b.classList.remove('hidden'); }
@@ -199,23 +201,24 @@ function endFlip(success){
   state='result'; resultT=0; lastSuccess=success; rewardUsed=false;
   const deg=Math.round(maxTheta*180/Math.PI); const ri=RINFO[foe.rarity];
   if(success){
-    won++; combo++;
-    const gain=Math.round((10+stage*3+combo*2)*ri.mult); lastGain=gain; score+=gain;
+    won++; combo++; const pf=perfectHit;
+    let gain=Math.round((10+stage*3+combo*2)*ri.mult); if(pf) gain=Math.round(gain*1.5); lastGain=gain; score+=gain;
     const first=!(owned[foe.id]>0); owned[foe.id]=(owned[foe.id]||0)+1; saveDex();
-    const earn=Math.round((3+stage)*ri.mult*coinMult()); coins+=earn; saveCoins();
+    let earn=Math.round((3+stage)*ri.mult*coinMult()); if(pf) earn=Math.round(earn*1.5); coins+=earn; saveCoins();
     if(score>best){ best=score; try{localStorage.setItem('ddakji_best',best);}catch(e){} }
     stage++; if(stage>bestStage){ bestStage=stage; try{localStorage.setItem('ddakji_bstage',bestStage);}catch(e){} }
-    showMsg(foe.rarity==='e'?'전설 획득! 👑':foe.rarity==='r'?'레어 획득! ✨':'뒤집기 성공! 🟫', ri.mult>1?ri.color:'#aef5b0');
-    showSub((first?'🆕 새 딱지! ':'')+foe.name+' +'+gain+'점 · 🪙+'+earn+(ri.mult>1?' (x'+ri.mult+')':'')+' · STAGE '+stage);
-    sfx.win(); sfx.vib([20,40,30]);
-    const cc=foe.rarity==='c'?['#ffcf5c','#ff7a5c','#5cff9e','#5cc8ff']:[ri.color,'#ffffff',ri.color,'#ffe9b0'];
-    for(let i=0;i<(foe.rarity==='c'?30:50);i++){ const a=Math.random()*Math.PI*2, sp=2+Math.random()*5; parts.push({x:0,y:-10,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,life:0.9,r:3+Math.random()*4,c:cc[i%4]}); }
+    showMsg(foe.rarity==='e'?'전설 획득! 👑':foe.rarity==='r'?'레어 획득! ✨':(pf?'완벽하게 뒤집었다! 🎯':'뒤집기 성공! 🟫'), pf?'#ffe14d':(ri.mult>1?ri.color:'#aef5b0'));
+    showSub((pf?'✨완벽타 x1.5 ':'')+(first?'🆕 새 딱지! ':'')+foe.name+' +'+gain+'점 · 🪙+'+earn+(ri.mult>1?' (x'+ri.mult+')':'')+' · STAGE '+stage);
+    sfx.win(); sfx.vib([20,40,30]); shake=9; sfx.slam();   // 착지 쿵
+    for(let i=0;i<10;i++){ const a=-Math.PI/2+(Math.random()-.5)*2.2, sp=1+Math.random()*3; parts.push({x:(Math.random()-.5)*60,y:30,vx:Math.cos(a)*sp,vy:-Math.random()*3-1,life:0.5,r:2+Math.random()*3}); }
+    const cc=pf?['#ffe14d','#fff','#ffcf5c','#ffb04a']:(foe.rarity==='c'?['#ffcf5c','#ff7a5c','#5cff9e','#5cc8ff']:[ri.color,'#ffffff',ri.color,'#ffe9b0']);
+    const n=pf?64:(foe.rarity==='c'?30:50); for(let i=0;i<n;i++){ const a=Math.random()*Math.PI*2, sp=2+Math.random()*(pf?6:5); parts.push({x:0,y:-10,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,life:0.9,r:3+Math.random()*4,c:cc[i%4]}); }
     setReward('🎬 광고 보고 점수 2배');
   } else {
-    combo=0; const lack=Math.max(1,90-deg);
-    showMsg('아깝다! 😫','#ff9a9a');
-    showSub((deg>=80? `90°까지 딱 ${lack}° 모자랐어요!` : `${deg}°까지… 조금 더 세게!`)+' · '+foe.name);
-    sfx.fail(); sfx.vib(60);
+    combo=0; const lack=Math.max(1,90-deg); const nearly=deg>=82;
+    showMsg(nearly?'으악! 거의 넘어갔는데! 😣':'아깝다! 😫', nearly?'#ff7a7a':'#ff9a9a');
+    showSub((nearly? `90°까지 딱 ${lack}°!! 한 번만 더!` : deg>=70?`${deg}°까지… 조금만 더 세게!`:`${deg}°… 힘이 부족했어요`)+' · '+foe.name);
+    sfx.fail(); sfx.vib(nearly?[40,30,60]:60); if(nearly){ shake=7; flash=0.25; }
     setReward('🎬 광고 보고 쉽게 다시');
   }
   setTop();
@@ -268,16 +271,23 @@ function update(dt){
     slamT+=dt; dropY=-220*(1-Math.min(1,slamT/0.22))**1.4 + Math.min(1,slamT/0.22)*0;
     dropY=-220*(1-Math.min(1,slamT/0.22)); if(slamT>=0.22){ dropY=0; doImpact(); }
   } else if(state==='flip'){
+    // 티핑포인트(90°) 근처에서 느리게 넘어가면 슬로모션 → "넘어갈 듯 말 듯" 긴장 극대화
+    const degNow=theta*180/Math.PI;
+    const nearTip = degNow>68 && degNow<112 && Math.abs(omega)<2.7;
+    const slow = nearTip ? 0.33 : 1;
+    if(nearTip && !teetering){ teetering=true; sfx.teeter(); }
+    else if(!nearTip) teetering=false;
+    teetDeg=Math.round(degNow);
     // 역진자: 평형 0·π(안정), π/2(불안정 정점). α=-G·cos(θ)
-    const steps=3; const h=dt/steps;
+    const edt=dt*slow; const steps=4; const h=edt/steps;
     for(let i=0;i<steps;i++){
       const a=-Gcur*Math.cos(theta);
       omega+=a*h; omega*=0.999; theta+=omega*h;
       if(theta>maxTheta) maxTheta=theta;
     }
-    if(Math.abs(theta*180/Math.PI-90)<6 && Math.abs(omega)<2.2) { if(Math.random()<0.25) sfx.teeter(); }
-    if(theta>=Math.PI){ theta=Math.PI; endFlip(true); }
-    else if(theta<=0 && omega<=0){ theta=0; endFlip(false); }
+    if(nearTip && Math.random()<0.4) sfx.teeter();
+    if(theta>=Math.PI){ theta=Math.PI; teetering=false; endFlip(true); }
+    else if(theta<=0 && omega<=0){ theta=0; teetering=false; endFlip(false); }
   } else if(state==='result'){
     resultT+=dt;
   }
@@ -354,22 +364,36 @@ function render(){
   ctx.globalAlpha=1;
   ctx.restore();
 
+  // "거의…!" 티핑포인트 긴장 연출
+  if(state==='flip' && teetering){ const pulse=0.5+0.5*Math.sin(gt*22);
+    ctx.save(); ctx.textAlign='center';
+    ctx.globalAlpha=0.55+0.45*pulse; ctx.fillStyle='#ffe14d'; ctx.font='900 34px system-ui'; ctx.fillText('거의…!',W/2,H*0.28);
+    ctx.globalAlpha=0.8; ctx.fillStyle='#fff'; ctx.font='800 16px system-ui'; ctx.fillText(teetDeg+'°',W/2,H*0.28+26);
+    ctx.restore();
+  }
+
   // 충격 플래시
   if(flash>0){ ctx.fillStyle='rgba(255,240,200,'+(flash*0.5)+')'; ctx.fillRect(0,0,W,H); }
 
   // 파워 바 (ready)
   if(state==='ready'){
-    const bw=Math.min(W*0.8,340), bx=(W-bw)/2, by=H*0.78, bh=26;
-    ctx.fillStyle='rgba(0,0,0,.4)'; roundRect(bx-3,by-3,bw+6,bh+6,10); ctx.fill();
-    // 눈금 배경
-    ctx.fillStyle='#2e2416'; roundRect(bx,by,bw,bh,8); ctx.fill();
-    // 초록 구간
-    ctx.fillStyle='rgba(90,220,120,.55)'; ctx.fillRect(bx+bw*GREEN[0],by,bw*(GREEN[1]-GREEN[0]),bh);
-    ctx.fillStyle='rgba(120,255,150,.9)'; ctx.fillRect(bx+bw*GREEN[0],by,3,bh); ctx.fillRect(bx+bw*GREEN[1]-3,by,3,bh);
-    // 마커
+    const bw=Math.min(W*0.82,350), bx=(W-bw)/2, by=H*0.78, bh=28;
+    ctx.save();
+    ctx.fillStyle='rgba(0,0,0,.45)'; roundRect(bx-4,by-4,bw+8,bh+8,12); ctx.fill();
+    roundRect(bx,by,bw,bh,9); ctx.clip();
+    const bgr=ctx.createLinearGradient(bx,0,bx+bw,0); bgr.addColorStop(0,'#3a2a18'); bgr.addColorStop(1,'#5a4024');
+    ctx.fillStyle=bgr; ctx.fillRect(bx,by,bw,bh);
+    const gl=bx+bw*GREEN[0], gw=bw*(GREEN[1]-GREEN[0]);
+    ctx.fillStyle='rgba(70,200,110,.55)'; ctx.fillRect(gl,by,gw,bh);                 // 초록=성공
+    const pf0=Math.min(0.97,GREEN[0]+(1-GREEN[0])*0.68), pfl=bx+bw*pf0;
+    ctx.fillStyle='rgba(255,220,80,.6)'; ctx.fillRect(pfl,by,(bx+bw)-pfl,bh);         // 노랑=완벽
+    ctx.restore();
+    ctx.fillStyle='rgba(140,255,170,.95)'; ctx.fillRect(gl,by,3,bh);
     const mx=bx+bw*power;
-    ctx.fillStyle='#ffcf5c'; roundRect(mx-5,by-6,10,bh+12,4); ctx.fill();
-    ctx.fillStyle='#fff'; ctx.font='700 12px system-ui'; ctx.textAlign='center'; ctx.fillText('힘',bx+bw/2,by-10);
+    ctx.save(); ctx.shadowColor='#ffcf5c'; ctx.shadowBlur=10; ctx.fillStyle='#fff'; roundRect(mx-5,by-7,10,bh+14,4); ctx.fill(); ctx.restore();
+    ctx.fillStyle='#e9d6bf'; ctx.font='700 11px system-ui';
+    ctx.textAlign='left'; ctx.fillText('약',bx+2,by-8); ctx.textAlign='right'; ctx.fillText('강 💥',bx+bw-2,by-8);
+    ctx.textAlign='center'; ctx.fillStyle='#ffe14d'; ctx.font='800 12px system-ui'; ctx.fillText('초록=성공 · 노랑=완벽!',bx+bw/2,by+bh+17);
   }
 }
 
