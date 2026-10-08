@@ -20,6 +20,24 @@
   #start p{font-size:15px;line-height:1.7;color:#e9d6bf;max-width:300px}
   #start .btn{pointer-events:auto;margin-top:8px;background:#ffcf5c;color:#5a3a10;font-size:22px;font-weight:900;border:none;border-radius:16px;padding:16px 46px;box-shadow:0 6px 0 #b5831f;cursor:pointer}
   #start .btn:active{transform:translateY(3px);box-shadow:0 3px 0 #b5831f}
+  #foeLabel{top:calc(env(safe-area-inset-top,0px) + 54px);font-size:16px;font-weight:800;text-shadow:0 2px 4px #000}
+  #dexBtn,#dexBtn2{pointer-events:auto;position:fixed;background:rgba(22,16,10,.75);color:#ffcf5c;border:1px solid #6a4e2a;border-radius:12px;padding:8px 14px;font-size:14px;font-weight:800;cursor:pointer;z-index:8}
+  #dexBtn{right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 14px)}
+  #dexBtn2{position:static;margin-top:4px}
+  #rewardBtn{pointer-events:auto;position:fixed;left:50%;transform:translateX(-50%);top:54%;background:#2ec77a;color:#fff;border:none;border-radius:14px;padding:13px 22px;font-size:17px;font-weight:900;box-shadow:0 5px 0 #1a8a52;cursor:pointer;z-index:9}
+  #rewardBtn:active{transform:translateX(-50%) translateY(3px);box-shadow:0 2px 0 #1a8a52}
+  #dex{position:fixed;inset:0;z-index:12;background:rgba(18,12,7,.96);color:#fff;display:flex;flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 20px) 16px 20px;overflow-y:auto}
+  #dex h2{font-size:24px;color:#ffcf5c;margin-bottom:4px}
+  #dexGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:min(94vw,440px);margin:12px 0}
+  .dcard{background:#20160d;border:1px solid #3a2a18;border-radius:12px;padding:8px 4px;text-align:center;font-size:11px;font-weight:700}
+  .dcard .nm{margin-top:4px;color:#e9d6bf}
+  .dcard .cnt{font-size:10px;color:#9a815f}
+  .dcard.lk{opacity:.45}
+  #dexClose,#adov{pointer-events:auto}
+  #dexClose{margin-top:6px;background:#ffcf5c;color:#5a3a10;border:none;border-radius:12px;padding:12px 34px;font-size:17px;font-weight:900;box-shadow:0 5px 0 #b5831f;cursor:pointer}
+  #adov{position:fixed;inset:0;z-index:20;background:rgba(5,4,2,.93);color:#ffcf5c;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-size:18px;font-weight:800}
+  #adov .sp{width:40px;height:40px;border:5px solid rgba(255,255,255,.15);border-top-color:#ffcf5c;border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
   .hidden{display:none!important}
 </style></head>
 <body>
@@ -30,14 +48,25 @@
   <div class="pill"><span class="k">연속</span><span id="combo">0</span></div>
   <div class="pill"><span class="k">최고</span><span id="best">0</span></div>
 </div>
+<div class="ui" id="foeLabel"></div>
 <div class="ui" id="msg"></div>
 <div class="ui" id="sub"></div>
 <div class="ui hidden" id="hint">화면을 탭해서 내리쳐요!</div>
-<div id="ver">v0.2 · 스테이지 난이도 램프(초록↓·파워바↑)</div>
+<button id="dexBtn" class="hidden">📖 도감</button>
+<button id="rewardBtn" class="hidden"></button>
+<div id="dex" class="hidden">
+  <h2>📖 딱지 도감</h2>
+  <div id="dexCount" style="font-size:13px;color:#e9d6bf"></div>
+  <div id="dexGrid"></div>
+  <button id="dexClose">닫기</button>
+</div>
+<div id="adov" class="hidden"><div class="sp"></div><div id="adovTxt">광고 보는 중…</div></div>
+<div id="ver">v0.3 · 딱지 도감·레어·리워드광고</div>
 <div id="start">
   <h1>딱! 딱지치기</h1>
   <p>초록 구간에서 <b>탭</b>해서 딱지를 내리쳐요.<br/>상대 딱지가 <b>90°를 넘기면</b> 뒤집혀서 따먹어요!<br/>스테이지 올라갈수록 <b>초록은 좁아지고 파워바는 빨라져요</b> 🟫<br/><span id="bstage" style="color:#ffcf5c;font-weight:800"></span></p>
   <button class="btn" id="startBtn">시작</button>
+  <button id="dexBtn2">📖 딱지 도감 보기</button>
 </div>
 <script>
 const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
@@ -67,12 +96,37 @@ function applyDifficulty(){ const s=stage;
 }
 let theta=0, omega=0, maxTheta=0;   // 뒤집기 물리(라디안, 0=평평, PI=뒤집힘)
 let Gcur=9.0;                       // 중력 토크(=딱지 무게). 스테이지↑ = 무거워짐 = 더 센 힘 필요
-let slamT=0, resultT=0, shake=0, flash=0;
+let slamT=0, resultT=0, shake=0, flash=0, gt=0;
 let parts=[];                       // 먼지/파편
 let dropY=0;                        // 내리치는 딱지 낙하
-let pattern=0;                      // 상대 딱지 무늬
-const COLORS=[['#e8534e','#b23a36'],['#4e86e8','#3a62b2'],['#4eb86a','#36934f'],['#e8b24e','#b2832f'],['#a24ee8','#7a36b2'],['#3fb8c8','#2a8794']];
-let nearMiss=0;
+// ---- 딱지 도감(레어도) ----
+const DDAKJI=[
+  {id:'red',   name:'빨강 딱지', cols:['#e8534e','#b23a36'], rarity:'c'},
+  {id:'blue',  name:'파랑 딱지', cols:['#4e86e8','#3a62b2'], rarity:'c'},
+  {id:'green', name:'초록 딱지', cols:['#4eb86a','#36934f'], rarity:'c'},
+  {id:'yellow',name:'노랑 딱지', cols:['#e8b24e','#b2832f'], rarity:'c'},
+  {id:'purple',name:'보라 딱지', cols:['#a24ee8','#7a36b2'], rarity:'c'},
+  {id:'sky',   name:'하늘 딱지', cols:['#3fb8c8','#2a8794'], rarity:'c'},
+  {id:'tiger', name:'호랑이 딱지', cols:['#ff8a2a','#1c1c1c'], rarity:'r'},
+  {id:'magpie',name:'까치 딱지', cols:['#e9edf2','#20242c'], rarity:'r'},
+  {id:'rose',  name:'무궁화 딱지', cols:['#ff7ab0','#b23a6e'], rarity:'r'},
+  {id:'taeguk',name:'태극 딱지', cols:['#e5464e','#2a52be'], rarity:'r'},
+  {id:'gold',  name:'황금 딱지', cols:['#ffd75c','#bb8a1a'], rarity:'e'},
+  {id:'dragon',name:'용 딱지',   cols:['#38e0c8','#c9a227'], rarity:'e'},
+];
+const RINFO={ c:{label:'',       stars:'',    mult:1, color:'#cdbfa6'},
+             r:{label:'✨ 레어',  stars:'★★',  mult:2, color:'#7cf6ff'},
+             e:{label:'👑 전설',  stars:'★★★', mult:3, color:'#ffcf5c'} };
+let foe=DDAKJI[0];                   // 이번 라운드 상대 딱지
+let owned={};                        // 도감: id→획득수
+try{ owned=JSON.parse(localStorage.getItem('ddakji_dex')||'{}')||{}; }catch(e){}
+function saveDex(){ try{ localStorage.setItem('ddakji_dex',JSON.stringify(owned)); }catch(e){} }
+function pickFoe(){ const s=stage;
+  let rare=0.14+Math.min(0.20,s*0.01), epic=0.03+Math.min(0.09,s*0.006); // 스테이지↑ = 레어/전설 확률↑
+  const roll=Math.random(); let tier = roll<epic?'e' : roll<epic+rare?'r' : 'c';
+  const pool=DDAKJI.filter(d=>d.rarity===tier); return pool[Math.floor(Math.random()*pool.length)];
+}
+let lastGain=0, rewardUsed=false, lastSuccess=false, easyNext=false, foeGlow=0;
 
 function $(id){ return document.getElementById(id); }
 function setTop(){ $('score').textContent=score; $('combo').textContent=combo; $('stage').textContent=stage; $('best').textContent=best; }
@@ -80,7 +134,13 @@ function showMsg(t,c){ const m=$('msg'); m.textContent=t; m.style.color=c||'#fff
 function showSub(t){ const s=$('sub'); s.textContent=t||''; s.style.opacity=t?1:0; }
 function clearMsg(){ $('msg').style.opacity=0; $('sub').style.opacity=0; }
 
-function newRound(){ pattern=(pattern+1)%COLORS.length; theta=0; omega=0; maxTheta=0; power=0; pdir=1; applyDifficulty(); state='ready'; clearMsg(); $('hint').classList.remove('hidden'); }
+function newRound(keepFoe){ if(!keepFoe) foe=pickFoe(); theta=0; omega=0; maxTheta=0; power=0; pdir=1; rewardUsed=false; applyDifficulty();
+  if(easyNext){ GREEN=[Math.max(0.48,GREEN[0]-0.15),1.0]; easyNext=false; }   // 리워드 '쉽게 다시' 1회 적용
+  const ri=RINFO[foe.rarity]; foeGlow=foe.rarity==='c'?0:1;
+  $('foeLabel').innerHTML=(ri.label?('<span style="color:'+ri.color+'">'+ri.label+' '+ri.stars+'</span> '):'')+foe.name;
+  $('rewardBtn').classList.add('hidden'); $('dexBtn').classList.remove('hidden');
+  state='ready'; clearMsg(); $('hint').classList.remove('hidden');
+}
 
 function slam(){
   if(state!=='ready') return;
@@ -95,27 +155,57 @@ function doImpact(){
   theta=0.001; maxTheta=0; state='flip';
 }
 
+function setReward(txt){ const b=$('rewardBtn'); b.textContent=txt; b.classList.remove('hidden'); }
 function endFlip(success){
-  state='result'; resultT=0;
-  const deg=Math.round(maxTheta*180/Math.PI);
+  state='result'; resultT=0; lastSuccess=success; rewardUsed=false;
+  const deg=Math.round(maxTheta*180/Math.PI); const ri=RINFO[foe.rarity];
   if(success){
-    won++; combo++; const gain=10+stage*3+combo*2; score+=gain;
+    won++; combo++;
+    const gain=Math.round((10+stage*3+combo*2)*ri.mult); lastGain=gain; score+=gain;
+    const first=!(owned[foe.id]>0); owned[foe.id]=(owned[foe.id]||0)+1; saveDex();
     if(score>best){ best=score; try{localStorage.setItem('ddakji_best',best);}catch(e){} }
     stage++; if(stage>bestStage){ bestStage=stage; try{localStorage.setItem('ddakji_bstage',bestStage);}catch(e){} }
-    showMsg('뒤집기 성공! 🟫','#aef5b0'); showSub('+'+gain+'점 · STAGE '+stage+' ▶'+(combo>1?' ('+combo+'연속)':''));
+    showMsg(foe.rarity==='e'?'전설 획득! 👑':foe.rarity==='r'?'레어 획득! ✨':'뒤집기 성공! 🟫', ri.mult>1?ri.color:'#aef5b0');
+    showSub((first?'🆕 새 딱지! ':'')+foe.name+' +'+gain+'점'+(ri.mult>1?' (x'+ri.mult+')':'')+' · STAGE '+stage);
     sfx.win(); sfx.vib([20,40,30]);
-    for(let i=0;i<30;i++){ const a=Math.random()*Math.PI*2, sp=2+Math.random()*5; parts.push({x:0,y:-10,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,life:0.9,r:3+Math.random()*4,c:['#ffcf5c','#ff7a5c','#5cff9e','#5cc8ff'][i%4]}); }
+    const cc=foe.rarity==='c'?['#ffcf5c','#ff7a5c','#5cff9e','#5cc8ff']:[ri.color,'#ffffff',ri.color,'#ffe9b0'];
+    for(let i=0;i<(foe.rarity==='c'?30:50);i++){ const a=Math.random()*Math.PI*2, sp=2+Math.random()*5; parts.push({x:0,y:-10,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,life:0.9,r:3+Math.random()*4,c:cc[i%4]}); }
+    setReward('🎬 광고 보고 점수 2배');
   } else {
-    combo=0;
-    const lack=Math.max(1,90-deg);
+    combo=0; const lack=Math.max(1,90-deg);
     showMsg('아깝다! 😫','#ff9a9a');
-    showSub(deg>=80? `90°까지 딱 ${lack}° 모자랐어요!` : `${deg}°까지 올라갔어요 · 조금 더 세게!`);
+    showSub((deg>=80? `90°까지 딱 ${lack}° 모자랐어요!` : `${deg}°까지… 조금 더 세게!`)+' · '+foe.name);
     sfx.fail(); sfx.vib(60);
+    setReward('🎬 광고 보고 쉽게 다시');
   }
   setTop();
 }
+// ---- 리워드 광고 (현재 플레이스홀더; 앱 출시 때 AdMob 연동 지점) ----
+const AD_USE_TEST=false, AD_REWARD_REAL='', AD_REWARD_TEST='ca-app-pub-3940256099942544/5224354917';
+function playAd(cb){
+  const ov=$('adov'); ov.classList.remove('hidden'); let t=2; $('adovTxt').textContent='광고 보는 중… '+t;
+  const iv=setInterval(()=>{ t--; if(t>0){ $('adovTxt').textContent='광고 보는 중… '+t; } else { clearInterval(iv); ov.classList.add('hidden'); cb(); } },700);
+}
+function doReward(){ if(rewardUsed||state!=='result') return; rewardUsed=true; $('rewardBtn').classList.add('hidden'); initAudio();
+  playAd(()=>{
+    if(lastSuccess){ score+=lastGain; if(score>best){ best=score; try{localStorage.setItem('ddakji_best',best);}catch(e){} } showSub('점수 2배! +'+lastGain+'점 🎉'); setTop(); sfx.win(); }
+    else { easyNext=true; newRound(true); }   // 같은 딱지 쉽게 다시
+  });
+}
+// ---- 도감 ----
+function renderDex(){ const g=$('dexGrid'); g.innerHTML=''; let got=0;
+  DDAKJI.forEach(d=>{ const n=owned[d.id]||0; if(n>0) got++; const ri=RINFO[d.rarity];
+    const el=document.createElement('div'); el.className='dcard'+(n>0?'':' lk');
+    const sw=n>0? `<svg width="56" height="40" viewBox="0 0 56 40"><defs><linearGradient id="g_${d.id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${d.cols[0]}"/><stop offset="1" stop-color="${d.cols[1]}"/></linearGradient></defs><rect x="5" y="4" width="46" height="32" rx="5" fill="url(#g_${d.id})"/><line x1="5" y1="20" x2="51" y2="20" stroke="#ffffff66" stroke-width="2"/><line x1="28" y1="4" x2="28" y2="36" stroke="#ffffff66" stroke-width="2"/></svg>` : '<div style="font-size:30px;color:#4a3a28;height:40px;line-height:40px">❔</div>';
+    el.innerHTML=sw+'<div class="nm" style="color:'+(n>0?ri.color:'#6a5842')+'">'+(n>0?d.name:'???')+'</div><div class="cnt">'+(n>0?('x'+n+(ri.stars?' '+ri.stars:'')):(ri.label||'일반'))+'</div>';
+    g.appendChild(el);
+  });
+  $('dexCount').textContent='수집 '+got+' / '+DDAKJI.length+' 종';
+}
+function openDex(){ renderDex(); $('dex').classList.remove('hidden'); }
 
 function update(dt){
+  gt+=dt;
   if(shake>0) shake=Math.max(0,shake-dt*40);
   if(flash>0) flash=Math.max(0,flash-dt*2);
   for(const p of parts){ p.x+=p.vx; p.y+=p.vy; p.vy+=0.25; p.life-=dt; } parts=parts.filter(p=>p.life>0);
@@ -194,12 +284,17 @@ function render(){
   ctx.strokeStyle='rgba(255,255,255,.12)'; ctx.lineWidth=2; ctx.setLineDash([8,8]);
   ctx.beginPath(); ctx.arc(CX,CY+SZ*0.5,SZ*1.3,0,Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
 
+  // 레어/전설 딱지 오라
+  if(foe.rarity!=='c'){ const ri=RINFO[foe.rarity]; const pulse=0.5+0.4*Math.sin(gt*5);
+    ctx.save(); ctx.globalAlpha=pulse*0.55; ctx.fillStyle=ri.color;
+    ctx.beginPath(); ctx.arc(CX,CY-Math.sin(theta)*SZ*0.5,SZ*(1.05+pulse*0.12),0,Math.PI*2); ctx.fill(); ctx.restore(); }
+
   // 상대 딱지
-  drawDdakji(CX,CY,SZ,theta,COLORS[pattern]);
+  drawDdakji(CX,CY,SZ,theta,foe.cols);
 
   // 내리치는 내 딱지 (slam)
   if(state==='slam'){
-    drawDdakji(CX,CY+dropY,SZ*0.92,0,COLORS[(pattern+3)%COLORS.length]);
+    drawDdakji(CX,CY+dropY,SZ*0.92,0,['#d8b27a','#9a7638']);
   }
 
   // 먼지/파편
@@ -245,9 +340,12 @@ function tap(){
   }
 }
 cv.addEventListener('pointerdown',e=>{ e.preventDefault(); tap(); });
-document.addEventListener('pointerdown',e=>{ if(state==='result'&&!e.target.closest('#start')) tap(); },{passive:false});
+$('rewardBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); doReward(); });
+$('dexBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); initAudio(); openDex(); });
+$('dexBtn2').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); openDex(); });
+$('dexClose').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); $('dex').classList.add('hidden'); });
 
-$('startBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); initAudio(); score=0; combo=0; won=0; stage=1; $('start').classList.add('hidden'); setTop(); newRound(); lastTs=performance.now(); });
+$('startBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); initAudio(); score=0; combo=0; won=0; stage=1; easyNext=false; $('start').classList.add('hidden'); $('dexBtn').classList.remove('hidden'); setTop(); newRound(); lastTs=performance.now(); });
 setTop(); if(bestStage>1) $('bstage').textContent='🏆 최고 스테이지 '+bestStage;
 </script>
 </body></html>
