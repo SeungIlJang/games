@@ -140,7 +140,7 @@
   <div id="shopList"></div>
   <button class="btn" id="shopClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v1.12 · 3게임마다 전면광고 추가</div>
+<div id="ver">v1.13 · 전면광고 5판마다로 조정</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -507,7 +507,7 @@ function die(msg, fromChoice){
   if(score>0 && fbReady){ _mineMark={name:myName,score:Math.floor(score)}; fbSubmit(myName,score); $('overRank').textContent='🌐 전세계 랭킹 등록! (랭킹 보기)'; }
   else $('overRank').textContent = rank>0 ? ('🏆 랭킹 '+rank+'위'+(rank===1?' — 1등!':(rank<=3?' 진입!':''))) : '';
   deathCount++;
-  if(deathCount%3===0) playInterstitial(()=>{});   // 3게임(판)마다 전면광고
+  if(deathCount%5===0) playInterstitial(()=>{});   // 5게임(판)마다 전면광고
   showBanner();   // 결과 화면에 배너
   const canRevive = reviveCount<MAX_REVIVE && score>0;
   $('reviveBtn').style.display = canRevive ? 'block' : 'none';
