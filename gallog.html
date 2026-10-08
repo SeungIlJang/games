@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.97 · 3스테이지마다 전면광고 추가</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.98 · 리워드광고 후 게임 안이어지던 버그 수정</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">한국어</button>
       <button data-lang="en" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">English</button>
@@ -1351,7 +1351,7 @@ async function playAd(cb){
       });
       if(lr&&lr.remove) lr.remove(); if(ld&&ld.remove) ld.remove();
       lastTs=performance.now(); adPlaying=false; // 광고 종료 → 시간 점프 방지 후 재개
-      if(got) cb();             // 끝까지 봐야 보상
+      cb();   // 광고 닫히면 무조건 보상·게임 재개 (일부 플러그인 버전은 보상 이벤트가 닫힘 뒤에 와서 got=false로 프리즈되던 버그 수정)
       return;
     }catch(e){ if(lr&&lr.remove) lr.remove(); if(ld&&ld.remove) ld.remove(); console.warn('[ad] rewarded failed:', e); /* 로드 실패 시 아래 폴백 */ }
   }
