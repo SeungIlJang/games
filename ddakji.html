@@ -38,6 +38,20 @@
   #adov{position:fixed;inset:0;z-index:20;background:rgba(5,4,2,.93);color:#ffcf5c;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-size:18px;font-weight:800}
   #adov .sp{width:40px;height:40px;border:5px solid rgba(255,255,255,.15);border-top-color:#ffcf5c;border-radius:50%;animation:spin .8s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
+  #coinHud{position:fixed;left:10px;top:calc(env(safe-area-inset-top,0px) + 52px);font-size:14px;font-weight:800;color:#ffd75c;text-shadow:0 2px 3px #000;z-index:6;pointer-events:none}
+  #shopBtnP{pointer-events:auto;position:fixed;right:104px;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);background:rgba(22,16,10,.75);color:#8affb0;border:1px solid #2a6a40;border-radius:12px;padding:8px 14px;font-size:14px;font-weight:800;cursor:pointer;z-index:8}
+  #shopBtn2{pointer-events:auto;background:#20263c00;color:#8affb0;border:1px solid #2a6a40;border-radius:12px;padding:10px 18px;font-size:15px;font-weight:800;cursor:pointer;margin-top:2px}
+  #shop{position:fixed;inset:0;z-index:12;background:rgba(18,12,7,.97);color:#fff;display:flex;flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 20px) 16px 20px;overflow-y:auto}
+  #shop h2{font-size:24px;color:#8affb0;margin-bottom:2px}
+  #shopCoins{font-size:15px;color:#ffd75c;font-weight:800;margin-bottom:10px}
+  .urow{display:flex;align-items:center;gap:8px;width:min(94vw,440px);background:#20160d;border:1px solid #3a2a18;border-radius:12px;padding:10px 12px;margin:5px 0;text-align:left}
+  .urow .ui2{flex:1;min-width:0}
+  .urow .un{font-size:15px;font-weight:800}
+  .urow .ud{font-size:11px;color:#9a815f;margin-top:2px}
+  .urow .lv{font-size:11px;color:#8affb0;margin-top:2px;font-weight:700}
+  .urow .ub{background:#2ec77a;color:#fff;border:none;border-radius:10px;padding:10px 12px;font-weight:800;font-size:13px;cursor:pointer;pointer-events:auto;white-space:nowrap}
+  .urow .ub:disabled{background:#4a4030;color:#998;cursor:default}
+  #shopClose{margin-top:8px;background:#ffcf5c;color:#5a3a10;border:none;border-radius:12px;padding:12px 34px;font-size:17px;font-weight:900;box-shadow:0 5px 0 #b5831f;cursor:pointer;pointer-events:auto}
   .hidden{display:none!important}
 </style></head>
 <body>
@@ -52,8 +66,16 @@
 <div class="ui" id="msg"></div>
 <div class="ui" id="sub"></div>
 <div class="ui hidden" id="hint">화면을 탭해서 내리쳐요!</div>
+<div id="coinHud" class="hidden"></div>
 <button id="dexBtn" class="hidden">📖 도감</button>
+<button id="shopBtnP" class="hidden">🔨 강화</button>
 <button id="rewardBtn" class="hidden"></button>
+<div id="shop" class="hidden">
+  <h2>🔨 딱지 강화</h2>
+  <div id="shopCoins"></div>
+  <div id="shopRows"></div>
+  <button id="shopClose">닫기</button>
+</div>
 <div id="dex" class="hidden">
   <h2>📖 딱지 도감</h2>
   <div id="dexCount" style="font-size:13px;color:#e9d6bf"></div>
@@ -61,12 +83,15 @@
   <button id="dexClose">닫기</button>
 </div>
 <div id="adov" class="hidden"><div class="sp"></div><div id="adovTxt">광고 보는 중…</div></div>
-<div id="ver">v0.3 · 딱지 도감·레어·리워드광고</div>
+<div id="ver">v0.4 · 딱지 강화(엽전 상점)</div>
 <div id="start">
   <h1>딱! 딱지치기</h1>
   <p>초록 구간에서 <b>탭</b>해서 딱지를 내리쳐요.<br/>상대 딱지가 <b>90°를 넘기면</b> 뒤집혀서 따먹어요!<br/>스테이지 올라갈수록 <b>초록은 좁아지고 파워바는 빨라져요</b> 🟫<br/><span id="bstage" style="color:#ffcf5c;font-weight:800"></span></p>
   <button class="btn" id="startBtn">시작</button>
-  <button id="dexBtn2">📖 딱지 도감 보기</button>
+  <div style="display:flex;gap:10px">
+    <button id="dexBtn2">📖 도감</button>
+    <button id="shopBtn2">🔨 강화</button>
+  </div>
 </div>
 <script>
 const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
@@ -89,10 +114,10 @@ let power=0, pdir=1;                 // 파워 바 (0..1 핑퐁)
 let GREEN=[0.70,0.92];              // 성공 구간(초록). 스테이지별로 좁아지고 위로. 아래 0.5~0.69는 '아깝다' 니어미스
 let barSpeed=1.35;                  // 파워바 속도(스테이지↑ = 빨라짐)
 function applyDifficulty(){ const s=stage;
-  barSpeed=Math.min(3.0, 1.2 + (s-1)*0.12);            // 파워바 점점 빠르게(아슬아슬)
+  barSpeed=Math.min(3.0, 1.2 + (s-1)*0.12) * (1 - up.barslow*0.08);  // 스테이지↑ 빠르게 · 집중력 강화로 감속
   Gcur=Math.min(13.5, 9 + (s-1)*0.42);                 // 딱지 점점 무겁게 → 뒤집기 임계 힘 상승
-  const pstar=(Math.sqrt(2*Gcur)-1.5)/4.6;             // 이론 임계 파워(ω0=1.5+power*4.6 기준)
-  GREEN=[ Math.min(0.90, pstar+0.095), 1.0 ];          // 초록=실제 성공구간(임계+여유 ~ 최대). 스테이지↑ = 좁아짐(최고도 band≥0.10)
+  const pstar=(Math.sqrt(2*Gcur)-1.5-powBonus())/4.6;  // 임계 파워(ω0=1.5+power*4.6+힘강화 기준)
+  GREEN=[ Math.max(0.40, Math.min(0.90, pstar+0.095-aimBonus())), 1.0 ]; // 초록=실제 성공구간. 힘/정확도 강화로 넓어짐
 }
 let theta=0, omega=0, maxTheta=0;   // 뒤집기 물리(라디안, 0=평평, PI=뒤집힘)
 let Gcur=9.0;                       // 중력 토크(=딱지 무게). 스테이지↑ = 무거워짐 = 더 센 힘 필요
@@ -128,8 +153,22 @@ function pickFoe(){ const s=stage;
 }
 let lastGain=0, rewardUsed=false, lastSuccess=false, easyNext=false, foeGlow=0;
 
+// ---- 엽전 & 딱지 강화(영구 성장) ----
+let coins=0, up={power:0,aim:0,barslow:0,coin:0};
+try{ coins=parseInt(localStorage.getItem('ddakji_coins')||'0')||0; up=Object.assign(up,JSON.parse(localStorage.getItem('ddakji_up')||'{}')); }catch(e){}
+function saveCoins(){ try{ localStorage.setItem('ddakji_coins',coins); localStorage.setItem('ddakji_up',JSON.stringify(up)); }catch(e){} }
+const UPG=[
+  {id:'power',  name:'💪 내려치는 힘', desc:'뒤집기에 필요한 힘 ↓ (초록 넓어짐)', max:5, cost:l=>40+l*45},
+  {id:'aim',    name:'🎯 정확도',     desc:'초록 성공 구간이 더 넓어져요', max:5, cost:l=>40+l*45},
+  {id:'barslow',name:'🐢 집중력',     desc:'파워바가 느려져 맞추기 쉬워요', max:4, cost:l=>60+l*70},
+  {id:'coin',   name:'🪙 엽전 복',    desc:'엽전 획득량이 늘어나요', max:5, cost:l=>50+l*55},
+];
+function powBonus(){ return up.power*0.28; }         // ω0 보너스
+function aimBonus(){ return up.aim*0.016; }          // 초록 하한 ↓(넓어짐)
+function coinMult(){ return 1 + up.coin*0.3; }
+
 function $(id){ return document.getElementById(id); }
-function setTop(){ $('score').textContent=score; $('combo').textContent=combo; $('stage').textContent=stage; $('best').textContent=best; }
+function setTop(){ $('score').textContent=score; $('combo').textContent=combo; $('stage').textContent=stage; $('best').textContent=best; const ch=$('coinHud'); if(ch) ch.textContent='🪙 '+coins; }
 function showMsg(t,c){ const m=$('msg'); m.textContent=t; m.style.color=c||'#fff'; m.style.opacity=1; }
 function showSub(t){ const s=$('sub'); s.textContent=t||''; s.style.opacity=t?1:0; }
 function clearMsg(){ $('msg').style.opacity=0; $('sub').style.opacity=0; }
@@ -138,7 +177,7 @@ function newRound(keepFoe){ if(!keepFoe) foe=pickFoe(); theta=0; omega=0; maxThe
   if(easyNext){ GREEN=[Math.max(0.48,GREEN[0]-0.15),1.0]; easyNext=false; }   // 리워드 '쉽게 다시' 1회 적용
   const ri=RINFO[foe.rarity]; foeGlow=foe.rarity==='c'?0:1;
   $('foeLabel').innerHTML=(ri.label?('<span style="color:'+ri.color+'">'+ri.label+' '+ri.stars+'</span> '):'')+foe.name;
-  $('rewardBtn').classList.add('hidden'); $('dexBtn').classList.remove('hidden');
+  $('rewardBtn').classList.add('hidden'); $('dexBtn').classList.remove('hidden'); $('shopBtnP').classList.remove('hidden');
   state='ready'; clearMsg(); $('hint').classList.remove('hidden');
 }
 
@@ -151,7 +190,7 @@ function doImpact(){
   shake=10; flash=0.5; sfx.slam(); sfx.vib(30);
   for(let i=0;i<16;i++){ const a=Math.random()*Math.PI*2, sp=1+Math.random()*3; parts.push({x:0,y:0,vx:Math.cos(a)*sp,vy:-Math.random()*4-1,life:0.5,r:2+Math.random()*3}); }
   // 파워 → 초기 각속도(ω0). 임계값 sqrt(2G)=~4.24 를 넘겨야 90° 통과
-  omega = 1.5 + power*4.6;   // power>~0.595 이면 뒤집힘 가능
+  omega = 1.5 + power*4.6 + powBonus();   // 힘 강화 시 더 잘 넘어감
   theta=0.001; maxTheta=0; state='flip';
 }
 
@@ -163,10 +202,11 @@ function endFlip(success){
     won++; combo++;
     const gain=Math.round((10+stage*3+combo*2)*ri.mult); lastGain=gain; score+=gain;
     const first=!(owned[foe.id]>0); owned[foe.id]=(owned[foe.id]||0)+1; saveDex();
+    const earn=Math.round((3+stage)*ri.mult*coinMult()); coins+=earn; saveCoins();
     if(score>best){ best=score; try{localStorage.setItem('ddakji_best',best);}catch(e){} }
     stage++; if(stage>bestStage){ bestStage=stage; try{localStorage.setItem('ddakji_bstage',bestStage);}catch(e){} }
     showMsg(foe.rarity==='e'?'전설 획득! 👑':foe.rarity==='r'?'레어 획득! ✨':'뒤집기 성공! 🟫', ri.mult>1?ri.color:'#aef5b0');
-    showSub((first?'🆕 새 딱지! ':'')+foe.name+' +'+gain+'점'+(ri.mult>1?' (x'+ri.mult+')':'')+' · STAGE '+stage);
+    showSub((first?'🆕 새 딱지! ':'')+foe.name+' +'+gain+'점 · 🪙+'+earn+(ri.mult>1?' (x'+ri.mult+')':'')+' · STAGE '+stage);
     sfx.win(); sfx.vib([20,40,30]);
     const cc=foe.rarity==='c'?['#ffcf5c','#ff7a5c','#5cff9e','#5cc8ff']:[ri.color,'#ffffff',ri.color,'#ffe9b0'];
     for(let i=0;i<(foe.rarity==='c'?30:50);i++){ const a=Math.random()*Math.PI*2, sp=2+Math.random()*5; parts.push({x:0,y:-10,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,life:0.9,r:3+Math.random()*4,c:cc[i%4]}); }
@@ -203,6 +243,18 @@ function renderDex(){ const g=$('dexGrid'); g.innerHTML=''; let got=0;
   $('dexCount').textContent='수집 '+got+' / '+DDAKJI.length+' 종';
 }
 function openDex(){ renderDex(); $('dex').classList.remove('hidden'); }
+// ---- 강화 상점 ----
+function renderShop(){ $('shopCoins').textContent='보유 엽전: 🪙 '+coins; const box=$('shopRows'); box.innerHTML='';
+  UPG.forEach(u=>{ const lv=up[u.id]||0, maxed=lv>=u.max, cost=u.cost(lv);
+    const row=document.createElement('div'); row.className='urow';
+    row.innerHTML='<div class="ui2"><div class="un">'+u.name+'</div><div class="ud">'+u.desc+'</div><div class="lv">Lv '+lv+' / '+u.max+'</div></div>';
+    const b=document.createElement('button'); b.className='ub';
+    if(maxed){ b.textContent='MAX'; b.disabled=true; }
+    else { b.textContent='🪙 '+cost; b.disabled=coins<cost; b.onclick=()=>{ if(coins<cost)return; coins-=cost; up[u.id]=lv+1; saveCoins(); sfx.win(); sfx.vib(20); renderShop(); setTop(); }; }
+    row.appendChild(b); box.appendChild(row);
+  });
+}
+function openShop(){ renderShop(); $('shop').classList.remove('hidden'); }
 
 function update(dt){
   gt+=dt;
@@ -344,8 +396,11 @@ $('rewardBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPro
 $('dexBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); initAudio(); openDex(); });
 $('dexBtn2').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); openDex(); });
 $('dexClose').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); $('dex').classList.add('hidden'); });
+$('shopBtnP').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); initAudio(); openShop(); });
+$('shopBtn2').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); openShop(); });
+$('shopClose').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); $('shop').classList.add('hidden'); });
 
-$('startBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); initAudio(); score=0; combo=0; won=0; stage=1; easyNext=false; $('start').classList.add('hidden'); $('dexBtn').classList.remove('hidden'); setTop(); newRound(); lastTs=performance.now(); });
+$('startBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); initAudio(); score=0; combo=0; won=0; stage=1; easyNext=false; $('start').classList.add('hidden'); $('dexBtn').classList.remove('hidden'); $('shopBtnP').classList.remove('hidden'); $('coinHud').classList.remove('hidden'); setTop(); newRound(); lastTs=performance.now(); });
 setTop(); if(bestStage>1) $('bstage').textContent='🏆 최고 스테이지 '+bestStage;
 </script>
 </body></html>
