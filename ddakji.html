@@ -26,17 +26,17 @@
 <canvas id="cv"></canvas>
 <div class="ui" id="topbar">
   <div class="pill"><span class="k">점수</span><span id="score">0</span></div>
+  <div class="pill"><span class="k">스테이지</span><span id="stage">1</span></div>
   <div class="pill"><span class="k">연속</span><span id="combo">0</span></div>
-  <div class="pill"><span class="k">딴 딱지</span><span id="won">0</span></div>
   <div class="pill"><span class="k">최고</span><span id="best">0</span></div>
 </div>
 <div class="ui" id="msg"></div>
 <div class="ui" id="sub"></div>
 <div class="ui hidden" id="hint">화면을 탭해서 내리쳐요!</div>
-<div id="ver">v0.1 · 딱지치기 MVP (재미검증)</div>
+<div id="ver">v0.2 · 스테이지 난이도 램프(초록↓·파워바↑)</div>
 <div id="start">
   <h1>딱! 딱지치기</h1>
-  <p>초록 구간에서 <b>탭</b>해서 딱지를 내리쳐요.<br/>상대 딱지가 <b>90°를 넘기면</b> 뒤집혀서 따먹어요!<br/>넘어갈 듯 말 듯… 타이밍이 전부예요 🟫</p>
+  <p>초록 구간에서 <b>탭</b>해서 딱지를 내리쳐요.<br/>상대 딱지가 <b>90°를 넘기면</b> 뒤집혀서 따먹어요!<br/>스테이지 올라갈수록 <b>초록은 좁아지고 파워바는 빨라져요</b> 🟫<br/><span id="bstage" style="color:#ffcf5c;font-weight:800"></span></p>
   <button class="btn" id="startBtn">시작</button>
 </div>
 <script>
@@ -54,12 +54,19 @@ const sfx={ slam(){ noise(0.18,0.5); tone(90,0.18,'square',0.25,40); }, whoosh()
 
 // ---- State ----
 let state='start'; // start | ready | slam | flip | result
-let score=0, combo=0, won=0, best=0;
-try{ best=parseInt(localStorage.getItem('ddakji_best')||'0')||0; }catch(e){}
+let score=0, combo=0, won=0, best=0, stage=1, bestStage=1;
+try{ best=parseInt(localStorage.getItem('ddakji_best')||'0')||0; bestStage=parseInt(localStorage.getItem('ddakji_bstage')||'1')||1; }catch(e){}
 let power=0, pdir=1;                 // 파워 바 (0..1 핑퐁)
-const GREEN=[0.70,0.92];            // 성공 구간(초록). 이 아래 0.5~0.69는 '아깝다' 니어미스 구간
+let GREEN=[0.70,0.92];              // 성공 구간(초록). 스테이지별로 좁아지고 위로. 아래 0.5~0.69는 '아깝다' 니어미스
+let barSpeed=1.35;                  // 파워바 속도(스테이지↑ = 빨라짐)
+function applyDifficulty(){ const s=stage;
+  barSpeed=Math.min(3.0, 1.2 + (s-1)*0.12);            // 파워바 점점 빠르게(아슬아슬)
+  Gcur=Math.min(13.5, 9 + (s-1)*0.42);                 // 딱지 점점 무겁게 → 뒤집기 임계 힘 상승
+  const pstar=(Math.sqrt(2*Gcur)-1.5)/4.6;             // 이론 임계 파워(ω0=1.5+power*4.6 기준)
+  GREEN=[ Math.min(0.90, pstar+0.095), 1.0 ];          // 초록=실제 성공구간(임계+여유 ~ 최대). 스테이지↑ = 좁아짐(최고도 band≥0.10)
+}
 let theta=0, omega=0, maxTheta=0;   // 뒤집기 물리(라디안, 0=평평, PI=뒤집힘)
-const G=9.0;                        // 중력 토크 상수 (티핑포인트 PI/2)
+let Gcur=9.0;                       // 중력 토크(=딱지 무게). 스테이지↑ = 무거워짐 = 더 센 힘 필요
 let slamT=0, resultT=0, shake=0, flash=0;
 let parts=[];                       // 먼지/파편
 let dropY=0;                        // 내리치는 딱지 낙하
@@ -68,12 +75,12 @@ const COLORS=[['#e8534e','#b23a36'],['#4e86e8','#3a62b2'],['#4eb86a','#36934f'],
 let nearMiss=0;
 
 function $(id){ return document.getElementById(id); }
-function setTop(){ $('score').textContent=score; $('combo').textContent=combo; $('won').textContent=won; $('best').textContent=best; }
+function setTop(){ $('score').textContent=score; $('combo').textContent=combo; $('stage').textContent=stage; $('best').textContent=best; }
 function showMsg(t,c){ const m=$('msg'); m.textContent=t; m.style.color=c||'#fff'; m.style.opacity=1; }
 function showSub(t){ const s=$('sub'); s.textContent=t||''; s.style.opacity=t?1:0; }
 function clearMsg(){ $('msg').style.opacity=0; $('sub').style.opacity=0; }
 
-function newRound(){ pattern=(pattern+1)%COLORS.length; theta=0; omega=0; maxTheta=0; power=0; pdir=1; state='ready'; clearMsg(); $('hint').classList.remove('hidden'); }
+function newRound(){ pattern=(pattern+1)%COLORS.length; theta=0; omega=0; maxTheta=0; power=0; pdir=1; applyDifficulty(); state='ready'; clearMsg(); $('hint').classList.remove('hidden'); }
 
 function slam(){
   if(state!=='ready') return;
@@ -92,9 +99,10 @@ function endFlip(success){
   state='result'; resultT=0;
   const deg=Math.round(maxTheta*180/Math.PI);
   if(success){
-    won++; combo++; const gain=10+combo*2; score+=gain;
+    won++; combo++; const gain=10+stage*3+combo*2; score+=gain;
     if(score>best){ best=score; try{localStorage.setItem('ddakji_best',best);}catch(e){} }
-    showMsg('뒤집기 성공! 🟫','#aef5b0'); showSub('+'+gain+'점 · '+(combo>1?combo+'연속!':'딱지 획득'));
+    stage++; if(stage>bestStage){ bestStage=stage; try{localStorage.setItem('ddakji_bstage',bestStage);}catch(e){} }
+    showMsg('뒤집기 성공! 🟫','#aef5b0'); showSub('+'+gain+'점 · STAGE '+stage+' ▶'+(combo>1?' ('+combo+'연속)':''));
     sfx.win(); sfx.vib([20,40,30]);
     for(let i=0;i<30;i++){ const a=Math.random()*Math.PI*2, sp=2+Math.random()*5; parts.push({x:0,y:-10,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,life:0.9,r:3+Math.random()*4,c:['#ffcf5c','#ff7a5c','#5cff9e','#5cc8ff'][i%4]}); }
   } else {
@@ -113,7 +121,7 @@ function update(dt){
   for(const p of parts){ p.x+=p.vx; p.y+=p.vy; p.vy+=0.25; p.life-=dt; } parts=parts.filter(p=>p.life>0);
 
   if(state==='ready'){
-    power+=pdir*dt*1.35; if(power>=1){power=1;pdir=-1;} else if(power<=0){power=0;pdir=1;}
+    power+=pdir*dt*barSpeed; if(power>=1){power=1;pdir=-1;} else if(power<=0){power=0;pdir=1;}
   } else if(state==='slam'){
     slamT+=dt; dropY=-220*(1-Math.min(1,slamT/0.22))**1.4 + Math.min(1,slamT/0.22)*0;
     dropY=-220*(1-Math.min(1,slamT/0.22)); if(slamT>=0.22){ dropY=0; doImpact(); }
@@ -121,7 +129,7 @@ function update(dt){
     // 역진자: 평형 0·π(안정), π/2(불안정 정점). α=-G·cos(θ)
     const steps=3; const h=dt/steps;
     for(let i=0;i<steps;i++){
-      const a=-G*Math.cos(theta);
+      const a=-Gcur*Math.cos(theta);
       omega+=a*h; omega*=0.999; theta+=omega*h;
       if(theta>maxTheta) maxTheta=theta;
     }
@@ -239,7 +247,7 @@ function tap(){
 cv.addEventListener('pointerdown',e=>{ e.preventDefault(); tap(); });
 document.addEventListener('pointerdown',e=>{ if(state==='result'&&!e.target.closest('#start')) tap(); },{passive:false});
 
-$('startBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); initAudio(); $('start').classList.add('hidden'); setTop(); newRound(); lastTs=performance.now(); });
-setTop();
+$('startBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); initAudio(); score=0; combo=0; won=0; stage=1; $('start').classList.add('hidden'); setTop(); newRound(); lastTs=performance.now(); });
+setTop(); if(bestStage>1) $('bstage').textContent='🏆 최고 스테이지 '+bestStage;
 </script>
 </body></html>
