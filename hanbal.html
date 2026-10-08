@@ -62,7 +62,7 @@
 
 <div id="start" class="center on">
   <h1>모두의 한방</h1>
-  <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v0.15 · 배너광고 추가 · 화면 버전표기 시작</div>
+  <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v0.16 · 3판마다 전면광고 추가</div>
   <div class="sub">🟠 <b>움직이는 구조물</b>의 틈이 열릴 때<br>🔵 <b>타겟</b>을 맞추세요! (리드샷 타이밍)<br>구조물에 막히면 실패 · 화면 탭 = 발사</div>
   <div id="gunsel" class="guns"></div>
   <button class="btn" id="startBtn">시작</button>
@@ -139,7 +139,9 @@ const AD_REWARD_TEST='ca-app-pub-3940256099942544/5224354917'; // 구글 공식 
 const AD_REWARD_REAL='ca-app-pub-9017259597860535/3081347454'; // 모두의 한방 실 리워드 광고단위
 const AD_BANNER_TEST='ca-app-pub-3940256099942544/6300978111'; // 구글 공식 테스트 배너
 const AD_BANNER_REAL='ca-app-pub-9017259597860535/6637217576'; // 출시 시 실제 배너 광고단위 ID 입력
-let admobReady=false;
+const AD_INTER_TEST='ca-app-pub-3940256099942544/1033173712';   // 구글 공식 테스트 전면
+const AD_INTER_REAL='ca-app-pub-9017259597860535/5835788710';   // 모두의 한방 실 전면 광고단위
+let admobReady=false, interCount=0;
 (async function initAdMob(){ try{ const C=window.Capacitor; if(C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.AdMob){ await C.Plugins.AdMob.initialize({initializeForTesting:AD_USE_TEST}); admobReady=true; if(typeof state==='undefined'||state!=='play') showBanner(); } }catch(e){ admobReady=false; } })();
 function adLoading(on){ let el=document.getElementById('adLoading');
   if(!el){ if(!document.getElementById('adSpKf')){ const st=document.createElement('style'); st.id='adSpKf'; st.textContent='@keyframes sp{to{transform:rotate(360deg)}}'; document.head.appendChild(st); }
@@ -172,6 +174,7 @@ async function playAd(onReward){
 let bannerShown=false, bannerCreated=false;
 async function showBanner(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)||bannerShown) return; const bannerId=AD_USE_TEST?AD_BANNER_TEST:AD_BANNER_REAL; if(!bannerId) return; bannerShown=true; const _A=C.Plugins.AdMob; const _opt={ adId: bannerId, adSize:'BANNER', position:'BOTTOM_CENTER', margin:0, isTesting:AD_USE_TEST }; try{ if(bannerCreated){ try{ await _A.resumeBanner(); }catch(_e){ await _A.showBanner(_opt); } } else { await _A.showBanner(_opt); bannerCreated=true; } }catch(e){ bannerShown=false; } }
 async function hideBanner(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)||!bannerShown) return; bannerShown=false; try{ await C.Plugins.AdMob.hideBanner(); }catch(e){} }
+async function showInterstitial(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)) return; const interId=AD_USE_TEST?AD_INTER_TEST:AD_INTER_REAL; if(!interId) return; const A=C.Plugins.AdMob; try{ await A.prepareInterstitial({ adId:interId, isTesting:AD_USE_TEST }); await A.showInterstitial(); }catch(e){} }
 function gunUnlocked(g){ return best>=g.unlock; }
 function renderGunSelect(){
   const box=document.getElementById('gunsel'); if(!box) return; box.innerHTML='';
@@ -278,6 +281,7 @@ function gameOver(){
   document.getElementById('dblBtn').classList.toggle('hidden', doubledRun);    // 2배도 판당 1회
   document.getElementById('over').classList.remove('hidden');
   document.getElementById('over').classList.add('on');
+  interCount++; if(interCount%3===0) showInterstitial();   // 3판마다 전면광고
   showBanner();   // 결과 화면에 배너
   submitScore().then(renderLB).catch(()=>renderLB()); // 리더보드 제출·갱신
 }
