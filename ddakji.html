@@ -83,7 +83,7 @@
   <button id="dexClose">닫기</button>
 </div>
 <div id="adov" class="hidden"><div class="sp"></div><div id="adovTxt">광고 보는 중…</div></div>
-<div id="ver">모두의 딱지치기 v0.6</div>
+<div id="ver">모두의 딱지치기 v0.7 · 난이도 상향</div>
 <div id="start">
   <h1 style="font-size:38px">모두의 딱지치기</h1>
   <p>초록 구간에서 <b>탭</b>해서 딱지를 내리쳐요.<br/>상대 딱지가 <b>90°를 넘기면</b> 뒤집혀서 따먹어요!<br/>스테이지 올라갈수록 <b>초록은 좁아지고 파워바는 빨라져요</b> 🟫<br/><span id="bstage" style="color:#ffcf5c;font-weight:800"></span></p>
@@ -114,10 +114,10 @@ let power=0, pdir=1;                 // 파워 바 (0..1 핑퐁)
 let GREEN=[0.70,0.92];              // 성공 구간(초록). 스테이지별로 좁아지고 위로. 아래 0.5~0.69는 '아깝다' 니어미스
 let barSpeed=1.35;                  // 파워바 속도(스테이지↑ = 빨라짐)
 function applyDifficulty(){ const s=stage;
-  barSpeed=Math.min(3.0, 1.2 + (s-1)*0.12) * (1 - up.barslow*0.08);  // 스테이지↑ 빠르게 · 집중력 강화로 감속
-  Gcur=Math.min(13.5, 9 + (s-1)*0.42);                 // 딱지 점점 무겁게 → 뒤집기 임계 힘 상승
+  barSpeed=Math.min(3.3, 1.3 + (s-1)*0.14) * (1 - up.barslow*0.08);  // 스테이지↑ 빠르게(상향) · 집중력 강화로 감속
+  Gcur=Math.min(14.5, 9 + (s-1)*0.5);                  // 딱지 점점 무겁게(상향) → 뒤집기 임계 힘 상승
   const pstar=(Math.sqrt(2*Gcur)-1.5-powBonus())/4.6;  // 임계 파워(ω0=1.5+power*4.6+힘강화 기준)
-  GREEN=[ Math.max(0.40, Math.min(0.90, pstar+0.095-aimBonus())), 1.0 ]; // 초록=실제 성공구간. 힘/정확도 강화로 넓어짐
+  GREEN=[ Math.max(0.40, Math.min(0.92, pstar+0.085-aimBonus())), 1.0 ]; // 초록=실제 성공구간(상향: 더 좁게). 힘/정확도 강화로 넓어짐
 }
 let theta=0, omega=0, maxTheta=0;   // 뒤집기 물리(라디안, 0=평평, PI=뒤집힘)
 let Gcur=9.0;                       // 중력 토크(=딱지 무게). 스테이지↑ = 무거워짐 = 더 센 힘 필요
