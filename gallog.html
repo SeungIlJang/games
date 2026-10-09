@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.98 · 리워드광고 후 게임 안이어지던 버그 수정</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.99 · 전면광고 중 게임정지(사망방지) + 후반 레벨업 정체 완화</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">한국어</button>
       <button data-lang="en" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">English</button>
@@ -750,10 +750,11 @@ function hurtEnemy(e,dmg,color){
   if(e.hp<=0){ e.dead=true; kills++;
     combo++; comboTimer=2.5; if(combo>maxCombo) maxCombo=combo;
     { const g=Math.round((e.boss?20:1)*goldMult()); meta.gold+=g; runGold+=g; } // 실시간 골드(골드획득 강화 반영)
-    texts.push({x:e.x,y:e.y-e.r,vy:-46,life:0.7,str:e.boss?'BOSS!':'+'+(e.gem||1),color:e.boss?'#ff5ce1':'#7df3ff',size:e.boss?22:14}); // +N XP텍스트=젬 시안색
+    const gv=Math.max(1,Math.round((e.gem||0)*(1+(stage-1)*0.14)));  // 적 경험치(젬)를 스테이지 비례로 증가(후반 레벨업 정체 해소)
+    texts.push({x:e.x,y:e.y-e.r,vy:-46,life:0.7,str:e.boss?'BOSS!':'+'+gv,color:e.boss?'#ff5ce1':'#7df3ff',size:e.boss?22:14}); // +N XP텍스트=젬 시안색
     burst(e.x,e.y,color||e.color,e.big?18:8); shake=Math.min(shake+(e.boss?4:(e.big?0.5:0.12)),8);
     e.big?sfx.killBig():sfx.kill();
-    if(e.gem>0) gems.push({x:e.x,y:e.y,v:e.gem});
+    if(e.gem>0) gems.push({x:e.x,y:e.y,v:gv});
     if(player.lifesteal>0){ const cap=player.maxhp*0.05, h=Math.min(player.lifesteal, Math.max(0,cap-lifestealAcc)); player.hp=Math.min(player.maxhp,player.hp+h); lifestealAcc+=h; } // 초당 최대 5%까지만 흡혈 회복
     if(e.boss) heals.push({x:e.x,y:e.y}); else if(Math.random()<0.02) heals.push({x:e.x,y:e.y}); // 힐 드롭(희귀)
     if(e.type==='splitter'){ for(let i=0;i<2;i++){ const a=rand(0,6.28); enemies.push(makeEnemy(e.x+Math.cos(a)*10,e.y+Math.sin(a)*10,'fast',1+time/60)); } }
@@ -997,7 +998,7 @@ function update(dt){
     const d=dist2(g,player);
     if(d<player.magnet*player.magnet){ const a=Math.atan2(player.y-g.y,player.x-g.x); const sp=380; g.x+=Math.cos(a)*sp*dt; g.y+=Math.sin(a)*sp*dt; }
     if(d<(player.r+8)*(player.r+8)){ g.got=true; player.xp+=g.v; if(gemSfxCd<=0){sfx.gem(); gemSfxCd=0.04;}
-      if(player.xp>=player.xpNeed){ player.xp-=player.xpNeed; player.level++; player.xpNeed=Math.floor(player.xpNeed*1.26+3);
+      if(player.xp>=player.xpNeed){ player.xp-=player.xpNeed; player.level++; player.xpNeed=Math.floor(player.xpNeed*1.22+3);  // 복리 완화(1.26→1.22) + 적젬 스테이지스케일로 후반 정체 해소
         const LU_HP=TUNE.levelHp; player.maxhp+=LU_HP; player.hp=Math.min(player.maxhp, player.hp+LU_HP); // 레벨업: 최대체력+N + 회복 (TUNE)
         if(player.level>=(player.awakenAt||TUNE.awakenStart)){ awaken(); player.awakenAt=(player.awakenAt||TUNE.awakenStart)+TUNE.awakenStep; } // 각성: TUNE 시작레벨·간격
         openLevelUp(); } }
@@ -1362,7 +1363,18 @@ async function playAd(cb){
 let bannerShown=false, bannerCreated=false;
 async function showBanner(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)||bannerShown) return; const bannerId=AD_USE_TEST?AD_BANNER_TEST:AD_BANNER_REAL; if(!bannerId) return; bannerShown=true; const _A=C.Plugins.AdMob; const _opt={ adId: bannerId, adSize:'BANNER', position:'BOTTOM_CENTER', margin:0, isTesting:AD_USE_TEST }; try{ if(bannerCreated){ try{ await _A.resumeBanner(); }catch(_e){ await _A.showBanner(_opt); } } else { await _A.showBanner(_opt); bannerCreated=true; } }catch(e){ bannerShown=false; } }
 async function hideBanner(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)||!bannerShown) return; bannerShown=false; try{ await C.Plugins.AdMob.hideBanner(); }catch(e){} }
-async function showInterstitial(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)) return; const interId=AD_USE_TEST?AD_INTER_TEST:AD_INTER_REAL; if(!interId) return; const A=C.Plugins.AdMob; try{ await A.prepareInterstitial({ adId:interId, isTesting:AD_USE_TEST }); await A.showInterstitial(); }catch(e){} }
+async function showInterstitial(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)) return; const interId=AD_USE_TEST?AD_INTER_TEST:AD_INTER_REAL; if(!interId) return; const A=C.Plugins.AdMob;
+  adPlaying=true;   // 전면광고 동안 게임 진행 정지(뒤에서 돌아가다 죽는 것 방지)
+  let resumed=false, dl=null, fl=null;
+  const resume=()=>{ if(resumed)return; resumed=true; try{dl&&dl.remove&&dl.remove();}catch(e){} try{fl&&fl.remove&&fl.remove();}catch(e){} lastTs=performance.now(); adPlaying=false; };
+  try{
+    Promise.resolve(A.addListener('interstitialAdDismissed',resume)).then(l=>{dl=l; if(resumed)resume();}).catch(()=>{});
+    Promise.resolve(A.addListener('interstitialAdFailedToShow',resume)).then(l=>{fl=l; if(resumed)resume();}).catch(()=>{});
+    await A.prepareInterstitial({ adId:interId, isTesting:AD_USE_TEST });
+    await A.showInterstitial();   // 광고가 화면에 뜸 → 닫힘(Dismissed) 이벤트에서 resume
+  }catch(e){ resume(); return; }
+  setTimeout(resume, 90000);   // 안전장치: 이벤트 유실 시 영구정지 방지
+}
 document.getElementById('reviveBtn').onclick=()=>{ if(reviveCount>=MAX_REVIVE||state!=='over') return; reviveCount++; document.getElementById('reviveBtn').style.display='none';
   playAd(()=>{ meta.gold=Math.max(0, meta.gold-lastEndBonus); saveMeta(); // 부활: 마감 보너스 회수(이미 썼으면 0까지만 — 마이너스 방지)
     player.hp=player.maxhp; player.xp=Math.min(player.xpNeed-1, Math.floor(player.xpNeed*TUNE.reviveXp)); enemies.length=0; bullets.length=0; ebullets.length=0; // 부활: 체력100% + 경험치(TUNE) 채워 시작
