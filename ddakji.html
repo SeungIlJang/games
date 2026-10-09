@@ -52,6 +52,10 @@
   .urow .ub{background:#2ec77a;color:#fff;border:none;border-radius:10px;padding:10px 12px;font-weight:800;font-size:13px;cursor:pointer;pointer-events:auto;white-space:nowrap}
   .urow .ub:disabled{background:#4a4030;color:#998;cursor:default}
   #shopClose{margin-top:8px;background:#ffcf5c;color:#5a3a10;border:none;border-radius:12px;padding:12px 34px;font-size:17px;font-weight:900;box-shadow:0 5px 0 #b5831f;cursor:pointer;pointer-events:auto}
+  #lb{position:fixed;inset:0;z-index:12;background:rgba(18,12,7,.97);color:#fff;display:flex;flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 20px) 16px 20px;overflow-y:auto}
+  #lb h2{font-size:24px;color:#ffcf5c}
+  #lbClose{margin-top:12px;background:#ffcf5c;color:#5a3a10;border:none;border-radius:12px;padding:12px 34px;font-size:17px;font-weight:900;box-shadow:0 5px 0 #b5831f;cursor:pointer;pointer-events:auto}
+  #lbBtn2{pointer-events:auto;background:#20263c00;color:#ffcf5c;border:1px solid #6a4e2a;border-radius:12px;padding:10px 18px;font-size:15px;font-weight:800;cursor:pointer;margin-top:2px}
   .hidden{display:none!important}
 </style></head>
 <body>
@@ -83,7 +87,7 @@
   <button id="dexClose">닫기</button>
 </div>
 <div id="adov" class="hidden"><div class="sp"></div><div id="adovTxt">광고 보는 중…</div></div>
-<div id="ver">모두의 딱지치기 v0.9 · 랜덤 초록존 + 난이도 상향(빠른 바·좁은 존)</div>
+<div id="ver">모두의 딱지치기 v1.0 · 🏆 글로벌 랭킹 추가</div>
 <div id="start">
   <h1 style="font-size:38px">모두의 딱지치기</h1>
   <p><b>초록 구간</b>(매번 위치가 바뀜!)에 파워바가 올 때 <b>탭</b>해서 내리쳐요.<br/>너무 약해도·너무 세도 실패 — <b>딱 맞춰야</b> 90° 넘겨 뒤집어요! 중앙 노랑=완벽타 🎯<br/>스테이지 올라갈수록 <b>초록은 좁아지고 파워바는 빨라져요</b> 🟫<br/><span id="bstage" style="color:#ffcf5c;font-weight:800"></span></p>
@@ -91,8 +95,52 @@
   <div style="display:flex;gap:10px">
     <button id="dexBtn2">📖 도감</button>
     <button id="shopBtn2">🔨 강화</button>
+    <button id="lbBtn2">🏆 랭킹</button>
   </div>
 </div>
+<div id="lb" class="hidden">
+  <div style="display:flex;justify-content:space-between;align-items:center;width:100%;max-width:340px;margin-bottom:8px">
+    <h2 style="margin:0">🏆 랭킹</h2>
+    <button id="lbNameBtn" style="pointer-events:auto;background:rgba(22,16,10,.75);color:#ffcf5c;border:1px solid #6a4e2a;border-radius:10px;padding:6px 12px;font-size:13px;font-weight:800;cursor:pointer">✏️ 이름</button>
+  </div>
+  <div id="lbList" style="font-size:14px;line-height:1.8;text-align:left;min-height:40px;color:#e9d6bf;width:100%;max-width:340px">불러오는 중…</div>
+  <button id="lbClose">닫기</button>
+</div>
+<!-- 글로벌 리더보드 (Firebase Firestore) — 전용 컬렉션 ddakji_scores -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+  import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+  const firebaseConfig = {
+    apiKey: "AIzaSyDUanex0x7CmvCQxBK2d3a7SkyscuEGzwY",
+    authDomain: "gallog-return-be90f.firebaseapp.com",
+    projectId: "gallog-return-be90f",
+    storageBucket: "gallog-return-be90f.firebasestorage.app",
+    messagingSenderId: "317854999265",
+    appId: "1:317854999265:web:c78708adabdef449a08da0"
+  };
+  let db=null;
+  try { db=getFirestore(initializeApp(firebaseConfig)); } catch(e){ console.warn('fb init fail', e); }
+  window.LB = {
+    get ready(){ return !!db; },
+    async submit(id,name,score,stage){
+      if(!db) return false;
+      try{
+        const ref=doc(db,'ddakji_scores',String(id));
+        const snap=await getDoc(ref);
+        const prev = snap.exists() ? (snap.data().score|0) : 0;
+        const keep = Math.max(score|0, prev);   // 최고 점수만 유지
+        const keepStage = (keep===(score|0)) ? (stage|0) : (snap.exists()?(snap.data().stage|0):(stage|0));
+        await setDoc(ref, {uid:String(id), name:String(name||'익명').slice(0,16), score:keep, stage:keepStage, ts:Date.now()});
+        return true;
+      } catch(e){ console.warn('LB.submit', e); return false; }
+    },
+    async top(){
+      if(!db) return null;
+      try{ const s=await getDocs(query(collection(db,'ddakji_scores'), orderBy('score','desc'), limit(100))); const out=[]; s.forEach(d=>out.push(d.data())); return out; }
+      catch(e){ console.warn('LB.top', e); return null; }
+    }
+  };
+</script>
 <script>
 const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
 let W=0,H=0,DPR=1;
@@ -213,7 +261,7 @@ function endFlip(success){
     let gain=Math.round((10+stage*3+combo*2)*ri.mult); if(pf) gain=Math.round(gain*1.5); lastGain=gain; score+=gain;
     const first=!(owned[foe.id]>0); owned[foe.id]=(owned[foe.id]||0)+1; saveDex();
     let earn=Math.round((3+stage)*ri.mult*coinMult()); if(pf) earn=Math.round(earn*1.5); coins+=earn; saveCoins();
-    if(score>best){ best=score; try{localStorage.setItem('ddakji_best',best);}catch(e){} }
+    if(score>best){ best=score; try{localStorage.setItem('ddakji_best',best);}catch(e){} try{submitScore();}catch(e){} }
     stage++; if(stage>bestStage){ bestStage=stage; try{localStorage.setItem('ddakji_bstage',bestStage);}catch(e){} }
     showMsg(foe.rarity==='e'?'전설 획득! 👑':foe.rarity==='r'?'레어 획득! ✨':(pf?'완벽하게 뒤집었다! 🎯':'뒤집기 성공! 🟫'), pf?'#ffe14d':(ri.mult>1?ri.color:'#aef5b0'));
     showSub((pf?'✨완벽타 x1.5 ':'')+(first?'🆕 새 딱지! ':'')+foe.name+' +'+gain+'점 · 🪙+'+earn+(ri.mult>1?' (x'+ri.mult+')':'')+' · STAGE '+stage);
@@ -239,7 +287,7 @@ function playAd(cb){
 }
 function doReward(){ if(rewardUsed||state!=='result') return; rewardUsed=true; $('rewardBtn').classList.add('hidden'); initAudio();
   playAd(()=>{
-    if(lastSuccess){ score+=lastGain; if(score>best){ best=score; try{localStorage.setItem('ddakji_best',best);}catch(e){} } showSub('점수 2배! +'+lastGain+'점 🎉'); setTop(); sfx.win(); }
+    if(lastSuccess){ score+=lastGain; if(score>best){ best=score; try{localStorage.setItem('ddakji_best',best);}catch(e){} try{submitScore();}catch(e){} } showSub('점수 2배! +'+lastGain+'점 🎉'); setTop(); sfx.win(); }
     else { easyNext=true; newRound(true); }   // 같은 딱지 쉽게 다시
   });
 }
@@ -434,6 +482,31 @@ $('shopBtn2').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopProp
 $('shopClose').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); $('shop').classList.add('hidden'); });
 
 $('startBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); initAudio(); score=0; combo=0; won=0; stage=1; easyNext=false; $('start').classList.add('hidden'); $('dexBtn').classList.remove('hidden'); $('shopBtnP').classList.remove('hidden'); $('coinHud').classList.remove('hidden'); setTop(); newRound(); lastTs=performance.now(); });
+
+// ---- 글로벌 랭킹 (Firebase) ----
+function getUid(){ let u=localStorage.getItem('ddakji_uid'); if(!u){ u='d'+Math.random().toString(36).slice(2,10); localStorage.setItem('ddakji_uid',u); } return u; }
+function getName(){ let n=localStorage.getItem('ddakji_name'); if(!n){ n='장군'+getUid().slice(-4); localStorage.setItem('ddakji_name',n); } return n; }
+function escH(s){ return String(s).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])); }
+function submitScore(){ if(!(window.LB&&window.LB.ready)) return Promise.resolve(); if(best<=0) return Promise.resolve(); return window.LB.submit(getUid(), getName(), best, bestStage); }
+async function renderLB(){
+  const el=$('lbList'); if(!el) return;
+  if(!(window.LB&&window.LB.ready)){ el.innerHTML='<span style="opacity:.6">오프라인 (랭킹 연결 안 됨)</span>'; return; }
+  el.textContent='불러오는 중…';
+  const rows=await window.LB.top(); if(!rows){ el.textContent='불러오기 실패 (네트워크 확인)'; return; }
+  rows.sort((a,b)=>(b.score||0)-(a.score||0));
+  if(!rows.length){ el.innerHTML='<span style="opacity:.6">아직 기록이 없어요 — 1등에 도전!</span>'; return; }
+  const uid=getUid(); const myRank=rows.findIndex(r=>r.uid===uid);
+  const medal=i=>i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'.';
+  let html='';
+  rows.slice(0,10).forEach((r,i)=>{ const me=r.uid===uid; html+='<div style="'+(me?'color:#ffd34d;font-weight:800':'')+'">'+medal(i)+' '+escH(r.name||'익명')+' — '+(r.score||0)+'점 · S'+(r.stage||1)+(me?' (나)':'')+'</div>'; });
+  if(myRank>=10) html+='<div style="opacity:.4">⋯</div><div style="color:#ffd34d;font-weight:800">'+(myRank+1)+'. '+escH(getName())+' — '+(rows[myRank].score||0)+'점 · S'+(rows[myRank].stage||1)+' (나)</div>';
+  el.innerHTML=html;
+}
+function openLB(){ $('lb').classList.remove('hidden'); submitScore().then(renderLB).catch(()=>renderLB()); }
+$('lbBtn2').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); openLB(); });
+$('lbClose').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); $('lb').classList.add('hidden'); });
+$('lbNameBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); const n=prompt('랭킹에 표시할 이름 (최대 12자)', getName()); if(n&&n.trim()){ localStorage.setItem('ddakji_name', n.trim().slice(0,12)); submitScore().then(renderLB).catch(()=>renderLB()); } });
+
 setTop(); if(bestStage>1) $('bstage').textContent='🏆 최고 스테이지 '+bestStage;
 </script>
 </body></html>
