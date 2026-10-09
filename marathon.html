@@ -126,7 +126,7 @@
 
 <div class="overlay" id="startScreen">
   <h1>🏃‍♂️ 마라톤</h1>
-  <div style="font-size:11px;color:#8aa0b4;margin:-4px 0 6px">v0.3 · 급수대 물마시기 쉽게 (아무 데나 탭)</div>
+  <div style="font-size:11px;color:#8aa0b4;margin:-4px 0 6px">v0.4 · 🔥피버타임 · 📣응원·🌉터널 구간 추가</div>
   <p><b>왼발 L</b> · <b>오른발 R</b> 번갈아 두드려 달립니다.</p>
   <div class="demo"><span class="key">L</span><span>→</span><span class="key b">R</span><span>→</span><span class="key">L</span><span>→</span><span class="key b">R</span></div>
   <div id="distSel">
@@ -136,7 +136,7 @@
     <button class="dbtn" data-d="풀">풀</button>
   </div>
   <p id="goalP">🎯 목표: <b>175spm</b> · 4:53/km · 완주 <b>24:25</b></p>
-  <p style="font-size:13px">🥁 <b>박자</b>에 딱 맞춰 밟으면 <b>PERFECT·콤보</b>(🪙코인) · 🏃 <b>고스트</b>와 경주 · 완주 <b>랭크(S~D)</b><br>⚡<b>스퍼트 구간</b> 몰아치기 · 🧱<b>35km 마의 벽</b> 버티고 돌파 · 📸<b>포토피니시</b> · 💧급수대 <b>아무 데나 탭 물마시기</b> · ⚡<b>파워젤</b></p>
+  <p style="font-size:13px">🥁 <b>박자</b>에 딱 맞춰 밟으면 <b>PERFECT·콤보</b>(🪙코인) · 🏃 <b>고스트</b>와 경주 · 완주 <b>랭크(S~D)</b><br>⚡<b>스퍼트 구간</b> 몰아치기 · 🧱<b>35km 마의 벽</b> 버티고 돌파 · 📸<b>포토피니시</b> · 🔥<b>피버타임</b>(연속 PERFECT=폭발·코인2배) · 📣<b>응원</b>·🌉<b>터널</b> 구간 · 💧급수대 · ⚡<b>파워젤</b></p>
   <div id="lvbar" style="width:100%;max-width:340px;text-align:left;font-size:13px;color:var(--txt)">
     <div style="display:flex;justify-content:space-between"><span id="lvTxt">LV.1</span><span id="coinTxt">🪙 0</span></div>
     <div style="height:8px;background:#e6eef6;border-radius:5px;overflow:hidden;margin-top:3px"><div id="xpFill" style="height:100%;width:0;background:linear-gradient(90deg,#a06bff,#7b3ff2)"></div></div>
@@ -221,6 +221,7 @@
   let coins=parseInt(localStorage.getItem('marathon_coins')||'0'); // 코인(파워젤 구매용, 영구 저장)
   let drinkOpenUntil=0, gelCdUntil=0;                      // 급수대 물마시기 창 / 젤 쿨다운
   let surgeGood=0, wallActive=false, wallDone=false, wallVfx=0, hiEndAt=0; // ⚡스퍼트 유지 / 🧱마의 벽 / 러너스하이 연출
+  let fever=0, feverActive=false, feverEndAt=0, feverCount=0; // ⚡A. 피버타임(연속 PERFECT로 게이지 충전→폭발: 코인2배·무적질주)
   const GEL_COST=25, GEL_HEAL=35;
   const saveCoins=()=>{try{localStorage.setItem('marathon_coins',String(coins));}catch(e){}};
   const CHEERS=["좋아요 💪","가볍다 가벼워 ✨","리듬 최고 🎵","페이스 굿 👍","잘하고 있어요 🔥","그대로 유지 🙌"];
@@ -251,14 +252,19 @@
   function judgeTap(t){
     if(!curSeg||curSeg.type==='water')return;
     const bm=60000/curTarget, err=Math.min(Math.abs(t-(beatAt-bm)),Math.abs(beatAt-t));
+    const cheerX=(curSeg&&curSeg.type==='cheer')?2:1;   // 📣 응원구간: 점수·코인 2배
     let kind,col,pts;
-    if(err<bm*0.16){kind="PERFECT!";col="#3fca6b";pts=100;nPerfect++;gly=Math.min(100,gly+0.8);coins+=2*cmul();runCoins+=2*cmul(); beatEff=Math.min(1.35,beatEff+0.06);}  // 완벽 = 쭉 가속
-    else if(err<bm*0.34){kind="GOOD";col="#4aa3ff";pts=55;nGood++;coins+=1*cmul();runCoins+=1*cmul(); beatEff=Math.min(1.18,beatEff+0.015);}
-    else {kind="OFF";col="#8496a8";pts=0;nMiss++;combo=0; beatEff=Math.max(0.5,beatEff-0.15); bob=1.3; shake=Math.max(shake,3.5);}   // 빗나감 = 휘청·감속
-    if(pts>0){combo++;maxCombo=Math.max(maxCombo,combo);score+=pts+combo*5;saveCoins();}
+    if(err<bm*0.16){kind="PERFECT!";col="#3fca6b";pts=100;nPerfect++;gly=Math.min(100,gly+0.8);coins+=2*cmul()*cheerX;runCoins+=2*cmul()*cheerX; beatEff=Math.min(1.35,beatEff+0.06); fever=Math.min(100,fever+9);}  // 완벽 = 쭉 가속 + 피버충전
+    else if(err<bm*0.34){kind="GOOD";col="#4aa3ff";pts=55;nGood++;coins+=1*cmul()*cheerX;runCoins+=1*cmul()*cheerX; beatEff=Math.min(1.18,beatEff+0.015); fever=Math.min(100,fever+3);}
+    else {kind="OFF";col="#8496a8";pts=0;nMiss++;combo=0; beatEff=Math.max(0.5,beatEff-0.15); bob=1.3; shake=Math.max(shake,3.5); if(!feverActive)fever=Math.max(0,fever-20);}   // 빗나감 = 휘청·감속 + 피버 깎임
+    if(pts>0){combo++;maxCombo=Math.max(maxCombo,combo);score+=(pts+combo*5)*cheerX;saveCoins();}
     if(pts>0&&combo>0&&combo%10===0){ shake=9; judge={txt:"🔥 "+combo+" COMBO!",col:"#ff6f9c",t:now()}; }
     else judge={txt:kind,col,t:now()};
     if(kind==="PERFECT!"){ for(let i=0;i<9;i++) sparks.push({x:W*0.28+(Math.random()*36-18),y:H*0.52-72,vx:Math.random()*5-2.5,vy:-(Math.random()*3.5+1.2),life:1}); }
+    // ⚡A. 피버 발동: 게이지 꽉 참 → 6초 폭발(팝업이 콤보팝업보다 우선하도록 마지막에)
+    if(!feverActive && fever>=100){ feverActive=true; fever=100; feverEndAt=now()+6000; feverCount++; shake=Math.max(shake,13);
+      judge={txt:"🔥🔥 피버타임!! 🔥🔥",col:"#ff2e63",t:now()}; setCoach("🔥 피버! 코인2배·무적질주 — 몰아쳐요!!",'var(--ok)');
+      for(let i=0;i<30;i++)sparks.push({x:W*0.28+(Math.random()*110-55),y:H*0.5-60,vx:Math.random()*11-5.5,vy:-(Math.random()*8+2.2),life:1}); }
   }
   // 급수대: 화면(캔버스)을 터치하면 물 마심(+6), 박자 창에 맞으면 보너스(+12)
   function drink(px,py){
@@ -294,17 +300,19 @@
   // 코스: 지형(오르막/내리막→목표 케이던스 변동)·급수대 구간
   function buildCourse(){
     course=[
-      {to:0.10,type:'flat',d:0},
-      {to:0.19,type:'up',d:12},
-      {to:0.26,type:'down',d:-10},
-      {to:0.32,type:'water',d:0},
-      {to:0.42,type:'surge',d:24},   // ⚡ 스퍼트 챌린지
-      {to:0.51,type:'flat',d:0},
-      {to:0.60,type:'up',d:14},
-      {to:0.67,type:'down',d:-12},
-      {to:0.72,type:'water',d:0},
-      {to:0.81,type:'surge',d:26},   // ⚡ 2차 스퍼트
-      {to:0.90,type:'wall',d:6},     // 🧱 35km 마의 벽 (클라이맥스)
+      {to:0.08,type:'flat',d:0},
+      {to:0.15,type:'up',d:12},
+      {to:0.21,type:'down',d:-10},
+      {to:0.27,type:'water',d:0},
+      {to:0.35,type:'cheer',d:6},    // 📣 응원 구간 (점수·코인 2배)
+      {to:0.44,type:'surge',d:24},   // ⚡ 스퍼트 챌린지
+      {to:0.51,type:'tunnel',d:4},   // 🌉 터널 (어두움, 리듬 집중)
+      {to:0.58,type:'up',d:14},
+      {to:0.64,type:'down',d:-12},
+      {to:0.69,type:'water',d:0},
+      {to:0.77,type:'cheer',d:8},    // 📣 2차 응원 (보너스 2배)
+      {to:0.84,type:'surge',d:26},   // ⚡ 2차 스퍼트
+      {to:0.91,type:'wall',d:6},     // 🧱 35km 마의 벽 (클라이맥스)
       {to:1.01,type:'sprint',d:12},  // 🏁 라스트 스퍼트 + 포토피니시
     ];
     curSeg=null; curTarget=TARGET_CAD; splitKm=0;
@@ -313,6 +321,8 @@
     if(seg.type==='up') setCoach("⛰️ 오르막! 케이던스 올려요 (+"+seg.d+")",'var(--warn)');
     else if(seg.type==='down') setCoach("⬇️ 내리막 — 케이던스 낮춰 편하게",'var(--accent)');
     else if(seg.type==='water') setCoach("💧 급수대! 아무 데나 탭해서 물 마시기",'var(--accent)');
+    else if(seg.type==='cheer'){ setCoach("📣 응원 구간! 관중 환호 — 점수·코인 2배! 몰아쳐요!",'var(--ok)'); shake=Math.max(shake,4); }
+    else if(seg.type==='tunnel'){ setCoach("🌉 터널! 어둡다 — 비트에만 집중해요",'var(--accent)'); }
     else if(seg.type==='surge'){ setCoach("⚡ 스퍼트 구간! 케이던스 폭발 — 지금 몰아쳐요!",'var(--bad)'); shake=Math.max(shake,7); surgeGood=0; }
     else if(seg.type==='wall'){ setCoach("🧱 35km 마의 벽! 무너지지 마 — 리듬으로 버텨!!",'var(--bad)'); shake=Math.max(shake,10); wallActive=true; wallDone=false; gly=Math.min(gly,42); }
     else if(seg.type==='sprint'){ setCoach("🔥 라스트 스퍼트!! 전력 질주!",'var(--bad)'); shake=8; }
@@ -374,12 +384,14 @@
     }
     const over=Math.max(0,cad-SUSTAIN)/60;
     const wallM=(seg.type==='wall');                                                   // 🧱 벽: 소모↑·회복↓
-    const drain=(over*8+(cad>0?0.9:0)+(1-eff)*3.5)*(buff().drain||1)*(wallM?1.7:1);   // 신발: 소모 감소
+    const drain=(over*8+(cad>0?0.9:0)+(1-eff)*3.5)*(buff().drain||1)*(wallM?1.7:1)*(feverActive?0.2:1);   // 신발: 소모 감소 / 피버=거의 무적
     const regen=((cad>0&&cad<=SUSTAIN)?(eff>0.8?1.4:0.8):0)*(buff().regen||1)*(1+lvl()*0.015)*(wallM?0.4:1); // 신발+레벨: 회복↑
     gly=Math.max(0,Math.min(100,gly-drain*dtS+regen*dtS));
     beatEff += (0.9-beatEff)*Math.min(1,dtS*0.5);   // 박자 승수 중립(0.9)로 서서히 회귀 — 계속 잘 쳐야 빠름 유지
+    if(feverActive && now()>=feverEndAt){ feverActive=false; fever=0; setCoach("피버 종료 — 다시 모아요! 🔥",'var(--warn)'); }   // ⚡A. 피버 만료
     let g=eff; if(gly<20)g*=0.5+0.5*(gly/20);
     speed=(cad/60)*strideFor(cad)*g*beatEff*(buff().stride||1);                        // 박자 판정이 속도에 직접 반영 + 신발
+    if(feverActive) speed*=1.25;                                                       // ⚡A. 피버타임 가속질주
     if(seg.type!=='wall' && speed>0) score+=Math.round(speed*dtS*2*(beatEff>1.05?1.5:1)); // 빠를수록·잘칠수록 점수↑
     if(seg.type==='surge' && cad>=curTarget-CAD_TOL){   // ⚡ 스퍼트 유지 보상: 가속 + 점수·코인
       speed*=1.14; surgeGood+=dtS; score+=Math.round(70*dtS);
@@ -666,7 +678,25 @@
     if(wallVfx>0.02){ ctx.save(); ctx.globalAlpha=wallVfx*0.55; ctx.fillStyle="#fff7d6"; ctx.fillRect(0,0,W,H); ctx.restore(); wallVfx*=0.88; }
     if(now()<hiEndAt){ ctx.save(); ctx.fillStyle="#ff8a1e"; ctx.font="900 30px sans-serif"; ctx.textAlign="center";
       ctx.globalAlpha=0.9; ctx.fillText("🔥 러너스 하이! 🔥",W/2,H*0.52); ctx.restore(); }
-    const shakeAmt=Math.max(shake,(running&&gly<15&&cad>1)?3:0,wallActive?4:0);
+    // 🌉 터널 암전 + 러너 스포트라이트
+    if(running && curSeg && curSeg.type==='tunnel'){ ctx.save();
+      ctx.fillStyle="rgba(10,14,34,0.52)"; ctx.fillRect(0,0,W,H);
+      const sg=ctx.createRadialGradient(W*0.28,H*0.5,16,W*0.28,H*0.5,H*0.52);
+      sg.addColorStop(0,"rgba(255,255,255,0.16)"); sg.addColorStop(1,"rgba(0,0,0,0)"); ctx.fillStyle=sg; ctx.fillRect(0,0,W,H); ctx.restore(); }
+    // ⚡A. 피버 게이지 바(하늘 영역 — 상단 HUD에 안 가리게) + 피버타임 불꽃 오버레이
+    if(running){ const gw=W*0.56, gx=W/2-gw/2, gy=H*0.455;
+      ctx.save(); ctx.textAlign="center";
+      ctx.fillStyle=feverActive?"#ff2e63":"#c96a00"; ctx.font="bold 12px sans-serif";
+      ctx.fillText(feverActive?"🔥 FEVER!":("🔥 피버 게이지 "+Math.round(fever)+"%"),W/2,gy-5);
+      ctx.fillStyle="rgba(0,0,0,0.14)"; ctx.fillRect(gx,gy,gw,9);
+      ctx.fillStyle=feverActive?"#ff2e63":"#ff8a1e"; ctx.fillRect(gx,gy,gw*(fever/100),9);
+      ctx.strokeStyle="rgba(255,255,255,0.7)"; ctx.lineWidth=1.5; ctx.strokeRect(gx,gy,gw,9); ctx.restore(); }
+    if(feverActive){ ctx.save(); const pulse=0.5+0.5*Math.sin(now()/70);
+      const fg=ctx.createRadialGradient(W/2,H*0.56,H*0.10,W/2,H*0.56,H*0.92);
+      fg.addColorStop(0,"rgba(255,90,0,0)"); fg.addColorStop(1,"rgba(255,40,0,"+(0.28+pulse*0.18).toFixed(3)+")");
+      ctx.fillStyle=fg; ctx.fillRect(0,0,W,H);
+      ctx.globalAlpha=0.92; ctx.fillStyle="#fff"; ctx.font="900 26px sans-serif"; ctx.textAlign="center"; ctx.fillText("🔥 FEVER TIME 🔥",W/2,H*0.37); ctx.restore(); }
+    const shakeAmt=Math.max(shake,(running&&gly<15&&cad>1)?3:0,wallActive?4:0,feverActive?3:0);
     cvs.style.transform=shakeAmt>0.4?("translate("+(((Math.random()*2-1)*shakeAmt)|0)+"px,"+(((Math.random()*2-1)*shakeAmt)|0)+"px)"):"";
     shake*=0.85;
   }
@@ -679,7 +709,7 @@
     running=true; dailyMode=!!daily; taps=[]; lastSide=null; lastTapT=now();
     dist=0;raceT=0;gly=100;eff=1;cad=0;cv=0;speed=0;formBreaks=0;legPhase=0;legTarget=0;bob=0;scroll=0;critT=0;gait=0;
     combo=0;maxCombo=0;score=0;nPerfect=0;nGood=0;nMiss=0;judge=null;sparks=[];rivalDist=0;rivalAhead=true;shake=0;runCoins=0;revived=false;
-    surgeGood=0;wallActive=false;wallDone=false;wallVfx=0;hiEndAt=0; beatEff=0.9;
+    surgeGood=0;wallActive=false;wallDone=false;wallVfx=0;hiEndAt=0; beatEff=0.9; fever=0;feverActive=false;feverEndAt=0;feverCount=0;
     slowmoUntil=0; slowmoDone=false; myRank=9; computeTargets(); field=[]; for(let i=0;i<8;i++) field.push(TGT_TIME*(0.86+i*0.036)); // ② 라이벌 8명 완주시간 분포(빠른~느린)
     halfT=0; pbGhostDist=0; curPB=parseFloat(localStorage.getItem('marathon_pb_'+curDist)||'0');  // PB 고스트 기준
     buildCourse();                    // 지형·급수대·스플릿 코스 생성
@@ -710,7 +740,7 @@
   let ownShoes=JSON.parse(localStorage.getItem('marathon_shoes')||'["basic"]');
   let equipShoe=localStorage.getItem('marathon_shoe')||'basic';
   const buff=()=>{ const s=SHOES.find(x=>x.id===equipShoe)||SHOES[0]; return s.b||{}; };
-  const cmul=()=>buff().coin||1;
+  const cmul=()=>(buff().coin||1)*(feverActive?2:1);   // 피버타임엔 코인 2배
   const saveXP=()=>{try{localStorage.setItem('marathon_xp',String(xp));}catch(e){}};
   const saveShoes=()=>{try{localStorage.setItem('marathon_shoes',JSON.stringify(ownShoes));localStorage.setItem('marathon_shoe',equipShoe);}catch(e){}};
   function loadMissions(){ let m; try{m=JSON.parse(localStorage.getItem('marathon_missions'));}catch(e){}
@@ -803,7 +833,7 @@
     else if(lbRank<=100) lbLine="🏆 <b>TOP 100 진입! "+lbRank+"위</b>";
     else lbLine="아쉽게 "+lbRank+"위 — TOP 100 도전!";
     let stats=lbLine+
-      "<br>🏆 점수 <b>"+score+"</b>"+sNew+" · 최대 콤보 "+maxCombo+
+      "<br>🏆 점수 <b>"+score+"</b>"+sNew+" · 최대 콤보 "+maxCombo+" · 🔥 피버 "+feverCount+"회"+
       "<br>PERFECT "+nPerfect+" · GOOD "+nGood+" · OFF "+nMiss+
       "<br>"+(curPB>0?("내 기록 고스트 "+(won?"앞섬 🏅":"뒤짐")):("라이벌 "+(won?"이김 🥇":"짐 😵")))+" · 폼 붕괴 "+formBreaks+"회 · 체력 "+Math.round(gly)+"%";
     // 다음 종목 해금
