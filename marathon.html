@@ -126,6 +126,7 @@
 
 <div class="overlay" id="startScreen">
   <h1>🏃‍♂️ 마라톤</h1>
+  <div style="font-size:11px;color:#8aa0b4;margin:-4px 0 6px">v0.3 · 급수대 물마시기 쉽게 (아무 데나 탭)</div>
   <p><b>왼발 L</b> · <b>오른발 R</b> 번갈아 두드려 달립니다.</p>
   <div class="demo"><span class="key">L</span><span>→</span><span class="key b">R</span><span>→</span><span class="key">L</span><span>→</span><span class="key b">R</span></div>
   <div id="distSel">
@@ -135,7 +136,7 @@
     <button class="dbtn" data-d="풀">풀</button>
   </div>
   <p id="goalP">🎯 목표: <b>175spm</b> · 4:53/km · 완주 <b>24:25</b></p>
-  <p style="font-size:13px">🥁 <b>박자</b>에 딱 맞춰 밟으면 <b>PERFECT·콤보</b>(🪙코인) · 🏃 <b>고스트</b>와 경주 · 완주 <b>랭크(S~D)</b><br>⚡<b>스퍼트 구간</b> 몰아치기 · 🧱<b>35km 마의 벽</b> 버티고 돌파 · 📸<b>포토피니시</b> · 💧급수대 <b>화면 탭 물마시기</b> · ⚡<b>파워젤</b></p>
+  <p style="font-size:13px">🥁 <b>박자</b>에 딱 맞춰 밟으면 <b>PERFECT·콤보</b>(🪙코인) · 🏃 <b>고스트</b>와 경주 · 완주 <b>랭크(S~D)</b><br>⚡<b>스퍼트 구간</b> 몰아치기 · 🧱<b>35km 마의 벽</b> 버티고 돌파 · 📸<b>포토피니시</b> · 💧급수대 <b>아무 데나 탭 물마시기</b> · ⚡<b>파워젤</b></p>
   <div id="lvbar" style="width:100%;max-width:340px;text-align:left;font-size:13px;color:var(--txt)">
     <div style="display:flex;justify-content:space-between"><span id="lvTxt">LV.1</span><span id="coinTxt">🪙 0</span></div>
     <div style="height:8px;background:#e6eef6;border-radius:5px;overflow:hidden;margin-top:3px"><div id="xpFill" style="height:100%;width:0;background:linear-gradient(90deg,#a06bff,#7b3ff2)"></div></div>
@@ -263,7 +264,7 @@
   function drink(px,py){
     if(!running||!curSeg||curSeg.type!=='water')return;
     lastTapT=now();
-    const open=now()<=drinkOpenUntil; const amt=open?12:6;
+    const open=now()<=drinkOpenUntil; const amt=open?16:10;   // 아무 탭이나 넉넉히 회복(+10), 박자맞으면 보너스(+16)
     gly=Math.min(100,gly+amt); coins+=cmul(); runCoins+=cmul(); saveCoins(); if(open)drinkOpenUntil=0;
     judge={txt:open?"🥤 꿀꺽! +12":"💧 한 모금 +6",col:open?"#3fca6b":"#5bbdff",t:now()};
     const sx=(px!=null)?px:W*0.5, sy=(py!=null)?py:H*0.42;
@@ -271,8 +272,7 @@
   }
   function tap(side){
     if(!running)return; const t=now(); lastTapT=t;
-    // 급수대에선 좌우 패드 대신 화면 터치로 마심 — 패드 탭은 무시
-    if(curSeg&&curSeg.type==='water') return;
+    if(curSeg&&curSeg.type==='water'){ drink(); flash(side==="L"?padL:padR,"hit"); return; }   // 급수대: 발판·화면 아무 탭이나 물 마시기(통일)
     if(oneHand) side=(lastSide==='L')?'R':'L';   // ④ 한손 모드: 아무 탭이나 자동 교대
     if(side===lastSide){formBreaks++;combo=Math.max(0,combo-1);beatEff=Math.max(0.6,beatEff-0.05);flash(side==="L"?padL:padR,"bad");if(now()>coachUntil)setCoach("번갈아 밟아요 👟",'var(--warn)');return;} // ④ 페널티 완화(리듬·콤보 안 날림)
     const prev=taps.length?taps[taps.length-1].t:t; const dt=t-prev;
@@ -312,7 +312,7 @@
   function onSeg(seg){
     if(seg.type==='up') setCoach("⛰️ 오르막! 케이던스 올려요 (+"+seg.d+")",'var(--warn)');
     else if(seg.type==='down') setCoach("⬇️ 내리막 — 케이던스 낮춰 편하게",'var(--accent)');
-    else if(seg.type==='water') setCoach("💧 급수대! 화면을 탭해서 물 마시기",'var(--accent)');
+    else if(seg.type==='water') setCoach("💧 급수대! 아무 데나 탭해서 물 마시기",'var(--accent)');
     else if(seg.type==='surge'){ setCoach("⚡ 스퍼트 구간! 케이던스 폭발 — 지금 몰아쳐요!",'var(--bad)'); shake=Math.max(shake,7); surgeGood=0; }
     else if(seg.type==='wall'){ setCoach("🧱 35km 마의 벽! 무너지지 마 — 리듬으로 버텨!!",'var(--bad)'); shake=Math.max(shake,10); wallActive=true; wallDone=false; gly=Math.min(gly,42); }
     else if(seg.type==='sprint'){ setCoach("🔥 라스트 스퍼트!! 전력 질주!",'var(--bad)'); shake=8; }
@@ -368,7 +368,7 @@
       speed=TGT_SPEED*0.5;
       dist+=speed*dtS*SCALE; raceT+=dtS*SCALE; scroll+=speed*dtS*SCROLL_K;
       gait+=(150/60)*Math.PI*dtS; bob*=Math.pow(0.004,dtS); critT=0;
-      if(now()>coachUntil) setCoach("💧 화면을 탭! → 물 마시기 (박자 맞추면 보너스)",'var(--accent)');
+      if(now()>coachUntil) setCoach("💧 톡톡 탭! 탭할수록 체력 회복돼요",'var(--accent)');
       if(dist>=TARGET_M){dist=TARGET_M;finish();}
       return;
     }
@@ -611,7 +611,8 @@
     if(running&&curSeg&&curSeg.type==='water'){
       const open=now()<=drinkOpenUntil; ctx.textAlign="center";
       ctx.font="900 28px sans-serif"; ctx.fillStyle=open?"#1f9ae0":"#4aa3ff";
-      ctx.fillText(open?"💧 지금! 화면 탭 꿀꺽 (보너스)":"💧 화면을 탭! 물 마시기",W/2,H*0.42);
+      ctx.fillText("💧 탭! 탭! 물 마시기",W/2,H*0.40);
+      ctx.font="bold 17px sans-serif"; ctx.fillStyle="#1f7ac0"; ctx.fillText("발판·화면 아무 데나 톡톡 → 체력 회복",W/2,H*0.40+30);
     }
     // 라이벌 화면 밖 표시(가장자리 화살표)
     if(running){ ctx.fillStyle=curPB>0?"#e0a800":"#ff6f9c"; ctx.font="bold 13px sans-serif"; const gl=curPB>0?"내 기록 🏅":"라이벌 🏃";
