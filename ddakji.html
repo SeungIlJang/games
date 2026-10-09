@@ -83,10 +83,10 @@
   <button id="dexClose">닫기</button>
 </div>
 <div id="adov" class="hidden"><div class="sp"></div><div id="adovTxt">광고 보는 중…</div></div>
-<div id="ver">모두의 딱지치기 v0.7 · 난이도 상향</div>
+<div id="ver">모두의 딱지치기 v0.8 · 초록존 랜덤 위치(끝 고정 해제)</div>
 <div id="start">
   <h1 style="font-size:38px">모두의 딱지치기</h1>
-  <p>초록 구간에서 <b>탭</b>해서 딱지를 내리쳐요.<br/>상대 딱지가 <b>90°를 넘기면</b> 뒤집혀서 따먹어요!<br/>스테이지 올라갈수록 <b>초록은 좁아지고 파워바는 빨라져요</b> 🟫<br/><span id="bstage" style="color:#ffcf5c;font-weight:800"></span></p>
+  <p><b>초록 구간</b>(매번 위치가 바뀜!)에 파워바가 올 때 <b>탭</b>해서 내리쳐요.<br/>너무 약해도·너무 세도 실패 — <b>딱 맞춰야</b> 90° 넘겨 뒤집어요! 중앙 노랑=완벽타 🎯<br/>스테이지 올라갈수록 <b>초록은 좁아지고 파워바는 빨라져요</b> 🟫<br/><span id="bstage" style="color:#ffcf5c;font-weight:800"></span></p>
   <button class="btn" id="startBtn">시작</button>
   <div style="display:flex;gap:10px">
     <button id="dexBtn2">📖 도감</button>
@@ -116,8 +116,10 @@ let barSpeed=1.35;                  // 파워바 속도(스테이지↑ = 빨라
 function applyDifficulty(){ const s=stage;
   barSpeed=Math.min(3.3, 1.3 + (s-1)*0.14) * (1 - up.barslow*0.08);  // 스테이지↑ 빠르게(상향) · 집중력 강화로 감속
   Gcur=Math.min(14.5, 9 + (s-1)*0.5);                  // 딱지 점점 무겁게(상향) → 뒤집기 임계 힘 상승
-  const pstar=(Math.sqrt(2*Gcur)-1.5-powBonus())/4.6;  // 임계 파워(ω0=1.5+power*4.6+힘강화 기준)
-  GREEN=[ Math.max(0.40, Math.min(0.92, pstar+0.085-aimBonus())), 1.0 ]; // 초록=실제 성공구간(상향: 더 좁게). 힘/정확도 강화로 넓어짐
+  // 성공 밴드(초록): 스테이지↑ 좁아짐, 힘·정확도 강화로 넓어짐 + 매 라운드 랜덤 위치(오른쪽 끝 고정 제거)
+  const w=Math.max(0.11, 0.26 - (s-1)*0.011 + up.power*0.015 + up.aim*0.018);
+  const lo=w/2+0.08, hi=1-w/2-0.05, c=lo+Math.random()*Math.max(0,(hi-lo));
+  GREEN=[c-w/2, c+w/2];
 }
 let theta=0, omega=0, maxTheta=0;   // 뒤집기 물리(라디안, 0=평평, PI=뒤집힘)
 let Gcur=9.0;                       // 중력 토크(=딱지 무게). 스테이지↑ = 무거워짐 = 더 센 힘 필요
@@ -175,7 +177,7 @@ function showSub(t){ const s=$('sub'); s.textContent=t||''; s.style.opacity=t?1:
 function clearMsg(){ $('msg').style.opacity=0; $('sub').style.opacity=0; }
 
 function newRound(keepFoe){ if(!keepFoe) foe=pickFoe(); theta=0; omega=0; maxTheta=0; power=0; pdir=1; rewardUsed=false; applyDifficulty();
-  if(easyNext){ GREEN=[Math.max(0.48,GREEN[0]-0.15),1.0]; easyNext=false; }   // 리워드 '쉽게 다시' 1회 적용
+  if(easyNext){ const c=(GREEN[0]+GREEN[1])/2; let w=Math.min(0.5,(GREEN[1]-GREEN[0])+0.16); GREEN=[Math.max(0.05,c-w/2),Math.min(0.97,c+w/2)]; easyNext=false; }   // 리워드 '쉽게 다시' 1회: 밴드 넓힘
   const ri=RINFO[foe.rarity]; foeGlow=foe.rarity==='c'?0:1;
   $('foeLabel').innerHTML=(ri.label?('<span style="color:'+ri.color+'">'+ri.label+' '+ri.stars+'</span> '):'')+foe.name;
   $('rewardBtn').classList.add('hidden'); $('dexBtn').classList.remove('hidden'); $('shopBtnP').classList.remove('hidden');
@@ -191,8 +193,14 @@ function doImpact(){
   shake=10; flash=0.5; sfx.slam(); sfx.vib(30);
   for(let i=0;i<16;i++){ const a=Math.random()*Math.PI*2, sp=1+Math.random()*3; parts.push({x:0,y:0,vx:Math.cos(a)*sp,vy:-Math.random()*4-1,life:0.5,r:2+Math.random()*3}); }
   // 파워 → 초기 각속도(ω0). 임계값 sqrt(2G)=~4.24 를 넘겨야 90° 통과
-  omega = 1.5 + power*4.6 + powBonus();   // 힘 강화 시 더 잘 넘어감
-  lastPower=power; perfectHit = power >= Math.min(0.97, GREEN[0] + (1-GREEN[0])*0.68);  // 초록 상단부 명중 = 완벽타
+  // 랜덤 밴드 판정: 밴드 안에 멈춰야 뒤집힘(너무 약해도·너무 세도 실패). 밴드 중앙=완벽타
+  lastPower=power;
+  const gc=(GREEN[0]+GREEN[1])/2, ghalf=(GREEN[1]-GREEN[0])/2;
+  const inGreen = power>=GREEN[0] && power<=GREEN[1];
+  perfectHit = Math.abs(power-gc) <= ghalf*0.34;
+  const thr=Math.sqrt(2*Gcur);   // 90°(티핑포인트) 넘기는 임계 각속도
+  if(inGreen){ omega = thr + 0.45 + (perfectHit?0.8:0.25); }   // 밴드 적중 → 확실히 뒤집힘(완벽=여유)
+  else { const d = power<GREEN[0] ? (GREEN[0]-power) : (power-GREEN[1]); omega = thr*Math.max(0.40, 1 - d*2.0); }  // 밴드 밖 → 못 넘김(가까울수록 90° 근처서 아깝게 되돌아옴)
   theta=0.001; maxTheta=0; teetering=false; state='flip';
 }
 
@@ -384,9 +392,10 @@ function render(){
     const bgr=ctx.createLinearGradient(bx,0,bx+bw,0); bgr.addColorStop(0,'#3a2a18'); bgr.addColorStop(1,'#5a4024');
     ctx.fillStyle=bgr; ctx.fillRect(bx,by,bw,bh);
     const gl=bx+bw*GREEN[0], gw=bw*(GREEN[1]-GREEN[0]);
-    ctx.fillStyle='rgba(70,200,110,.55)'; ctx.fillRect(gl,by,gw,bh);                 // 초록=성공
-    const pf0=Math.min(0.97,GREEN[0]+(1-GREEN[0])*0.68), pfl=bx+bw*pf0;
-    ctx.fillStyle='rgba(255,220,80,.6)'; ctx.fillRect(pfl,by,(bx+bw)-pfl,bh);         // 노랑=완벽
+    ctx.fillStyle='rgba(70,200,110,.55)'; ctx.fillRect(gl,by,gw,bh);                 // 초록=성공(랜덤 위치)
+    const gc=(GREEN[0]+GREEN[1])/2, pfw=(GREEN[1]-GREEN[0])*0.34/2;                   // 노랑=완벽(밴드 중앙)
+    const pfl=bx+bw*(gc-pfw), pfr=bx+bw*(gc+pfw);
+    ctx.fillStyle='rgba(255,220,80,.68)'; ctx.fillRect(pfl,by,pfr-pfl,bh);
     ctx.restore();
     ctx.fillStyle='rgba(140,255,170,.95)'; ctx.fillRect(gl,by,3,bh);
     const mx=bx+bw*power;
