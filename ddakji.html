@@ -56,6 +56,14 @@
   #lb h2{font-size:24px;color:#ffcf5c}
   #lbClose{margin-top:12px;background:#ffcf5c;color:#5a3a10;border:none;border-radius:12px;padding:12px 34px;font-size:17px;font-weight:900;box-shadow:0 5px 0 #b5831f;cursor:pointer;pointer-events:auto}
   #lbBtn2{pointer-events:auto;background:#20263c00;color:#ffcf5c;border:1px solid #6a4e2a;border-radius:12px;padding:10px 18px;font-size:15px;font-weight:800;cursor:pointer;margin-top:2px}
+  #duelSetup,#duelResult{position:fixed;inset:0;z-index:13;background:rgba(18,12,7,.97);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:24px;text-align:center}
+  #duelSetup h2,#duelResult h2{font-size:26px;color:#ff8a6a;margin-bottom:2px}
+  .betb{pointer-events:auto;background:#2a1c10;color:#ffd75c;border:2px solid #6a4e2a;border-radius:12px;padding:10px 16px;font-size:16px;font-weight:800;cursor:pointer}
+  .betb.sel{background:#ffcf5c;color:#5a3a10;border-color:#ffcf5c}
+  .lnk{pointer-events:auto;background:none;border:none;color:#c9b79a;font-size:14px;margin-top:10px;cursor:pointer;text-decoration:underline}
+  #duelHud{position:fixed;top:calc(env(safe-area-inset-top,0px) + 92px);left:0;right:0;z-index:7;text-align:center;pointer-events:none;color:#fff;text-shadow:0 2px 4px #000}
+  #duelScore{font-size:20px;font-weight:900}
+  #duelTurn{font-size:15px;font-weight:800;margin-top:2px}
   .hidden{display:none!important}
 </style></head>
 <body>
@@ -87,16 +95,36 @@
   <button id="dexClose">닫기</button>
 </div>
 <div id="adov" class="hidden"><div class="sp"></div><div id="adovTxt">광고 보는 중…</div></div>
-<div id="ver">모두의 딱지치기 v1.0 · 🏆 글로벌 랭킹 추가</div>
+<div id="ver">모두의 딱지치기 v1.1 · ⚔️ 대결모드(PvE 3판2선승·엽전베팅) 추가</div>
 <div id="start">
   <h1 style="font-size:38px">모두의 딱지치기</h1>
   <p><b>초록 구간</b>(매번 위치가 바뀜!)에 파워바가 올 때 <b>탭</b>해서 내리쳐요.<br/>너무 약해도·너무 세도 실패 — <b>딱 맞춰야</b> 90° 넘겨 뒤집어요! 중앙 노랑=완벽타 🎯<br/>스테이지 올라갈수록 <b>초록은 좁아지고 파워바는 빨라져요</b> 🟫<br/><span id="bstage" style="color:#ffcf5c;font-weight:800"></span></p>
   <button class="btn" id="startBtn">시작</button>
+  <button class="btn" id="duelBtn" style="background:#e85c5c;box-shadow:0 6px 0 #a33;font-size:19px;padding:13px 40px">⚔️ 딱지 대결</button>
   <div style="display:flex;gap:10px">
     <button id="dexBtn2">📖 도감</button>
     <button id="shopBtn2">🔨 강화</button>
     <button id="lbBtn2">🏆 랭킹</button>
   </div>
+</div>
+<div id="duelSetup" class="hidden">
+  <h2>⚔️ 딱지 대결</h2>
+  <div id="duelOpp" style="font-size:17px;margin:8px 0;font-weight:800"></div>
+  <div style="font-size:13px;color:#e9d6bf;margin-bottom:12px;line-height:1.6">3판 2선승 · 번갈아 내려치기<br/>이기면 <b style="color:#8affb0">판돈만큼 +</b>, 지면 <b style="color:#ff9a9a">판돈만큼 −</b> · 이기면 상대 딱지도 획득!</div>
+  <div style="font-size:14px;margin-bottom:6px">판돈(엽전) 선택</div>
+  <div id="betRow" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:320px"></div>
+  <button class="btn" id="duelGoBtn" style="margin-top:16px">대결 시작</button>
+  <button id="duelCancelBtn" class="lnk">취소</button>
+</div>
+<div id="duelHud" class="hidden">
+  <div id="duelScore"></div>
+  <div id="duelTurn"></div>
+</div>
+<div id="duelResult" class="hidden">
+  <h2 id="drTitle"></h2>
+  <div id="drSub" style="font-size:15px;color:#e9d6bf;margin:10px 0;line-height:1.6"></div>
+  <button class="btn" id="drAgain">⚔️ 다시 대결</button>
+  <button id="drHome" class="lnk">나가기</button>
 </div>
 <div id="lb" class="hidden">
   <div style="display:flex;justify-content:space-between;align-items:center;width:100%;max-width:340px;margin-bottom:8px">
@@ -203,6 +231,10 @@ function pickFoe(){ const s=stage;
   const pool=DDAKJI.filter(d=>d.rarity===tier); return pool[Math.floor(Math.random()*pool.length)];
 }
 let lastGain=0, rewardUsed=false, lastSuccess=false, easyNext=false, foeGlow=0;
+// ---- 대결모드(PvE 듀얼) ----
+let duel={on:false, bet:0, pWins:0, oWins:0, attacker:'P', pDak:null, oDak:null, oppName:'', oppSkill:0.5, round:1};
+let attackerCols=['#d8b27a','#9a7638'];   // slam 시 내려치는 딱지 색(공격자)
+let aiAimT=0, duelAfter=null, setupBet=30;
 
 // ---- 엽전 & 딱지 강화(영구 성장) ----
 let coins=0, up={power:0,aim:0,barslow:0,coin:0};
@@ -254,6 +286,7 @@ function doImpact(){
 
 function setReward(txt){ const b=$('rewardBtn'); b.textContent=txt; b.classList.remove('hidden'); }
 function endFlip(success){
+  if(duel.on){ duelResolve(success); return; }   // 대결모드는 별도 정산
   state='result'; resultT=0; lastSuccess=success; rewardUsed=false;
   const deg=Math.round(maxTheta*180/Math.PI); const ri=RINFO[foe.rarity];
   if(success){
@@ -323,6 +356,9 @@ function update(dt){
 
   if(state==='ready'){
     power+=pdir*dt*barSpeed; if(power>=1){power=1;pdir=-1;} else if(power<=0){power=0;pdir=1;}
+  } else if(state==='aiaim'){   // 상대(AI) 조준: 바 움직이다가 일정 시간 후 자동 타격
+    power+=pdir*dt*barSpeed; if(power>=1){power=1;pdir=-1;} else if(power<=0){power=0;pdir=1;}
+    aiAimT+=dt; if(aiAimT>=0.9) aiStrike();
   } else if(state==='slam'){
     slamT+=dt; dropY=-220*(1-Math.min(1,slamT/0.22))**1.4 + Math.min(1,slamT/0.22)*0;
     dropY=-220*(1-Math.min(1,slamT/0.22)); if(slamT>=0.22){ dropY=0; doImpact(); }
@@ -346,6 +382,7 @@ function update(dt){
     else if(theta<=0 && omega<=0){ theta=0; teetering=false; endFlip(false); }
   } else if(state==='result'){
     resultT+=dt;
+    if(duelAfter){ if(resultT>=duelAfter.t){ const fn=duelAfter.fn; duelAfter=null; fn(); } }
   }
 }
 
@@ -410,9 +447,9 @@ function render(){
   // 상대 딱지
   drawDdakji(CX,CY,SZ,theta,foe.cols);
 
-  // 내리치는 내 딱지 (slam)
+  // 내리치는 공격자 딱지 (slam)
   if(state==='slam'){
-    drawDdakji(CX,CY+dropY,SZ*0.92,0,['#d8b27a','#9a7638']);
+    drawDdakji(CX,CY+dropY,SZ*0.92,0,attackerCols);
   }
 
   // 먼지/파편
@@ -431,8 +468,8 @@ function render(){
   // 충격 플래시
   if(flash>0){ ctx.fillStyle='rgba(255,240,200,'+(flash*0.5)+')'; ctx.fillRect(0,0,W,H); }
 
-  // 파워 바 (ready)
-  if(state==='ready'){
+  // 파워 바 (ready / 상대 조준 aiaim)
+  if(state==='ready' || state==='aiaim'){
     const bw=Math.min(W*0.82,350), bx=(W-bw)/2, by=H*0.78, bh=28;
     ctx.save();
     ctx.fillStyle='rgba(0,0,0,.45)'; roundRect(bx-4,by-4,bw+8,bh+8,12); ctx.fill();
@@ -467,8 +504,8 @@ requestAnimationFrame(loop);
 function tap(){
   initAudio();
   if(state==='ready'){ slam(); }
-  else if(state==='result'){
-    if(resultT<0.35) return;    // 결과 잠깐 보여주기
+  else if(state==='result' && !duel.on){   // 솔로만 탭으로 다음 라운드(듀얼은 자동 진행)
+    if(resultT<0.35) return;
     newRound();
   }
 }
@@ -506,6 +543,85 @@ function openLB(){ $('lb').classList.remove('hidden'); submitScore().then(render
 $('lbBtn2').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); openLB(); });
 $('lbClose').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); $('lb').classList.add('hidden'); });
 $('lbNameBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); const n=prompt('랭킹에 표시할 이름 (최대 12자)', getName()); if(n&&n.trim()){ localStorage.setItem('ddakji_name', n.trim().slice(0,12)); submitScore().then(renderLB).catch(()=>renderLB()); } });
+
+// ---- 대결모드 (PvE 듀얼, 3판 2선승) ----
+function duelOpponent(){ const d=pickFoe(); const sk=d.rarity==='e'?0.80:d.rarity==='r'?0.64:0.50;
+  const ri=RINFO[d.rarity]; return {dak:d, skill:sk, name:(ri.label?ri.label+' ':'')+d.name}; }
+function myDuelDak(){ // 내 딱지: 도감에서 보유한 가장 높은 등급 1장(없으면 기본)
+  const order={e:3,r:2,c:1}; let best=null;
+  DDAKJI.forEach(d=>{ if((owned[d.id]||0)>0){ if(!best||order[d.rarity]>order[best.rarity]) best=d; } });
+  return best||{id:'mine',name:'내 딱지',cols:['#d8b27a','#9a7638'],rarity:'c'};
+}
+function renderBetRow(){ const row=$('betRow'); row.innerHTML=''; const opts=[10,30,50,100].filter(v=>v<=coins);
+  if(!opts.length){ row.innerHTML='<span style="color:#ff9a9a">엽전이 부족해요 (최소 10) — 솔로로 모아보세요</span>'; $('duelGoBtn').style.display='none'; return; }
+  $('duelGoBtn').style.display=''; if(!opts.includes(setupBet)) setupBet=opts[0];
+  opts.forEach(v=>{ const b=document.createElement('button'); b.className='betb'+(v===setupBet?' sel':''); b.textContent='🪙 '+v; b.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation(); setupBet=v; renderBetRow();}); row.appendChild(b); });
+}
+let pendingOpp=null;
+function openDuelSetup(){ initAudio(); pendingOpp=duelOpponent();
+  const my=myDuelDak(); const mri=RINFO[my.rarity];
+  $('duelOpp').innerHTML='🙋 내 딱지: <b>'+my.name+'</b> '+(mri.stars||'')+'<br>🆚<br>😈 상대: <b>'+pendingOpp.name+'</b>';
+  renderBetRow(); $('start').classList.add('hidden'); $('duelSetup').classList.remove('hidden'); }
+function startDuel(){ if(setupBet>coins) return; duel.on=true; duel.bet=setupBet; duel.pWins=0; duel.oWins=0; duel.round=1; duel.attacker='P';
+  duel.pDak=myDuelDak(); const opp=pendingOpp||duelOpponent(); duel.oDak=opp.dak; duel.oppName=opp.name; duel.oppSkill=opp.skill;
+  $('duelSetup').classList.add('hidden'); $('duelResult').classList.add('hidden');
+  $('dexBtn').classList.add('hidden'); $('shopBtnP').classList.add('hidden'); $('coinHud').classList.remove('hidden'); $('duelHud').classList.remove('hidden');
+  setTop(); beginDuelTurn(); lastTs=performance.now();
+}
+function beginDuelTurn(){ duelAfter=null;
+  if(duel.attacker==='P'){ foe=duel.oDak; attackerCols=duel.pDak.cols; } else { foe=duel.pDak; attackerCols=duel.oDak.cols; }
+  theta=0; omega=0; maxTheta=0; power=0; pdir=1; teetering=false; dropY=0; applyDifficulty();
+  foeGlow=foe.rarity==='c'?0:1; $('foeLabel').innerHTML=''; clearMsg(); updateDuelHud();
+  if(duel.attacker==='P'){ state='ready'; $('hint').classList.remove('hidden'); }
+  else { state='aiaim'; aiAimT=0; $('hint').classList.add('hidden'); }
+}
+function aiStrike(){ initAudio(); sfx.whoosh();
+  const gc=(GREEN[0]+GREEN[1])/2, half=(GREEN[1]-GREEN[0])/2;
+  if(Math.random()<duel.oppSkill){ power=Math.max(0.02,Math.min(0.98, gc+(Math.random()*2-1)*half*0.6)); }  // 명중: 밴드 안
+  else { const side=Math.random()<0.5?-1:1; const d=half+0.02+Math.random()*0.12; power=Math.max(0.02,Math.min(0.98, gc+side*d)); }  // 빗나감: 밴드 밖
+  state='slam'; slamT=0; dropY=-220;
+}
+function duelResolve(success){
+  if(success){ roundWin(duel.attacker); return; }
+  duel.attacker = duel.attacker==='P'?'O':'P';   // 실패 → 공수 전환
+  const nowP = duel.attacker==='P';
+  state='result'; resultT=0; lastSuccess=false;
+  showMsg(nowP?'막아냈다! 내 차례 💪':'막혔다! 상대 차례 ⚔️', nowP?'#aef5b0':'#ff9a9a'); showSub('공수 전환!');
+  updateDuelHud(); duelAfter={t:1.0, fn:beginDuelTurn};
+}
+function roundWin(winner){ if(winner==='P') duel.pWins++; else duel.oWins++;
+  const pf=perfectHit;
+  state='result'; resultT=0;
+  if(winner==='P'){ showMsg(pf?'완벽하게 따먹었다! 🎯':'상대 딱지 넘겼다! 🟫', '#ffe14d'); sfx.win(); sfx.vib([20,40,30]); shake=9;
+    for(let i=0;i<40;i++){ const a=Math.random()*Math.PI*2, sp=2+Math.random()*5; parts.push({x:0,y:-10,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,life:0.9,r:3+Math.random()*4,c:['#ffe14d','#fff','#ffcf5c','#ff7a5c'][i%4]}); } }
+  else { showMsg('내 딱지가 넘어갔다… 😣','#ff9a9a'); sfx.fail(); sfx.vib(60); shake=6; }
+  showSub('라운드 '+duel.round+' · '+(winner==='P'?'승리!':'패배')+'   (나 '+duel.pWins+ ' : '+duel.oWins+' 상대)');
+  updateDuelHud();
+  if(duel.pWins>=2 || duel.oWins>=2){ duelAfter={t:1.5, fn:duelMatchEnd}; }
+  else { duel.round++; duel.attacker=(duel.round%2===1)?'P':'O'; duelAfter={t:1.5, fn:beginDuelTurn}; }
+}
+function duelMatchEnd(){ duelAfter=null; const win=duel.pWins>duel.oWins; const delta=win?duel.bet:-duel.bet;
+  coins=Math.max(0, coins+delta); let gotMsg='';
+  if(win){ owned[duel.oDak.id]=(owned[duel.oDak.id]||0)+1; saveDex(); gotMsg='<br>🎁 상대 딱지 <b>'+duel.oDak.name+'</b> 획득! (도감)'; }
+  saveCoins(); setTop();
+  duel.on=false; $('duelHud').classList.add('hidden'); clearMsg();
+  $('drTitle').textContent=win?'🏆 대결 승리!':'💀 대결 패배';
+  $('drTitle').style.color=win?'#ffe14d':'#ff7a7a';
+  $('drSub').innerHTML=(win?'상대 딱지를 따먹었어요! 🪙 +'+duel.bet:'판돈을 잃었어요… 🪙 -'+duel.bet)+' (보유 '+coins+')'+gotMsg;
+  $('duelResult').classList.remove('hidden');
+}
+function updateDuelHud(){ const dot=(n)=>'●'.repeat(n)+'○'.repeat(Math.max(0,2-n));
+  $('duelScore').textContent='나 '+dot(duel.pWins)+' : '+dot(duel.oWins)+' 상대  · 🪙'+duel.bet;
+  $('duelTurn').textContent=(state==='aiaim'||duel.attacker==='O')?('🛡️ '+duel.oppName+' 공격 중…'):'⚔️ 내 공격 — 초록에 맞춰 탭!'; }
+function exitDuel(){ duel.on=false; duelAfter=null; state='start';
+  $('duelHud').classList.add('hidden'); $('duelResult').classList.add('hidden'); $('duelSetup').classList.add('hidden');
+  $('dexBtn').classList.add('hidden'); $('shopBtnP').classList.add('hidden'); $('coinHud').classList.add('hidden');
+  $('start').classList.remove('hidden'); if(bestStage>1) $('bstage').textContent='🏆 최고 스테이지 '+bestStage; }
+$('duelBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); openDuelSetup(); });
+$('duelCancelBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); $('duelSetup').classList.add('hidden'); $('start').classList.remove('hidden'); });
+$('duelGoBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); startDuel(); });
+$('drAgain').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); $('duelResult').classList.add('hidden'); openDuelSetup(); });
+$('drHome').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); exitDuel(); });
 
 setTop(); if(bestStage>1) $('bstage').textContent='🏆 최고 스테이지 '+bestStage;
 </script>
