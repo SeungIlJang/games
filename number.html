@@ -140,7 +140,7 @@
   <div id="shopList"></div>
   <button class="btn" id="shopClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v1.13 · 전면광고 5판마다로 조정</div>
+<div id="ver">v1.14 · 이어하기(부활) 광고완료 시에만 소비·중복클릭 방지</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -410,7 +410,7 @@ function tick(){
   timer=setTimeout(tick, nd);
 }
 function nextTick(first){ clearTimeout(timer); timer=setTimeout(tick, curIsRoll?ROLL_MS:first); }
-function start(){ score=0; hits=0; hearts=1; mult=1; runCoins=0; inGap=false; showMult(); slowEndShown=false; reviveCount=0; hideBanner(); $('start').classList.add('hidden'); $('over').classList.add('hidden'); state='play';
+function start(){ score=0; hits=0; hearts=1; mult=1; runCoins=0; inGap=false; showMult(); slowEndShown=false; reviveCount=0; adPlaying=false; const _rb=$('reviveBtn'); if(_rb)_rb.disabled=false; hideBanner(); $('start').classList.add('hidden'); $('over').classList.add('hidden'); state='play';
   try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
   renderHearts(); newRound(false); if(rule.type!=='choice') nextTick(560); }
 function hitOK(){
@@ -517,8 +517,12 @@ function die(msg, fromChoice){
   setTimeout(()=>{ $('cur').classList.remove('miss'); $('wrap').classList.remove('choice'); $('over').classList.remove('hidden'); renderOverLB(); },750);   // 판정 먼저 보여주고 결과창(랭킹 바로 내장)
 }
 function revive(){
-  if(reviveCount>=MAX_REVIVE || state!=='over') return; reviveCount++;
+  if(reviveCount>=MAX_REVIVE || state!=='over' || adPlaying) return;   // 광고 재생 중 중복클릭 차단
+  $('reviveBtn').disabled=true;
   playAd(()=>{
+    $('reviveBtn').disabled=false;
+    if(state!=='over') return;        // 상태 바뀌었으면 무시
+    reviveCount++;                     // ★ 광고 끝났을 때만 부활 횟수 소비(안 돌면 버튼 유지)
     $('over').classList.add('hidden'); $('reviveBtn').style.display='none'; state='play'; hideBanner();
     floatText('🔥 이어하기!','#2ec77a'); vib([20,40,20]);
     newRound(true); if(rule.type!=='choice') nextTick(curIsRoll?ROLL_MS:Math.max(220,speed()));
