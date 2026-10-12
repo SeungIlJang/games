@@ -89,8 +89,10 @@ const AD_USE_TEST=true;
 const AD_BANNER = AD_USE_TEST ? 'ca-app-pub-3940256099942544/6300978111' : '';
 const AD_INTER  = AD_USE_TEST ? 'ca-app-pub-3940256099942544/1033173712' : '';
 let admobReady=false, bannerShown=false, interCount=0;
+// 제스처 바(홈 인디케이터) 높이만큼 배너를 띄운다. viewport-fit=cover 필요.
+function safeBottomInset(){ try{ const p=document.createElement('div'); p.style.cssText='position:fixed;left:0;bottom:0;width:0;height:env(safe-area-inset-bottom,0px);visibility:hidden;pointer-events:none'; document.body.appendChild(p); const h=Math.round(p.getBoundingClientRect().height); p.remove(); return h; }catch(e){ return 0; } }
 (async function(){ try{ const C=window.Capacitor; if(C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.AdMob){ await C.Plugins.AdMob.initialize({initializeForTesting:AD_USE_TEST}); admobReady=true; showBanner(); } }catch(e){} })();
-async function showBanner(){ const C=window.Capacitor; if(!(C&&C.Plugins&&C.Plugins.AdMob)||bannerShown) return; bannerShown=true; try{document.body.classList.add('has-banner');}catch(e){} try{ await C.Plugins.AdMob.showBanner({adId:AD_BANNER,adSize:'BANNER',position:'BOTTOM_CENTER',margin:0,isTesting:AD_USE_TEST}); }catch(e){ bannerShown=false; try{document.body.classList.remove('has-banner');}catch(e2){} } }
+async function showBanner(){ const C=window.Capacitor; if(!(C&&C.Plugins&&C.Plugins.AdMob)||bannerShown) return; bannerShown=true; try{document.body.classList.add('has-banner');}catch(e){} try{ await C.Plugins.AdMob.showBanner({adId:AD_BANNER,adSize:'BANNER',position:'BOTTOM_CENTER',margin:safeBottomInset(),isTesting:AD_USE_TEST}); }catch(e){ bannerShown=false; try{document.body.classList.remove('has-banner');}catch(e2){} } }
 async function showInterstitial(){ const C=window.Capacitor; if(!(admobReady&&C&&C.Plugins&&C.Plugins.AdMob)) return; try{ await C.Plugins.AdMob.prepareInterstitial({adId:AD_INTER,isTesting:AD_USE_TEST}); await C.Plugins.AdMob.showInterstitial(); }catch(e){} }
 
 const cv=$('cv'), ctx=cv.getContext('2d'); let W=412,H=740,DPR=1;
