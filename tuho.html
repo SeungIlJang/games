@@ -6,8 +6,8 @@
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{width:100%;height:100%;overflow:hidden;background:#13100c;touch-action:none;overscroll-behavior:none;font-family:system-ui,-apple-system,sans-serif}
   #cv{display:block;width:100vw;height:100vh}
-  #hud{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);left:0;right:0;display:flex;justify-content:center;gap:10px;pointer-events:none;z-index:5}
-  .pill{background:rgba(20,14,8,.72);border:1px solid #6a4e2a;border-radius:12px;padding:6px 12px;color:#ffe6b0;font-size:13px;font-weight:800;text-align:center;min-width:64px}
+  #hud{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);left:0;right:0;display:flex;justify-content:center;gap:6px;pointer-events:none;z-index:5}
+  .pill{background:rgba(20,14,8,.72);border:1px solid #6a4e2a;border-radius:12px;padding:6px 9px;color:#ffe6b0;font-size:12px;font-weight:800;text-align:center;min-width:50px}
   .pill b{display:block;font-size:19px;color:#fff}
   #wind{position:fixed;top:calc(env(safe-area-inset-top,0px) + 70px);left:0;right:0;text-align:center;color:#9fd0ff;font-size:14px;font-weight:800;text-shadow:0 2px 3px #000;pointer-events:none;z-index:5;min-height:18px}
   #hint{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 90px);left:0;right:0;text-align:center;color:#ffe14d;font-size:16px;font-weight:800;text-shadow:0 2px 4px #000;pointer-events:none;z-index:5}
@@ -19,20 +19,31 @@
   .ov p{font-size:14px;color:#e9d6bf;line-height:1.7}
   .btn{pointer-events:auto;background:#ffcf5c;color:#5a3a10;font-size:22px;font-weight:900;border:none;border-radius:16px;padding:15px 48px;box-shadow:0 6px 0 #b5831f;cursor:pointer}
   .hidden{display:none!important}
+  #btns{position:fixed;top:calc(env(safe-area-inset-top,0px) + 56px);right:10px;display:flex;gap:8px;z-index:8}
+  .iconbtn{pointer-events:auto;background:rgba(20,14,8,.72);border:1px solid #6a4e2a;border-radius:10px;color:#ffe6b0;font-size:18px;width:42px;height:42px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  #rotate{display:none;position:fixed;inset:0;z-index:30;background:#13100c;color:#ffe6b0;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;font-weight:800;font-size:18px;padding:30px}
+  #rotate .ico{font-size:60px;animation:rot 1.6s ease-in-out infinite}
+  @keyframes rot{0%,100%{transform:rotate(0)}50%{transform:rotate(-90deg)}}
+  @media (orientation:landscape){ #rotate{display:flex} }
 </style></head>
 <body>
 <canvas id="cv"></canvas>
 <div id="hud">
+  <div class="pill">목숨<b id="lives">❤️❤️❤️</b></div>
   <div class="pill">점수<b id="score">0</b></div>
   <div class="pill">연속<b id="combo">0</b></div>
   <div class="pill">단계<b id="stage">1</b></div>
   <div class="pill">최고<b id="best">0</b></div>
 </div>
+<div id="btns">
+  <button class="iconbtn" id="muteBtn">🔊</button>
+  <button class="iconbtn" id="pauseBtn">⏸</button>
+</div>
 <div id="wind"></div>
 <div id="hint"></div>
 <div id="msg"></div>
 <div id="sub"></div>
-<div id="ver">모두의 화살촉 v0.3 · 조준→파워 2탭, 항아리에 화살 넣기</div>
+<div id="ver">모두의 화살촉 v0.4 · 목숨3·일시정지·음소거·세로고정</div>
 <div id="start" class="ov">
   <h1>🏹 모두의 화살촉</h1>
   <p><b>투호(投壺)</b> — 화살을 던져 항아리에 넣는 전통놀이.<br/>
@@ -40,6 +51,16 @@
   포물선으로 날아가 <b>항아리 입구</b>에 쏙 들어가면 성공! 🎯<br/>
   바람·거리를 읽어 <b>한 끗</b>을 맞춰요. 단계 오를수록 멀고 좁아져요.</p>
   <button class="btn" id="startBtn">시작</button>
+</div>
+<div id="over" class="ov hidden">
+  <h1>게임 오버</h1>
+  <p id="overSub">기록을 남겼어요!</p>
+  <button class="btn" id="overBtn">다시 하기</button>
+</div>
+<div id="rotate">
+  <div class="ico">📱↻</div>
+  <div>세로로 돌려주세요</div>
+  <div style="font-size:13px;color:#9a8666">모두의 화살촉은 세로 화면 게임이에요</div>
 </div>
 <script>
 const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
@@ -51,7 +72,7 @@ const $=id=>document.getElementById(id);
 // ---- audio ----
 let AC=null;
 function initAudio(){ if(!AC){ try{AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){} } if(AC&&AC.state==='suspended')AC.resume(); }
-function tone(f,d,t,g,slide){ if(!AC)return; const o=AC.createOscillator(),v=AC.createGain(); o.type=t||'sine'; o.frequency.value=f; if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(1,slide),AC.currentTime+d); v.gain.value=g||0.12; v.gain.exponentialRampToValueAtTime(0.0001,AC.currentTime+d); o.connect(v);v.connect(AC.destination); o.start();o.stop(AC.currentTime+d); }
+function tone(f,d,t,g,slide){ if(!AC||muted)return; const o=AC.createOscillator(),v=AC.createGain(); o.type=t||'sine'; o.frequency.value=f; if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(1,slide),AC.currentTime+d); v.gain.value=g||0.12; v.gain.exponentialRampToValueAtTime(0.0001,AC.currentTime+d); o.connect(v);v.connect(AC.destination); o.start();o.stop(AC.currentTime+d); }
 const sfx={ swing(){tone(300,0.2,'sine',0.07,620);}, lock(){tone(620,0.05,'square',0.08);}, in(){[660,880,1180].forEach((f,i)=>setTimeout(()=>tone(f,0.14,'triangle',0.16),i*70));}, clink(){tone(1200,0.07,'square',0.1,500);}, miss(){tone(180,0.28,'sawtooth',0.14,80);}, vib(ms){try{navigator.vibrate&&navigator.vibrate(ms);}catch(e){}} };
 
 // ---- state ----
@@ -67,6 +88,7 @@ let parts=[];
 let resultT=0, shake=0, gt=0, lastTs=0;
 let msgT=0;
 let lastHit=false;   // 직전 결과가 명중인지 (명중 때만 항아리에 화살 꽂힘 표시)
+let lives=3, paused=false, muted=false;  // 목숨 / 일시정지 / 음소거
 
 // geometry (resize 비례)
 function groundY(){ return H*0.80; }
@@ -97,7 +119,7 @@ function newThrow(){
 function clearMsg(){ $('msg').style.opacity=0; $('sub').style.opacity=0; }
 function showMsg(t,c){ const m=$('msg'); m.textContent=t; m.style.color=c||'#fff'; m.style.opacity=1; }
 function showSub(t){ const s=$('sub'); s.textContent=t||''; s.style.opacity=t?1:0; }
-function setTop(){ $('score').textContent=score; $('combo').textContent=combo; $('stage').textContent=stage; $('best').textContent=best; }
+function setTop(){ $('score').textContent=score; $('combo').textContent=combo; $('stage').textContent=stage; $('best').textContent=best; $('lives').textContent='❤️'.repeat(Math.max(0,lives))||'—'; }
 
 function launch(){
   const a=angle*Math.PI/180, sp=VMAX*power;
@@ -106,6 +128,7 @@ function launch(){
 }
 
 function tap(){
+  if(paused||state==='over')return;
   initAudio();
   if(state==='aim'){ state='power'; power=0; pDir=1; $('hint').textContent='② 탭 — 힘 멈추기 (조준선 참고)'; sfx.lock(); sfx.vib(8); }
   else if(state==='power'){ sfx.lock(); launch(); }
@@ -126,11 +149,20 @@ function finishIn(perfect){
   setTop();
 }
 function finishMiss(near,where){
-  state='result'; resultT=0; combo=0; lastHit=false;
-  showMsg(near?'아깝다! 한 끗! 😫':'빗나감 😵', near?'#ff7a7a':'#ff9a9a');
-  showSub(near?(where+' — 입구 바로 옆!! 다시!'):(where+' · 연속 끊김'));
+  combo=0; lastHit=false; lives--;
   sfx.miss(); sfx.vib(near?[30,30,50]:50); if(near){shake=6;}
+  if(lives<=0){ setTop(); gameOver(); return; }
+  state='result'; resultT=0;
+  showMsg(near?'아깝다! 한 끗! 😫':'빗나감 😵', near?'#ff7a7a':'#ff9a9a');
+  showSub((near?(where+' — 입구 바로 옆!! '):(where+' · '))+'목숨 '+lives+'개 남음');
   setTop();
+}
+function gameOver(){
+  state='over'; clearMsg(); arrow=null; trail=[];
+  const rec = score>=best && score>0;
+  $('overSub').innerHTML = '최종 점수 <b>'+score+'</b> · 단계 '+stage+'<br>최고 '+best+(rec?' 🏆 <b>신기록!</b>':'');
+  $('over').classList.remove('hidden');
+  sfx.vib([40,60,40]);
 }
 
 // ---- update ----
@@ -286,13 +318,23 @@ function render(){
     ctx.fillStyle=g; ctx.fillRect(bx,by,bw*power,bh); ctx.restore();
     ctx.fillStyle='#fff'; ctx.font='bold 11px system-ui'; ctx.textAlign='center'; ctx.fillText('힘 '+Math.round(power*100)+'%',W/2,by+bh+14);
   }
+  // 일시정지 딤
+  if(paused){ ctx.fillStyle='rgba(0,0,0,.5)'; ctx.fillRect(0,0,W,H); ctx.fillStyle='#ffe6b0'; ctx.font='bold 30px system-ui'; ctx.textAlign='center'; ctx.fillText('⏸ 일시정지',W/2,H*0.48); ctx.font='14px system-ui'; ctx.fillStyle='#caa'; ctx.fillText('▶ 버튼을 눌러 계속',W/2,H*0.48+30); }
 }
 
-function loop(ts){ requestAnimationFrame(loop); if(state==='start'){lastTs=ts;return;} let dt=(ts-lastTs)/1000; lastTs=ts; if(dt>0.05)dt=0.05; if(dt<0)dt=0; update(dt); render(); }
+function loop(ts){ requestAnimationFrame(loop);
+  if(state==='start'){ lastTs=ts; return; }
+  if(state==='over'||paused){ lastTs=ts; render(); return; }  // 멈춘 화면은 렌더만(프리즈)
+  let dt=(ts-lastTs)/1000; lastTs=ts; if(dt>0.05)dt=0.05; if(dt<0)dt=0; update(dt); render(); }
 requestAnimationFrame(loop);
 
 cv.addEventListener('pointerdown',e=>{ e.preventDefault(); tap(); });
-$('startBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); initAudio(); score=0; combo=0; stage=1; $('start').classList.add('hidden'); setTop(); newThrow(); lastTs=performance.now(); });
+function tryLockPortrait(){ try{ if(screen.orientation&&screen.orientation.lock) screen.orientation.lock('portrait').catch(()=>{}); }catch(e){} }
+function startGame(){ initAudio(); tryLockPortrait(); score=0; combo=0; stage=1; lives=3; paused=false; $('pauseBtn').textContent='⏸'; $('start').classList.add('hidden'); $('over').classList.add('hidden'); setTop(); newThrow(); lastTs=performance.now(); }
+$('startBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); startGame(); });
+$('overBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); startGame(); });
+$('pauseBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); if(state==='start'||state==='over')return; paused=!paused; $('pauseBtn').textContent=paused?'▶':'⏸'; if(!paused)lastTs=performance.now(); });
+$('muteBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); muted=!muted; $('muteBtn').textContent=muted?'🔇':'🔊'; });
 setTop();
 </script>
 </body></html>
