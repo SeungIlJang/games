@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="ko"><head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
-<title>모두의 투호</title>
+<title>모두의 화살촉</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{width:100%;height:100%;overflow:hidden;background:#13100c;touch-action:none;overscroll-behavior:none;font-family:system-ui,-apple-system,sans-serif}
@@ -32,9 +32,9 @@
 <div id="hint"></div>
 <div id="msg"></div>
 <div id="sub"></div>
-<div id="ver">모두의 투호 v0.1 · 조준→파워 2탭, 항아리에 살 넣기</div>
+<div id="ver">모두의 화살촉 v0.2 · 조준→파워 2탭, 항아리에 화살 넣기</div>
 <div id="start" class="ov">
-  <h1>🏺 모두의 투호</h1>
+  <h1>🏹 모두의 화살촉</h1>
   <p><b>투호(投壺)</b> — 화살을 던져 항아리에 넣는 전통놀이.<br/>
   ① <b>탭</b>해서 <b>각도</b> 멈추기 → ② <b>탭</b>해서 <b>힘</b> 멈추기<br/>
   포물선으로 날아가 <b>항아리 입구</b>에 쏙 들어가면 성공! 🎯<br/>
@@ -194,6 +194,22 @@ function drawPot(){
   ctx.strokeStyle='rgba(0,0,0,.18)'; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(x-w*0.42,ry+h*0.5); ctx.lineTo(x+w*0.42,ry+h*0.5); ctx.stroke();
   ctx.restore();
 }
+function drawWindFlag(){
+  const px=Math.min(W-26, pot.x+pot.w*0.62), gy=groundY(), topY=gy-pot.h-54;
+  ctx.save();
+  ctx.strokeStyle='#6a4e2a'; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(px,gy); ctx.lineTo(px,topY); ctx.stroke();
+  ctx.fillStyle='#caa15a'; ctx.beginPath(); ctx.arc(px,topY,4,0,Math.PI*2); ctx.fill();
+  // 깃발: 바람 방향·세기로 펄럭
+  const dir = wind>1?1 : wind<-1?-1 : 0;
+  const strength = Math.min(1, Math.abs(wind)/160);
+  const len = 30 + strength*20, wave=Math.sin(gt*8)*3*(strength+0.2);
+  ctx.fillStyle = dir===0 ? '#9aa6b0' : (dir>0?'#ff8a5c':'#5cb8ff');
+  ctx.beginPath(); ctx.moveTo(px,topY+2);
+  if(dir===0){ ctx.lineTo(px+6,topY+22); ctx.lineTo(px-2,topY+20); } // 무풍=축 처짐
+  else { const L=px+dir*len; ctx.quadraticCurveTo(px+dir*len*0.5,topY-6+wave,L,topY+2); ctx.quadraticCurveTo(px+dir*len*0.5,topY+14+wave,px,topY+16); }
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
 function drawArrowShape(x,y,ang,sc){
   ctx.save(); ctx.translate(x,y); ctx.rotate(ang); sc=sc||1;
   ctx.strokeStyle='#caa15a'; ctx.lineWidth=4*sc; ctx.beginPath(); ctx.moveTo(-26*sc,0); ctx.lineTo(16*sc,0); ctx.stroke();
@@ -203,18 +219,40 @@ function drawArrowShape(x,y,ang,sc){
 }
 function render(){
   ctx.clearRect(0,0,W,H);
-  // 하늘/마당 배경
-  const sky=ctx.createLinearGradient(0,0,0,H); sky.addColorStop(0,'#2a3d55'); sky.addColorStop(0.5,'#55463a'); sky.addColorStop(1,'#3a2a1a');
-  ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
+  const gy=groundY();
+  // 하늘 (석양 그라데이션)
+  const sky=ctx.createLinearGradient(0,0,0,gy); sky.addColorStop(0,'#24405e'); sky.addColorStop(0.55,'#4a6a7e'); sky.addColorStop(1,'#caa36e');
+  ctx.fillStyle=sky; ctx.fillRect(0,0,W,gy);
+  // 해 (은은한 글로우)
+  ctx.save(); const sx=W*0.78, syy=gy*0.30;
+  const sg=ctx.createRadialGradient(sx,syy,4,sx,syy,70); sg.addColorStop(0,'rgba(255,238,200,.9)'); sg.addColorStop(1,'rgba(255,238,200,0)');
+  ctx.fillStyle=sg; ctx.beginPath(); ctx.arc(sx,syy,70,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#ffe9b8'; ctx.beginPath(); ctx.arc(sx,syy,26,0,Math.PI*2); ctx.fill(); ctx.restore();
+  // 원경 산 (겹겹)
+  function hill(baseY,amp,col){ ctx.fillStyle=col; ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(0,baseY);
+    for(let x=0;x<=W;x+=W/6){ ctx.lineTo(x,baseY-Math.sin(x/W*Math.PI*1.4+baseY)*amp); } ctx.lineTo(W,gy); ctx.closePath(); ctx.fill(); }
+  hill(gy-54,34,'rgba(60,78,96,.6)'); hill(gy-24,26,'rgba(74,90,78,.7)');
+  // 구름
+  ctx.fillStyle='rgba(255,255,255,.14)';
+  for(let i=0;i<3;i++){ const cx=((i*160+gt*6)%(W+160))-80, cyy=gy*0.22+i*26; ctx.beginPath(); ctx.ellipse(cx,cyy,36,12,0,0,Math.PI*2); ctx.ellipse(cx+28,cyy+4,26,10,0,0,Math.PI*2); ctx.fill(); }
+
   ctx.save();
   if(shake>0) ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);
-  // 바닥(마당)
-  const gy=groundY();
-  const gg=ctx.createLinearGradient(0,gy,0,H); gg.addColorStop(0,'#6b4e30'); gg.addColorStop(1,'#432f1b');
+  // 바닥(마당 흙)
+  const gg=ctx.createLinearGradient(0,gy,0,H); gg.addColorStop(0,'#7a5832'); gg.addColorStop(1,'#43301c');
   ctx.fillStyle=gg; ctx.fillRect(0,gy,W,H-gy);
-  ctx.strokeStyle='rgba(0,0,0,.12)'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(W,gy); ctx.stroke();
+  // 지평선 라인 + 흙 질감
+  ctx.strokeStyle='rgba(255,230,180,.18)'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(W,gy); ctx.stroke();
+  ctx.fillStyle='rgba(0,0,0,.08)'; for(let i=0;i<34;i++){ const x=(i*83%W), yy=gy+8+(i*47%(H-gy-10)); ctx.fillRect(x,yy,3,2); }
+  // 거리 가이드 (사대 → 항아리 바닥, 점선)
+  ctx.strokeStyle='rgba(255,255,255,.14)'; ctx.lineWidth=2; ctx.setLineDash([7,9]);
+  ctx.beginPath(); ctx.moveTo(originX(),gy+16); ctx.lineTo(pot.x,gy+16); ctx.stroke(); ctx.setLineDash([]);
+  // 사대(발사대 멍석)
+  ctx.save(); const mx=originX(); ctx.fillStyle='#8a6b3c'; rr(mx-34,gy-6,68,14,6); ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,.2)'; ctx.lineWidth=1; for(let i=-28;i<=28;i+=8){ ctx.beginPath(); ctx.moveTo(mx+i,gy-6); ctx.lineTo(mx+i,gy+8); ctx.stroke(); } ctx.restore();
 
   drawPot();
+  drawWindFlag();
 
   // 예측 조준선 (power 상태) — 바람 미반영
   if(state==='power'){ const pts=predict(); ctx.fillStyle='rgba(255,255,255,.5)';
