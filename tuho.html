@@ -32,7 +32,7 @@
 <div id="hint"></div>
 <div id="msg"></div>
 <div id="sub"></div>
-<div id="ver">모두의 화살촉 v0.2 · 조준→파워 2탭, 항아리에 화살 넣기</div>
+<div id="ver">모두의 화살촉 v0.3 · 조준→파워 2탭, 항아리에 화살 넣기</div>
 <div id="start" class="ov">
   <h1>🏹 모두의 화살촉</h1>
   <p><b>투호(投壺)</b> — 화살을 던져 항아리에 넣는 전통놀이.<br/>
@@ -66,6 +66,7 @@ let trail=[];
 let parts=[];
 let resultT=0, shake=0, gt=0, lastTs=0;
 let msgT=0;
+let lastHit=false;   // 직전 결과가 명중인지 (명중 때만 항아리에 화살 꽂힘 표시)
 
 // geometry (resize 비례)
 function groundY(){ return H*0.80; }
@@ -114,7 +115,7 @@ function nextThrow(){ newThrow(); }
 
 // ---- 판정 ----
 function finishIn(perfect){
-  state='result'; resultT=0;
+  state='result'; resultT=0; lastHit=true;
   const gain=Math.round((10+stage*4)*(perfect?2:1)); score+=gain; combo++;
   if(score>best){ best=score; try{localStorage.setItem('tuho_best',best);}catch(e){} }
   stage++;
@@ -125,7 +126,7 @@ function finishIn(perfect){
   setTop();
 }
 function finishMiss(near,where){
-  state='result'; resultT=0; combo=0;
+  state='result'; resultT=0; combo=0; lastHit=false;
   showMsg(near?'아깝다! 한 끗! 😫':'빗나감 😵', near?'#ff7a7a':'#ff9a9a');
   showSub(near?(where+' — 입구 바로 옆!! 다시!'):(where+' · 연속 끊김'));
   sfx.miss(); sfx.vib(near?[30,30,50]:50); if(near){shake=6;}
@@ -270,7 +271,7 @@ function render(){
   // 날아가는 화살
   if(arrow&&!arrow.dead && (state==='fly')) drawArrowShape(arrow.x,arrow.y,arrow.ang,1);
   // 성공 후 항아리에 꽂힌 화살
-  if(state==='result' && arrow){ drawArrowShape(pot.x,pot.rimY+6,Math.PI/2,0.9); }
+  if(state==='result' && arrow && lastHit){ drawArrowShape(pot.x,pot.rimY+6,Math.PI/2,0.9); }
 
   // 파티클
   for(const p of parts){ ctx.globalAlpha=Math.max(0,p.life*1.4); ctx.fillStyle=p.c||'#ffcf5c'; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill(); }
