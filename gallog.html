@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v7.2 · 얼음마법사 전직 강화(공격+50%·참격+3·충격파+3·블랙홀+3)</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v7.3 · 화면 잔상(긴 줄무늬) 수정 — 프레임 클리어 방탄 처리</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">한국어</button>
       <button data-lang="en" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">English</button>
@@ -299,8 +299,10 @@ safeProbe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;visibili
 document.body.appendChild(safeProbe);
 function resize(){
   DPR = Math.min(window.devicePixelRatio || 1, 2);
-  W = window.innerWidth; H = window.innerHeight;
-  cv.width = W * DPR; cv.height = H * DPR;
+  // 회전/복귀 순간 innerWidth가 0으로 오는 기기 방어 → 0이면 클리어가 안 돼 잔상 발생
+  W = window.innerWidth || document.documentElement.clientWidth || 360;
+  H = window.innerHeight || document.documentElement.clientHeight || 640;
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
   cv.style.width = W + 'px'; cv.style.height = H + 'px';
   ctx.setTransform(DPR,0,0,DPR,0,0);
   const cs = getComputedStyle(safeProbe);
@@ -1053,7 +1055,12 @@ let stars=[];
 function initStars(){ stars=[]; for(let i=0;i<120;i++){ const L=i%3; stars.push({x:Math.random()*W,y:Math.random()*H,z:L===2?2.5:L===1?1.6:1,sp:L===2?1.7:L===1?1.0:0.55,a:L===2?0.95:0.5,c:L===2?'#bfe3ff':'#ffffff',seed:Math.random()*6.28}); } }
 function render(){
   // bg — 우주 별밭 (화면 고정 + 카메라 패럴랙스)
-  ctx.fillStyle='#05060f'; ctx.fillRect(0,0,W,H);
+  // 화면 크기가 바뀌었는데 resize 이벤트를 놓친 경우(회전·앱복귀·광고후) 재동기화 → 잔상(긴 줄무늬) 방지
+  if (cv.width !== Math.round(W * DPR) || W !== window.innerWidth || H !== window.innerHeight) resize();
+  // 전체 버퍼를 '실제 픽셀' 단위로 강제 클리어(변환/크기 틀어져도 100% 지움)
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = '#05060f'; ctx.fillRect(0, 0, cv.width, cv.height);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   if(!stars.length) initStars();
   for(const s of stars){ s.y+=s.sp; if(s.y>H) s.y-=H;
     const par=s.z*0.12, px=((s.x-cam.x*par)%W+W)%W, py=((s.y-cam.y*par)%H+H)%H;
