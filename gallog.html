@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v7.3 · 화면 잔상(긴 줄무늬) 수정 — 프레임 클리어 방탄 처리</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v7.4 · 화면 잔상 수정 2차(젬 무한누적 상한 + 프레임 클리어 방탄)</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">한국어</button>
       <button data-lang="en" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">English</button>
@@ -1030,6 +1030,7 @@ function update(dt){
   enemies=enemies.filter(e=>!e.dead);
   bullets=bullets.filter(b=>b.life>0 && b.x>cam.x-60&&b.x<cam.x+W+60&&b.y>cam.y-60&&b.y<cam.y+H+60);   // 카메라 기준(월드좌표) — 화면좌표로 잘못 컬링해 총알이 사라지던 버그 수정
   gems=gems.filter(g=>!g.got);
+  if(gems.length>500) gems.splice(0, gems.length-500); // 젬 무한 누적 방지(오래된 것부터 제거) — 프레임 급락·화면밀림 예방
   particles=particles.filter(p=>p.life>0);
   if(shake>0) shake=Math.max(0,shake-dt*18);
   if(player.hp<=0){ gameOver(); }
