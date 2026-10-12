@@ -86,7 +86,7 @@
   </div>
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v6.99 · 전면광고 중 게임정지(사망방지) + 후반 레벨업 정체 완화</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v7.0 · 후반 레벨업 정체 해결(적 경험치 스테이지 지수 스케일)</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">한국어</button>
       <button data-lang="en" style="pointer-events:auto;background:#20263c;color:#cdd;border:1px solid #2b3350;border-radius:9px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;">English</button>
@@ -750,7 +750,7 @@ function hurtEnemy(e,dmg,color){
   if(e.hp<=0){ e.dead=true; kills++;
     combo++; comboTimer=2.5; if(combo>maxCombo) maxCombo=combo;
     { const g=Math.round((e.boss?20:1)*goldMult()); meta.gold+=g; runGold+=g; } // 실시간 골드(골드획득 강화 반영)
-    const gv=Math.max(1,Math.round((e.gem||0)*(1+(stage-1)*0.14)));  // 적 경험치(젬)를 스테이지 비례로 증가(후반 레벨업 정체 해소)
+    const gv=Math.max(1,Math.round((e.gem||0)*Math.pow(1.13,stage-1)));  // 적 경험치(젬): 스테이지 지수 스케일(1.13^) — 초반 동일·후반 정체 해소(필요경험치 복리 대응)
     texts.push({x:e.x,y:e.y-e.r,vy:-46,life:0.7,str:e.boss?'BOSS!':'+'+gv,color:e.boss?'#ff5ce1':'#7df3ff',size:e.boss?22:14}); // +N XP텍스트=젬 시안색
     burst(e.x,e.y,color||e.color,e.big?18:8); shake=Math.min(shake+(e.boss?4:(e.big?0.5:0.12)),8);
     e.big?sfx.killBig():sfx.kill();
