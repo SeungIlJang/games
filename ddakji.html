@@ -64,10 +64,17 @@
   #duelHud{position:fixed;top:calc(env(safe-area-inset-top,0px) + 92px);left:0;right:0;z-index:7;text-align:center;pointer-events:none;color:#fff;text-shadow:0 2px 4px #000}
   #duelScore{font-size:20px;font-weight:900}
   #duelTurn{font-size:15px;font-weight:800;margin-top:2px}
+  #muteBtn{pointer-events:auto;position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);right:8px;font-size:22px;z-index:9;cursor:pointer;opacity:.85;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+  /* 배너 광고가 뜨면 하단 UI를 배너 위로 올림(겹침 방지) */
+  body.has-banner #ver{bottom:calc(env(safe-area-inset-bottom,0px) + 66px)}
+  body.has-banner #hint{bottom:calc(env(safe-area-inset-bottom,0px) + 90px)}
+  body.has-banner #dexBtn{bottom:calc(env(safe-area-inset-bottom,0px) + 74px)}
+  body.has-banner #shopBtnP{bottom:calc(env(safe-area-inset-bottom,0px) + 74px)}
   .hidden{display:none!important}
 </style></head>
 <body>
 <canvas id="cv"></canvas>
+<div id="muteBtn">🔊</div>
 <div class="ui" id="topbar">
   <div class="pill"><span class="k">점수</span><span id="score">0</span></div>
   <div class="pill"><span class="k">스테이지</span><span id="stage">1</span></div>
@@ -95,7 +102,7 @@
   <button id="dexClose">닫기</button>
 </div>
 <div id="adov" class="hidden"><div class="sp"></div><div id="adovTxt">광고 보는 중…</div></div>
-<div id="ver">모두의 딱지치기 v1.1 · ⚔️ 대결모드(PvE 3판2선승·엽전베팅) 추가</div>
+<div id="ver">모두의 딱지치기 v1.2 · 🔊음소거 · 실광고(배너·전면·리워드) · AD_ID/minSdk24</div>
 <div id="start">
   <h1 style="font-size:38px">모두의 딱지치기</h1>
   <p><b>초록 구간</b>(매번 위치가 바뀜!)에 파워바가 올 때 <b>탭</b>해서 내리쳐요.<br/>너무 약해도·너무 세도 실패 — <b>딱 맞춰야</b> 90° 넘겨 뒤집어요! 중앙 노랑=완벽타 🎯<br/>스테이지 올라갈수록 <b>초록은 좁아지고 파워바는 빨라져요</b> 🟫<br/><span id="bstage" style="color:#ffcf5c;font-weight:800"></span></p>
@@ -177,10 +184,12 @@ addEventListener('resize',resize); resize();
 
 // ---- Audio (code-gen, no files) ----
 let AC=null;
+let muted=(()=>{try{return localStorage.getItem('ddakji_mute')==='1';}catch(e){return false;}})();
+function renderMute(){ const b=$('muteBtn'); if(b) b.textContent=muted?'🔇':'🔊'; }
 function initAudio(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC&&AC.state==='suspended') AC.resume(); }
-function tone(f,d,type,g,slide){ if(!AC) return; const o=AC.createOscillator(),v=AC.createGain(); o.type=type||'sine'; o.frequency.value=f; if(slide) o.frequency.exponentialRampToValueAtTime(Math.max(1,slide),AC.currentTime+d); v.gain.value=g||0.15; v.gain.exponentialRampToValueAtTime(0.0001,AC.currentTime+d); o.connect(v); v.connect(AC.destination); o.start(); o.stop(AC.currentTime+d); }
-function noise(d,g){ if(!AC) return; const n=Math.floor(AC.sampleRate*d), buf=AC.createBuffer(1,n,AC.sampleRate), dt=buf.getChannelData(0); for(let i=0;i<n;i++) dt[i]=(Math.random()*2-1)*(1-i/n); const s=AC.createBufferSource(); s.buffer=buf; const v=AC.createGain(); v.gain.value=g||0.3; s.connect(v); v.connect(AC.destination); s.start(); }
-const sfx={ slam(){ noise(0.18,0.5); tone(90,0.18,'square',0.25,40); }, whoosh(){ tone(300,0.25,'sine',0.08,700); }, teeter(){ tone(520,0.07,'sine',0.08); }, win(){ [523,659,784,1046].forEach((f,i)=>setTimeout(()=>tone(f,0.16,'triangle',0.18),i*80)); }, fail(){ tone(180,0.3,'sawtooth',0.18,70); noise(0.2,0.25); }, vib(ms){ try{navigator.vibrate&&navigator.vibrate(ms);}catch(e){} } };
+function tone(f,d,type,g,slide){ if(muted||!AC) return; const o=AC.createOscillator(),v=AC.createGain(); o.type=type||'sine'; o.frequency.value=f; if(slide) o.frequency.exponentialRampToValueAtTime(Math.max(1,slide),AC.currentTime+d); v.gain.value=g||0.15; v.gain.exponentialRampToValueAtTime(0.0001,AC.currentTime+d); o.connect(v); v.connect(AC.destination); o.start(); o.stop(AC.currentTime+d); }
+function noise(d,g){ if(muted||!AC) return; const n=Math.floor(AC.sampleRate*d), buf=AC.createBuffer(1,n,AC.sampleRate), dt=buf.getChannelData(0); for(let i=0;i<n;i++) dt[i]=(Math.random()*2-1)*(1-i/n); const s=AC.createBufferSource(); s.buffer=buf; const v=AC.createGain(); v.gain.value=g||0.3; s.connect(v); v.connect(AC.destination); s.start(); }
+const sfx={ slam(){ noise(0.18,0.5); tone(90,0.18,'square',0.25,40); }, whoosh(){ tone(300,0.25,'sine',0.08,700); }, teeter(){ tone(520,0.07,'sine',0.08); }, win(){ [523,659,784,1046].forEach((f,i)=>setTimeout(()=>tone(f,0.16,'triangle',0.18),i*80)); }, fail(){ tone(180,0.3,'sawtooth',0.18,70); noise(0.2,0.25); }, vib(ms){ if(muted)return; try{navigator.vibrate&&navigator.vibrate(ms);}catch(e){} } };
 
 // ---- State ----
 let state='start'; // start | ready | slam | flip | result
@@ -312,12 +321,24 @@ function endFlip(success){
   }
   setTop();
 }
-// ---- 리워드 광고 (현재 플레이스홀더; 앱 출시 때 AdMob 연동 지점) ----
-const AD_USE_TEST=false, AD_REWARD_REAL='', AD_REWARD_TEST='ca-app-pub-3940256099942544/5224354917';
-function playAd(cb){
-  const ov=$('adov'); ov.classList.remove('hidden'); let t=2; $('adovTxt').textContent='광고 보는 중… '+t;
-  const iv=setInterval(()=>{ t--; if(t>0){ $('adovTxt').textContent='광고 보는 중… '+t; } else { clearInterval(iv); ov.classList.add('hidden'); cb(); } },700);
-}
+// ---- AdMob (Capacitor 네이티브=실제 광고 / 웹·터널=시뮬) ----
+// ⚠️ AD_USE_TEST=true 유지(테스트 광고). 출시 때 false + 실유닛 ID로 교체.
+const AD_USE_TEST=true;
+const AD_BANNER = AD_USE_TEST ? 'ca-app-pub-3940256099942544/6300978111' : '';
+const AD_INTER  = AD_USE_TEST ? 'ca-app-pub-3940256099942544/1033173712' : '';
+const AD_REWARD = AD_USE_TEST ? 'ca-app-pub-3940256099942544/5224354917' : '';
+let admobReady=false, bannerShown=false, interCount=0;
+function admob(){ const C=window.Capacitor; return (C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.AdMob)?C.Plugins.AdMob:null; }
+function safeBottomInset(){ try{ const p=document.createElement('div'); p.style.cssText='position:fixed;left:0;bottom:0;width:0;height:env(safe-area-inset-bottom,0px);visibility:hidden;pointer-events:none'; document.body.appendChild(p); const h=Math.round(p.getBoundingClientRect().height); p.remove(); return h; }catch(e){ return 0; } }
+(async function(){ const A=admob(); if(!A) return; try{ await A.initialize({initializeForTesting:AD_USE_TEST}); admobReady=true; showBanner(); }catch(e){} })();
+async function showBanner(){ const A=admob(); if(!A||bannerShown) return; bannerShown=true; try{document.body.classList.add('has-banner');}catch(e){} try{ await A.showBanner({adId:AD_BANNER,adSize:'ADAPTIVE_BANNER',position:'BOTTOM_CENTER',margin:safeBottomInset(),isTesting:AD_USE_TEST}); }catch(e){ bannerShown=false; try{document.body.classList.remove('has-banner');}catch(e2){} } }
+async function showInterstitial(){ const A=admob(); if(!(admobReady&&A)) return; try{ await A.prepareInterstitial({adId:AD_INTER,isTesting:AD_USE_TEST}); await A.showInterstitial(); }catch(e){} }
+// 리워드: 네이티브=실제 보상형 광고, 웹/실패=시뮬 오버레이. cb=보상 지급.
+function playAd(cb){ const A=admob();
+  if(admobReady&&A){ (async()=>{ try{ await A.prepareRewardVideoAd({adId:AD_REWARD,isTesting:AD_USE_TEST}); await A.showRewardVideoAd(); cb(); }catch(e){ simAd(cb); } })(); return; }
+  simAd(cb); }
+function simAd(cb){ const ov=$('adov'); ov.classList.remove('hidden'); let t=2; $('adovTxt').textContent='광고 보는 중… '+t;
+  const iv=setInterval(()=>{ t--; if(t>0){ $('adovTxt').textContent='광고 보는 중… '+t; } else { clearInterval(iv); ov.classList.add('hidden'); cb(); } },700); }
 function doReward(){ if(rewardUsed||state!=='result') return; rewardUsed=true; $('rewardBtn').classList.add('hidden'); initAudio();
   playAd(()=>{
     if(lastSuccess){ score+=lastGain; if(score>best){ best=score; try{localStorage.setItem('ddakji_best',best);}catch(e){} try{submitScore();}catch(e){} } showSub('점수 2배! +'+lastGain+'점 🎉'); setTop(); sfx.win(); }
@@ -613,7 +634,7 @@ function duelMatchEnd(){ duelAfter=null; const win=duel.pWins>duel.oWins; const 
 function updateDuelHud(){ const dot=(n)=>'●'.repeat(n)+'○'.repeat(Math.max(0,2-n));
   $('duelScore').textContent='나 '+dot(duel.pWins)+' : '+dot(duel.oWins)+' 상대  · 🪙'+duel.bet;
   $('duelTurn').textContent=(state==='aiaim'||duel.attacker==='O')?('🛡️ '+duel.oppName+' 공격 중…'):'⚔️ 내 공격 — 초록에 맞춰 탭!'; }
-function exitDuel(){ duel.on=false; duelAfter=null; state='start';
+function exitDuel(){ duel.on=false; duelAfter=null; state='start'; interCount++; if(interCount%2===0) showInterstitial();
   $('duelHud').classList.add('hidden'); $('duelResult').classList.add('hidden'); $('duelSetup').classList.add('hidden');
   $('dexBtn').classList.add('hidden'); $('shopBtnP').classList.add('hidden'); $('coinHud').classList.add('hidden');
   $('start').classList.remove('hidden'); if(bestStage>1) $('bstage').textContent='🏆 최고 스테이지 '+bestStage; }
@@ -623,6 +644,7 @@ $('duelGoBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPro
 $('drAgain').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); $('duelResult').classList.add('hidden'); openDuelSetup(); });
 $('drHome').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); exitDuel(); });
 
+$('muteBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); muted=!muted; try{localStorage.setItem('ddakji_mute',muted?'1':'0');}catch(e2){} renderMute(); if(!muted){ initAudio(); tone(660,0.05,'square',0.08); } }); renderMute();
 setTop(); if(bestStage>1) $('bstage').textContent='🏆 최고 스테이지 '+bestStage;
 </script>
 </body></html>
