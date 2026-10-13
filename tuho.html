@@ -25,6 +25,8 @@
   #rotate .ico{font-size:60px;animation:rot 1.6s ease-in-out infinite}
   @keyframes rot{0%,100%{transform:rotate(0)}50%{transform:rotate(-90deg)}}
   @media (orientation:landscape){ #rotate{display:flex} }
+  .btn2{pointer-events:auto;background:#2f7a4d;color:#fff;font-size:17px;font-weight:800;border:none;border-radius:14px;padding:12px 26px;box-shadow:0 5px 0 #1d5033;cursor:pointer}
+  .has-banner #ver{display:none}
 </style></head>
 <body>
 <canvas id="cv"></canvas>
@@ -43,7 +45,7 @@
 <div id="hint"></div>
 <div id="msg"></div>
 <div id="sub"></div>
-<div id="ver">모두의 화살촉 v0.4 · 목숨3·일시정지·음소거·세로고정</div>
+<div id="ver">모두의 화살촉 v0.5 · 광고(배너·전면·리워드이어하기)</div>
 <div id="start" class="ov">
   <h1>🏹 모두의 화살촉</h1>
   <p><b>투호(投壺)</b> — 화살을 던져 항아리에 넣는 전통놀이.<br/>
@@ -55,6 +57,7 @@
 <div id="over" class="ov hidden">
   <h1>게임 오버</h1>
   <p id="overSub">기록을 남겼어요!</p>
+  <button class="btn2" id="continueBtn">📺 광고 보고 이어하기 (목숨 +1)</button>
   <button class="btn" id="overBtn">다시 하기</button>
 </div>
 <div id="rotate">
@@ -89,6 +92,20 @@ let resultT=0, shake=0, gt=0, lastTs=0;
 let msgT=0;
 let lastHit=false;   // 직전 결과가 명중인지 (명중 때만 항아리에 화살 꽂힘 표시)
 let lives=3, paused=false, muted=false;  // 목숨 / 일시정지 / 음소거
+
+// ---- AdMob (Capacitor 네이티브 앱에서만 동작; 웹/터널은 무시) ----
+// ⚠️ 아래는 구글 '테스트' 광고단위. 출시(프로덕션) 전 실제 AdMob ID로 교체 필수!
+const AD_USE_TEST = true;
+const AD_BANNER = AD_USE_TEST ? 'ca-app-pub-3940256099942544/6300978111' : '';
+const AD_INTER  = AD_USE_TEST ? 'ca-app-pub-3940256099942544/1033173712' : '';
+const AD_REWARD = AD_USE_TEST ? 'ca-app-pub-3940256099942544/5224354917' : '';
+let admobReady=false, bannerShown=false, interCount=0, continuedThisRun=false;
+function admob(){ const C=window.Capacitor; return (C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.AdMob)?C.Plugins.AdMob:null; }
+(async function(){ const A=admob(); if(!A)return; try{ await A.initialize({initializeForTesting:AD_USE_TEST}); admobReady=true; showBanner(); }catch(e){} })();
+async function showBanner(){ const A=admob(); if(!A||bannerShown)return; bannerShown=true; try{document.body.classList.add('has-banner');}catch(e){} try{ await A.showBanner({adId:AD_BANNER,adSize:'ADAPTIVE_BANNER',position:'BOTTOM_CENTER',margin:0,isTesting:AD_USE_TEST}); }catch(e){ bannerShown=false; try{document.body.classList.remove('has-banner');}catch(e2){} } }
+async function showInterstitial(){ const A=admob(); if(!(admobReady&&A))return; try{ await A.prepareInterstitial({adId:AD_INTER,isTesting:AD_USE_TEST}); await A.showInterstitial(); }catch(e){} }
+async function showRewarded(){ const A=admob(); if(!A) return true; /* 웹: 광고없음→보상지급(개발편의) */ try{ await A.prepareRewardVideoAd({adId:AD_REWARD,isTesting:AD_USE_TEST}); const r=await A.showRewardVideoAd(); return !!r; }catch(e){ return false; } }
+function bottomRes(){ return bannerShown ? 64 : 0; }  // 하단 배너만큼 게임 UI 띄우기
 
 // geometry (resize 비례)
 function groundY(){ return H*0.80; }
@@ -158,9 +175,10 @@ function finishMiss(near,where){
   setTop();
 }
 function gameOver(){
-  state='over'; clearMsg(); arrow=null; trail=[];
+  state='over'; clearMsg(); arrow=null; trail=[]; interCount++;
   const rec = score>=best && score>0;
   $('overSub').innerHTML = '최종 점수 <b>'+score+'</b> · 단계 '+stage+'<br>최고 '+best+(rec?' 🏆 <b>신기록!</b>':'');
+  $('continueBtn').style.display = continuedThisRun ? 'none' : 'block'; // 이어하기는 한 판 1회
   $('over').classList.remove('hidden');
   sfx.vib([40,60,40]);
 }
@@ -311,7 +329,7 @@ function render(){
   ctx.restore();
 
   // 파워 게이지 (power 상태)
-  if(state==='power'){ const bw=Math.min(W*0.8,340),bx=(W-bw)/2,by=H*0.9,bh=20;
+  if(state==='power'){ const bw=Math.min(W*0.8,340),bx=(W-bw)/2,by=Math.round(H*0.88)-bottomRes(),bh=20;
     ctx.fillStyle='rgba(0,0,0,.45)'; rr(bx-4,by-4,bw+8,bh+8,10); ctx.fill();
     ctx.save(); rr(bx,by,bw,bh,8); ctx.clip();
     const g=ctx.createLinearGradient(bx,0,bx+bw,0); g.addColorStop(0,'#3a7a3a'); g.addColorStop(.6,'#e8c24e'); g.addColorStop(1,'#e8534e');
@@ -330,9 +348,10 @@ requestAnimationFrame(loop);
 
 cv.addEventListener('pointerdown',e=>{ e.preventDefault(); tap(); });
 function tryLockPortrait(){ try{ if(screen.orientation&&screen.orientation.lock) screen.orientation.lock('portrait').catch(()=>{}); }catch(e){} }
-function startGame(){ initAudio(); tryLockPortrait(); score=0; combo=0; stage=1; lives=3; paused=false; $('pauseBtn').textContent='⏸'; $('start').classList.add('hidden'); $('over').classList.add('hidden'); setTop(); newThrow(); lastTs=performance.now(); }
+function startGame(){ initAudio(); tryLockPortrait(); score=0; combo=0; stage=1; lives=3; paused=false; continuedThisRun=false; $('pauseBtn').textContent='⏸'; $('start').classList.add('hidden'); $('over').classList.add('hidden'); setTop(); newThrow(); lastTs=performance.now(); }
 $('startBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); startGame(); });
-$('overBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); startGame(); });
+$('overBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); if(interCount%3===0) showInterstitial(); startGame(); });
+$('continueBtn').addEventListener('pointerdown',async e=>{ e.preventDefault(); e.stopPropagation(); const b=$('continueBtn'); b.style.pointerEvents='none'; b.textContent='⏳ 광고 보는 중…'; const ok=await showRewarded(); b.style.pointerEvents='auto'; b.textContent='📺 광고 보고 이어하기 (목숨 +1)'; if(ok){ continuedThisRun=true; lives=1; $('over').classList.add('hidden'); setTop(); newThrow(); lastTs=performance.now(); } });
 $('pauseBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); if(state==='start'||state==='over')return; paused=!paused; $('pauseBtn').textContent=paused?'▶':'⏸'; if(!paused)lastTs=performance.now(); });
 $('muteBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); muted=!muted; $('muteBtn').textContent=muted?'🔇':'🔊'; });
 setTop();
