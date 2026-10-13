@@ -771,7 +771,7 @@ function hurtEnemy(e,dmg,color){
   if(e.dead) return; e.flash=0.06; e.hp-=dmg;
   if(e.hp<=0){ e.dead=true; kills++;
     combo++; comboTimer=2.5; if(combo>maxCombo) maxCombo=combo;
-    { const g=Math.round((e.boss?20:1)*goldMult()); meta.gold+=g; runGold+=g; } // 실시간 골드(골드획득 강화 반영)
+    { const sMul=Math.pow(2,Math.floor((stage-1)/10)); const g=Math.round((e.boss?20:1)*goldMult()*sMul); meta.gold+=g; runGold+=g; } // 실시간 골드(골드획득 강화 + 10스테이지마다 ×2)
     const gv=Math.max(1,Math.round((e.gem||0)*Math.pow(1.13,stage-1)));  // 적 경험치(젬): 스테이지 지수 스케일(1.13^) — 초반 동일·후반 정체 해소(필요경험치 복리 대응)
     texts.push({x:e.x,y:e.y-e.r,vy:-46,life:0.7,str:e.boss?'BOSS!':'+'+gv,color:e.boss?'#ff5ce1':'#7df3ff',size:e.boss?22:14}); // +N XP텍스트=젬 시안색
     burst(e.x,e.y,color||e.color,e.big?18:8); shake=Math.min(shake+(e.boss?4:(e.big?0.5:0.12)),8);
