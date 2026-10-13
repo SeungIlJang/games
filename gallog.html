@@ -167,6 +167,16 @@
       <button class="btn" id="devReset" style="padding:12px 22px;font-size:16px;background:#555;box-shadow:0 5px 0 #333;">기본값</button>
       <button class="btn" id="devClose" style="padding:12px 22px;font-size:16px;background:#c0392b;box-shadow:0 5px 0 #7d2419;">닫기</button>
     </div>
+    <div style="margin-top:16px;border-top:1px solid #2b3350;padding-top:14px;width:min(92vw,380px);text-align:center;">
+      <div style="font-weight:700;margin-bottom:8px;">💰 골드 지급 <span style="opacity:.55;font-size:12px;">(현재: <span id="devGoldNow">0</span>)</span></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+        <button class="btn devGold" data-g="10000" style="padding:10px 14px;font-size:14px;background:#b8860b;box-shadow:0 4px 0 #6b4e06;">+1만</button>
+        <button class="btn devGold" data-g="100000" style="padding:10px 14px;font-size:14px;background:#b8860b;box-shadow:0 4px 0 #6b4e06;">+10만</button>
+        <button class="btn devGold" data-g="1000000" style="padding:10px 14px;font-size:14px;background:#b8860b;box-shadow:0 4px 0 #6b4e06;">+100만</button>
+        <button class="btn devGold" data-g="100000000" style="padding:10px 14px;font-size:14px;background:#b8860b;box-shadow:0 4px 0 #6b4e06;">+1억</button>
+        <button class="btn" id="devGoldReset" style="padding:10px 14px;font-size:14px;background:#555;box-shadow:0 4px 0 #333;">골드 0</button>
+      </div>
+    </div>
   </div>
 </div>
 <script>
@@ -585,8 +595,10 @@ function openDev(){
     inp.style.cssText='width:130px;padding:8px;border-radius:8px;border:1px solid #2b3350;background:#141c30;color:#fff;font-size:16px;margin-top:4px;';
     row.appendChild(inp); box.appendChild(row);
   }
+  const gn=document.getElementById('devGoldNow'); if(gn) gn.textContent=(meta.gold||0).toLocaleString();
   document.getElementById('devPanel').classList.remove('hidden');
 }
+function devGrantGold(n){ meta.gold=Math.max(0,(meta.gold||0)+n); saveMeta(); if(typeof renderShop==='function'){try{renderShop();}catch(e){}} const el=document.getElementById('devGoldNow'); if(el) el.textContent=meta.gold.toLocaleString(); }
 function applyDev(){
   document.querySelectorAll('#devFields input').forEach(inp=>{ const v=parseFloat(inp.value); if(isFinite(v)) TUNE[inp.dataset.k]=v; });
   saveTune(); document.getElementById('devPanel').classList.add('hidden');
@@ -594,6 +606,8 @@ function applyDev(){
 document.getElementById('devLogo').onclick=()=>{ const pw=prompt('개발자 비밀번호'); if(pw==='799879') openDev(); };
 document.getElementById('devApply').onclick=applyDev;
 document.getElementById('devReset').onclick=()=>{ TUNE=Object.assign({},TUNE_DEFAULTS); saveTune(); openDev(); };
+document.querySelectorAll('.devGold').forEach(b=>{ b.onclick=()=>devGrantGold(parseInt(b.dataset.g,10)); });
+document.getElementById('devGoldReset').onclick=()=>devGrantGold(-1e18);  // 0으로 리셋(음수 하한 clamp)
 document.getElementById('devClose').onclick=()=>document.getElementById('devPanel').classList.add('hidden');
 let time, kills, spawnTimer, shake, lastTs, bossAlive, banner='', bannerT=0, startOffset=0, stage, stageTime, bossSpawned, catchUpStage=0, catchUpSpeed=1.2;
 const STAGE_BOSS_DELAY=20; // 스테이지 시작 후 보스 등장까지(초)
