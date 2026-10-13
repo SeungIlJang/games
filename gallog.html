@@ -632,7 +632,7 @@ function reset(){
   time=0; kills=0; spawnTimer=0; shake=0; bossAlive=false; banner='STAGE 1 ▶ '+t('bnBoss'); bannerT=2.6; startHintT=5;
   stage=1; stageTime=0; bossSpawned=false; bossQueue=[]; won=false;
   catchUpStage=(meta.bestStage||0);   // 죽고 재도전 시, 이전 최고 스테이지 전까지 가속(초반 지루함↓)
-  { const bs=meta.bestStage||0; catchUpSpeed = bs>=31?1.5 : bs>=21?1.4 : bs>=11?1.3 : 1.2; } // 최고스테이지별 가속 배율
+  { const bs=meta.bestStage||0; catchUpSpeed = Math.min(2.0, Math.round((1.2 + 0.1*Math.floor((Math.max(1,bs)-1)/10))*10)/10); } // 최고스테이지별 가속 배율: 10스테이지마다 +0.1 (1~10=1.2 … 81+=2.0)
   startOffset = metaPower()*TUNE.startPow;    // 시작강도 계수 (TUNE)
 }
 
