@@ -409,17 +409,17 @@ const CLASS_TREE=[
  {key:'demonlord',base:'mage',parent:'warlock',tier:4,icon:'👿',name:'마왕',en:'Demon Lord',cost:9000, desc:'공격+50%, 유도+1, 체력+10%, 블랙홀+4', apply:p=>{ p.dmg*=1.5; gainW(p,'homing',1); p.maxhp*=1.1; gainW(p,'blackhole',1); }},
  {key:'archdemon',base:'mage',parent:'demonlord',tier:5,icon:'😈',name:'대마왕',en:'Archdemon',cost:100000000, desc:'👑 최종 전직 · 모든 기술 +6', apply:p=>{ gainW(p,'bolt',6); gainW(p,'slash',6); gainW(p,'santoryu',6); gainW(p,'nova',6); gainW(p,'spread',6); gainW(p,'homing',6); gainW(p,'orbit',6); gainW(p,'blackhole',6); }},
  // ── 궁수 / Archer ──
- {key:'archer',base:'archer',parent:null,tier:1,icon:'🏹',name:'궁수',en:'Archer',cost:400, desc:'볼트 · 연사+15%, 사거리+15%', apply:p=>{ p.fireRate*=1.15; p.range*=1.15; gainW(p,'bolt',2); }},
- {key:'rangerA',base:'archer',parent:'archer',tier:2,icon:'🎯',name:'레인저',en:'Ranger',cost:1000, desc:'관통+2, 사거리+30%, 연사+20%', apply:p=>{ p.pierce+=2; p.range*=1.3; p.fireRate*=1.2; }},
- {key:'sniper',base:'archer',parent:'rangerA',tier:3,icon:'🔭',name:'명사수',en:'Sniper',cost:3000, desc:'공격+30%, 관통+1, 탄속+20%', apply:p=>{ p.dmg*=1.3; p.pierce+=1; p.bulletSpeed*=1.2; }},
- {key:'skypiercer',base:'archer',parent:'sniper',tier:4,icon:'☄️',name:'천공사수',en:'Sky Piercer',cost:9000, desc:'공격+40%, 관통+2, 볼트+1', apply:p=>{ p.dmg*=1.4; p.pierce+=2; gainW(p,'bolt',1); }},
- {key:'hunter',base:'archer',parent:'rangerA',tier:3,icon:'🐺',name:'사냥꾼',en:'Hunter',cost:3000, desc:'연사+20%, 산탄+1', apply:p=>{ p.fireRate*=1.2; gainW(p,'spread',1); }},
- {key:'beastmaster',base:'archer',parent:'hunter',tier:4,icon:'🦁',name:'야수왕',en:'Beast Master',cost:9000, desc:'연사+20%, 산탄+2, 공격+20%', apply:p=>{ p.fireRate*=1.2; gainW(p,'spread',2); p.dmg*=1.2; }},
- {key:'arcanearcher',base:'archer',parent:'archer',tier:2,icon:'🔮',name:'마궁수',en:'Arcane Archer',cost:1000, desc:'공격+40%, 유도미사일+2', apply:p=>{ p.dmg*=1.4; gainW(p,'homing',2); }},
- {key:'spiritarcher',base:'archer',parent:'arcanearcher',tier:3,icon:'🧚',name:'정령궁수',en:'Spirit Archer',cost:3000, desc:'공격+20%, 유도+1, 자석+30%', apply:p=>{ p.dmg*=1.2; gainW(p,'homing',1); p.magnet*=1.3; }},
- {key:'spiritlord',base:'archer',parent:'spiritarcher',tier:4,icon:'💫',name:'정령왕',en:'Spirit Lord',cost:9000, desc:'공격+35%, 유도+1, 연사+10%', apply:p=>{ p.dmg*=1.35; gainW(p,'homing',1); p.fireRate*=1.1; }},
- {key:'shadowarcher',base:'archer',parent:'arcanearcher',tier:3,icon:'🌚',name:'암흑궁수',en:'Shadow Archer',cost:3000, desc:'공격+25%, 흡혈+1, 볼트+1', apply:p=>{ p.dmg*=1.25; p.lifesteal+=1; gainW(p,'bolt',1); }},
- {key:'shadowreaper',base:'archer',parent:'shadowarcher',tier:4,icon:'💀',name:'그림자사신',en:'Shadow Reaper',cost:9000, desc:'공격+40%, 흡혈+1, 관통+2', apply:p=>{ p.dmg*=1.4; p.lifesteal+=1; p.pierce+=2; }},
+ {key:'archer',base:'archer',parent:null,tier:1,icon:'🏹',name:'궁수',en:'Archer',cost:400, desc:'화살촉 · 연사+15%, 사거리+15%', apply:p=>{ p.fireRate*=1.15; p.range*=1.15; gainW(p,'arrow',2); }},
+ {key:'rangerA',base:'archer',parent:'archer',tier:2,icon:'🎯',name:'레인저',en:'Ranger',cost:1000, desc:'화살촉+2, 관통+2, 사거리+30%, 연사+20%', apply:p=>{ gainW(p,'arrow',2); p.pierce+=2; p.range*=1.3; p.fireRate*=1.2; }},
+ {key:'sniper',base:'archer',parent:'rangerA',tier:3,icon:'🔭',name:'명사수',en:'Sniper',cost:3000, desc:'공격+30%, 화살촉+3, 관통+1, 탄속+20%', apply:p=>{ p.dmg*=1.3; gainW(p,'arrow',3); p.pierce+=1; p.bulletSpeed*=1.2; }},
+ {key:'skypiercer',base:'archer',parent:'sniper',tier:4,icon:'☄️',name:'천공사수',en:'Sky Piercer',cost:9000, desc:'공격+40%, 화살촉+4, 관통+2', apply:p=>{ p.dmg*=1.4; gainW(p,'arrow',4); p.pierce+=2; }},
+ {key:'hunter',base:'archer',parent:'rangerA',tier:3,icon:'🐺',name:'사냥꾼',en:'Hunter',cost:3000, desc:'화살촉+3, 연사+20%, 산탄+1', apply:p=>{ gainW(p,'arrow',3); p.fireRate*=1.2; gainW(p,'spread',1); }},
+ {key:'beastmaster',base:'archer',parent:'hunter',tier:4,icon:'🦁',name:'야수왕',en:'Beast Master',cost:9000, desc:'화살촉+4, 연사+20%, 산탄+2, 공격+20%', apply:p=>{ gainW(p,'arrow',4); p.fireRate*=1.2; gainW(p,'spread',2); p.dmg*=1.2; }},
+ {key:'arcanearcher',base:'archer',parent:'archer',tier:2,icon:'🔮',name:'마궁수',en:'Arcane Archer',cost:1000, desc:'공격+40%, 화살촉+2, 유도미사일+2', apply:p=>{ p.dmg*=1.4; gainW(p,'arrow',2); gainW(p,'homing',2); }},
+ {key:'spiritarcher',base:'archer',parent:'arcanearcher',tier:3,icon:'🧚',name:'정령궁수',en:'Spirit Archer',cost:3000, desc:'공격+20%, 화살촉+3, 유도+1, 자석+30%', apply:p=>{ p.dmg*=1.2; gainW(p,'arrow',3); gainW(p,'homing',1); p.magnet*=1.3; }},
+ {key:'spiritlord',base:'archer',parent:'spiritarcher',tier:4,icon:'💫',name:'정령왕',en:'Spirit Lord',cost:9000, desc:'공격+35%, 화살촉+4, 유도+1, 연사+10%', apply:p=>{ p.dmg*=1.35; gainW(p,'arrow',4); gainW(p,'homing',1); p.fireRate*=1.1; }},
+ {key:'shadowarcher',base:'archer',parent:'arcanearcher',tier:3,icon:'🌚',name:'암흑궁수',en:'Shadow Archer',cost:3000, desc:'공격+25%, 화살촉+3, 흡혈+1', apply:p=>{ p.dmg*=1.25; gainW(p,'arrow',3); p.lifesteal+=1; }},
+ {key:'shadowreaper',base:'archer',parent:'shadowarcher',tier:4,icon:'💀',name:'그림자사신',en:'Shadow Reaper',cost:9000, desc:'공격+40%, 화살촉+4, 흡혈+1, 관통+2', apply:p=>{ p.dmg*=1.4; gainW(p,'arrow',4); p.lifesteal+=1; p.pierce+=2; }},
  // ── 도적 / Rogue ──
  {key:'rogue',base:'rogue',parent:null,tier:1,icon:'🗡️',name:'도적',en:'Rogue',cost:400, desc:'산탄 · 이동+12%, 공격+15%', apply:p=>{ p.speed*=1.12; p.dmg*=1.15; gainW(p,'spread',2); }},
  {key:'assassin',base:'rogue',parent:'rogue',tier:2,icon:'🥷',name:'암살자',en:'Assassin',cost:1000, desc:'공격+50%, 이동+12%', apply:p=>{ p.dmg*=1.5; p.speed*=1.12; }},
@@ -454,7 +454,7 @@ const CLASS_BY_KEY={}; CLASS_TREE.forEach(n=>CLASS_BY_KEY[n.key]=n);
 const CLASS_CHILDREN={}; CLASS_TREE.forEach(n=>{ if(n.parent){ (CLASS_CHILDREN[n.parent]=CLASS_CHILDREN[n.parent]||[]).push(n); } });
 const CLASS_ROOTS=CLASS_TREE.filter(n=>!n.parent);
 // 기본직별 정체성 무기 (전직 단계마다 +1로 성장)
-const IDENTITY_WEAPON={hero:'bolt', warrior:'slash', swordsman:'santoryu', mage:'nova', archer:'bolt', rogue:'spread'};
+const IDENTITY_WEAPON={hero:'bolt', warrior:'slash', swordsman:'santoryu', mage:'nova', archer:'arrow', rogue:'spread'};
 // 전직 비용 — 단계(티어)마다 급상승(용사만 무료 시작). 밸런스는 여기서만 조정
 const TIER_COST={1:1500, 2:990000, 3:1000000, 4:10000000, 5:100000000}; // L2 99만(능력치 2배 밸런스), L3·L4 비공개, L5=대마왕(최종)
 CLASS_TREE.forEach(n=>{ n.cost = (n.key==='hero') ? 0 : TIER_COST[n.tier]; });
