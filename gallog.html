@@ -521,13 +521,16 @@ function renderShop(){
 function renderClasses(){
   const box=document.getElementById('classes'); if(!box) return; box.innerHTML='';
   const order=[]; function walk(n){ order.push(n); (CLASS_CHILDREN[n.key]||[]).forEach(walk); } CLASS_ROOTS.forEach(walk);
+  // 대마왕(최종 전직)은 계열 상관없이 목록 맨 끝에 1회만 노출
+  const adI=order.findIndex(n=>n.key==='archdemon'); if(adI>=0) order.push(order.splice(adI,1)[0]);
+  const anyTier4=CLASS_TREE.some(c=>c.tier===4 && meta.cls[c.key]);  // 어떤 계열이든 4차 전직 보유 시 대마왕 해금
   order.forEach(n=>{
-    const owned=!!meta.cls[n.key], sel=meta.sel===n.key, parentOwned=!n.parent||!!meta.cls[n.parent];
+    const owned=!!meta.cls[n.key], sel=meta.sel===n.key, parentOwned=(n.key==='archdemon') ? anyTier4 : (!n.parent||!!meta.cls[n.parent]);
     // 심플화: 열린(보유) 전직 + 바로 아래 해금 가능한 단계만 노출 (더 깊은 트리는 부모 해금 후 등장)
     if(!(owned||parentOwned)) return;
     const buyable=!owned&&parentOwned&&meta.gold>=n.cost;
     const el=document.createElement('div'); el.className='card';
-    el.style.marginLeft=((n.tier-1)*11)+'px';
+    el.style.marginLeft=(n.key==='archdemon'?0:(n.tier-1)*11)+'px';
     const price = n.cost.toLocaleString();
     if(sel) el.style.borderColor='#5ce1ff'; el.style.opacity = owned?1:(buyable?0.95:0.7);
     const badge = sel?'✓ 선택됨' : (owned?'▶ 선택' : ('🪙'+price+(meta.gold<n.cost?' 부족':'')));
