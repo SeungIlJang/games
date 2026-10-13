@@ -508,7 +508,7 @@ let meta = loadMeta();
 function saveMeta(){ if(meta.gold<0||!isFinite(meta.gold)) meta.gold=Math.max(0,meta.gold||0); try{ localStorage.setItem('ss_meta', JSON.stringify(meta)); }catch{} }
 const metaLvl=k=>meta.lvls[k]||0;
 const metaCost=d=>Math.floor(d.base*Math.pow(d.mul, metaLvl(d.key)));
-const goldMult=()=>1+0.15*metaLvl('gold');
+const goldMult=()=>(1+0.15*metaLvl('gold'))*(TUNE.goldMul||1);
 function applyMeta(p){ for(const d of META_DEFS){ const l=metaLvl(d.key); for(let i=0;i<l;i++) d.one(p); } }
 function fillShop(box){
   box.innerHTML='';
@@ -569,7 +569,7 @@ let lifestealAcc=0, lifestealT=0; // 흡혈 초당 회복 상한용
 let combo=0, comboTimer=0, maxCombo=0;
 let best=0; try{ best=parseInt(localStorage.getItem('ss_best')||'0')||0; }catch{}
 // ---- 개발자 튜닝 (로고 클릭+비번 799879) ----
-const TUNE_DEFAULTS={ hpWall:0.4, startPow:0.35, awakenStart:15, awakenStep:15, levelHp:8, reviveXp:0.95, enemyHp:1.0, enemySpeed:1.0, camFollow:4, bossPow:1.0, bossGem:1.0 };
+const TUNE_DEFAULTS={ hpWall:0.4, startPow:0.35, awakenStart:15, awakenStep:15, levelHp:8, reviveXp:0.95, enemyHp:1.0, enemySpeed:1.0, camFollow:4, bossPow:1.0, bossGem:1.0, goldMul:1.0 };
 let TUNE=Object.assign({},TUNE_DEFAULTS);
 try{ TUNE=Object.assign(TUNE, JSON.parse(localStorage.getItem('ss_tune')||'{}')); }catch(e){}
 function saveTune(){ try{ localStorage.setItem('ss_tune', JSON.stringify(TUNE)); }catch(e){} }
@@ -585,6 +585,7 @@ const DEV_KNOBS=[
   {k:'camFollow',  name:'카메라 추적세기',   step:1,    hint:'0~10 · 0=화면고정(기존), 낮을수록 느슨, 높을수록 딱붙음 (기본4)'},
   {k:'bossPow',    name:'보스 강함 배수',    step:0.1,  hint:'보스 체력·데미지× (기본1.0, 예 1.5=1.5배 강함)'},
   {k:'bossGem',    name:'보스 잼 배수',      step:0.1,  hint:'보스 처치 시 큰 젬 개수× (기본1.0)'},
+  {k:'goldMul',    name:'골드 지급 배수',    step:0.5,  hint:'모든 골드 획득(처치·마감)× (기본1.0, 예 5=5배)'},
 ];
 function openDev(){
   const box=document.getElementById('devFields'); box.innerHTML='';
