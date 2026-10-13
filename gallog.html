@@ -407,6 +407,7 @@ const CLASS_TREE=[
  {key:'abyssmage',base:'mage',parent:'darkwizard',tier:4,icon:'🕳️',name:'심연술사',en:'Abyss Mage',cost:9000, desc:'공격+45%, 흡혈+2, 블랙홀+4', apply:p=>{ p.dmg*=1.45; p.lifesteal+=2; gainW(p,'blackhole',1); }},
  {key:'warlock',base:'mage',parent:'darkmage',tier:3,icon:'😈',name:'흑마법사',en:'Warlock',cost:3000, desc:'공격+25%, 유도미사일+1, 흡혈+1, 블랙홀+3', apply:p=>{ p.dmg*=1.25; gainW(p,'homing',1); p.lifesteal+=1; gainW(p,'blackhole',1); }},
  {key:'demonlord',base:'mage',parent:'warlock',tier:4,icon:'👿',name:'마왕',en:'Demon Lord',cost:9000, desc:'공격+50%, 유도+1, 체력+10%, 블랙홀+4', apply:p=>{ p.dmg*=1.5; gainW(p,'homing',1); p.maxhp*=1.1; gainW(p,'blackhole',1); }},
+ {key:'archdemon',base:'mage',parent:'demonlord',tier:5,icon:'😈',name:'대마왕',en:'Archdemon',cost:100000000, desc:'👑 최종 전직 · 모든 기술 +6', apply:p=>{ gainW(p,'bolt',6); gainW(p,'slash',6); gainW(p,'santoryu',6); gainW(p,'nova',6); gainW(p,'spread',6); gainW(p,'homing',6); gainW(p,'orbit',6); gainW(p,'blackhole',6); }},
  // ── 궁수 / Archer ──
  {key:'archer',base:'archer',parent:null,tier:1,icon:'🏹',name:'궁수',en:'Archer',cost:400, desc:'볼트 · 연사+15%, 사거리+15%', apply:p=>{ p.fireRate*=1.15; p.range*=1.15; gainW(p,'bolt',2); }},
  {key:'rangerA',base:'archer',parent:'archer',tier:2,icon:'🎯',name:'레인저',en:'Ranger',cost:1000, desc:'관통+2, 사거리+30%, 연사+20%', apply:p=>{ p.pierce+=2; p.range*=1.3; p.fireRate*=1.2; }},
@@ -455,7 +456,7 @@ const CLASS_ROOTS=CLASS_TREE.filter(n=>!n.parent);
 // 기본직별 정체성 무기 (전직 단계마다 +1로 성장)
 const IDENTITY_WEAPON={hero:'bolt', warrior:'slash', swordsman:'santoryu', mage:'nova', archer:'bolt', rogue:'spread'};
 // 전직 비용 — 단계(티어)마다 급상승(용사만 무료 시작). 밸런스는 여기서만 조정
-const TIER_COST={1:1500, 2:990000, 3:1000000, 4:10000000}; // L2 99만(능력치 2배 밸런스), L3·L4는 비공개 콘텐츠
+const TIER_COST={1:1500, 2:990000, 3:1000000, 4:10000000, 5:100000000}; // L2 99만(능력치 2배 밸런스), L3·L4 비공개, L5=대마왕(최종)
 CLASS_TREE.forEach(n=>{ n.cost = (n.key==='hero') ? 0 : TIER_COST[n.tier]; });
 function classChain(key){ const c=[]; let k=key; while(k&&CLASS_BY_KEY[k]){ c.unshift(CLASS_BY_KEY[k]); k=CLASS_BY_KEY[k].parent; } return c; }
 function applyClass(p){
