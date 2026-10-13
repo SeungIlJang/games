@@ -35,6 +35,7 @@
 </style></head>
 <body>
 <canvas id="cv"></canvas>
+<div id="muteBtn" style="position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:12px;z-index:9;font-size:22px;cursor:pointer;pointer-events:auto;opacity:.85;text-shadow:0 1px 4px rgba(0,0,0,.6)">🔊</div>
 <div id="top">
   <div id="stage"></div>
   <div id="info"></div>
@@ -45,7 +46,7 @@
   <button class="btn d" id="resetBtn">↺ 초기화</button>
   <button class="btn g" id="goBtn" disabled>🛵 출발!</button>
 </div>
-<div id="ver">v0.5.0 · 동네·콤보·최고기록·광고(AdMob)</div>
+<div id="ver">v0.6.0 · 🔊음소거 · 광고보고+15초 · AD_ID/minSdk24</div>
 
 <div id="start">
   <h1>🛵 모두의 배달</h1>
@@ -61,13 +62,14 @@
   </div>
   <div id="rec" class="sub" style="color:#ffd34d;font-weight:800"></div>
   <button class="btn g" id="startBtn" style="padding:15px 34px;font-size:20px">시작하기</button>
-  <div id="changelog">🆕 <b>v0.5.0</b> · <b>동네 테마</b>(6종 로테이션)·<b>연속 별3 콤보</b>(+보너스)·<b>최고기록</b>·별3 니어미스·후반 7건</div>
+  <div id="changelog">🆕 <b>v0.6.0</b> · 🔊 음소거 버튼(우상단) · ⏰ 시간초과 때 <b>광고 보고 +15초</b>(판당1) · 안정성 개선</div>
 </div>
 
 <div id="over" class="hidden">
   <div id="overTitle">배달 완료!</div>
   <div id="stars">⭐⭐⭐</div>
   <div id="overMsg"></div>
+  <button class="btn g" id="timeAdBtn" style="display:none">📺 광고 보고 +15초</button>
   <button class="btn d" id="ansBtn" style="padding:11px 20px;font-size:15px">🏆 별3 정답 경로 보기</button>
   <div style="display:flex;gap:10px;margin-top:4px">
     <button class="btn" id="retryBtn">🔥 별3 도전</button>
@@ -80,7 +82,9 @@
 const $=id=>document.getElementById(id);
 const rnd=(a,b)=>a+Math.random()*(b-a);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-let AC; function tone(f,d,t,g){ try{ if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)(); const o=AC.createOscillator(),v=AC.createGain(); o.type=t||'square'; o.frequency.value=f; v.gain.value=g||0.06; o.connect(v);v.connect(AC.destination); const s=AC.currentTime;o.start(s);v.gain.setValueAtTime(v.gain.value,s);v.gain.exponentialRampToValueAtTime(0.0001,s+(d||0.1));o.stop(s+(d||0.1)); }catch(e){} }
+let muted=(()=>{try{return localStorage.getItem('baedal_mute')==='1';}catch(e){return false;}})();
+function renderMute(){ const b=$('muteBtn'); if(b) b.textContent=muted?'🔇':'🔊'; }
+let AC; function tone(f,d,t,g){ if(muted)return; try{ if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)(); const o=AC.createOscillator(),v=AC.createGain(); o.type=t||'square'; o.frequency.value=f; v.gain.value=g||0.06; o.connect(v);v.connect(AC.destination); const s=AC.currentTime;o.start(s);v.gain.setValueAtTime(v.gain.value,s);v.gain.exponentialRampToValueAtTime(0.0001,s+(d||0.1));o.stop(s+(d||0.1)); }catch(e){} }
 function chord(b){ [0,4,7,12].forEach((s,i)=>setTimeout(()=>tone(b*Math.pow(2,s/12),0.16,'triangle',0.06),i*70)); }
 function vib(m){ try{navigator.vibrate&&navigator.vibrate(m);}catch(e){} }
 
@@ -88,12 +92,15 @@ function vib(m){ try{navigator.vibrate&&navigator.vibrate(m);}catch(e){} }
 const AD_USE_TEST=true;
 const AD_BANNER = AD_USE_TEST ? 'ca-app-pub-3940256099942544/6300978111' : '';
 const AD_INTER  = AD_USE_TEST ? 'ca-app-pub-3940256099942544/1033173712' : '';
-let admobReady=false, bannerShown=false, interCount=0;
+const AD_REWARD = AD_USE_TEST ? 'ca-app-pub-3940256099942544/5224354917' : '';  // 리워드(시간 +15초). 출시 전 실유닛 교체
+let admobReady=false, bannerShown=false, interCount=0, adUsedThisStage=false;
 // 제스처 바(홈 인디케이터) 높이만큼 배너를 띄운다. viewport-fit=cover 필요.
 function safeBottomInset(){ try{ const p=document.createElement('div'); p.style.cssText='position:fixed;left:0;bottom:0;width:0;height:env(safe-area-inset-bottom,0px);visibility:hidden;pointer-events:none'; document.body.appendChild(p); const h=Math.round(p.getBoundingClientRect().height); p.remove(); return h; }catch(e){ return 0; } }
 (async function(){ try{ const C=window.Capacitor; if(C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.AdMob){ await C.Plugins.AdMob.initialize({initializeForTesting:AD_USE_TEST}); admobReady=true; showBanner(); } }catch(e){} })();
 async function showBanner(){ const C=window.Capacitor; if(!(C&&C.Plugins&&C.Plugins.AdMob)||bannerShown) return; bannerShown=true; try{document.body.classList.add('has-banner');}catch(e){} try{ await C.Plugins.AdMob.showBanner({adId:AD_BANNER,adSize:'BANNER',position:'BOTTOM_CENTER',margin:safeBottomInset(),isTesting:AD_USE_TEST}); }catch(e){ bannerShown=false; try{document.body.classList.remove('has-banner');}catch(e2){} } }
 async function showInterstitial(){ const C=window.Capacitor; if(!(admobReady&&C&&C.Plugins&&C.Plugins.AdMob)) return; try{ await C.Plugins.AdMob.prepareInterstitial({adId:AD_INTER,isTesting:AD_USE_TEST}); await C.Plugins.AdMob.showInterstitial(); }catch(e){} }
+// 리워드 광고: 보상 지급 여부 반환. 웹/실패 시 true(바로 보상)로 폴백.
+async function showRewarded(){ const C=window.Capacitor; if(!(admobReady&&C&&C.Plugins&&C.Plugins.AdMob)) return true; try{ await C.Plugins.AdMob.prepareRewardVideoAd({adId:AD_REWARD,isTesting:AD_USE_TEST}); const r=await C.Plugins.AdMob.showRewardVideoAd(); return !!r; }catch(e){ return false; } }
 
 const cv=$('cv'), ctx=cv.getContext('2d'); let W=412,H=740,DPR=1;
 function resize(){ DPR=Math.min(devicePixelRatio||1,2); const vw=innerWidth,vh=innerHeight; W=412; H=Math.round(W*vh/vw); cv.width=W*DPR;cv.height=H*DPR; cv.style.width=vw+'px';cv.style.height=vh+'px'; ctx.setTransform(DPR,0,0,DPR,0,0); }
@@ -151,7 +158,7 @@ function optimalRoute(){ const N=nodes.length; const INF=Infinity; const shopIdx
 function segCross(a,b,c,d){ const ccw=(p,q,r)=>(r.y-p.y)*(q.x-p.x)-(q.y-p.y)*(r.x-p.x); const d1=ccw(a,b,c),d2=ccw(a,b,d),d3=ccw(c,d,a),d4=ccw(c,d,b); return ((d1>0)!==(d2>0))&&((d3>0)!==(d4>0)); }
 function updateCross(){ crossPairs=new Set(); const pts=[start,...order.map(i=>nodes[i])]; for(let i=0;i<pts.length-1;i++){ for(let j=i+1;j<pts.length-1;j++){ if(j===i||j===i+1||j===i-1) continue; if(segCross(pts[i],pts[i+1],pts[j],pts[j+1])){ crossPairs.add(i); crossPairs.add(j); } } } }
 
-function newStage(regen){ if(regen) genStage(); order=[]; pickedSet=new Set(); crossPairs=new Set(); scoot=null; parts=[]; state='plan';
+function newStage(regen){ if(regen) genStage(); order=[]; pickedSet=new Set(); crossPairs=new Set(); scoot=null; parts=[]; state='plan'; adUsedThisStage=false; $('timeAdBtn').style.display='none';
   if(stage>bestStage){ bestStage=stage; try{localStorage.setItem('baedal_best',bestStage);}catch(e){} }
   timeLeft=STAGE_TIME; lastTick=999; updateTimer();
   $('over').classList.add('hidden'); updateHUD(); refreshBtns(); $('hint').textContent='👆 같은 색 음식점→집 순서로 탭 (음식점 먼저!)'; }
@@ -160,6 +167,7 @@ function failTime(){ state='fail'; combo=0; flash('⏰ 시간 초과!','#ff5a6e'
   $('overTitle').textContent='⏰ 시간 초과!'; $('overTitle').style.color='#ff6a7a'; $('stars').textContent='⌛';
   $('overMsg').innerHTML='제한 시간 <b>'+STAGE_TIME+'초</b> 안에 출발하지 못했어요!<br><span style="color:#ff9a5a">더 빠르게 순서를 짜보세요</span>';
   $('retryBtn').style.display='block'; $('retryBtn').textContent='↺ 다시 도전'; $('nextBtn').style.display='none';
+  $('timeAdBtn').style.display = adUsedThisStage ? 'none' : 'block';   // 판당 1회 리워드 "+15초"
   setTimeout(()=>$('over').classList.remove('hidden'),650); }
 function updateHUD(){ $('stage').textContent=district().n+' · '+stage+'단계 · 배달 '+pairs+'건';
   const comboTxt = combo>=2 ? '  🔥콤보 '+combo : '';
@@ -199,7 +207,7 @@ function flash(t,c){ const d=document.createElement('div');d.className='flash';d
 function confetti(x,y,n){ const cols=['#ffd34d','#7cffb0','#5ab0ff','#ff8a5a','#c9a3ff','#fff']; for(let i=0;i<n;i++){const a=Math.random()*6.28,s=rnd(2,9);parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-5,life:1.5,c:cols[i%cols.length],r:3+Math.random()*4});} }
 function freshOf(carryDist){ return clamp(1 - carryDist/(optLen*0.85), 0, 1); }
 
-function failRun(node){ state='fail'; combo=0; const col=PAIRCOL[node.pair]; const nx=node.x, ny=node.y; scoot=null;
+function failRun(node){ state='fail'; combo=0; $('timeAdBtn').style.display='none'; const col=PAIRCOL[node.pair]; const nx=node.x, ny=node.y; scoot=null;
   flash('❌ 배달 실수!','#ff5a6e'); tone(150,0.4,'sawtooth',0.1); vib([40,60,40]); shake=18;
   for(let i=0;i<16;i++){const a=Math.random()*6.28,s=rnd(2,7);parts.push({x:nx,y:ny,vx:Math.cos(a)*s,vy:Math.sin(a)*s-2,life:1.1,c:'#ff5a6e',r:2+Math.random()*3});}
   flashSmall('❌',nx,ny-24);
@@ -209,7 +217,7 @@ function failRun(node){ state='fail'; combo=0; const col=PAIRCOL[node.pair]; con
   $('retryBtn').style.display='block'; $('retryBtn').textContent='↺ 다시 도전'; $('nextBtn').style.display='none';
   setTimeout(()=>$('over').classList.remove('hidden'),650);
 }
-function finishRun(myLen){ const ratio=myLen/optLen; let stars=ratio<=1.10?3:ratio<=1.30?2:1; const passed=stars>=2; state=passed?'result':'fail';
+function finishRun(myLen){ $('timeAdBtn').style.display='none'; const ratio=myLen/optLen; let stars=ratio<=1.10?3:ratio<=1.30?2:1; const passed=stars>=2; state=passed?'result':'fail';
   const eff=Math.round(optLen/myLen*100);
   if(passed){ let bonus=0;
     if(stars===3){ combo++; if(combo>bestCombo){bestCombo=combo;try{localStorage.setItem('baedal_combo',bestCombo);}catch(e){}} if(combo>=3) bonus=1; }
@@ -235,6 +243,10 @@ $('ansClose').onclick=()=>{ state=ansPrev; $('ansClose').style.display='none'; $
 $('retryBtn').onclick=()=>{ $('ansClose').style.display='none'; newStage(false); };
 $('nextBtn').onclick=()=>{ $('ansClose').style.display='none'; interCount++; if(interCount%3===0) showInterstitial(); stage++; try{localStorage.setItem('baedal_stage',stage);}catch(e){} newStage(true); };
 $('startBtn').onclick=()=>{ try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){} $('start').classList.add('hidden'); newStage(true); };
+$('timeAdBtn').onclick=async()=>{ const b=$('timeAdBtn'); if(b.disabled)return; b.disabled=true; const ok=await showRewarded(); b.disabled=false;
+  if(ok){ adUsedThisStage=true; b.style.display='none'; $('over').classList.add('hidden'); timeLeft=15; lastTick=999; state='plan'; updateTimer(); flash('⏱️ +15초! 이어서 짜보세요','#7cffb0'); tone(700,0.1,'triangle',0.08); $('hint').textContent='👆 이어서 순서를 완성하고 🛵 출발!'; }
+  else { flash('광고를 끝까지 봐야 시간이 추가돼요','#ffd34d'); } };
+$('muteBtn').onclick=()=>{ muted=!muted; try{localStorage.setItem('baedal_mute',muted?'1':'0');}catch(e){} renderMute(); if(!muted) tone(660,0.05,'square',0.08); }; renderMute();
 
 let last=performance.now();
 function loop(now){ requestAnimationFrame(loop); let dt=(now-last)/1000; last=now; if(dt>0.05)dt=0.05;
