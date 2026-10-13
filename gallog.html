@@ -854,22 +854,21 @@ const STAT_UPS=[
   {t:'🩸 흡혈 +1', d:'적 처치 시 체력 회복', a:p=>p.lifesteal+=1},
 ];
 function buildChoices(){
-  const pool=[];
+  const wpool=[], spool=[];   // wpool=무기(강화·진화·새무기) / spool=스탯업
   for(const key in WEAPONS){ const w=WEAPONS[key], owned=player.weapons[key];
     if(owned){
-      if(owned<w.max) pool.push({t:`${w.icon} ${w.name} 강화 (Lv${owned}→${owned+1})`, d:w.desc, weight:3, a:()=>player.weapons[key]++});
-      else if(!player.evolved[key]) pool.push({t:`🌟 진화 · ${w.name} → ${EVOLVE[key]}`, d:'무기가 상위 형태로 각성!', weight:6, a:()=>{ player.evolved[key]=true; sfx.levelup(); }});
+      if(owned<w.max) wpool.push({t:`${w.icon} ${w.name} 강화 (Lv${owned}→${owned+1})`, d:w.desc, weight:3, a:()=>player.weapons[key]++});
+      else if(!player.evolved[key]) wpool.push({t:`🌟 진화 · ${w.name} → ${EVOLVE[key]}`, d:'무기가 상위 형태로 각성!', weight:6, a:()=>{ player.evolved[key]=true; sfx.levelup(); }});
     }
-    else pool.push({t:`${w.icon} 새 무기 · ${w.name}`, d:w.desc, weight:key==='blackhole'?6:4, a:()=>{ player.weapons[key]=1; if(key!=='orbit') player.timers[key]=0; }});
+    else wpool.push({t:`${w.icon} 새 무기 · ${w.name}`, d:w.desc, weight:key==='blackhole'?6:4, a:()=>{ player.weapons[key]=1; if(key!=='orbit') player.timers[key]=0; }});
   }
-  for(const s of STAT_UPS) pool.push({...s, weight:2});
-  // 가중치 랜덤 3택 (중복 없이)
-  const chosen=[]; const bag=[...pool];
-  while(chosen.length<3 && bag.length){
-    let tot=bag.reduce((a,b)=>a+b.weight,0), r=Math.random()*tot, i=0;
-    for(;i<bag.length;i++){ r-=bag[i].weight; if(r<=0) break; }
-    chosen.push(bag.splice(Math.min(i,bag.length-1),1)[0]);
-  }
+  for(const s of STAT_UPS) spool.push({...s, weight:2});
+  // 가중치 랜덤 뽑기(해당 bag에서 제거)
+  const pick=(bag)=>{ let tot=bag.reduce((a,b)=>a+b.weight,0), r=Math.random()*tot, i=0; for(;i<bag.length;i++){ r-=bag[i].weight; if(r<=0) break; } return bag.splice(Math.min(i,bag.length-1),1)[0]; };
+  const chosen=[];
+  if(wpool.length) chosen.push(pick(wpool));   // ★ 무기 선택지 최소 1개 보장
+  const rest=[...wpool,...spool];              // 나머지 2칸은 무기+스탯 통합 풀에서(중복 없이)
+  while(chosen.length<3 && rest.length) chosen.push(pick(rest));
   return chosen;
 }
 function stageClear(){
