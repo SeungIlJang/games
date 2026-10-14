@@ -810,7 +810,7 @@ function ensureSpiritEnt(){ if(!player.spiritEnt||player.spiritEnt.length<3){ pl
 function spiritPositions(){ return ensureSpiritEnt(); }
 // 삼수호령: 이동(리시) + 세 원소 "독립 쿨다운" 발사(=3무기 동시 운용 재현). 검령은 플레이어 근처 우선 방어.
 function updateSpirits(dt){ if(!player.weapons.spirits) return; const S=ensureSpiritEnt();
-  const L=player.weapons.spirits, evo=player.evolved.spirits, crisis=player.hp/player.maxhp<=0.4;
+  const L=player.weapons.spirits, Lp=L+1, evo=player.evolved.spirits, crisis=player.hp/player.maxhp<=0.4;  // Lp=공격력 기준 레벨(각 원소 +1레벨 보너스)
   const spd=crisis?320:210, rage=crisis?1.8:1, cr=crisis?0.5:1;
   if(!player.spiritCd) player.spiritCd={l:0,f:0,s:0};
   const cand=enemies.filter(e=>!e.dead).map(e=>({e,d:dist2(player,e)})).filter(o=>o.d<260*260).sort((a,b)=>a.d-b.d);
@@ -822,14 +822,14 @@ function updateSpirits(dt){ if(!player.weapons.spirits) return; const S=ensureSp
   // ⚡ 뇌운령 = 번개 독립 쿨다운
   player.spiritCd.l-=dt; if(player.spiritCd.l<=0){ player.spiritCd.l=Math.max(0.6,1.4-0.12*(L-1))*(evo?0.68:1)*cr;
     const P=S[0]; let cur=null,cd=1e9; for(const e of enemies){ if(e.dead)continue; const d=dist2(P,e); if(d<cd){cd=d;cur=e;} }
-    if(cur){ const jumps=(evo?L+4:L+1)+(crisis?2:0), rng=(evo?210:150)*(evo?210:150), dmg0=player.dmg*(1.1+0.2*(L-1))*(evo?1.4:1)*rage; const seen=new Set(); let prev=P;
+    if(cur){ const jumps=(evo?Lp+4:Lp+1)+(crisis?2:0), rng=(evo?210:150)*(evo?210:150), dmg0=player.dmg*(1.1+0.2*(Lp-1))*(evo?1.4:1)*rage; const seen=new Set(); let prev=P;
       for(let j=0;j<jumps&&cur;j++){ seen.add(cur); hurtEnemy(cur,dmg0*Math.pow(0.9,j),'#aee3ff'); player.zaps.push({a:prev,b:{x:cur.x,y:cur.y},t:0,max:0.16,evo:evo||crisis}); prev={x:cur.x,y:cur.y}; let nx=null,nd=rng; for(const e of enemies){ if(e.dead||seen.has(e))continue; const d=dist2(prev,e); if(d<nd){nd=d;nx=e;} } cur=nx; } } }
   // 🔥 염화령 = 화염방사 독립 쿨다운
   player.spiritCd.f-=dt; if(player.spiritCd.f<=0){ player.spiritCd.f=Math.max(0.9,1.8-0.14*(L-1))*cr;
-    const P=S[1], life=(2.5+0.2*L)*(evo?1.4:1); player.flames.push({x:P.x,y:P.y,r:(34+6*L)*(evo?1.4:1)*(crisis?1.2:1),dmg:player.dmg*(0.5+0.12*L)*(evo?1.6:1)*rage,life,max:life,evo}); }
+    const P=S[1], life=(2.5+0.2*Lp)*(evo?1.4:1); player.flames.push({x:P.x,y:P.y,r:(34+6*Lp)*(evo?1.4:1)*(crisis?1.2:1),dmg:player.dmg*(0.5+0.12*Lp)*(evo?1.6:1)*rage,life,max:life,evo}); }
   // 🗡️ 검령 = 삼도류 독립 쿨다운 (플레이어 근처 방어)
   player.spiritCd.s-=dt; if(player.spiritCd.s<=0){ player.spiritCd.s=Math.max(0.5,1.15-0.09*(L-1))*cr;
-    const P=S[2], dmg=player.dmg*(1.7+0.35*(L-1))*(evo?1.5:1)*rage, R=(34+7*L)*(crisis?1.2:1);
+    const P=S[2], dmg=player.dmg*(1.7+0.35*(Lp-1))*(evo?1.5:1)*rage, R=(34+7*Lp)*(crisis?1.2:1);
     for(const e of enemies){ if(e.dead)continue; if(dist2(e,P)<(R+e.r)*(R+e.r)) hurtEnemy(e,dmg,'#eafff0'); }
     const b0=rand(0,6.28); for(let k=0;k<3;k++){ const a=b0+k*2.094; for(let q=1;q<=4;q++){ const rr=R*q/4; particles.push({x:P.x+Math.cos(a)*rr,y:P.y+Math.sin(a)*rr,vx:Math.cos(a)*60,vy:Math.sin(a)*60,life:0.22,color:'#eafff0'}); } } } }
 const WEAPONS = {
@@ -903,7 +903,7 @@ const WEAPONS = {
       const life=(2.5+0.2*l)*(evo?1.4:1);
       p.flames.push({x:fx,y:fy,r:(34+6*l)*(evo?1.4:1),dmg:p.dmg*(0.5+0.12*l)*(evo?1.6:1),life,max:life,evo,burst:evo?0.8:0});
       noise(0.16,0.14); tone(240,0.14,'sawtooth',0.1,160); } },
-  spirits:{ name:'삼수호령', icon:'🌟', desc:'세 원소(번개·화염·삼도류)를 Lv6급으로 융합 · 각자 독립 발사 · 레벨마다 동시 강화 · 위기(체력40%↓) 분노', max:10,
+  spirits:{ name:'삼수호령', icon:'🌟', desc:'세 원소(번개·화염·삼도류)를 융합 · 각 원소 +1레벨 강화 · 각자 독립 발사 · 레벨마다 동시 성장 · 위기(체력40%↓) 분노', max:10,
     interval:()=>Infinity, fire:()=>{} },   // 실제 발사·이동은 updateSpirits()에서 원소별 독립 쿨다운으로 처리
 };
 // 블랙홀 씨앗탄이 착탄한 자리에 회오리 생성(아주 작게 시작 → 점점 커짐)
@@ -1305,10 +1305,23 @@ function render(){
       ctx.globalAlpha=0.9; ctx.fillStyle='#ff5a5a'; ctx.font='bold 15px system-ui'; ctx.fillText('🔥 분노!', player.x, player.y-66);
       ctx.globalAlpha=1;
     }
-    for(let i=0;i<3;i++){ const P=sp[i], bob=Math.sin(time*(crisis?12:6)+i*2)*(crisis?4:2);
-      ctx.globalAlpha=crisis?1:0.9; ctx.font=((ev?22:18)+(crisis?8:0))+'px system-ui';   // 분노 시 정령 커짐
-      ctx.shadowColor=crisis?'#ff3b3b':['#9fd4ff','#ffb04a','#eafff0'][i]; ctx.shadowBlur=crisis?20:(ev?14:9);
-      ctx.fillText(ems[i], P.x, P.y+bob); }
+    const cols=['#5ab6ff','#ff8a2a','#b6ffce'];   // 뇌운(파랑)·염화(주황)·검(초록)
+    // 플레이어↔정령 연결선(어디 있는지 항상 보이게)
+    ctx.globalAlpha=0.35; ctx.lineWidth=2; ctx.setLineDash([5,6]); ctx.lineDashOffset=-time*18;
+    for(let i=0;i<3;i++){ ctx.strokeStyle=cols[i]; ctx.beginPath(); ctx.moveTo(player.x,player.y); ctx.lineTo(sp[i].x,sp[i].y); ctx.stroke(); }
+    ctx.setLineDash([]);
+    for(let i=0;i<3;i++){ const P=sp[i], bob=Math.sin(time*(crisis?12:6)+i*2)*(crisis?4:2), y=P.y+bob;
+      const pul=0.5+0.5*Math.sin(time*6+i*2.1), rad=(ev?20:16)+(crisis?8:0)+3*pul;
+      // 상시 발광 오라(색 원 + 글로우)
+      ctx.globalAlpha=0.22+0.18*pul; ctx.fillStyle=cols[i];
+      ctx.beginPath(); ctx.arc(P.x,y,rad,0,Math.PI*2); ctx.fill();
+      ctx.globalAlpha=0.55+0.2*pul; ctx.strokeStyle=cols[i]; ctx.lineWidth=2.5;
+      ctx.beginPath(); ctx.arc(P.x,y,rad,0,Math.PI*2); ctx.stroke();
+      // 이모지(크게 + 강한 글로우)
+      ctx.globalAlpha=1; ctx.font=((ev?26:22)+(crisis?8:0))+'px system-ui';
+      ctx.shadowColor=crisis?'#ff3b3b':cols[i]; ctx.shadowBlur=crisis?24:18;
+      ctx.fillText(ems[i], P.x, y);
+      ctx.shadowBlur=0; }
     ctx.restore(); }
   // orbit (몸 주위 도는 육각형)
   for(const o of player.orbs){ poly(o.x,o.y,o.evo?13:9,6,time*(o.evo?5:3),o.evo?'#ff8ae0':'#ffe08a'); }
