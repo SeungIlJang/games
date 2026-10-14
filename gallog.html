@@ -821,7 +821,7 @@ function spiritPositions(){ return ensureSpiritEnt(); }
 // 삼수호령: 이동(리시) + 세 원소 "독립 쿨다운" 발사(=3무기 동시 운용 재현). 검령은 플레이어 근처 우선 방어.
 function updateSpirits(dt){ if(!player.weapons.spirits) return; const S=ensureSpiritEnt();
   const L=player.weapons.spirits, Lp=L+1, evo=player.evolved.spirits, crisis=player.hp/player.maxhp<=0.4;  // Lp=공격력 기준 레벨(각 원소 +1레벨 보너스)
-  const spd=crisis?320:210, rage=crisis?1.8:1, cr=crisis?0.5:1, SM=1.35;   // SM=삼수호령 추가 피해배수(각 원소 공통)
+  const spd=crisis?320:210, rage=crisis?1.8:1, cr=crisis?0.5:1, SM=1.6;   // SM=삼수호령 추가 피해배수(각 원소 공통)
   if(!player.spiritCd) player.spiritCd={l:0,f:0,s:0};
   const cand=enemies.filter(e=>!e.dead).map(e=>({e,d:dist2(player,e)})).filter(o=>o.d<260*260).sort((a,b)=>a.d-b.d);
   // 이동: 뇌운·염화(0,1)는 적 추격(leash90), 검령(2)은 플레이어 근처 방어(leash55·멀리 안 쫓음)
