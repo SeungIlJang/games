@@ -821,7 +821,10 @@ function spiritPositions(){ return ensureSpiritEnt(); }
 // 삼수호령: 이동(리시) + 세 원소 "독립 쿨다운" 발사(=3무기 동시 운용 재현). 검령은 플레이어 근처 우선 방어.
 function updateSpirits(dt){ if(!player.weapons.spirits) return; const S=ensureSpiritEnt();
   const L=player.weapons.spirits, Lp=L+1, evo=player.evolved.spirits, crisis=player.hp/player.maxhp<=0.4;  // Lp=공격력 기준 레벨(각 원소 +1레벨 보너스)
-  const spd=crisis?320:210, rage=crisis?1.8:1, cr=crisis?0.5:1, SM=1.9;   // SM=삼수호령 추가 피해배수(각 원소 공통)
+  const spd=crisis?320:210, rage=crisis?2.1:1, cr=crisis?0.5:1, SM=1.9;   // SM=삼수호령 추가 피해배수(각 원소 공통), rage=분노 피해배수
+  // 분노 진입 순간(비위기→위기) 1회: 적 밀쳐내기 + 피해로 숨돌릴 공간 확보
+  if(crisis && !player.inRage){ for(const e of enemies){ if(e.dead)continue; const dx=e.x-player.x,dy=e.y-player.y,d=Math.hypot(dx,dy)||1; if(d<230){ hurtEnemy(e, player.dmg*8, '#ff6a6a'); e.x=player.x+dx/d*240; e.y=player.y+dy/d*240; } } shake=Math.min((shake||0)+6,10); }
+  player.inRage=crisis;
   if(!player.spiritCd) player.spiritCd={l:0,f:0,s:0};
   const cand=enemies.filter(e=>!e.dead).map(e=>({e,d:dist2(player,e)})).filter(o=>o.d<260*260).sort((a,b)=>a.d-b.d);
   // 이동: 뇌운령(0)은 멀리까지 사냥(leash95), 염화령(1)·검령(2)은 플레이어 근처 방어(근접 적만 요격)
