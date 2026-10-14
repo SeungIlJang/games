@@ -640,7 +640,7 @@ function metaPower(){ return Object.values(meta.lvls).reduce((a,b)=>a+b,0); }
 let cam={x:0,y:0};   // 카메라(무한 필드, 플레이어 추적)
 function reset(){
   player = { x:W/2, y:H/2, r:14, hp:100, maxhp:100,
-    speed:210, fireRate:2.2, dmg:12, bulletSpeed:430, range:280,
+    speed:210, fireRate:2.2, dmg:15, bulletSpeed:430, range:280,
     pierce:0, level:1, xp:0, xpNeed:5, magnet:90, lifesteal:0,
     weapons:{ bolt:1 }, timers:{ bolt:0 }, orbs:[], novas:[], blades:[], holes:[], slashFx:[], flames:[], zaps:[], orbAngle:0, evolved:{},
     awakened:false, awakenAt:TUNE.awakenStart, awakenCount:0, dmgReduce:1, sigCd:0, cls:'hero', baseCls:'hero', invuln:0 };
