@@ -821,7 +821,7 @@ function spiritPositions(){ return ensureSpiritEnt(); }
 // 삼수호령: 이동(리시) + 세 원소 "독립 쿨다운" 발사(=3무기 동시 운용 재현). 검령은 플레이어 근처 우선 방어.
 function updateSpirits(dt){ if(!player.weapons.spirits) return; const S=ensureSpiritEnt();
   const L=player.weapons.spirits, Lp=L+1, evo=player.evolved.spirits, crisis=player.hp/player.maxhp<=0.4;  // Lp=공격력 기준 레벨(각 원소 +1레벨 보너스)
-  const spd=crisis?320:210, rage=crisis?1.8:1, cr=crisis?0.5:1;
+  const spd=crisis?320:210, rage=crisis?1.8:1, cr=crisis?0.5:1, SM=1.35;   // SM=삼수호령 추가 피해배수(각 원소 공통)
   if(!player.spiritCd) player.spiritCd={l:0,f:0,s:0};
   const cand=enemies.filter(e=>!e.dead).map(e=>({e,d:dist2(player,e)})).filter(o=>o.d<260*260).sort((a,b)=>a.d-b.d);
   // 이동: 뇌운·염화(0,1)는 적 추격(leash90), 검령(2)은 플레이어 근처 방어(leash55·멀리 안 쫓음)
@@ -832,14 +832,14 @@ function updateSpirits(dt){ if(!player.weapons.spirits) return; const S=ensureSp
   // ⚡ 뇌운령 = 번개 독립 쿨다운
   player.spiritCd.l-=dt; if(player.spiritCd.l<=0){ player.spiritCd.l=Math.max(0.6,1.4-0.12*(L-1))*(evo?0.68:1)*cr;
     const P=S[0]; let cur=null,cd=1e9; for(const e of enemies){ if(e.dead)continue; const d=dist2(P,e); if(d<cd){cd=d;cur=e;} }
-    if(cur){ const jumps=(evo?Lp+4:Lp+1)+(crisis?2:0), rng=(evo?210:150)*(evo?210:150), dmg0=player.dmg*(1.1+0.2*(Lp-1))*(evo?1.4:1)*rage; const seen=new Set(); let prev=P;
+    if(cur){ const jumps=(evo?Lp+4:Lp+1)+(crisis?2:0), rng=(evo?210:150)*(evo?210:150), dmg0=player.dmg*(1.1+0.2*(Lp-1))*(evo?1.4:1)*rage*SM; const seen=new Set(); let prev=P;
       for(let j=0;j<jumps&&cur;j++){ seen.add(cur); hurtEnemy(cur,dmg0*Math.pow(0.9,j),'#aee3ff'); player.zaps.push({a:prev,b:{x:cur.x,y:cur.y},t:0,max:0.16,evo:evo||crisis}); prev={x:cur.x,y:cur.y}; let nx=null,nd=rng; for(const e of enemies){ if(e.dead||seen.has(e))continue; const d=dist2(prev,e); if(d<nd){nd=d;nx=e;} } cur=nx; } } }
   // 🔥 염화령 = 화염방사 독립 쿨다운
   player.spiritCd.f-=dt; if(player.spiritCd.f<=0){ player.spiritCd.f=Math.max(0.9,1.8-0.14*(L-1))*cr;
-    const P=S[1], life=(2.5+0.2*Lp)*(evo?1.4:1); player.flames.push({x:P.x,y:P.y,r:(34+6*Lp)*(evo?1.4:1)*(crisis?1.2:1),dmg:player.dmg*(0.5+0.12*Lp)*(evo?1.6:1)*rage,life,max:life,evo}); }
+    const P=S[1], life=(2.5+0.2*Lp)*(evo?1.4:1); player.flames.push({x:P.x,y:P.y,r:(34+6*Lp)*(evo?1.4:1)*(crisis?1.2:1),dmg:player.dmg*(0.5+0.12*Lp)*(evo?1.6:1)*rage*SM,life,max:life,evo}); }
   // 🗡️ 검령 = 삼도류 독립 쿨다운 (플레이어 근처 방어)
   player.spiritCd.s-=dt; if(player.spiritCd.s<=0){ player.spiritCd.s=Math.max(0.5,1.15-0.09*(L-1))*cr;
-    const P=S[2], dmg=player.dmg*(1.7+0.35*(Lp-1))*(evo?1.5:1)*rage, R=(34+7*Lp)*(crisis?1.2:1);
+    const P=S[2], dmg=player.dmg*(1.7+0.35*(Lp-1))*(evo?1.5:1)*rage*SM, R=(34+7*Lp)*(crisis?1.2:1);
     for(const e of enemies){ if(e.dead)continue; if(dist2(e,P)<(R+e.r)*(R+e.r)) hurtEnemy(e,dmg,'#eafff0'); }
     const b0=rand(0,6.28); for(let k=0;k<3;k++){ const a=b0+k*2.094; for(let q=1;q<=4;q++){ const rr=R*q/4; particles.push({x:P.x+Math.cos(a)*rr,y:P.y+Math.sin(a)*rr,vx:Math.cos(a)*60,vy:Math.sin(a)*60,life:0.22,color:'#eafff0'}); } } } }
 const WEAPONS = {
