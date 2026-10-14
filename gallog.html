@@ -253,7 +253,7 @@ const TR={
   '냉기 파동으로 적을 느리게 + 피해 (진화=빙결)':'Frost wave slows enemies + damage (evolve=freeze)',
   '불을 뿜어 바닥에 화염 장판 → 지속 피해 (진화=용암)':'Breathes fire, leaving burning ground → damage over time (evolve=lava)',
   '세 수호정령(뇌운·염화·검)이 돌며 자동 공격':'Three guardian spirits (storm·flame·blade) orbit and auto-attack',
-  '세 원소(번개·화염·삼도류)를 융합 · 각 원소 +1레벨 강화 · 각자 독립 발사 · 레벨마다 동시 성장 · 위기(체력40%↓) 분노':'Fuses three elements (lightning·flame·santoryu) · each element +1 level · fires independently · all grow together per level · rage at crisis (HP ≤40%)',
+  '세 원소(번개·화염·삼도류)를 융합 · 각 원소 +1레벨 강화 · 각자 독립 발사 · 레벨마다 동시 성장 · 체력 40% 이하면 분노(폭주)':'Fuses three elements (lightning·flame·santoryu) · each element +1 level · fires independently · all grow together per level · RAGE when HP ≤40%',
   '🌟 삼수호령 각성! (번개·화염·삼도류 융합)':'🌟 Three Guardians Awaken! (fuse lightning·flame·santoryu)',
   '세 무기가 합쳐져 세 수호정령이 깃든다 · 위기 때 분노':'Three weapons merge into three guardian spirits · rages in crisis',
   '🌟 삼수호령 강림!':'🌟 Three Guardians Descend!',
@@ -279,7 +279,7 @@ const TR={
   '냉기 파동으로 적을 느리게 + 피해 (진화=빙결)':'冷気の波で敵を鈍化＋ダメージ（進化=氷結）',
   '불을 뿜어 바닥에 화염 장판 → 지속 피해 (진화=용암)':'炎を吐き地面に火炎 → 継続ダメージ（進化=溶岩）',
   '세 수호정령(뇌운·염화·검)이 돌며 자동 공격':'三守護霊（雷雲·炎·剣）が周回して自動攻撃',
-  '세 원소(번개·화염·삼도류)를 융합 · 각 원소 +1레벨 강화 · 각자 독립 발사 · 레벨마다 동시 성장 · 위기(체력40%↓) 분노':'三元素（雷·炎·三刀流）を融合 · 各元素+1レベル · 各自独立発射 · レベルごとに同時成長 · 危機（HP40%以下）で怒り',
+  '세 원소(번개·화염·삼도류)를 융합 · 각 원소 +1레벨 강화 · 각자 독립 발사 · 레벨마다 동시 성장 · 체력 40% 이하면 분노(폭주)':'三元素（雷·炎·三刀流）を融合 · 各元素+1レベル · 各自独立発射 · レベルごとに同時成長 · HP40%以下で怒り（暴走）',
   '🌟 삼수호령 각성! (번개·화염·삼도류 융합)':'🌟 三守護霊 覚醒！（雷·炎·三刀流を融合）',
   '세 무기가 합쳐져 세 수호정령이 깃든다 · 위기 때 분노':'三つの武器が合わさり三守護霊が宿る · 危機時に怒り',
   '🌟 삼수호령 강림!':'🌟 三守護霊 降臨！',
@@ -913,7 +913,7 @@ const WEAPONS = {
       const life=(2.5+0.2*l)*(evo?1.4:1);
       p.flames.push({x:fx,y:fy,r:(34+6*l)*(evo?1.4:1),dmg:p.dmg*(0.5+0.12*l)*(evo?1.6:1),life,max:life,evo,burst:evo?0.8:0});
       noise(0.16,0.14); tone(240,0.14,'sawtooth',0.1,160); } },
-  spirits:{ name:'삼수호령', icon:'🌟', desc:'세 원소(번개·화염·삼도류)를 융합 · 각 원소 +1레벨 강화 · 각자 독립 발사 · 레벨마다 동시 성장 · 위기(체력40%↓) 분노', max:10,
+  spirits:{ name:'삼수호령', icon:'🌟', desc:'세 원소(번개·화염·삼도류)를 융합 · 각 원소 +1레벨 강화 · 각자 독립 발사 · 레벨마다 동시 성장 · 체력 40% 이하면 분노(폭주)', max:10,
     interval:()=>Infinity, fire:()=>{} },   // 실제 발사·이동은 updateSpirits()에서 원소별 독립 쿨다운으로 처리
 };
 // 블랙홀 씨앗탄이 착탄한 자리에 회오리 생성(아주 작게 시작 → 점점 커짐)
