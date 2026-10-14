@@ -240,8 +240,8 @@ function applyI18n(){
 function setLang(l){ if(!I18N[l])return; LANG=l; LANG_AUTO=false; saveLang(l); applyI18n(); if(typeof renderShop==='function'){try{renderShop();renderClasses();}catch(e){}} }
 // ===== 2단계: 설명/이름 번역 (용어사전 GLOSS + 문장/보스명 TR) =====
 const GLOSS={
- en:{'레일건':'Railgun','스플릿링':'Split Ring','초신성':'Supernova','톱날궤도':'Saw Orbit','대참격':'Great Slash','군집미사일':'Missile Swarm','삼천세계':'Trichiliocosm','특이점':'Singularity','새 무기':'New Weapon','강화':'Upgrade','진화':'Evolve','부족':'short','비공개':'Hidden','최대 강화':'MAXED','공격력':'ATK','최대체력':'Max HP','최대 체력':'Max HP','피해감소':'Dmg Reduce','유도미사일':'Homing','삼도류':'Santoryu','블랙홀':'Blackhole','충격파':'Nova','획득량':'Gain','데미지':'DMG','이동속도':'Move Spd','회복':'Heal','범위':'Range','골드':'Gold','획득':'Gain','공격':'ATK','연사':'Fire Rate','이동':'Move','사거리':'Range','관통':'Pierce','탄속':'Bullet Spd','체력':'HP','자석':'Magnet','흡혈':'Lifesteal','흡수':'Absorb','볼트':'Bolt','화살촉':'Arrow','폭풍화살':'Storm Arrow','번개':'Lightning','뇌신':'Thunder God','서리':'Frost','절대영도':'Absolute Zero','화염방사':'Flamethrower','용암지대':'Lava Field','산탄':'Spread','궤도':'Orbit','참격':'Slash','유도':'Homing'},
- ja:{'레일건':'レールガン','스플릿링':'スプリットリング','초신성':'超新星','톱날궤도':'鋸軌道','대참격':'大斬撃','군집미사일':'ミサイル群','삼천세계':'三千世界','특이점':'特異点','새 무기':'新武器','강화':'強化','진화':'進化','부족':'不足','비공개':'非公開','최대 강화':'最大強化','공격력':'攻撃力','최대체력':'最大体力','최대 체력':'最大体力','피해감소':'被ダメ減','유도미사일':'誘導','삼도류':'三刀流','블랙홀':'ブラックホール','충격파':'衝撃波','획득량':'獲得量','데미지':'ダメージ','이동속도':'移動速度','회복':'回復','범위':'範囲','골드':'ゴールド','획득':'獲得','공격':'攻撃','연사':'連射','이동':'移動','사거리':'射程','관통':'貫通','탄속':'弾速','체력':'体力','자석':'マグネット','흡혈':'吸血','흡수':'吸収','볼트':'ボルト','화살촉':'矢','폭풍화살':'嵐の矢','번개':'雷','뇌신':'雷神','서리':'氷','절대영도':'絶対零度','화염방사':'火炎放射','용암지대':'溶岩地帯','산탄':'散弾','궤도':'軌道','참격':'斬撃','유도':'誘導'}
+ en:{'레일건':'Railgun','스플릿링':'Split Ring','초신성':'Supernova','톱날궤도':'Saw Orbit','대참격':'Great Slash','군집미사일':'Missile Swarm','삼천세계':'Trichiliocosm','특이점':'Singularity','새 무기':'New Weapon','강화':'Upgrade','진화':'Evolve','부족':'short','비공개':'Hidden','최대 강화':'MAXED','공격력':'ATK','최대체력':'Max HP','최대 체력':'Max HP','피해감소':'Dmg Reduce','유도미사일':'Homing','삼도류':'Santoryu','블랙홀':'Blackhole','충격파':'Nova','획득량':'Gain','데미지':'DMG','이동속도':'Move Spd','회복':'Heal','범위':'Range','골드':'Gold','획득':'Gain','공격':'ATK','연사':'Fire Rate','이동':'Move','사거리':'Range','관통':'Pierce','탄속':'Bullet Spd','체력':'HP','자석':'Magnet','흡혈':'Lifesteal','흡수':'Absorb','볼트':'Bolt','화살촉':'Arrow','폭풍화살':'Storm Arrow','번개':'Lightning','뇌신':'Thunder God','서리':'Frost','절대영도':'Absolute Zero','화염방사':'Flamethrower','용암지대':'Lava Field','삼수호령':'Three Guardians','삼신강림':'Three Gods Descend','산탄':'Spread','궤도':'Orbit','참격':'Slash','유도':'Homing'},
+ ja:{'레일건':'レールガン','스플릿링':'スプリットリング','초신성':'超新星','톱날궤도':'鋸軌道','대참격':'大斬撃','군집미사일':'ミサイル群','삼천세계':'三千世界','특이점':'特異点','새 무기':'新武器','강화':'強化','진화':'進化','부족':'不足','비공개':'非公開','최대 강화':'最大強化','공격력':'攻撃力','최대체력':'最大体力','최대 체력':'最大体力','피해감소':'被ダメ減','유도미사일':'誘導','삼도류':'三刀流','블랙홀':'ブラックホール','충격파':'衝撃波','획득량':'獲得量','데미지':'ダメージ','이동속도':'移動速度','회복':'回復','범위':'範囲','골드':'ゴールド','획득':'獲得','공격':'攻撃','연사':'連射','이동':'移動','사거리':'射程','관통':'貫通','탄속':'弾速','체력':'体力','자석':'マグネット','흡혈':'吸血','흡수':'吸収','볼트':'ボルト','화살촉':'矢','폭풍화살':'嵐の矢','번개':'雷','뇌신':'雷神','서리':'氷','절대영도':'絶対零度','화염방사':'火炎放射','용암지대':'溶岩地帯','삼수호령':'三守護霊','삼신강림':'三神降臨','산탄':'散弾','궤도':'軌道','참격':'斬撃','유도':'誘導'}
 };
 const _GK={ en:Object.keys(GLOSS.en).sort((a,b)=>b.length-a.length), ja:Object.keys(GLOSS.ja).sort((a,b)=>b.length-a.length) };
 const TR={
@@ -251,6 +251,7 @@ const TR={
   '가까운 적을 때리고 주변으로 연쇄 (떼거리에 강함)':'Hits nearest then chains to nearby foes (great vs crowds)',
   '냉기 파동으로 적을 느리게 + 피해 (진화=빙결)':'Frost wave slows enemies + damage (evolve=freeze)',
   '불을 뿜어 바닥에 화염 장판 → 지속 피해 (진화=용암)':'Breathes fire, leaving burning ground → damage over time (evolve=lava)',
+  '세 수호정령(뇌운·염화·검)이 돌며 자동 공격':'Three guardian spirits (storm·flame·blade) orbit and auto-attack',
   '부채꼴로 여러 발 (근접 강함)':'Fan of shots (strong up close)',
   '주변으로 퍼지는 파동 (전방위)':'A wave that spreads around you (omni)',
   '몸을 도는 도형이 적을 갈아버림':'Orbiting shapes grind down enemies',
@@ -271,6 +272,7 @@ const TR={
   '가까운 적을 때리고 주변으로 연쇄 (떼거리에 강함)':'近くの敵を撃ち周囲へ連鎖（群れに強い）',
   '냉기 파동으로 적을 느리게 + 피해 (진화=빙결)':'冷気の波で敵を鈍化＋ダメージ（進化=氷結）',
   '불을 뿜어 바닥에 화염 장판 → 지속 피해 (진화=용암)':'炎を吐き地面に火炎 → 継続ダメージ（進化=溶岩）',
+  '세 수호정령(뇌운·염화·검)이 돌며 자동 공격':'三守護霊（雷雲·炎·剣）が周回して自動攻撃',
   '부채꼴로 여러 발 (근접 강함)':'扇状に複数発（近接に強い）',
   '주변으로 퍼지는 파동 (전방위)':'周囲に広がる波動（全方位）',
   '몸을 도는 도형이 적을 갈아버림':'体を回る図形が敵を削る',
@@ -801,7 +803,9 @@ function explode(x,y,dmg,radius,color){
   shake=Math.min(shake+2,10);
 }
 // 무기 정의 (Lv6 만렙 → 진화)
-const EVOLVE = { bolt:'레일건 ⚡', arrow:'폭풍화살 🏹', spread:'스플릿링 ◍', nova:'초신성 ✵', orbit:'톱날궤도 ⚙', slash:'대참격 ✷', homing:'군집미사일 ✺', santoryu:'삼천세계 🌀', blackhole:'특이점 🕳️', lightning:'뇌신 ⚡', frost:'절대영도 🧊', flame:'용암지대 🌋' };
+const EVOLVE = { bolt:'레일건 ⚡', arrow:'폭풍화살 🏹', spread:'스플릿링 ◍', nova:'초신성 ✵', orbit:'톱날궤도 ⚙', slash:'대참격 ✷', homing:'군집미사일 ✺', santoryu:'삼천세계 🌀', blackhole:'특이점 🕳️', lightning:'뇌신 ⚡', frost:'절대영도 🧊', flame:'용암지대 🌋', spirits:'삼신강림 🌟' };
+// 삼수호령: 플레이어 주위를 도는 3정령 위치(뇌운령·염화령·검령) — time 기반 공전
+function spiritPositions(){ const R=52, base=(typeof time!=='undefined'?time:0)*1.3; return [0,1,2].map(i=>{ const a=base+i*2.0944; return {x:player.x+Math.cos(a)*R, y:player.y+Math.sin(a)*R}; }); }
 const WEAPONS = {
   bolt:{ name:'볼트', icon:'🔹', desc:'가까운 적에게 발사 (강화 시 다발)', max:6,
     interval:(p,l)=>(p.evolved.bolt?0.7:1)/(1+0.12*(l-1)),
@@ -873,6 +877,20 @@ const WEAPONS = {
       const life=(2.5+0.2*l)*(evo?1.4:1);
       p.flames.push({x:fx,y:fy,r:(34+6*l)*(evo?1.4:1),dmg:p.dmg*(0.5+0.12*l)*(evo?1.6:1),life,max:life,evo,burst:evo?0.8:0});
       noise(0.16,0.14); tone(240,0.14,'sawtooth',0.1,160); } },
+  spirits:{ name:'삼수호령', icon:'🌟', desc:'세 수호정령(뇌운·염화·검)이 돌며 자동 공격', max:6,
+    interval:(p,l)=>Math.max(0.75, 1.7-0.15*(l-1)),
+    fire:(p,l)=>{ const evo=p.evolved.spirits; const pos=spiritPositions();
+      // ① 뇌운령 — 연쇄 번개
+      { const P=pos[0]; let cur=null,cd=1e9; for(const e of enemies){ if(e.dead)continue; const d=dist2(P,e); if(d<cd){cd=d;cur=e;} }
+        if(cur){ const jumps=2+Math.floor(l/2)+(evo?2:0), rng=150*150, dmg=p.dmg*(0.8+0.15*l)*(evo?1.4:1); const seen=new Set(); let prev=P;
+          for(let j=0;j<jumps&&cur;j++){ seen.add(cur); hurtEnemy(cur,dmg*Math.pow(0.9,j),'#aee3ff'); p.zaps.push({a:prev,b:{x:cur.x,y:cur.y},t:0,max:0.16,evo}); prev={x:cur.x,y:cur.y}; let nx=null,nd=rng; for(const e of enemies){ if(e.dead||seen.has(e))continue; const d=dist2(prev,e); if(d<nd){nd=d;nx=e;} } cur=nx; } } }
+      // ② 염화령 — 화염 장판
+      { const P=pos[1]; const life=2.0*(evo?1.4:1); p.flames.push({x:P.x,y:P.y,r:(28+5*l)*(evo?1.3:1),dmg:p.dmg*(0.4+0.1*l)*(evo?1.5:1),life,max:life,evo}); }
+      // ③ 검령 — 근접 참격 범위
+      { const P=pos[2]; const R=(42+6*l)*(evo?1.3:1), dmg=p.dmg*(0.9+0.18*l)*(evo?1.6:1);
+        for(const e of enemies){ if(e.dead)continue; if(dist2(e,P)<(R+e.r)*(R+e.r)) hurtEnemy(e,dmg,'#eafff0'); }
+        for(let i=0;i<10;i++){ const a=i/10*6.28; particles.push({x:P.x+Math.cos(a)*R,y:P.y+Math.sin(a)*R,vx:Math.cos(a)*40,vy:Math.sin(a)*40,life:0.2,color:'#eafff0'}); } }
+      tone(880,0.07,'triangle',0.08); } },
 };
 // 블랙홀 씨앗탄이 착탄한 자리에 회오리 생성(아주 작게 시작 → 점점 커짐)
 function plantHole(x,y,l,evo){
@@ -1251,6 +1269,15 @@ function render(){
     else if(b.arrow){ ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(Math.atan2(b.vy,b.vx)); const L=11; ctx.strokeStyle=b.color||'#ffd9a0'; ctx.lineWidth=2.4; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(-L,0); ctx.lineTo(L,0); ctx.stroke(); ctx.fillStyle=b.color||'#ffd9a0'; ctx.beginPath(); ctx.moveTo(L+4,0); ctx.lineTo(L-3,-4); ctx.lineTo(L-3,4); ctx.closePath(); ctx.fill(); ctx.restore(); }
     else { const s=b.size||3; ctx.fillStyle=b.color||'#ffe066'; ctx.fillRect(b.x-s,b.y-s,s*2,s*2); }
   }
+  // 🌟 삼수호령: 세 수호정령(뇌운·염화·검)
+  if(player.weapons.spirits){ const sp=spiritPositions(), ev=player.evolved.spirits; const ems=['☁️','☀️','⚔️'];
+    ctx.save(); ctx.textAlign='center'; ctx.textBaseline='middle';
+    for(let i=0;i<3;i++){ const P=sp[i], bob=Math.sin(time*6+i*2)*2;
+      ctx.globalAlpha=0.9; ctx.font=(ev?22:18)+'px system-ui';
+      // 은은한 글로우
+      ctx.shadowColor=['#9fd4ff','#ffb04a','#eafff0'][i]; ctx.shadowBlur=ev?14:9;
+      ctx.fillText(ems[i], P.x, P.y+bob); }
+    ctx.restore(); }
   // orbit (몸 주위 도는 육각형)
   for(const o of player.orbs){ poly(o.x,o.y,o.evo?13:9,6,time*(o.evo?5:3),o.evo?'#ff8ae0':'#ffe08a'); }
   // 적 탄막
