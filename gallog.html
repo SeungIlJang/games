@@ -120,7 +120,8 @@
     <div class="cards" id="cards"></div>
   </div>
   <div id="over" class="center hidden" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
-    <h1>GAME OVER</h1>
+    <h1 id="overTitle">GAME OVER</h1>
+    <p class="sub" id="endStory" style="display:none;max-width:min(90vw,440px);color:#ffe9b0;line-height:1.7;margin:4px 0 10px;"></p>
     <p class="sub" id="overStats"></p>
     <button class="btn" id="reviveBtn" style="background:#c0392b;box-shadow:0 6px 0 #7d2419;margin-bottom:10px;">🎬 광고 보고 부활</button>
     <button class="btn" id="dblBtn" style="background:#c9a227;box-shadow:0 6px 0 #8a6f16;margin-bottom:16px;">🎬 광고 보고 골드 2배</button>
@@ -292,9 +293,9 @@ function trDesc(s){ if(s==null) return s; if(LANG==='ko') return s;
   if(TR[LANG]&&TR[LANG][s]!=null) return TR[LANG][s];
   let r=s; const g=GLOSS[LANG], ks=_GK[LANG]; if(g&&ks){ for(const k of ks){ if(r.indexOf(k)>=0) r=r.split(k).join(g[k]); } }
   return r; }
-Object.assign(I18N.ko,{ potionFmt:'❤️ 체력 물약 · 30% 회복 (🪙 {c})', goSurv:'생존', goCombo:'최대콤보', goBest:'최고', goRun:'이번판', goHave:'보유', goRec:'🏆신기록!', rankKills:'처치', rankSec:'초', rankNth:'위' });
-Object.assign(I18N.en,{ potionFmt:'❤️ Health Potion · Heal 30% (🪙 {c})', goSurv:'Survived', goCombo:'Max Combo', goBest:'Best', goRun:'This run', goHave:'Have', goRec:'🏆 New record!', rankKills:'kills', rankSec:'s', rankNth:'' });
-Object.assign(I18N.ja,{ potionFmt:'❤️ 回復ポーション · 30%回復 (🪙 {c})', goSurv:'生存', goCombo:'最大コンボ', goBest:'最高', goRun:'今回', goHave:'所持', goRec:'🏆新記録！', rankKills:'撃破', rankSec:'秒', rankNth:'位' });
+Object.assign(I18N.ko,{ potionFmt:'❤️ 체력 물약 · 30% 회복 (🪙 {c})', goSurv:'생존', goCombo:'최대콤보', goBest:'최고', goRun:'이번판', goHave:'보유', goRec:'🏆신기록!', rankKills:'처치', rankSec:'초', rankNth:'위', endTitle:'🏆 전설의 귀환!', endStory:'100 스테이지를 모두 돌파했다! 끝없이 밀려오던 갤로그의 군세를 꺾고, 용사는 마침내 평화를 되찾았다. 당신의 이름은 영원한 전설로 남는다. 🌟' });
+Object.assign(I18N.en,{ potionFmt:'❤️ Health Potion · Heal 30% (🪙 {c})', goSurv:'Survived', goCombo:'Max Combo', goBest:'Best', goRun:'This run', goHave:'Have', goRec:'🏆 New record!', rankKills:'kills', rankSec:'s', rankNth:'', endTitle:'🏆 A Legend Returns!', endStory:'You cleared all 100 stages! The endless Gallog horde is broken and peace returns at last. Your name will live on as legend. 🌟' });
+Object.assign(I18N.ja,{ potionFmt:'❤️ 回復ポーション · 30%回復 (🪙 {c})', goSurv:'生存', goCombo:'最大コンボ', goBest:'最高', goRun:'今回', goHave:'所持', goRec:'🏆新記録！', rankKills:'撃破', rankSec:'秒', rankNth:'位', endTitle:'🏆 伝説の帰還！', endStory:'100ステージを全て突破！ 果てなきギャログの軍勢を打ち破り、ついに平和を取り戻した。あなたの名は永遠の伝説となる。🌟' });
 function nth(i){ return LANG==='en'?('#'+(i+1)):((i+1)+t('rankNth')); }
 Object.assign(I18N.ko,{ title:'갤로그의 귀환', langAuto:'🌐 지역 기준 자동 선택됨 · 버튼으로 변경 가능' });
 Object.assign(I18N.en,{ title:'Gallog’s Return', langAuto:'🌐 Auto-selected by region · tap to change' });
@@ -1393,6 +1394,11 @@ function gameOver(){ state='over'; sfx.over(); showBanner();
   if(surv>best){ best=surv; try{localStorage.setItem('ss_best',best);}catch{} rec=' '+t('goRec'); }
   lastEndBonus=Math.floor((time*0.4 + maxCombo) * goldMult()); // 마감 보너스(생존·콤보)
   meta.gold+=lastEndBonus; lastEarned=runGold+lastEndBonus; saveMeta(); renderShop();
+  // 🏆 100스테이지 클리어 = 엔딩 / 그 외 = GAME OVER
+  { const ttl=document.getElementById('overTitle'), es=document.getElementById('endStory');
+    if(won){ ttl.textContent=t('endTitle'); ttl.style.color='#ffd25c'; if(es){ es.textContent=t('endStory'); es.style.display='block'; }
+      for(let i=0;i<60;i++){ const a=rand(0,6.28),s=rand(60,340); particles.push({x:player.x,y:player.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:rand(.8,1.6),color:['#ffd25c','#ff5ce1','#5ce1ff','#fff'][i%4]}); } }
+    else { ttl.textContent='GAME OVER'; ttl.style.color=''; if(es) es.style.display='none'; } }
   document.getElementById('overStats').innerHTML=`STAGE <b>${stage}</b> · ${t('goSurv')} <b>${surv}${t('sec')}</b>${rec} · ${t('hudKills')} <b>${kills}</b> · ${t('goCombo')} <b>${maxCombo}</b><br/>🏆 ${t('goBest')} ${best}${t('sec')} &nbsp;·&nbsp; 🪙 ${t('goRun')} <b>+${lastEarned}</b> (${t('goHave')} ${meta.gold})`;
   const rb=document.getElementById('reviveBtn'); const canRevive=!won&&reviveCount<MAX_REVIVE; rb.style.display=canRevive?'block':'none'; if(canRevive) rb.textContent=t('revive')+` (${reviveCount+1}/${MAX_REVIVE})`;
   const db=document.getElementById('dblBtn'); db.disabled=false; db.style.opacity=1; db.textContent=t('dblGold'); goldDoubled=false;
