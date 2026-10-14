@@ -240,14 +240,17 @@ function applyI18n(){
 function setLang(l){ if(!I18N[l])return; LANG=l; LANG_AUTO=false; saveLang(l); applyI18n(); if(typeof renderShop==='function'){try{renderShop();renderClasses();}catch(e){}} }
 // ===== 2단계: 설명/이름 번역 (용어사전 GLOSS + 문장/보스명 TR) =====
 const GLOSS={
- en:{'레일건':'Railgun','스플릿링':'Split Ring','초신성':'Supernova','톱날궤도':'Saw Orbit','대참격':'Great Slash','군집미사일':'Missile Swarm','삼천세계':'Trichiliocosm','특이점':'Singularity','새 무기':'New Weapon','강화':'Upgrade','진화':'Evolve','부족':'short','비공개':'Hidden','최대 강화':'MAXED','공격력':'ATK','최대체력':'Max HP','최대 체력':'Max HP','피해감소':'Dmg Reduce','유도미사일':'Homing','삼도류':'Santoryu','블랙홀':'Blackhole','충격파':'Nova','획득량':'Gain','데미지':'DMG','이동속도':'Move Spd','회복':'Heal','범위':'Range','골드':'Gold','획득':'Gain','공격':'ATK','연사':'Fire Rate','이동':'Move','사거리':'Range','관통':'Pierce','탄속':'Bullet Spd','체력':'HP','자석':'Magnet','흡혈':'Lifesteal','흡수':'Absorb','볼트':'Bolt','화살촉':'Arrow','폭풍화살':'Storm Arrow','산탄':'Spread','궤도':'Orbit','참격':'Slash','유도':'Homing'},
- ja:{'레일건':'レールガン','스플릿링':'スプリットリング','초신성':'超新星','톱날궤도':'鋸軌道','대참격':'大斬撃','군집미사일':'ミサイル群','삼천세계':'三千世界','특이점':'特異点','새 무기':'新武器','강화':'強化','진화':'進化','부족':'不足','비공개':'非公開','최대 강화':'最大強化','공격력':'攻撃力','최대체력':'最大体力','최대 체력':'最大体力','피해감소':'被ダメ減','유도미사일':'誘導','삼도류':'三刀流','블랙홀':'ブラックホール','충격파':'衝撃波','획득량':'獲得量','데미지':'ダメージ','이동속도':'移動速度','회복':'回復','범위':'範囲','골드':'ゴールド','획득':'獲得','공격':'攻撃','연사':'連射','이동':'移動','사거리':'射程','관통':'貫通','탄속':'弾速','체력':'体力','자석':'マグネット','흡혈':'吸血','흡수':'吸収','볼트':'ボルト','화살촉':'矢','폭풍화살':'嵐の矢','산탄':'散弾','궤도':'軌道','참격':'斬撃','유도':'誘導'}
+ en:{'레일건':'Railgun','스플릿링':'Split Ring','초신성':'Supernova','톱날궤도':'Saw Orbit','대참격':'Great Slash','군집미사일':'Missile Swarm','삼천세계':'Trichiliocosm','특이점':'Singularity','새 무기':'New Weapon','강화':'Upgrade','진화':'Evolve','부족':'short','비공개':'Hidden','최대 강화':'MAXED','공격력':'ATK','최대체력':'Max HP','최대 체력':'Max HP','피해감소':'Dmg Reduce','유도미사일':'Homing','삼도류':'Santoryu','블랙홀':'Blackhole','충격파':'Nova','획득량':'Gain','데미지':'DMG','이동속도':'Move Spd','회복':'Heal','범위':'Range','골드':'Gold','획득':'Gain','공격':'ATK','연사':'Fire Rate','이동':'Move','사거리':'Range','관통':'Pierce','탄속':'Bullet Spd','체력':'HP','자석':'Magnet','흡혈':'Lifesteal','흡수':'Absorb','볼트':'Bolt','화살촉':'Arrow','폭풍화살':'Storm Arrow','번개':'Lightning','뇌신':'Thunder God','서리':'Frost','절대영도':'Absolute Zero','화염방사':'Flamethrower','용암지대':'Lava Field','산탄':'Spread','궤도':'Orbit','참격':'Slash','유도':'Homing'},
+ ja:{'레일건':'レールガン','스플릿링':'スプリットリング','초신성':'超新星','톱날궤도':'鋸軌道','대참격':'大斬撃','군집미사일':'ミサイル群','삼천세계':'三千世界','특이점':'特異点','새 무기':'新武器','강화':'強化','진화':'進化','부족':'不足','비공개':'非公開','최대 강화':'最大強化','공격력':'攻撃力','최대체력':'最大体力','최대 체력':'最大体力','피해감소':'被ダメ減','유도미사일':'誘導','삼도류':'三刀流','블랙홀':'ブラックホール','충격파':'衝撃波','획득량':'獲得量','데미지':'ダメージ','이동속도':'移動速度','회복':'回復','범위':'範囲','골드':'ゴールド','획득':'獲得','공격':'攻撃','연사':'連射','이동':'移動','사거리':'射程','관통':'貫通','탄속':'弾速','체력':'体力','자석':'マグネット','흡혈':'吸血','흡수':'吸収','볼트':'ボルト','화살촉':'矢','폭풍화살':'嵐の矢','번개':'雷','뇌신':'雷神','서리':'氷','절대영도':'絶対零度','화염방사':'火炎放射','용암지대':'溶岩地帯','산탄':'散弾','궤도':'軌道','참격':'斬撃','유도':'誘導'}
 };
 const _GK={ en:Object.keys(GLOSS.en).sort((a,b)=>b.length-a.length), ja:Object.keys(GLOSS.ja).sort((a,b)=>b.length-a.length) };
 const TR={
  en:{
   '가까운 적에게 발사 (강화 시 다발)':'Fires at nearest enemy (multi-shot when upgraded)',
   '화살을 쏴 적을 관통 (레벨마다 화살 수 +1)':'Fires piercing arrows (+1 arrow per level)',
+  '가까운 적을 때리고 주변으로 연쇄 (떼거리에 강함)':'Hits nearest then chains to nearby foes (great vs crowds)',
+  '냉기 파동으로 적을 느리게 + 피해 (진화=빙결)':'Frost wave slows enemies + damage (evolve=freeze)',
+  '불을 뿜어 바닥에 화염 장판 → 지속 피해 (진화=용암)':'Breathes fire, leaving burning ground → damage over time (evolve=lava)',
   '부채꼴로 여러 발 (근접 강함)':'Fan of shots (strong up close)',
   '주변으로 퍼지는 파동 (전방위)':'A wave that spreads around you (omni)',
   '몸을 도는 도형이 적을 갈아버림':'Orbiting shapes grind down enemies',
@@ -265,6 +268,9 @@ const TR={
  ja:{
   '가까운 적에게 발사 (강화 시 다발)':'近い敵に発射（強化で多発）',
   '화살을 쏴 적을 관통 (레벨마다 화살 수 +1)':'矢を放ち敵を貫通（レベルごとに矢+1）',
+  '가까운 적을 때리고 주변으로 연쇄 (떼거리에 강함)':'近くの敵を撃ち周囲へ連鎖（群れに強い）',
+  '냉기 파동으로 적을 느리게 + 피해 (진화=빙결)':'冷気の波で敵を鈍化＋ダメージ（進化=氷結）',
+  '불을 뿜어 바닥에 화염 장판 → 지속 피해 (진화=용암)':'炎を吐き地面に火炎 → 継続ダメージ（進化=溶岩）',
   '부채꼴로 여러 발 (근접 강함)':'扇状に複数発（近接に強い）',
   '주변으로 퍼지는 파동 (전방위)':'周囲に広がる波動（全方位）',
   '몸을 도는 도형이 적을 갈아버림':'体を回る図形が敵を削る',
@@ -623,7 +629,7 @@ function reset(){
   player = { x:W/2, y:H/2, r:14, hp:100, maxhp:100,
     speed:210, fireRate:2.2, dmg:12, bulletSpeed:430, range:280,
     pierce:0, level:1, xp:0, xpNeed:5, magnet:90, lifesteal:0,
-    weapons:{ bolt:1 }, timers:{ bolt:0 }, orbs:[], novas:[], blades:[], holes:[], slashFx:[], orbAngle:0, evolved:{},
+    weapons:{ bolt:1 }, timers:{ bolt:0 }, orbs:[], novas:[], blades:[], holes:[], slashFx:[], flames:[], zaps:[], orbAngle:0, evolved:{},
     awakened:false, awakenAt:TUNE.awakenStart, awakenCount:0, dmgReduce:1, sigCd:0, cls:'hero', baseCls:'hero', invuln:0 };
   applyMeta(player); applyClass(player);
   cam.x=player.x-W/2; cam.y=player.y-H/2;   // 카메라 스냅
@@ -795,7 +801,7 @@ function explode(x,y,dmg,radius,color){
   shake=Math.min(shake+2,10);
 }
 // 무기 정의 (Lv6 만렙 → 진화)
-const EVOLVE = { bolt:'레일건 ⚡', arrow:'폭풍화살 🏹', spread:'스플릿링 ◍', nova:'초신성 ✵', orbit:'톱날궤도 ⚙', slash:'대참격 ✷', homing:'군집미사일 ✺', santoryu:'삼천세계 🌀', blackhole:'특이점 🕳️' };
+const EVOLVE = { bolt:'레일건 ⚡', arrow:'폭풍화살 🏹', spread:'스플릿링 ◍', nova:'초신성 ✵', orbit:'톱날궤도 ⚙', slash:'대참격 ✷', homing:'군집미사일 ✺', santoryu:'삼천세계 🌀', blackhole:'특이점 🕳️', lightning:'뇌신 ⚡', frost:'절대영도 🧊', flame:'용암지대 🌋' };
 const WEAPONS = {
   bolt:{ name:'볼트', icon:'🔹', desc:'가까운 적에게 발사 (강화 시 다발)', max:6,
     interval:(p,l)=>(p.evolved.bolt?0.7:1)/(1+0.12*(l-1)),
@@ -846,6 +852,27 @@ const WEAPONS = {
     fire:(p,l)=>{ const e=nearestEnemy(); const base=e?Math.atan2(e.y-p.y,e.x-p.x):-Math.PI/2;
       bullets.push({x:p.x,y:p.y,vx:Math.cos(base)*380,vy:Math.sin(base)*380,dmg:0,life:0.5,pierce:99,size:6,color:'#c9a3ff',bhSeed:true,fresh:true,bhLevel:l,bhEvo:!!p.evolved.blackhole});
       tone(78,0.14,'sine',0.16,40); } },
+  lightning:{ name:'번개', icon:'⚡', desc:'가까운 적을 때리고 주변으로 연쇄 (떼거리에 강함)', max:6,
+    interval:(p,l)=>Math.max(0.6, 1.4-0.12*(l-1)),
+    fire:(p,l)=>{ const evo=p.evolved.lightning; let cur=nearestEnemy(); if(!cur) return;
+      const jumps=(evo?l+4:l+1), range=(evo?210:150), dmg0=p.dmg*(1.1+0.2*(l-1))*(evo?1.4:1);
+      const seen=new Set(); let prev={x:p.x,y:p.y};
+      for(let j=0;j<jumps && cur;j++){ seen.add(cur); hurtEnemy(cur, dmg0*Math.pow(0.9,j), evo?'#fff6a0':'#aee3ff'); burst(cur.x,cur.y,evo?'#fff6a0':'#aee3ff',4);
+        p.zaps.push({a:prev,b:{x:cur.x,y:cur.y},t:0,max:0.16,evo}); prev={x:cur.x,y:cur.y};
+        let nx=null,nd=range*range; for(const e of enemies){ if(e.dead||seen.has(e))continue; const d=dist2(prev,e); if(d<nd){nd=d;nx=e;} } cur=nx; }
+      tone(evo?1200:900,0.08,'sawtooth',0.12,evo?2000:1500); } },
+  frost:{ name:'서리', icon:'❄️', desc:'냉기 파동으로 적을 느리게 + 피해 (진화=빙결)', max:6,
+    interval:(p,l)=>Math.max(1.6, 3.0-0.22*(l-1)),
+    fire:(p,l)=>{ const evo=p.evolved.frost;
+      p.novas.push({x:p.x,y:p.y,r:12,maxr:(90+16*l)*(evo?1.3:1),dmg:p.dmg*(0.8+0.2*l),hit:new Set(),frost:true,slowDur:(1.5+0.3*l),slowMul:0.5,freeze:evo});
+      noise(0.14,0.14); tone(520,0.2,'sine',0.14,900); } },
+  flame:{ name:'화염방사', icon:'🔥', desc:'불을 뿜어 바닥에 화염 장판 → 지속 피해 (진화=용암)', max:6,
+    interval:(p,l)=>Math.max(0.9, 1.8-0.14*(l-1)),
+    fire:(p,l)=>{ const evo=p.evolved.flame; const e=nearestEnemy(); const base=e?Math.atan2(e.y-p.y,e.x-p.x):-Math.PI/2;
+      const dreach=70, fx=p.x+Math.cos(base)*dreach, fy=p.y+Math.sin(base)*dreach;
+      const life=(2.5+0.2*l)*(evo?1.4:1);
+      p.flames.push({x:fx,y:fy,r:(34+6*l)*(evo?1.4:1),dmg:p.dmg*(0.5+0.12*l)*(evo?1.6:1),life,max:life,evo,burst:evo?0.8:0});
+      noise(0.16,0.14); tone(240,0.14,'sawtooth',0.1,160); } },
 };
 // 블랙홀 씨앗탄이 착탄한 자리에 회오리 생성(아주 작게 시작 → 점점 커짐)
 function plantHole(x,y,l,evo){
@@ -951,7 +978,8 @@ function update(dt){
   // 충격파(nova) 확장 + 데미지
   for(const nv of player.novas){ nv.r+=dt*300;
     for(const e of enemies){ if(nv.hit.has(e)||e.dead) continue; const dr=Math.hypot(e.x-nv.x,e.y-nv.y);
-      if(dr<nv.r && dr>nv.r-34){ nv.hit.add(e); burst(e.x,e.y,'#c9a3ff',4); hurtEnemy(e,nv.dmg,'#c9a3ff'); } } }
+      if(dr<nv.r && dr>nv.r-34){ nv.hit.add(e); const col=nv.frost?'#9fe8ff':'#c9a3ff'; burst(e.x,e.y,col,4); hurtEnemy(e,nv.dmg,col);
+        if(nv.frost && !e.boss){ e.slowT=nv.slowDur; e.slowMul=nv.slowMul; if(nv.freeze && Math.random()<0.3){ e.slowT=1.2; e.slowMul=0; } } } } }
   player.novas=player.novas.filter(nv=>nv.r<nv.maxr);
   // 블랙홀: 회오리로 적을 빨아들이며(보스 제외) 지속 피해
   for(const h of player.holes){ h.life-=dt; h.spin+=dt*7;
@@ -971,6 +999,13 @@ function update(dt){
   // 참격 찌릿 진행
   for(const s of player.slashFx) s.t+=dt;
   player.slashFx=player.slashFx.filter(s=>s.t<s.max);
+  // 🔥 화염 장판: 범위 내 적에게 지속 피해(DoT)
+  for(const f of player.flames){ f.life-=dt;
+    for(const e of enemies){ if(e.dead) continue; const rr=f.r+e.r; if(dist2(f,e)<rr*rr) hurtEnemy(e, f.dmg*dt, '#ff8a3c'); } }
+  player.flames=player.flames.filter(f=>f.life>0);
+  // ⚡ 번개 아크 비주얼 진행
+  for(const z of player.zaps) z.t+=dt;
+  player.zaps=player.zaps.filter(z=>z.t<z.max);
   // 궤도 접촉 데미지
   for(const o of player.orbs){ for(const e of enemies){ if(e.dead) continue; const rr=e.r+9; if(dist2(o,e)<rr*rr) hurtEnemy(e, o.dmg*dt*4, '#ffe08a'); } }
   // bullets (유도미사일은 적 추적)
@@ -996,6 +1031,7 @@ function update(dt){
     }
     const ang=Math.atan2(player.y-e.y,player.x-e.x);
     let spd=e.speed; if(e.boss&&e.dashT>0) spd*=3.3;
+    if(e.slowT>0){ e.slowT-=dt; spd*=(e.slowMul!=null?e.slowMul:1); }   // ❄️ 서리 슬로우/빙결
     let vx=Math.cos(ang)*spd, vy=Math.sin(ang)*spd;
     if(e.type==='weaver'){ const px=-Math.sin(ang),py=Math.cos(ang), w=Math.sin(e.t*4)*e.speed*0.9; vx+=px*w; vy+=py*w; }
     e.x+=vx*dt; e.y+=vy*dt;
@@ -1147,7 +1183,20 @@ function render(){
   for(const p of particles){ ctx.globalAlpha=Math.max(0,p.life*2); ctx.fillStyle=p.color; ctx.fillRect(p.x-2,p.y-2,4,4); }
   ctx.globalAlpha=1;
   // nova rings (확장 파동)
-  for(const nv of player.novas){ const al=Math.max(0,1-nv.r/nv.maxr).toFixed(2); ctx.strokeStyle=(nv.evo?'rgba(255,92,225,':'rgba(201,163,255,')+al+')'; ctx.lineWidth=nv.evo?7:5; ctx.beginPath(); ctx.arc(nv.x,nv.y,nv.r,0,Math.PI*2); ctx.stroke(); }
+  for(const nv of player.novas){ const al=Math.max(0,1-nv.r/nv.maxr).toFixed(2); ctx.strokeStyle=(nv.frost?'rgba(159,232,255,':(nv.evo?'rgba(255,92,225,':'rgba(201,163,255,'))+al+')'; ctx.lineWidth=nv.evo?7:5; ctx.beginPath(); ctx.arc(nv.x,nv.y,nv.r,0,Math.PI*2); ctx.stroke(); }
+  // 🔥 화염 장판
+  for(const f of player.flames){ const a=Math.max(0,f.life/f.max); ctx.save();
+    const fl=0.8+0.2*Math.sin(time*18+f.x);
+    const g=ctx.createRadialGradient(f.x,f.y,2,f.x,f.y,f.r*fl); g.addColorStop(0,'rgba(255,220,120,'+(0.55*a).toFixed(2)+')'); g.addColorStop(0.5,'rgba(255,130,50,'+(0.42*a).toFixed(2)+')'); g.addColorStop(1,'rgba(200,40,20,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(f.x,f.y,f.r*fl,0,Math.PI*2); ctx.fill();
+    if(f.evo){ ctx.strokeStyle='rgba(255,90,30,'+(0.5*a).toFixed(2)+')'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(f.x,f.y,f.r*0.7,0,Math.PI*2); ctx.stroke(); }
+    ctx.restore(); }
+  // ⚡ 번개 아크 (지그재그)
+  for(const z of player.zaps){ const a=Math.max(0,1-z.t/z.max); ctx.save(); ctx.globalAlpha=a; ctx.strokeStyle=z.evo?'#fff6a0':'#aee3ff'; ctx.lineWidth=z.evo?3:2; ctx.lineCap='round'; ctx.shadowColor=z.evo?'#ffe14d':'#7fd4ff'; ctx.shadowBlur=8;
+    const dx=z.b.x-z.a.x, dy=z.b.y-z.a.y, len=Math.hypot(dx,dy)||1, nx=-dy/len, ny=dx/len, seg=5;
+    ctx.beginPath(); ctx.moveTo(z.a.x,z.a.y);
+    for(let i=1;i<seg;i++){ const t=i/seg, j=(i%2?1:-1)*(6*Math.random()); ctx.lineTo(z.a.x+dx*t+nx*j, z.a.y+dy*t+ny*j); }
+    ctx.lineTo(z.b.x,z.b.y); ctx.stroke(); ctx.restore(); }
   // 블랙홀: 무수한 얇은 빛줄기가 중심으로 빨려드는 회오리(중력렌즈 느낌) + 어두운 중심 void
   for(const h of player.holes){ const a=Math.max(0,h.life/h.max), void_=h.r*0.30;
     ctx.save(); ctx.translate(h.x,h.y);
