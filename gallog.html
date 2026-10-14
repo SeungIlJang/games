@@ -253,6 +253,11 @@ const TR={
   '냉기 파동으로 적을 느리게 + 피해 (진화=빙결)':'Frost wave slows enemies + damage (evolve=freeze)',
   '불을 뿜어 바닥에 화염 장판 → 지속 피해 (진화=용암)':'Breathes fire, leaving burning ground → damage over time (evolve=lava)',
   '세 수호정령(뇌운·염화·검)이 돌며 자동 공격':'Three guardian spirits (storm·flame·blade) orbit and auto-attack',
+  '세 원소(번개·화염·삼도류)를 융합 · 각 원소 +1레벨 강화 · 각자 독립 발사 · 레벨마다 동시 성장 · 위기(체력40%↓) 분노':'Fuses three elements (lightning·flame·santoryu) · each element +1 level · fires independently · all grow together per level · rage at crisis (HP ≤40%)',
+  '🌟 삼수호령 각성! (번개·화염·삼도류 융합)':'🌟 Three Guardians Awaken! (fuse lightning·flame·santoryu)',
+  '세 무기가 합쳐져 세 수호정령이 깃든다 · 위기 때 분노':'Three weapons merge into three guardian spirits · rages in crisis',
+  '🌟 삼수호령 강림!':'🌟 Three Guardians Descend!',
+  '🔥 분노!':'🔥 RAGE!',
   '부채꼴로 여러 발 (근접 강함)':'Fan of shots (strong up close)',
   '주변으로 퍼지는 파동 (전방위)':'A wave that spreads around you (omni)',
   '몸을 도는 도형이 적을 갈아버림':'Orbiting shapes grind down enemies',
@@ -274,6 +279,11 @@ const TR={
   '냉기 파동으로 적을 느리게 + 피해 (진화=빙결)':'冷気の波で敵を鈍化＋ダメージ（進化=氷結）',
   '불을 뿜어 바닥에 화염 장판 → 지속 피해 (진화=용암)':'炎を吐き地面に火炎 → 継続ダメージ（進化=溶岩）',
   '세 수호정령(뇌운·염화·검)이 돌며 자동 공격':'三守護霊（雷雲·炎·剣）が周回して自動攻撃',
+  '세 원소(번개·화염·삼도류)를 융합 · 각 원소 +1레벨 강화 · 각자 독립 발사 · 레벨마다 동시 성장 · 위기(체력40%↓) 분노':'三元素（雷·炎·三刀流）を融合 · 各元素+1レベル · 各自独立発射 · レベルごとに同時成長 · 危機（HP40%以下）で怒り',
+  '🌟 삼수호령 각성! (번개·화염·삼도류 융합)':'🌟 三守護霊 覚醒！（雷·炎·三刀流を融合）',
+  '세 무기가 합쳐져 세 수호정령이 깃든다 · 위기 때 분노':'三つの武器が合わさり三守護霊が宿る · 危機時に怒り',
+  '🌟 삼수호령 강림!':'🌟 三守護霊 降臨！',
+  '🔥 분노!':'🔥 怒り！',
   '부채꼴로 여러 발 (근접 강함)':'扇状に複数発（近接に強い）',
   '주변으로 퍼지는 파동 (전방위)':'周囲に広がる波動（全方位）',
   '몸을 도는 도형이 적을 갈아버림':'体を回る図形が敵を削る',
@@ -944,7 +954,7 @@ function buildChoices(){
   if(!player.weapons.spirits && player.weapons.lightning>=6 && player.weapons.flame>=6 && player.weapons.santoryu>=6){
     wpool.push({t:'🌟 삼수호령 각성! (번개·화염·삼도류 융합)', d:'세 무기가 합쳐져 세 수호정령이 깃든다 · 위기 때 분노', weight:999, a:()=>{
       for(const k of ['lightning','flame','santoryu']){ delete player.weapons[k]; delete player.timers[k]; delete player.evolved[k]; }
-      player.weapons.spirits=6; player.timers.spirits=0; player.spiritCd={l:0,f:0,s:0}; player.invuln=Math.max(player.invuln||0,2); sfx.levelup(); banner='🌟 삼수호령 강림!'; bannerT=2.2; flashT=0.6; }});
+      player.weapons.spirits=6; player.timers.spirits=0; player.spiritCd={l:0,f:0,s:0}; player.invuln=Math.max(player.invuln||0,2); sfx.levelup(); banner=trDesc('🌟 삼수호령 강림!'); bannerT=2.2; flashT=0.6; }});
   }
   for(const s of STAT_UPS) spool.push({...s, weight:2});
   // 가중치 랜덤 뽑기(해당 bag에서 제거)
@@ -1302,7 +1312,7 @@ function render(){
       ctx.beginPath(); ctx.arc(player.x,player.y,58+6*pul,0,Math.PI*2); ctx.stroke();
       ctx.globalAlpha=0.12+0.12*pul; ctx.fillStyle='#ff5a3c'; ctx.beginPath(); ctx.arc(player.x,player.y,58+6*pul,0,Math.PI*2); ctx.fill();
       // "분노!" 라벨
-      ctx.globalAlpha=0.9; ctx.fillStyle='#ff5a5a'; ctx.font='bold 15px system-ui'; ctx.fillText('🔥 분노!', player.x, player.y-66);
+      ctx.globalAlpha=0.9; ctx.fillStyle='#ff5a5a'; ctx.font='bold 15px system-ui'; ctx.fillText(trDesc('🔥 분노!'), player.x, player.y-66);
       ctx.globalAlpha=1;
     }
     const cols=['#5ab6ff','#ff8a2a','#b6ffce'];   // 뇌운(파랑)·염화(주황)·검(초록)
