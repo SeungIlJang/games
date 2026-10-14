@@ -255,7 +255,7 @@ const TR={
   '세 수호정령(뇌운·염화·검)이 돌며 자동 공격':'Three guardian spirits (storm·flame·blade) orbit and auto-attack',
   '세 원소(번개·화염·삼도류)를 융합 · 각 원소 +1레벨 강화 · 각자 독립 발사 · 레벨마다 동시 성장 · 체력 40% 이하면 분노(폭주)':'Fuses three elements (lightning·flame·santoryu) · each element +1 level · fires independently · all grow together per level · RAGE when HP ≤40%',
   '🌟 삼수호령 각성! (번개·화염·삼도류 융합)':'🌟 Three Guardians Awaken! (fuse lightning·flame·santoryu)',
-  '세 무기가 합쳐져 세 수호정령이 깃든다 · 위기 때 분노':'Three weapons merge into three guardian spirits · rages in crisis',
+  '세 무기가 합쳐져 세 수호정령이 깃든다 · 흡혈+3 · 위기 때 분노':'Three weapons merge into three guardian spirits · lifesteal +3 · rages in crisis',
   '🌟 삼수호령 강림!':'🌟 Three Guardians Descend!',
   '🔥 분노!':'🔥 RAGE!',
   '부채꼴로 여러 발 (근접 강함)':'Fan of shots (strong up close)',
@@ -281,7 +281,7 @@ const TR={
   '세 수호정령(뇌운·염화·검)이 돌며 자동 공격':'三守護霊（雷雲·炎·剣）が周回して自動攻撃',
   '세 원소(번개·화염·삼도류)를 융합 · 각 원소 +1레벨 강화 · 각자 독립 발사 · 레벨마다 동시 성장 · 체력 40% 이하면 분노(폭주)':'三元素（雷·炎·三刀流）を融合 · 各元素+1レベル · 各自独立発射 · レベルごとに同時成長 · HP40%以下で怒り（暴走）',
   '🌟 삼수호령 각성! (번개·화염·삼도류 융합)':'🌟 三守護霊 覚醒！（雷·炎·三刀流を融合）',
-  '세 무기가 합쳐져 세 수호정령이 깃든다 · 위기 때 분노':'三つの武器が合わさり三守護霊が宿る · 危機時に怒り',
+  '세 무기가 합쳐져 세 수호정령이 깃든다 · 흡혈+3 · 위기 때 분노':'三つの武器が合わさり三守護霊が宿る · 吸血+3 · 危機時に怒り',
   '🌟 삼수호령 강림!':'🌟 三守護霊 降臨！',
   '🔥 분노!':'🔥 怒り！',
   '부채꼴로 여러 발 (근접 강함)':'扇状に複数発（近接に強い）',
@@ -956,9 +956,9 @@ function buildChoices(){
   }
   // 🌟 삼수호령 융합 각성: 번개·화염방사·삼도류를 모두 Lv6 마스터하면 등장(우선노출) → 세 무기 소모 후 수호령 합체
   if(!player.weapons.spirits && player.weapons.lightning>=6 && player.weapons.flame>=6 && player.weapons.santoryu>=6){
-    wpool.push({t:'🌟 삼수호령 각성! (번개·화염·삼도류 융합)', d:'세 무기가 합쳐져 세 수호정령이 깃든다 · 위기 때 분노', weight:999, a:()=>{
+    wpool.push({t:'🌟 삼수호령 각성! (번개·화염·삼도류 융합)', d:'세 무기가 합쳐져 세 수호정령이 깃든다 · 흡혈+3 · 위기 때 분노', weight:999, a:()=>{
       for(const k of ['lightning','flame','santoryu']){ delete player.weapons[k]; delete player.timers[k]; delete player.evolved[k]; }
-      player.weapons.spirits=6; player.timers.spirits=0; player.spiritCd={l:0,f:0,s:0}; player.invuln=Math.max(player.invuln||0,3);
+      player.weapons.spirits=6; player.timers.spirits=0; player.spiritCd={l:0,f:0,s:0}; player.invuln=Math.max(player.invuln||0,3); player.lifesteal+=3;   // 흡혈+3(처치 시 회복)
       // 강림 충격파: 주변 적 큰 피해 + 바깥으로 밀쳐내 숨돌릴 공간 확보
       for(const e of enemies){ if(e.dead)continue; const dx=e.x-player.x,dy=e.y-player.y,d=Math.hypot(dx,dy)||1; if(d<200){ hurtEnemy(e, player.dmg*12, '#ffe9a8'); e.x=player.x+dx/d*220; e.y=player.y+dy/d*220; } }
       shake=Math.min((shake||0)+7,10);
