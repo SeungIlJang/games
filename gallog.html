@@ -878,8 +878,8 @@ const WEAPONS = {
       p.flames.push({x:fx,y:fy,r:(34+6*l)*(evo?1.4:1),dmg:p.dmg*(0.5+0.12*l)*(evo?1.6:1),life,max:life,evo,burst:evo?0.8:0});
       noise(0.16,0.14); tone(240,0.14,'sawtooth',0.1,160); } },
   spirits:{ name:'삼수호령', icon:'🌟', desc:'세 원소를 융합한 세 수호정령 — 위기(체력30%↓)에 분노 발동', max:6,
-    interval:(p,l)=>{ const base=Math.max(0.75, 1.7-0.15*(l-1)); return (p.hp/p.maxhp<=0.3)? base*0.5 : base; },  // 위기=쿨다운 절반
-    fire:(p,l)=>{ const evo=p.evolved.spirits; const crisis=p.hp/p.maxhp<=0.3; const rage=crisis?1.8:1; const pos=spiritPositions();
+    interval:(p,l)=>{ const base=Math.max(0.75, 1.7-0.15*(l-1)); return (p.hp/p.maxhp<=0.4)? base*0.5 : base; },  // 위기(체력40%↓)=쿨다운 절반
+    fire:(p,l)=>{ const evo=p.evolved.spirits; const crisis=p.hp/p.maxhp<=0.4; const rage=crisis?1.8:1; const pos=spiritPositions();
       // ① 뇌운령 — 연쇄 번개
       { const P=pos[0]; let cur=null,cd=1e9; for(const e of enemies){ if(e.dead)continue; const d=dist2(P,e); if(d<cd){cd=d;cur=e;} }
         if(cur){ const jumps=2+Math.floor(l/2)+(evo?2:0)+(crisis?2:0), rng=150*150, dmg=p.dmg*(0.8+0.15*l)*(evo?1.4:1)*rage; const seen=new Set(); let prev=P;
@@ -1278,11 +1278,21 @@ function render(){
   }
   // 🌟 삼수호령: 세 수호정령(뇌운·염화·검)
   if(player.weapons.spirits){ const sp=spiritPositions(), ev=player.evolved.spirits; const ems=['☁️','☀️','⚔️'];
+    const crisis=player.hp/player.maxhp<=0.4;   // 위기=분노 모드
     ctx.save(); ctx.textAlign='center'; ctx.textBaseline='middle';
-    for(let i=0;i<3;i++){ const P=sp[i], bob=Math.sin(time*6+i*2)*2;
-      ctx.globalAlpha=0.9; ctx.font=(ev?22:18)+'px system-ui';
-      // 은은한 글로우
-      ctx.shadowColor=['#9fd4ff','#ffb04a','#eafff0'][i]; ctx.shadowBlur=ev?14:9;
+    if(crisis){
+      const pul=0.5+0.5*Math.sin(time*10);
+      // 플레이어 주위 붉은 분노 오라(맥동)
+      ctx.globalAlpha=0.25+0.25*pul; ctx.strokeStyle='#ff3b3b'; ctx.lineWidth=4+3*pul;
+      ctx.beginPath(); ctx.arc(player.x,player.y,58+6*pul,0,Math.PI*2); ctx.stroke();
+      ctx.globalAlpha=0.12+0.12*pul; ctx.fillStyle='#ff5a3c'; ctx.beginPath(); ctx.arc(player.x,player.y,58+6*pul,0,Math.PI*2); ctx.fill();
+      // "분노!" 라벨
+      ctx.globalAlpha=0.9; ctx.fillStyle='#ff5a5a'; ctx.font='bold 15px system-ui'; ctx.fillText('🔥 분노!', player.x, player.y-66);
+      ctx.globalAlpha=1;
+    }
+    for(let i=0;i<3;i++){ const P=sp[i], bob=Math.sin(time*(crisis?12:6)+i*2)*(crisis?4:2);
+      ctx.globalAlpha=crisis?1:0.9; ctx.font=((ev?22:18)+(crisis?8:0))+'px system-ui';   // 분노 시 정령 커짐
+      ctx.shadowColor=crisis?'#ff3b3b':['#9fd4ff','#ffb04a','#eafff0'][i]; ctx.shadowBlur=crisis?20:(ev?14:9);
       ctx.fillText(ems[i], P.x, P.y+bob); }
     ctx.restore(); }
   // orbit (몸 주위 도는 육각형)
