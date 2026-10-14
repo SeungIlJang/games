@@ -792,7 +792,7 @@ function hurtEnemy(e,dmg,color){
   if(e.hp<=0){ e.dead=true; kills++;
     combo++; comboTimer=2.5; if(combo>maxCombo) maxCombo=combo;
     { const sMul=Math.pow(2,Math.floor((stage-1)/10)); const g=Math.round((e.boss?20:1)*goldMult()*sMul); meta.gold+=g; runGold+=g; } // 실시간 골드(골드획득 강화 + 10스테이지마다 ×2)
-    const gv=Math.max(1,Math.round((e.gem||0)*Math.pow(1.13,stage-1)*1.3));  // 적 경험치(젬): 스테이지 지수 스케일(1.13^) ×1.3 경험치부스트 — 초반 동일·후반 정체 해소
+    const gv=Math.max(1,Math.round((e.gem||0)*Math.pow(1.13,stage-1)));  // 적 경험치(젬): 스테이지 지수 스케일(1.13^) — 초반 동일·후반 정체 해소(필요경험치 복리 대응)
     texts.push({x:e.x,y:e.y-e.r,vy:-46,life:0.7,str:e.boss?'BOSS!':'+'+gv,color:e.boss?'#ff5ce1':'#7df3ff',size:e.boss?22:14}); // +N XP텍스트=젬 시안색
     burst(e.x,e.y,color||e.color,e.big?18:8); shake=Math.min(shake+(e.boss?4:(e.big?0.5:0.12)),8);
     e.big?sfx.killBig():sfx.kill();
@@ -801,7 +801,7 @@ function hurtEnemy(e,dmg,color){
     if(e.boss) heals.push({x:e.x,y:e.y}); else if(Math.random()<0.02) heals.push({x:e.x,y:e.y}); // 힐 드롭(희귀)
     if(e.type==='splitter'){ for(let i=0;i<2;i++){ const a=rand(0,6.28); enemies.push(makeEnemy(e.x+Math.cos(a)*10,e.y+Math.sin(a)*10,'fast',1+time/60)); } }
     if(e.boss){ kills+=15;
-      const gemXp=e.mile?39:26; // 마일 보스(스테이지 10·20…90)는 경험치 1.5배 + ×1.3 부스트(20→26, 30→39)
+      const gemXp=e.mile?30:20; // 마일 보스(스테이지 10·20…90)는 경험치 1.5배(20→30)
       const nBig=Math.max(1,Math.round(stage*(TUNE.bossGem!=null?TUNE.bossGem:1))); for(let i=0;i<nBig;i++){ const a=rand(0,6.28),d=rand(10,40+nBig*1.5); gems.push({x:e.x+Math.cos(a)*d,y:e.y+Math.sin(a)*d,v:gemXp}); } // 보스 전용 '큰 젬' = 스테이지×보스잼배수
       for(let i=0;i<24;i++){ const a=rand(0,6.28),s=rand(60,240); particles.push({x:e.x,y:e.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:rand(.4,.8),color:'#ff5ce1'}); }
       if(bossQueue.length>0){ spawnNextBoss(); } else { stageClear(); } }
