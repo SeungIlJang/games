@@ -47,6 +47,7 @@
   h1 { font-size: 34px; letter-spacing: 1px; margin-bottom: 6px; }
   #start h1 { color:#eafcff; letter-spacing:2px; text-shadow:0 0 8px #5ce1ff, 0 0 20px #3a7bff, 0 0 40px #1f52c0; animation: neon 1.8s ease-in-out infinite alternate; }
   @keyframes neon { from { text-shadow:0 0 6px #5ce1ff,0 0 16px #3a7bff,0 0 30px #1f52c0; } to { text-shadow:0 0 12px #8af0ff,0 0 28px #5ce1ff,0 0 52px #3a7bff; } }
+  @keyframes revivePulse { 0%,100% { transform:scale(1); box-shadow:0 6px 0 #7d2419, 0 0 0 rgba(255,80,80,0); } 50% { transform:scale(1.06); box-shadow:0 6px 0 #7d2419, 0 0 22px rgba(255,90,90,.85); } }
   @keyframes ss-spin { to { transform: rotate(360deg); } }
   .ss-spinner { width:46px; height:46px; margin:14px auto 2px; border:5px solid rgba(255,255,255,.18); border-top-color:#5ce1ff; border-radius:50%; animation: ss-spin .8s linear infinite; }
   @keyframes ss-pulse { 0%,100%{ transform:scale(1); opacity:.9; } 50%{ transform:scale(1.14); opacity:1; } }
@@ -128,6 +129,7 @@
     <h1 id="overTitle">GAME OVER</h1>
     <p class="sub" id="endStory" style="display:none;max-width:min(90vw,440px);color:#ffe9b0;line-height:1.7;margin:4px 0 10px;"></p>
     <p class="sub" id="overStats"></p>
+    <p id="closeCall" style="display:none;font-weight:800;color:#ffd25c;font-size:16px;margin:2px 0 10px;max-width:min(88vw,400px);line-height:1.5;"></p>
     <button class="btn" id="reviveBtn" style="background:#c0392b;box-shadow:0 6px 0 #7d2419;margin-bottom:10px;">🎬 광고 보고 부활</button>
     <button class="btn" id="dblBtn" style="background:#c9a227;box-shadow:0 6px 0 #8a6f16;margin-bottom:16px;">🎬 광고 보고 골드 2배</button>
     <div style="display:flex;gap:12px;">
@@ -308,9 +310,9 @@ function trDesc(s){ if(s==null) return s; if(LANG==='ko') return s;
   if(TR[LANG]&&TR[LANG][s]!=null) return TR[LANG][s];
   let r=s; const g=GLOSS[LANG], ks=_GK[LANG]; if(g&&ks){ for(const k of ks){ if(r.indexOf(k)>=0) r=r.split(k).join(g[k]); } }
   return r; }
-Object.assign(I18N.ko,{ potionFmt:'❤️ 체력 물약 · 30% 회복 (🪙 {c})', goSurv:'생존', goCombo:'최대콤보', goBest:'최고', goRun:'이번판', goHave:'보유', goRec:'🏆신기록!', rankKills:'처치', rankSec:'초', rankNth:'위', endTitle:'🏆 전설의 귀환!', endStory:'100 스테이지를 모두 돌파했다! 끝없이 밀려오던 갤로그의 군세를 꺾고, 용사는 마침내 평화를 되찾았다. 당신의 이름은 영원한 전설로 남는다. 🌟' });
-Object.assign(I18N.en,{ potionFmt:'❤️ Health Potion · Heal 30% (🪙 {c})', goSurv:'Survived', goCombo:'Max Combo', goBest:'Best', goRun:'This run', goHave:'Have', goRec:'🏆 New record!', rankKills:'kills', rankSec:'s', rankNth:'', endTitle:'🏆 A Legend Returns!', endStory:'You cleared all 100 stages! The endless Gallog horde is broken and peace returns at last. Your name will live on as legend. 🌟' });
-Object.assign(I18N.ja,{ potionFmt:'❤️ 回復ポーション · 30%回復 (🪙 {c})', goSurv:'生存', goCombo:'最大コンボ', goBest:'最高', goRun:'今回', goHave:'所持', goRec:'🏆新記録！', rankKills:'撃破', rankSec:'秒', rankNth:'位', endTitle:'🏆 伝説の帰還！', endStory:'100ステージを全て突破！ 果てなきギャログの軍勢を打ち破り、ついに平和を取り戻した。あなたの名は永遠の伝説となる。🌟' });
+Object.assign(I18N.ko,{ potionFmt:'❤️ 체력 물약 · 30% 회복 (🪙 {c})', goSurv:'생존', goCombo:'최대콤보', goBest:'최고', goRun:'이번판', goHave:'보유', goRec:'🏆신기록!', rankKills:'처치', rankSec:'초', rankNth:'위', ccNearBest:'😱 최고기록까지 단 {n}초! 부활하면 깰 수 있어요!', ccKeep:'💀 STAGE {s}에서 끝내기 아깝죠? 부활해서 이어가요!', endTitle:'🏆 전설의 귀환!', endStory:'100 스테이지를 모두 돌파했다! 끝없이 밀려오던 갤로그의 군세를 꺾고, 용사는 마침내 평화를 되찾았다. 당신의 이름은 영원한 전설로 남는다. 🌟' });
+Object.assign(I18N.en,{ potionFmt:'❤️ Health Potion · Heal 30% (🪙 {c})', goSurv:'Survived', goCombo:'Max Combo', goBest:'Best', goRun:'This run', goHave:'Have', goRec:'🏆 New record!', rankKills:'kills', rankSec:'s', rankNth:'', ccNearBest:'😱 Just {n}s to your best! Revive and beat it!', ccKeep:'💀 End at STAGE {s}? Revive and keep going!', endTitle:'🏆 A Legend Returns!', endStory:'You cleared all 100 stages! The endless Gallog horde is broken and peace returns at last. Your name will live on as legend. 🌟' });
+Object.assign(I18N.ja,{ potionFmt:'❤️ 回復ポーション · 30%回復 (🪙 {c})', goSurv:'生存', goCombo:'最大コンボ', goBest:'最高', goRun:'今回', goHave:'所持', goRec:'🏆新記録！', rankKills:'撃破', rankSec:'秒', rankNth:'位', ccNearBest:'😱 最高記録まであと{n}秒！ 復活して超えよう！', ccKeep:'💀 STAGE {s}で終わり？ 復活して続けよう！', endTitle:'🏆 伝説の帰還！', endStory:'100ステージを全て突破！ 果てなきギャログの軍勢を打ち破り、ついに平和を取り戻した。あなたの名は永遠の伝説となる。🌟' });
 function nth(i){ return LANG==='en'?('#'+(i+1)):((i+1)+t('rankNth')); }
 Object.assign(I18N.ko,{ title:'갤로그의 귀환', langAuto:'🌐 지역 기준 자동 선택됨 · 버튼으로 변경 가능' });
 Object.assign(I18N.en,{ title:'Gallog’s Return', langAuto:'🌐 Auto-selected by region · tap to change' });
@@ -587,7 +589,7 @@ function renderClasses(){
 // ---- Game State ----
 let state = 'start'; // start | play | levelup | over
 let player, enemies, bullets, gems, particles, texts, heals, ebullets;
-let flashT=0, hurtFlash=0, lastEarned=0, lastEndBonus=0, runGold=0, goldDoubled=false, reviveCount=0;
+let flashT=0, hurtFlash=0, lastEarned=0, lastEndBonus=0, runGold=0, goldDoubled=false, reviveCount=0, deathT=0;
 const MAX_REVIVE=5; // 광고 부활 판당 최대 횟수
 let lifestealAcc=0, lifestealT=0; // 흡혈 초당 회복 상한용
 let combo=0, comboTimer=0, maxCombo=0;
@@ -700,24 +702,24 @@ const ETYPE={
   tank:    {r:23,hp:75, spd:[38,52],  dmg:24, color:'#ff8a5c', gem:7, big:true, shape:'core6', tier:'e'}, // 육각코어
   twin:    {r:20,hp:95, spd:[42,56],  dmg:28, color:'#ff6bd0', gem:8, big:true, shape:'core8', tier:'e'}, // 팔각코어
 };
-const ENEMY_CAP=42;       // 화면 동시 적 수 상한(기존60→42, 출현율 70%로 완화: 피할 공간 확보)
-const ELITE_CAP=3;        // 동시 정예 수 상한
+const ENEMY_CAP=28;       // 화면 동시 적 수 상한(42→28, 물량↓·회피공간↑: 비집고 다니는 플레이)
+const ELITE_CAP=4;        // 동시 정예 수 상한(3→4, 적게·강하게 리밸런싱)
 const FODDER=['normal','fast','shard'], MID=['weaver','spiker','splitter'], ELITE=['ringed','tank','twin'];
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 function edgePos(){ // 무한 필드: 플레이어 주변, 화면 밖 링에서 스폰
   const ang=rand(0,6.283), rad=Math.hypot(W,H)/2 + rand(30,120);
   return { x: player.x+Math.cos(ang)*rad, y: player.y+Math.sin(ang)*rad }; }
 function makeEnemy(x,y,type,diff){
-  const D=ETYPE[type], speedScale=1+Math.min(ddiff()/150,1.9), s=rand(D.spd[0],D.spd[1])*speedScale*TUNE.enemySpeed;
-  const hp=D.hp*diff*TUNE.enemyHp;
-  return {x,y,type,tier:D.tier,r:D.r,hp,maxhp:hp,speed:s,dmg:D.dmg,color:D.color,gem:D.gem,big:!!D.big,shape:D.shape,t:rand(0,6.28)};
+  const D=ETYPE[type], speedScale=1+Math.min(ddiff()/150,1.9), s=rand(D.spd[0],D.spd[1])*speedScale*TUNE.enemySpeed*1.12;  // 적게·강하게: 속도 ×1.12(추격감)
+  const hp=D.hp*diff*TUNE.enemyHp*1.5;   // 개체 강화: 체력 ×1.5
+  return {x,y,type,tier:D.tier,r:D.r,hp,maxhp:hp,speed:s,dmg:D.dmg*1.15,color:D.color,gem:D.gem,big:!!D.big,shape:D.shape,t:rand(0,6.28)};  // 접촉피해 ×1.15
 }
 function spawnEnemy(){
   if(enemies.length>=ENEMY_CAP) return; // 물량 상한
   const T=ddiff(), diff=(1+T/(stage===1?60:50))*(1+(stage-1)*0.18)*(1+Math.max(0,stage-7)*TUNE.hpWall), p=edgePos();
   // 티어 확률: 스테이지 오를수록 "양"보다 "정예 비중"↑
-  const eliteCh=Math.min(0.03+T/1000+(stage-1)*0.006, 0.14);
-  const midCh  =Math.min(0.14+T/320+(stage-1)*0.01, 0.42);
+  const eliteCh=Math.min(0.05+T/800+(stage-1)*0.008, 0.20);   // 정예 비중↑(상한 0.14→0.20)
+  const midCh  =Math.min(0.18+T/300+(stage-1)*0.012, 0.46);   // 중급 비중↑
   const r=Math.random(); let type;
   if(r<eliteCh){
     // 정예는 동시 소수만 (초과 시 일반으로 강등)
@@ -727,7 +729,7 @@ function spawnEnemy(){
   else { type=pick(FODDER); }
   enemies.push(makeEnemy(p.x,p.y,type,diff));
   // 잡몹은 2배로 스폰 (일반·정예는 그대로)
-  if(ETYPE[type].tier==='f' && enemies.length<ENEMY_CAP){ const q=edgePos(); enemies.push(makeEnemy(q.x,q.y,pick(FODDER),diff)); }
+  // (잡몹 2배 스폰 제거 — 물량↓·개체강화 리밸런싱)
 }
 const MAX_STAGE=100;
 let bossQueue=[], won=false, adPlaying=false, startHintT=0;
@@ -1027,10 +1029,10 @@ function update(dt){
   stageTime+=dt;
   lifestealT+=dt; if(lifestealT>=1){ lifestealT-=1; lifestealAcc=0; } // 흡혈 상한 초기화
   const T=ddiff();
-  spawnTimer-=dt; const interval=Math.max(0.16, 1.0 - T/60);
+  spawnTimer-=dt; const interval=Math.max(0.35, 1.2 - T/90);   // 스폰 간격 완화(0.16→0.35 최소, 기울기 완만)
   if(spawnTimer<=0){ spawnTimer=interval; spawnEnemy();
-    const extra=Math.floor((stage-1)*0.25 + (T>90?1:0)); // 물량은 완만히(상한 ENEMY_CAP이 실제 천장)
-    for(let i=0;i<extra;i++){ if(Math.random()<0.7) spawnEnemy(); } }
+    const extra=Math.floor((stage-1)*0.15 + (T>120?1:0)); // 추가 스폰 완화(0.25→0.15, 확률↓)
+    for(let i=0;i<extra;i++){ if(Math.random()<0.4) spawnEnemy(); } }
   // 스테이지 보스: 일정 시간 뒤 등장, 처치하면 스테이지 클리어
   if(!bossSpawned && stageTime>=STAGE_BOSS_DELAY){ buildBossQueue(); bossSpawned=true; spawnNextBoss(); }
   if(bannerT>0) bannerT-=dt;
@@ -1167,7 +1169,7 @@ function update(dt){
   if(gems.length>500) gems.splice(0, gems.length-500); // 젬 무한 누적 방지(오래된 것부터 제거) — 프레임 급락·화면밀림 예방
   particles=particles.filter(p=>p.life>0);
   if(shake>0) shake=Math.max(0,shake-dt*18);
-  if(player.hp<=0){ gameOver(); }
+  if(player.hp<=0 && state==='play'){ state='dying'; deathT=0.75; sfx.over(); shake=Math.min((shake||0)+9,12); }   // 즉시 결과창 대신 사망 연출(슬로우모션+암전)
 }
 
 // ---- Render ----
@@ -1423,6 +1425,18 @@ function render(){
 // ---- Loop ----
 function loop(ts){
   requestAnimationFrame(loop);
+  if(state==='dying'){   // 사망 연출: 0.75초 슬로우모션 + 점점 암전 + 💀 → 결과창
+    let dt=(ts-lastTs)/1000; lastTs=ts; if(dt>0.05)dt=0.05; deathT-=dt;
+    for(const p of particles){ p.x+=(p.vx||0)*dt*0.3; p.y+=(p.vy||0)*dt*0.3; p.life-=dt*0.6; }
+    if(shake>0) shake=Math.max(0,shake-dt*10);
+    render();
+    const k=1-Math.max(0,deathT)/0.75;
+    ctx.save(); ctx.fillStyle='rgba(0,0,0,'+(0.62*k).toFixed(3)+')'; ctx.fillRect(0,0,W,H);
+    ctx.globalAlpha=Math.min(1,k*1.6); ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.font='bold '+Math.round(38+46*k)+'px system-ui'; ctx.fillText('💀', W/2, H/2); ctx.restore();
+    if(deathT<=0) gameOver();
+    return;
+  }
   if(adPlaying || state!=='play'){ lastTs=ts; if(state!=='start' && state!=='tutorial') render(); return; }
   let dt=(ts-lastTs)/1000; lastTs=ts; if(dt>0.05)dt=0.05;
   { let sp=userSpeed; if(stage<catchUpStage) sp=Math.max(sp,catchUpSpeed); dt*=sp; }   // 사용자 속도 + 이전 최고 스테이지 전까진 최소 catchUpSpeed 가속
@@ -1444,7 +1458,13 @@ function gameOver(){ state='over'; sfx.over(); showBanner();
       for(let i=0;i<60;i++){ const a=rand(0,6.28),s=rand(60,340); particles.push({x:player.x,y:player.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:rand(.8,1.6),color:['#ffd25c','#ff5ce1','#5ce1ff','#fff'][i%4]}); } }
     else { ttl.textContent='GAME OVER'; ttl.style.color=''; if(es) es.style.display='none'; } }
   document.getElementById('overStats').innerHTML=`STAGE <b>${stage}</b> · ${t('goSurv')} <b>${surv}${t('sec')}</b>${rec} · ${t('hudKills')} <b>${kills}</b> · ${t('goCombo')} <b>${maxCombo}</b><br/>🏆 ${t('goBest')} ${best}${t('sec')} &nbsp;·&nbsp; 🪙 ${t('goRun')} <b>+${lastEarned}</b> (${t('goHave')} ${meta.gold})`;
-  const rb=document.getElementById('reviveBtn'); const canRevive=!won&&reviveCount<MAX_REVIVE; rb.style.display=canRevive?'block':'none'; if(canRevive) rb.textContent=t('revive')+` (${reviveCount+1}/${MAX_REVIVE})`;
+  const rb=document.getElementById('reviveBtn'); const canRevive=!won&&reviveCount<MAX_REVIVE; rb.style.display=canRevive?'block':'none';
+  if(canRevive){ rb.textContent=t('revive')+` (${reviveCount+1}/${MAX_REVIVE})`; rb.style.animation='revivePulse 1s ease-in-out infinite'; rb.style.fontSize='18px'; }
+  // 💔 "아쉽게" 카피: 최고기록에 근접하면 극대화 / 아니면 이어하기 유도
+  { const cc=document.getElementById('closeCall');
+    if(cc){ if(canRevive){ const gap=best-surv;
+        cc.textContent = (gap>0 && gap<=20) ? t('ccNearBest').replace('{n}',gap) : t('ccKeep').replace('{s}',stage);
+        cc.style.display='block'; } else cc.style.display='none'; } }
   const db=document.getElementById('dblBtn'); db.disabled=false; db.style.opacity=1; db.textContent=t('dblGold'); goldDoubled=false;
   lastRunTs=Date.now(); saveRun({stage,time:surv,kills,gold:lastEarned,ts:lastRunTs}); rankMode='gstage'; renderRank();
   // 최고기록 갱신 + 글로벌 리더보드 업로드
