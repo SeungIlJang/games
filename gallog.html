@@ -98,7 +98,7 @@
   .btn-danger { --button-edge:#e08d80;--button-top:#87433b;--button-bottom:#49252b; }
   .btn-neutral { --button-top:#2d3b58;--button-bottom:#172238; }
   .btn:active,.ranktab:active,.btn-sm:active { transform:translateY(2px);filter:brightness(1.22);box-shadow:none; }
-  .ranktab.on,.btn-sm.on { --button-edge:#8de9ff;--button-top:#286986;--button-bottom:#1b3c59;color:#f0ffff; }
+  .ranktab.on,.btn-sm.on { --button-edge:#8de9ff;--button-top:#286986;--button-bottom:#1b3c59;color:#f0ffff;background:linear-gradient(135deg,var(--button-top),var(--button-bottom));border-color:var(--button-edge); }
   .btn-sm { pointer-events:auto;font:700 12px var(--tech);padding:8px 12px; }
   .btn:focus-visible,.ranktab:focus-visible,.btn-sm:focus-visible { outline:2px solid #fff;outline-offset:-4px; }
   .field { pointer-events:auto;min-height:44px;background:#101c2d;color:#edf8ff;border:1px solid #6684a4;border-radius:0;padding:8px;font:16px var(--tech); }
@@ -236,6 +236,40 @@
     </div>
   </div>
 </div>
+<script>
+/* ── 부팅 오류 표시기 (앱 WebView 진단용) ──
+   메인 스크립트가 중간에 죽으면 시작 버튼 핸들러(아래쪽에서 연결)가 안 붙어
+   "버튼 눌러도 무반응"이 된다. 그 경우 원인을 화면에 띄운다. */
+(function(){
+  function show(msg){
+    try{
+      var d=document.getElementById('__bootErr');
+      if(!d){
+        d=document.createElement('div'); d.id='__bootErr';
+        d.style.cssText='position:fixed;left:0;right:0;top:0;z-index:99999;background:#7a0010;color:#fff;'
+          +'font:12px/1.5 ui-monospace,monospace;padding:10px 12px;white-space:pre-wrap;word-break:break-all;'
+          +'max-height:60vh;overflow:auto;pointer-events:auto';
+        (document.body||document.documentElement).appendChild(d);
+      }
+      d.textContent='[BOOT ERROR]\n'+msg;
+    }catch(e){}
+  }
+  window.addEventListener('error', function(ev){
+    show((ev.message||'error')+'\n@ '+((ev.filename||'').split('/').pop())+':'+(ev.lineno||'')+':'+(ev.colno||'')
+      +'\n'+(((ev.error||{}).stack)||''));
+  }, true);
+  window.addEventListener('unhandledrejection', function(ev){
+    var r=ev.reason||{}; show('unhandledrejection: '+(r.stack||r.message||String(ev.reason)));
+  });
+  /* 시작 버튼 방어: 메인 스크립트가 죽어 onclick이 안 붙어도 위임 클릭으로 받아낸다 */
+  document.addEventListener('click', function(ev){
+    var b=ev.target && ev.target.closest && ev.target.closest('#startBtn,#tutStartBtn');
+    if(!b || b.onclick) return;
+    if(typeof beginOrTutorial==='function'){ try{ beginOrTutorial(); }catch(e){ show('beginOrTutorial: '+(e.stack||e)); } }
+    else show('핸들러 미연결 — 메인 스크립트가 끝까지 실행되지 않았습니다.\n위 [BOOT ERROR] 내용을 확인하세요.');
+  }, true);
+})();
+</script>
 <script>
 const cv = document.getElementById('game');
 const ctx = cv.getContext('2d');
@@ -2238,13 +2272,14 @@ const iconGroups={
  medal1:'🥇 👑',medal2:'🥈',medal3:'🥉',lock:'🔒',check:'✓',star:'★ ✵ ✷ ✺ 💫 🌠',pause:'⏸',video:'🎬 📺',skull:'💀 ☠',home:'🏠',play:'▶',fast:'⏩',gem:'💎 💠',alert:'⚠ 😱',hand:'👆',up:'⬆',globe:'🌍 🗾',weapon:'🔫',phone:'📱',tool:'🛠 ⚙',sprout:'🌱 🍃',shield:'🛡 🔰 🏰',heart:'❤ 💖 💗 💔',coin:'🪙 💰',mountain:'🪨 ⛰ 🗿 🏔',moon:'🌑 🌚 🌘 🕳',mask:'😈 👿 👹 🧛 🥷 🃏',person:'👤 💃 🧚',wind:'🌪',flag:'🏴‍☠',target:'🎯 🔭',eye:'🐺 🦁 🐍',blackhole:'🔮',spirits:'🌈',flame:'🟥',nova:'🟪',santoryu:'🔱'
 };
 for(const [key,chars]of Object.entries(iconGroups))for(const ch of chars.split(' '))emojiKeys[ch]=key;
+Object.assign(emojiKeys,{'🏆':'trophy','☄':'orbit'});
 const unmappedIcons=new Set();
 function vectorizeMenus(root){
  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),nodes=[];let n;
  while(n=walker.nextNode())if(!n.parentElement.closest('svg,script,style,textarea,input'))nodes.push(n);
  for(const node of nodes){const re=/[\p{Extended_Pictographic}\u2600-\u27bf](?:\uFE0F|\u200D[\p{Extended_Pictographic}]\uFE0F?)*/gu;const value=node.nodeValue;let match,last=0,frag=null;
   while(match=re.exec(value)){if(!frag)frag=document.createDocumentFragment();frag.append(document.createTextNode(value.slice(last,match.index)));const ch=match[0].replace(/\uFE0F/g,''),span=document.createElement('span');const key=emojiKeys[ch];if(!key||!WICON[key]){frag.append(document.createTextNode(match[0]));last=re.lastIndex;if(!unmappedIcons.has(ch)){unmappedIcons.add(ch);if(['localhost','127.0.0.1'].includes(location.hostname))console.warn('Unmapped UI icon:',ch);}continue;}span.className='ui-icon';span.dataset.icon=key;span.innerHTML=weaponIcon(key);frag.append(span);last=re.lastIndex;}
-  if(frag){frag.append(document.createTextNode(value.slice(last)));node.replaceWith(frag);}
+  if(frag){frag.append(document.createTextNode(value.slice(last)));if(frag.querySelector('svg'))node.replaceWith(frag);}
  }
 }
 vectorizeMenus(document.getElementById('ui'));
