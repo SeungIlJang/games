@@ -730,7 +730,7 @@ function metaPower(){ return Object.values(meta.lvls).reduce((a,b)=>a+b,0); }
 let cam={x:0,y:0};   // 카메라(무한 필드, 플레이어 추적)
 function reset(){
   player = { x:W/2, y:H/2, r:14, hp:100, maxhp:100,
-    speed:210, fireRate:2.2, dmg:15, bulletSpeed:430, range:280,
+    speed:105, fireRate:2.2, dmg:15, bulletSpeed:430, range:280,
     pierce:0, level:1, xp:0, xpNeed:5, magnet:90, lifesteal:0,
     weapons:{ bolt:1 }, timers:{ bolt:0 }, orbs:[], novas:[], blades:[], holes:[], slashFx:[], flames:[], zaps:[], orbAngle:0, evolved:{},
     awakened:false, awakenAt:TUNE.awakenStart, awakenCount:0, dmgReduce:1, sigCd:0, cls:'hero', baseCls:'hero', invuln:0 };
@@ -792,7 +792,7 @@ function edgePos(){ // 무한 필드: 플레이어 주변, 화면 밖 링에서 
   const ang=rand(0,6.283), rad=Math.hypot(W,H)/2 + rand(30,120);
   return { x: player.x+Math.cos(ang)*rad, y: player.y+Math.sin(ang)*rad }; }
 function makeEnemy(x,y,type,diff){
-  const D=ETYPE[type], speedScale=1+Math.min(ddiff()/150,1.9), s=rand(D.spd[0],D.spd[1])*speedScale*TUNE.enemySpeed;  // 속도 원복(개편 전 수준)
+  const D=ETYPE[type], speedScale=1+Math.min(ddiff()/150,1.9), s=rand(D.spd[0],D.spd[1])*speedScale*TUNE.enemySpeed*0.5;  // 일반 적 속도 ×0.5(피할 공간 — 보스는 makeBoss로 별도라 영향 없음)
   const hp=D.hp*diff*TUNE.enemyHp;   // 체력 원복(개편 전 수준)
   return {x,y,type,tier:D.tier,r:D.r,hp,maxhp:hp,speed:s,dmg:D.dmg,color:D.color,gem:D.gem,big:!!D.big,shape:D.shape,t:rand(0,6.28)};  // 접촉피해 원복
 }
@@ -846,7 +846,7 @@ function makeBoss(spec){
   const p=edgePos(), e=makeEnemy(p.x,p.y,'tank',1);
   e.type='boss'; e.boss=true; e.big=true; e.r=mile?58:46;
   const bp=(TUNE.bossPow!=null?TUNE.bossPow:1);
-  e.hp=e.maxhp=(140+stage*95)*(1+stage*0.05)*hpMul*TUNE.enemyHp*bp;
+  e.hp=e.maxhp=(140+stage*95)*(1+stage*0.05)*hpMul*TUNE.enemyHp*bp*3;   // 보스 HP ×3(너무 빨리 죽던 것 보강)
   e.speed=(38+stage*1.5)*(mile?0.92:1)*TUNE.enemySpeed;
   e.dmg=(18+stage*2.4)*(mile?1.5:1)*bp;
   e.gem=0; e.bossKind=spec.k; e.abilityCd=mile?2:3; e.dashT=0; e.spin=0;
