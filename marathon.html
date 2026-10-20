@@ -10,7 +10,7 @@
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;}
   html,body{margin:0;height:100%;overflow:hidden;background:#8fd0ff;color:var(--txt);touch-action:none;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Malgun Gothic",sans-serif;}
-  #scene{position:fixed;inset:0;width:100%;height:100%;display:block;}
+  #scene{position:fixed;left:0;top:0;width:100%;height:100%;display:block;}
   #laneBtns{position:fixed;left:12px;bottom:calc(env(safe-area-inset-bottom) + 14px);display:none;flex-direction:column;gap:10px;z-index:3;}
   .lb{width:62px;height:58px;border-radius:18px;border:3px solid #ffffffcc;background:#2b3a4acc;color:#fff;font-size:26px;font-weight:900;
     display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px #0003;}
@@ -118,7 +118,7 @@
 <div class="ov" id="title">
   <h1 style="font-size:34px">🏃 모두의 마라톤</h1>
   <p>오늘은 어떻게 달려볼까요?</p>
-  <div style="font-size:11px;opacity:.6;margin-top:-4px">v3.3 · 광고(배너·전면·리워드) 추가</div>
+  <div style="font-size:11px;opacity:.6;margin-top:-4px">v3.4 · 배너가 버튼 안 가리게 레이아웃 보정</div>
   <div class="modes">
     <div class="mode" id="modeRhythm"><b class="mi">🎵</b><b>리듬 런</b><small>음악 비트에 맞춰 왼발·오른발!<br>홀드로 언덕을 넘고, 동시 탭으로 점프하는 리듬 게임</small></div>
     <div class="mode" id="modeRace"><b class="mi">🏁</b><b>레이스</b><small>10명과 겨루는 전략 마라톤<br>드래프팅·급수·젤로 월드 메이저 정복</small></div>
@@ -282,8 +282,9 @@ const RIVALS=[
 const $=id=>document.getElementById(id);
 const cvs=$("scene"), ctx=cvs.getContext("2d");
 let W=0,H=0,DPR=1,PX=2;
-function resize(){ DPR=Math.min(2,window.devicePixelRatio||1); W=innerWidth; H=innerHeight;
-  cvs.width=W*DPR; cvs.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); PX=Math.max(1.6,Math.min(3,W/200)); }
+let AD_BANNER_H=0; // 하단 AdMob 배너 높이(px). 배너 뜨면 캔버스/게임영역을 그만큼 위로 줄여 버튼 안 가리게.
+function resize(){ DPR=Math.min(2,window.devicePixelRatio||1); W=innerWidth; H=Math.max(200, innerHeight - AD_BANNER_H);
+  cvs.style.height=H+'px'; cvs.width=W*DPR; cvs.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); PX=Math.max(1.6,Math.min(3,W/200)); }
 addEventListener("resize",resize); resize();
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 // 📱 안전영역(노치·상태바·제스처바): Capacitor 8 SystemBars의 --safe-area-inset-* 또는 env()
@@ -1388,7 +1389,14 @@ let admobReady=false, bannerShown=false, interCount=0;
 function admob(){ const C=window.Capacitor; return (C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.AdMob)?C.Plugins.AdMob:null; }
 function adSafeBottom(){ try{ const p=document.createElement('div'); p.style.cssText='position:fixed;left:0;bottom:0;width:0;height:env(safe-area-inset-bottom,0px);visibility:hidden;pointer-events:none'; document.body.appendChild(p); const h=Math.round(p.getBoundingClientRect().height); p.remove(); return h; }catch(e){ return 0; } }
 (async function(){ const A=admob(); if(!A) return; try{ await A.initialize({initializeForTesting:AD_USE_TEST}); admobReady=true; adBanner(); }catch(e){} })();
-async function adBanner(){ const A=admob(); if(!A||bannerShown) return; bannerShown=true; try{ await A.showBanner({adId:AD_BANNER,adSize:'ADAPTIVE_BANNER',position:'BOTTOM_CENTER',margin:adSafeBottom(),isTesting:AD_USE_TEST}); }catch(e){ bannerShown=false; } }
+function adSetBannerH(h){ const nh=Math.max(0,Math.round(h||0)); if(nh!==AD_BANNER_H){ AD_BANNER_H=nh; resize(); } }
+async function adBanner(){ const A=admob(); if(!A||bannerShown) return; bannerShown=true;
+  // 배너 실제 높이를 받아 게임영역을 줄임(버튼 가림 방지). 이벤트 못 받으면 추정치 사용.
+  try{ A.addListener&&A.addListener('bannerAdSizeChanged', s=>{ const h=(s&&(s.height!=null?s.height:s.size&&s.size.height))||0; adSetBannerH(h?(h+adSafeBottom()):0); }); }catch(e){}
+  try{ await A.showBanner({adId:AD_BANNER,adSize:'ADAPTIVE_BANNER',position:'BOTTOM_CENTER',margin:0,isTesting:AD_USE_TEST});
+       // 이벤트가 안 와도 최소 공간 확보(적응형 배너 ≈ 50~60dp + 안전영역)
+       setTimeout(()=>{ if(AD_BANNER_H<40) adSetBannerH(56+adSafeBottom()); }, 600);
+  }catch(e){ bannerShown=false; } }
 async function adInterstitial(){ const A=admob(); if(!(admobReady&&A)) return; try{ await A.prepareInterstitial({adId:AD_INTER,isTesting:AD_USE_TEST}); await A.showInterstitial(); }catch(e){} }
 // 게임오버 때 광고 자주 안 뜨게 3판마다 1회
 function adMaybeInter(){ interCount++; if(interCount%3===0) adInterstitial(); }
