@@ -1,0 +1,50 @@
+{
+  "tiers": [
+    {
+      "tier": 0,
+      "level": 1,
+      "nozzles": 1
+    },
+    {
+      "tier": 1,
+      "level": 4,
+      "nozzles": 2
+    },
+    {
+      "tier": 2,
+      "level": 7,
+      "nozzles": 2
+    },
+    {
+      "tier": 3,
+      "level": 10,
+      "nozzles": 2
+    },
+    {
+      "tier": 4,
+      "level": 14,
+      "nozzles": 3
+    },
+    {
+      "tier": 5,
+      "level": 18,
+      "nozzles": 3
+    },
+    {
+      "tier": 6,
+      "level": 23,
+      "nozzles": 4
+    },
+    {
+      "tier": 7,
+      "level": 29,
+      "nozzles": 4
+    }
+  ],
+  "errors": [],
+  "onlyShipRendererChanged": true,
+  "bytes": {
+    "before": 218471,
+    "after": 214649
+  }
+}

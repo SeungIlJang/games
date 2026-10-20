@@ -285,6 +285,13 @@ function resize(){ DPR=Math.min(2,window.devicePixelRatio||1); W=innerWidth; H=i
   cvs.width=W*DPR; cvs.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); PX=Math.max(1.6,Math.min(3,W/200)); }
 addEventListener("resize",resize); resize();
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+// 📱 안전영역(노치·상태바·제스처바): Capacitor 8 SystemBars의 --safe-area-inset-* 또는 env()
+const SAI={t:0,b:0}; const _pr=[document.createElement('div'),document.createElement('div')];
+_pr[0].style.cssText='position:fixed;left:0;top:0;width:0;visibility:hidden;pointer-events:none;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)';
+_pr[1].style.cssText='position:fixed;left:0;top:0;width:0;visibility:hidden;pointer-events:none;padding-top:var(--safe-area-inset-top,0px);padding-bottom:var(--safe-area-inset-bottom,0px)';
+_pr.forEach(e=>document.body.appendChild(e));
+function readSAI(){ const a=_pr.map(e=>getComputedStyle(e)); SAI.t=Math.max(parseFloat(a[0].paddingTop)||0,parseFloat(a[1].paddingTop)||0); SAI.b=Math.max(parseFloat(a[0].paddingBottom)||0,parseFloat(a[1].paddingBottom)||0); }
+readSAI(); addEventListener('resize',readSAI); setTimeout(readSAI,500); setTimeout(readSAI,2000);
 const rand=(a,b)=>a+Math.random()*(b-a);
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 const store={ get:(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:v;}catch(e){return d;}}, set:(k,v)=>{try{localStorage.setItem(k,String(v));}catch(e){}} };
@@ -761,7 +768,7 @@ function render(){
 }
 
 function hud(p,wall,kick){
-  const top=10;
+  const top=10+SAI.t;
   const rk=state==='done'?finalRank:rank();
   ctx.textAlign="left"; ctx.font="900 34px sans-serif"; ctx.fillStyle=rk===1?"#e23c5a":rk<=3?"#ff7a2f":"#2b3a4a";
   ctx.strokeStyle="#fff"; ctx.lineWidth=5; ctx.strokeText(rk+"위",14,top+32); ctx.fillText(rk+"위",14,top+32);
@@ -966,7 +973,7 @@ function showMenu(){ mode='race'; state='menu'; slowmo=false; bgmOn=false; $("pa
   course=COURSES[selIdx]; weather='clear'; renderCourses(); renderMedals(); renderDaily();
   const total=COURSES.reduce((a,c)=>a+starsOf(c.id),0);
   $("howBox").style.display=total>0?"none":"grid";
-  $("menuMeta").innerHTML="🪙 "+coins+" · ⭐ "+total+"/"+(COURSES.length*3)+'<div style="font-size:11px;color:#8aa0b4;font-weight:400">v3.1 · 레이스</div>'; }
+  $("menuMeta").innerHTML="🪙 "+coins+" · ⭐ "+total+"/"+(COURSES.length*3)+'<div style="font-size:11px;color:#8aa0b4;font-weight:400">v3.2 · 레이스</div>'; }
 $("startBtn").addEventListener("click",()=>startRace(false));
 $("dailyBtn").addEventListener("click",()=>startRace(true));
 $("againBtn").addEventListener("click",()=>startRace(daily));
@@ -1165,12 +1172,14 @@ function rRender(){
   // HUD
   const p=clamp(now/rs.endT,0,1);
   ctx.textAlign="left"; ctx.font="900 15px sans-serif"; ctx.fillStyle="#2b3a4a"; ctx.lineWidth=4; ctx.strokeStyle="#fff";
+  ctx.save(); ctx.translate(0,SAI.t);
   ctx.strokeText(song.ic+" "+song.n,14,28); ctx.fillText(song.ic+" "+song.n,14,28);
   ctx.textAlign="right"; ctx.font="900 20px sans-serif"; ctx.strokeText(rs.score.toLocaleString(),W-14,28); ctx.fillText(rs.score.toLocaleString(),W-14,28);
   const bx=14,bw=W-28; ctx.fillStyle="#ffffffaa"; rr(bx,40,bw,8,4); ctx.fill(); ctx.fillStyle="#ff6f9c"; rr(bx,40,bw*p,8,4); ctx.fill();
   ctx.font="bold 12px sans-serif"; ctx.textAlign="left"; ctx.fillStyle="#2b3a4a"; ctx.fillText((p*song.km).toFixed(1)+" / "+song.km+"km",bx,64);
   ctx.textAlign="right"; ctx.fillText("체력",bx+bw-108,64); ctx.fillStyle="#ffffffaa"; rr(bx+bw-100,55,100,10,5); ctx.fill();
   ctx.fillStyle=rs.hp>50?"#3fca6b":rs.hp>25?"#ffab2e":"#ff5d6c"; rr(bx+bw-100,55,rs.hp,10,5); ctx.fill();
+  ctx.restore();   // 안전영역 오프셋 종료
   // 카운트인
   const first=rs.notes.length?rs.notes[0].t:0;
   if(now<first&&rs.state==='play'){ const left=Math.ceil((first-now)/beat); ctx.textAlign="center"; ctx.lineWidth=7; ctx.strokeStyle="#fff";
@@ -1231,7 +1240,7 @@ function hideAll(){ ["title","menu","rmenu","rresult","result","train","cert","p
   $("laneBtns").style.display="none"; $("gelBtn").style.display="none"; $("pauseBtn").style.display="none"; }
 function showTitle(){ if(rs&&rs.clock==='audio'&&actx&&actx.state==='suspended') actx.resume(); mode='title'; state='menu'; slowmo=false; bgmOn=false; rs=null; hideAll(); $("title").style.display="flex";
   const raceStar=COURSES.reduce((a,c)=>a+starsOf(c.id),0), rStar=SONGS.reduce((a,s)=>a+rStars(s.id),0);
-  $("titleMeta").innerHTML="🪙 "+coins+" &nbsp;·&nbsp; 🎵 ⭐"+rStar+"/"+(SONGS.length*3)+" &nbsp;·&nbsp; 🏁 ⭐"+raceStar+"/"+(COURSES.length*3)+'<div style="font-size:11px;color:#8aa0b4;font-weight:400;margin-top:4px">v3.1 · 리듬 런 + 레이스</div>'; }
+  $("titleMeta").innerHTML="🪙 "+coins+" &nbsp;·&nbsp; 🎵 ⭐"+rStar+"/"+(SONGS.length*3)+" &nbsp;·&nbsp; 🏁 ⭐"+raceStar+"/"+(COURSES.length*3)+'<div style="font-size:11px;color:#8aa0b4;font-weight:400;margin-top:4px">v3.2 · 리듬 런 + 레이스</div>'; }
 function showRMenu(){ mode='rmenu'; state='menu'; rs=null; hideAll(); $("rmenu").style.display="flex"; if(!rUnlocked(rSel))rSel=0; renderSongs(); }
 function renderSongs(){
   $("songs").innerHTML=SONGS.map((s,i)=>{ const lk=!rUnlocked(i), st=rStars(s.id), best=parseInt(store.get('mv2_rbest_'+s.id,'0'))||0, rk=store.get('mv2_rrank_'+s.id,'');
@@ -1342,6 +1351,24 @@ $("setSpd").addEventListener("click",()=>{ const o=[1,1.25,1.5,0.8]; rSpd=o[(o.i
 $("setReset").addEventListener("click",()=>{ if(!confirm("모든 기록·코인·업적·해금이 지워집니다. 정말 초기화할까요?"))return;
   Object.keys(localStorage).filter(k=>k.startsWith('mv2_')).forEach(k=>localStorage.removeItem(k)); location.reload(); });
 
+
+// 📱 안드로이드 뒤로가기 (Capacitor App 플러그인) — 플레이 중엔 일시정지, 화면은 한 단계씩, 처음 화면에선 두 번 눌러 종료
+let lastBack=0;
+function vis(id){ return $(id).style.display!=="none"; }
+function onBack(){
+  if(vis("cert")){ $("cert").style.display="none"; return; }
+  if(vis("pause")){ if(mode==="rhythm")rResume(); else resumeGame(); return; }
+  if(mode==='rhythm'&&rs&&(rs.state==='play'||rs.state==='resuming')){ rPause(); return; }
+  if(mode==='race'&&(state==='race'||state==='count')){ pauseGame(); return; }
+  if(vis("rresult")){ showRMenu(); return; }
+  if(vis("result")||vis("train")){ showMenu(); return; }
+  if(vis("menu")||vis("rmenu")||vis("achv")||vis("shop")||vis("settings")){ showTitle(); return; }
+  if(Date.now()-lastBack<2000){ const A=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.App; if(A&&A.exitApp)A.exitApp(); return; }
+  lastBack=Date.now(); const el=$("toast"); el.innerHTML='<b>👋</b><span>한 번 더 누르면 종료돼요</span>'; el.classList.add('on'); setTimeout(()=>el.classList.remove('on'),1600);
+}
+try{ const A=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.App; if(A&&A.addListener) A.addListener('backButton',onBack); }catch(e){}
+addEventListener('keydown',e=>{ if(e.code==='Backspace'&&!(e.target&&e.target.tagName==='INPUT')){ e.preventDefault(); onBack(); } });   // PC 테스트용
+
 // ================= 루프 =================
 let last=performance.now();
 function loop(t){ let dt=Math.min(0.05,(t-last)/1000); last=t;
@@ -1351,7 +1378,7 @@ function loop(t){ let dt=Math.min(0.05,(t-last)/1000); last=t;
 newRace(); showTitle(); requestAnimationFrame(loop);
 // 디버그/밸런스 테스트용 훅
 window.__mv2={ get P(){return P;}, get R(){return R;}, get state(){return state;}, get st(){return st;}, start:startRace, setHold:v=>{keyHold=v;},
-  lane:changeLane, gel:useGel, rank, step:dt=>update(dt), get rank0(){return finalRank;}, course:i=>{selIdx=i;course=COURSES[i];}, setUp:(id,l)=>store.set('mv2_up_'+id,l), daily:()=>startRace(true), get coins(){return coins;}, pause:pauseGame, resume:resumeGame, cert:openCert, rstart:(i,sim)=>rStart(i,sim!==false), rstep:dt=>rUpdate(dt), rpress:l=>rPress(l), rrel:l=>rRelease(l), get rs(){return rs;}, title:()=>showTitle(), grade:()=>gradeAt(P.pos) };
+  lane:changeLane, gel:useGel, rank, step:dt=>update(dt), get rank0(){return finalRank;}, course:i=>{selIdx=i;course=COURSES[i];}, setUp:(id,l)=>store.set('mv2_up_'+id,l), daily:()=>startRace(true), get coins(){return coins;}, pause:pauseGame, resume:resumeGame, cert:openCert, back:()=>onBack(), rstart:(i,sim)=>rStart(i,sim!==false), rstep:dt=>rUpdate(dt), rpress:l=>rPress(l), rrel:l=>rRelease(l), get rs(){return rs;}, title:()=>showTitle(), grade:()=>gradeAt(P.pos) };
 })();
 </script>
 </body>
