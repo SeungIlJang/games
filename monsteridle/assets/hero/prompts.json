@@ -1,0 +1,122 @@
+{
+  "common": {
+    "style": "2D mobile idle RPG character sprite, cute chibi, thick clean dark outline, flat cel shading with one soft highlight, high saturation, readable at small size",
+    "silhouette": "Simple bold silhouette recognizable at 60px tall. Big simple eyes. Identity comes from ONE strong element — the helmet, the hat, the hood, the weapon — not from fine detail. Each of the eight must be distinguishable from the others by silhouette alone.",
+    "attitude": "A human adventurer who thinks they are the hero of this story. Confident, a little smug, never frightening. This is the ENEMY the player fights, so it should read as 'punchable' rather than 'scary'.",
+    "facing": "Facing the viewer in a slight 3/4 turn toward the viewer's LEFT (these characters face the player's party, which stands on the left). Full body, feet on an invisible ground line at the bottom edge.",
+    "composition": "Single character, centered, filling about 80% of the frame height. Square frame. Fully transparent background — no ground shadow, no platform, no backdrop.",
+    "constraints": "No text, no letters, no numbers, no UI, no frame, no border, no watermark. No blood, no gore. Weapons are stylised and chunky, never pointed at the viewer.",
+    "negative": "monster, slime, text, letters, numbers, UI, HUD, frame, border, watermark, background, scenery, ground shadow, platform, multiple characters, photorealistic, gore, horror, grimdark, dull desaturated colors, busy tiny details, pixel art, dithering"
+  },
+  "poses": [
+    {
+      "key": "idle",
+      "add": "standing at ease, weapon lowered, calm confident expression"
+    },
+    {
+      "key": "attack",
+      "add": "lunging forward to the viewer's LEFT in mid-attack, body stretched toward the left target, weapon driven forward"
+    },
+    {
+      "key": "hit",
+      "add": "recoiling to the viewer's RIGHT, body squashed and leaning away, eyes squeezed shut, weapon dropping"
+    },
+    {
+      "key": "dead",
+      "add": "collapsed flat on the ground, limbs limp, eyes as closed curved lines, defeated but comical not gruesome"
+    }
+  ],
+  "heroes": [
+    {
+      "key": "warrior",
+      "name": "카엘",
+      "full": "Kael Ironblade",
+      "scene": "a young swordsman with messy brown hair, red scarf and a deep blue tunic with gold trim, a short broad sword held low, open confident grin, the most 'classic hero' looking of the eight"
+    },
+    {
+      "key": "knight",
+      "name": "알드릭",
+      "full": "Aldric Aegis",
+      "scene": "a stout knight in polished silver plate armour, closed helm with a tall blue plume, a large kite shield with a gold cross, stubby and heavy, immovable stance"
+    },
+    {
+      "key": "rogue",
+      "name": "사일러스",
+      "full": "Sylas Nightveil",
+      "scene": "a slim rogue in a deep green hood that shadows the upper face, white hair showing beneath, dark leather with belt buckles, two small daggers held reversed, sly half-smile"
+    },
+    {
+      "key": "mage",
+      "name": "라이라",
+      "full": "Lyra Arcanis",
+      "scene": "a small witch with long pink hair under an oversized pointed purple hat, purple robe with gold trim, a wooden staff topped with a glowing violet gem, smug half-lidded eyes"
+    },
+    {
+      "key": "cleric",
+      "name": "엘리라",
+      "full": "Elira Dawnlight",
+      "scene": "a blonde cleric in a white and blue habit with a tall white hat marked with a blue cross, holding a golden cross-topped staff, serene closed-eye smile, soft warm glow"
+    },
+    {
+      "key": "archer",
+      "name": "리나",
+      "full": "Rina Windarrow",
+      "scene": "an orange-haired archer with a high ponytail, green hunting leathers and a brown quiver, a short recurve bow held across the body, one eye winking, light and quick"
+    },
+    {
+      "key": "emage",
+      "name": "테라",
+      "full": "Terra Stoneheart",
+      "scene": "an earth mage in layered mossy green and brown robes, short dark hair with a leaf circlet, a gnarled wooden staff with a raw amber stone, calm and rooted, small floating pebbles beside the staff"
+    },
+    {
+      "key": "dmage",
+      "name": "닉스",
+      "full": "Nyx Shadowveil",
+      "scene": "a dark mage in a black and deep-violet robe with a wide hat brim hiding the eyes, pale lavender hair, a crooked staff with a dark crystal, wisps of shadow at the hem, the most ominous of the eight but still cute"
+    }
+  ],
+  "promptTemplate": "Use case: stylized-concept. Asset: production transparent sprite sheet for 2D mobile idle RPG. Square 2048x2048 sheet, exact 2 by 2 equal square cells, NO visible grid, no labels. Render the SAME character — {item.scene} — in four poses in ONE image, consistent identity, palette, volume, outline and light source across all cells. Top-left idle: {pose.idle}. Top-right attack: {pose.attack}. Bottom-left hit: {pose.hit}. Bottom-right dead: {pose.dead}. {common.style}. {common.silhouette} {common.attitude} {common.facing} Each pose entirely inside its own cell with ample transparent margin, same implied floor baseline at 85% down each cell, consistent body mass. {common.composition} {common.constraints}",
+  "generated": [
+    {
+      "key": "warrior",
+      "date": "2026-10-21",
+      "note": "4포즈 한 시트, 왼쪽 보기. dmage 는 재생성함."
+    },
+    {
+      "key": "knight",
+      "date": "2026-10-21",
+      "note": "4포즈 한 시트, 왼쪽 보기. dmage 는 재생성함."
+    },
+    {
+      "key": "rogue",
+      "date": "2026-10-21",
+      "note": "4포즈 한 시트, 왼쪽 보기. dmage 는 재생성함."
+    },
+    {
+      "key": "mage",
+      "date": "2026-10-21",
+      "note": "4포즈 한 시트, 왼쪽 보기. dmage 는 재생성함."
+    },
+    {
+      "key": "cleric",
+      "date": "2026-10-21",
+      "note": "4포즈 한 시트, 왼쪽 보기. dmage 는 재생성함."
+    },
+    {
+      "key": "archer",
+      "date": "2026-10-21",
+      "note": "4포즈 한 시트, 왼쪽 보기. dmage 는 재생성함."
+    },
+    {
+      "key": "emage",
+      "date": "2026-10-21",
+      "note": "4포즈 한 시트, 왼쪽 보기. dmage 는 재생성함."
+    },
+    {
+      "key": "dmage",
+      "date": "2026-10-21",
+      "note": "4포즈 한 시트, 왼쪽 보기. dmage 는 재생성함."
+    }
+  ]
+}
