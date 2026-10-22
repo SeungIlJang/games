@@ -3,3 +3,6 @@
 .design-review/
 .enemy-review/
 .weapon-review/
+
+# 납품 원본(풀사이즈)은 images/number/ 와 number-app/assets/ 에 보관 — 배포 저장소에는 축소본(ui/)만 올린다
+img/number/neon-v2/

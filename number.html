@@ -115,6 +115,7 @@
   /* 도움말 */
   #help{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,10,22,.95);gap:8px;padding:26px;text-align:left;z-index:13}
   #help h1{font-size:28px;align-self:center}
+  .art{vertical-align:middle;object-fit:contain;display:inline-block;flex:0 0 auto}
   #help .hrow{font-size:15.5px;line-height:1.65;max-width:330px;color:#cfe}
   #help b{color:#7cf6ff}
 </style></head>
@@ -154,7 +155,7 @@
     <button class="btn" id="helpBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:10px 16px;font-size:15px">📖 방법</button>
   </div>
   <div id="dailyBox"></div>
-  <div id="changelog">🆕 <b id="clVer">v2.0</b> · <span id="clNote"><b>랭크 승급</b>·<b>일일 미션</b>·<b>부스터</b> 추가 · <b>🔗 체인 목표</b>로 후반 재미 강화</span></div>
+  <div id="changelog">🆕 <b id="clVer">v2.1</b> · <span id="clNote"><b>랭크 엠블럼 7종</b>·<b>부스터 아이콘</b> 전용 아트 적용 · 새 앱 아이콘</span></div>
 </div>
 
 <div id="help" class="hidden">
@@ -205,7 +206,7 @@
   <div id="shopList"></div>
   <button class="btn" id="shopClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v2.0 · 랭크·일일미션·부스터·체인 목표</div>
+<div id="ver">v2.1 · 랭크 엠블럼·부스터 전용 아트 적용</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -406,7 +407,7 @@ function renderShop(){
 function renderBoostShop(){ const box=$('shopList');
   box.innerHTML='<div class="sub" style="font-size:12.5px;opacity:.7;margin-bottom:4px">사면 보유하고, 시작 화면에서 <b>장착</b>한 것만 그 판에 소모돼요</div>'
     + BOOSTS.map(B=>{ const n=bst[B.id]||0;
-      return '<div class="boostrow"><span class="bi">'+B.i+'</span><span class="bn">'+B.n+(n?' <span style="color:#5cffb0">×'+n+'</span>':'')+'<div class="bd">'+B.d+'</div></span>'
+      return '<div class="boostrow"><span class="bi">'+art('boost_'+B.id,B.i,34)+'</span><span class="bn">'+B.n+(n?' <span style="color:#5cffb0">×'+n+'</span>':'')+'<div class="bd">'+B.d+'</div></span>'
         + (coins>=B.cost? '<button class="sbtn buyb" data-id="'+B.id+'">💰 '+B.cost+'</button>' : '<span style="color:#5a6684">🔒 '+B.cost+'</span>')+'</div>'; }).join('');
   box.querySelectorAll('.sbtn.buyb').forEach(b=>b.onclick=()=>{ const B=BOOSTS.find(x=>x.id===b.dataset.id);
     if(coins<B.cost) return; coins-=B.cost; bst[B.id]=(bst[B.id]||0)+1; eqb[B.id]=true; saveBoost(); saveCoins(); renderShop(); renderBoostRow();
@@ -428,30 +429,34 @@ applyTheme(curTheme); renderCoins();
 // ───────────────── 🏅 랭크 (누적 점수로 영구 승급) ─────────────────
 let total=+(localStorage.getItem('num_total')||0), totalCommitted=0;
 const RANKS=[
-  {n:'브론즈',      i:'🥉', at:0,      c:'#c88a5a'},
-  {n:'실버',        i:'🥈', at:3000,   c:'#cfd8e3'},
-  {n:'골드',        i:'🥇', at:10000,  c:'#ffd34d'},
-  {n:'플래티넘',    i:'💎', at:25000,  c:'#7cf6ff'},
-  {n:'다이아',      i:'🔷', at:60000,  c:'#5c9dff'},
-  {n:'마스터',      i:'👑', at:120000, c:'#c9a3ff'},
-  {n:'그랜드마스터',i:'🌟', at:250000, c:'#ff6ea8'},
+  {n:'브론즈',      i:'🥉', at:0,      c:'#c88a5a', f:'rank_1_bronze'},
+  {n:'실버',        i:'🥈', at:3000,   c:'#cfd8e3', f:'rank_2_silver'},
+  {n:'골드',        i:'🥇', at:10000,  c:'#ffd34d', f:'rank_3_gold'},
+  {n:'플래티넘',    i:'💎', at:25000,  c:'#7cf6ff', f:'rank_4_platinum'},
+  {n:'다이아',      i:'🔷', at:60000,  c:'#5c9dff', f:'rank_5_diamond'},
+  {n:'마스터',      i:'👑', at:120000, c:'#c9a3ff', f:'rank_6_master'},
+  {n:'그랜드마스터',i:'🌟', at:250000, c:'#ff6ea8', f:'rank_7_grandmaster'},
 ];
+// 아트 이미지 — 못 불러오면(구버전 APK·오프라인) 원래 이모지로 자동 대체
+const ART='img/number/ui/';
+function art(file,emoji,px){ return '<img class="art" src="'+ART+file+'.png" alt="" width="'+px+'" height="'+px+'" data-fb="'+emoji+'" onerror="this.replaceWith(document.createTextNode(this.dataset.fb))">'; }
+const rankArt=(i,px)=>art(RANKS[i].f, RANKS[i].i, px);
 function rankIdx(t){ let i=0; for(let k=0;k<RANKS.length;k++) if(t>=RANKS[k].at) i=k; return i; }
 function renderRankCard(){
   const i=rankIdx(total), R=RANKS[i], N=RANKS[i+1];
-  const nm=$('rankName'); if(nm){ nm.textContent=R.i+' '+R.n; nm.style.color=R.c; }
+  const nm=$('rankName'); if(nm){ nm.innerHTML=rankArt(i,34)+' <span style="vertical-align:middle">'+R.n+'</span>'; nm.style.color=R.c; }
   const pt=$('rankPts'); if(pt) pt.textContent='누적 '+total.toLocaleString()+'점';
   const f=$('rankFill'), s=$('rankSub');
   if(N){ const p=Math.max(0,Math.min(100,(total-R.at)/(N.at-R.at)*100));
     if(f) f.style.width=p.toFixed(1)+'%';
-    if(s) s.innerHTML='다음 <b style="color:'+N.c+'">'+N.i+' '+N.n+'</b>까지 <b>'+(N.at-total).toLocaleString()+'</b>점';
+    if(s) s.innerHTML='다음 '+rankArt(i+1,20)+' <b style="color:'+N.c+'">'+N.n+'</b>까지 <b>'+(N.at-total).toLocaleString()+'</b>점';
   } else { if(f) f.style.width='100%'; if(s) s.innerHTML='<b style="color:#ff6ea8">최고 랭크 달성!</b> 전세계 랭킹에 도전하세요'; }
 }
 function addTotal(inc){
   if(inc<=0) return null;
   const b=rankIdx(total); total+=inc; try{ localStorage.setItem('num_total',total); }catch(e){}
   const a=rankIdx(total); renderRankCard();
-  if(a>b){ const rw=(a+1)*250; coins+=rw; saveCoins(); return {R:RANKS[a], rw}; }
+  if(a>b){ const rw=(a+1)*250; coins+=rw; saveCoins(); return {R:RANKS[a], i:a, rw}; }
   return null;
 }
 
@@ -518,7 +523,7 @@ function renderBoostRow(){
   const box=$('boostRow'); if(!box) return;
   const have=BOOSTS.filter(B=>(bst[B.id]||0)>0);
   if(!have.length){ box.innerHTML='<div class="sub" style="font-size:12px;opacity:.5">⚡ 부스터는 상점에서 살 수 있어요</div>'; return; }
-  box.innerHTML=have.map(B=>'<div class="bchip'+(eqb[B.id]?' on':'')+'" data-b="'+B.id+'">'+B.i+' '+B.n+' ×'+bst[B.id]+(eqb[B.id]?' ✓':'')+'</div>').join('');
+  box.innerHTML=have.map(B=>'<div class="bchip'+(eqb[B.id]?' on':'')+'" data-b="'+B.id+'">'+art('boost_'+B.id,B.i,20)+' '+B.n+' ×'+bst[B.id]+(eqb[B.id]?' ✓':'')+'</div>').join('');
   box.querySelectorAll('.bchip').forEach(c=>c.onclick=()=>{ const id=c.dataset.b; eqb[id]=!eqb[id]; saveBoost(); renderBoostRow(); tone(eqb[id]?760:420,0.06,'square',0.06); });
 }
 
@@ -778,7 +783,7 @@ function die(msg, fromChoice){
   commitCoins(); $('overCoin').innerHTML = '💰 <b style="color:#ffd34d">+'+runEarned+'</b> <span style="opacity:.6">(보유 '+coins+')</span>';
   // 🏅 랭크: 이번 판 점수를 누적(부활로 이어간 판은 증가분만)
   const up=addTotal(score-totalCommitted); totalCommitted=score;
-  $('overRankUp').innerHTML = up ? ('<span style="color:'+up.R.c+'">🎉 '+up.R.i+' '+up.R.n+' 승급! 💰+'+up.rw+'</span>') : '';
+  $('overRankUp').innerHTML = up ? ('<span style="color:'+up.R.c+'">🎉 '+rankArt(up.i,30)+' <span style="vertical-align:middle">'+up.R.n+' 승급! 💰+'+up.rw+'</span></span>') : '';
   if(up){ banner('🎉 '+up.R.i+' '+up.R.n+' 승급!',up.R.c); chord(660); setTimeout(()=>chord(990),160); vib([25,50,25,50,80]); }
   $('overMission').innerHTML = mToast.length ? mToast.join('<br/>') : ''; mToast=[];
   renderRankCard(); renderDaily(); renderBoostRow();
