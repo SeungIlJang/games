@@ -23,7 +23,7 @@
   @keyframes bn{0%{opacity:0;transform:scale(.6)}18%{opacity:1;transform:scale(1.1)}82%{opacity:1}100%{opacity:0;transform:scale(1)}}
   #hud{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:0;right:0;display:flex;justify-content:space-between;padding:0 16px;font-weight:800;font-size:15px;z-index:3}
   #combo{color:#ffd34d;font-weight:900}
-  #mult{position:fixed;top:31%;left:50%;transform:translateX(-50%) scale(.7);font-size:44px;font-weight:900;color:#ffd34d;text-shadow:0 0 22px rgba(255,211,77,.8);z-index:6;pointer-events:none;opacity:0;transition:opacity .18s,transform .18s}
+  #mult{position:fixed;top:15%;left:50%;transform:translateX(-50%) scale(.7);font-size:44px;font-weight:900;color:#ffd34d;text-shadow:0 0 22px rgba(255,211,77,.8);z-index:6;pointer-events:none;opacity:0;transition:opacity .18s,transform .18s}
   #mult.show{opacity:1;transform:translateX(-50%) scale(1)}
   #mult.bump{animation:mbump .28s ease-out}
   @keyframes mbump{0%{transform:translateX(-50%) scale(1.5)}60%{transform:translateX(-50%) scale(.9)}100%{transform:translateX(-50%) scale(1)}}
@@ -37,6 +37,9 @@
   @keyframes fl{0%{opacity:0;transform:translate(-50%,10px) scale(.7)}20%{opacity:1;transform:translate(-50%,-4px) scale(1.1)}100%{opacity:0;transform:translate(-50%,-52px) scale(1)}}
   #over,#start,#lb{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,10,22,.92);gap:10px;padding:24px;text-align:center;z-index:10}
   #lb{z-index:12;justify-content:flex-start;padding-top:calc(28px + env(safe-area-inset-top,0px))}
+  #over{justify-content:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-top:calc(16px + env(safe-area-inset-top,0px));padding-bottom:26px;gap:7px}
+  #start{overflow-y:auto;-webkit-overflow-scrolling:touch}
+  body.menu #hud,body.menu #wrap,body.menu #chase{visibility:hidden}   /* 메뉴에선 플레이 화면이 비쳐 보이지 않게 */
   #lbX{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:16px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:#cfe;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:50%;cursor:pointer;z-index:13}
   #lbX:active{background:rgba(255,255,255,.2)}
   #lbList{width:100%;max-width:340px;margin:6px 0;max-height:60vh;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
@@ -76,6 +79,44 @@
   .sbtn{background:#3a7bff;color:#fff;border:none;border-radius:12px;padding:9px 16px;font-size:15px;font-weight:800;box-shadow:0 4px 0 #1f52c0;cursor:pointer}
   .sbtn.use{background:#20263c;box-shadow:0 4px 0 #10131f}
   .sbtn:active{transform:translateY(2px)}
+  /* 상점 탭 */
+  #shopTabs{display:flex;gap:8px;margin:4px 0 2px}
+  .stab{background:#1a2033;color:#8892b0;border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:8px 18px;font-size:15px;font-weight:800;cursor:pointer}
+  .stab.on{background:#3a7bff;color:#fff;border-color:#7cf6ff}
+  /* 기록 추격 */
+  #chase{position:fixed;top:calc(38px + env(safe-area-inset-top,0px));left:0;right:0;text-align:center;font-size:13px;font-weight:800;color:#ffd34d;z-index:3;min-height:16px;pointer-events:none}
+  /* 체인 타겟 */
+  #chainTag{font-size:17px;font-weight:900;color:#ffd34d;letter-spacing:1px;min-height:20px}
+  #chainTag .done{color:#5cffb0}
+  #chainTag .now{color:#ffe14d;text-shadow:0 0 14px rgba(255,225,77,.8)}
+  #chainTag .todo{color:#5a6684}
+  /* 랭크 카드 */
+  #rankCard{width:min(92vw,330px);background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:11px 14px;margin:2px 0 4px}
+  #rankTop{display:flex;justify-content:space-between;align-items:center;font-size:17px;font-weight:900}
+  #rankBar{height:7px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden;margin-top:7px}
+  #rankFill{height:100%;width:0%;background:linear-gradient(90deg,#7cf6ff,#5cffb0);border-radius:4px;transition:width .5s ease-out}
+  #rankSub{font-size:12px;color:#8892b0;font-weight:700;margin-top:5px;text-align:left}
+  /* 일일 미션 */
+  #dailyBox{width:min(92vw,330px);background:rgba(255,211,77,.07);border:1px solid rgba(255,211,77,.28);border-radius:14px;padding:10px 13px;margin-top:2px}
+  #dailyBox .dt{font-size:14px;font-weight:900;color:#ffd34d;margin-bottom:6px;display:flex;justify-content:space-between}
+  .mrow{text-align:left;font-size:13px;font-weight:700;color:#cfe;margin:6px 0}
+  .mrow.ok{color:#5cffb0}
+  .mbar{height:5px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;margin-top:4px}
+  .mfill{height:100%;background:#ffd34d;border-radius:3px}
+  .mrow.ok .mfill{background:#5cffb0}
+  /* 부스터 */
+  #boostRow{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin-top:4px}
+  .bchip{background:#20263c;border:1px solid rgba(255,255,255,.14);border-radius:11px;padding:7px 12px;font-size:13px;font-weight:800;color:#8892b0;cursor:pointer}
+  .bchip.on{background:#2a3a1e;border-color:#5cffb0;color:#5cffb0}
+  .boostrow{display:flex;align-items:center;gap:10px;padding:11px 13px;margin:6px 0;border-radius:12px;background:rgba(255,255,255,.05);font-size:16px;font-weight:700;text-align:left}
+  .boostrow .bi{font-size:24px;flex:0 0 auto}
+  .boostrow .bn{flex:1}
+  .boostrow .bd{font-size:12px;color:#8892b0;font-weight:700}
+  /* 도움말 */
+  #help{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,10,22,.95);gap:8px;padding:26px;text-align:left;z-index:13}
+  #help h1{font-size:28px;align-self:center}
+  #help .hrow{font-size:15.5px;line-height:1.65;max-width:330px;color:#cfe}
+  #help b{color:#7cf6ff}
 </style></head>
 <body>
 <div id="vig"></div>
@@ -84,9 +125,11 @@
 <div id="banner"></div>
 <div id="mult"></div>
 <div id="hud"><div>점수 <span id="score">0</span> <span id="hearts" style="color:#ffd34d;font-weight:900"></span></div><div id="combo"></div><div>최고 <span id="best">0</span></div></div>
+<div id="chase"></div>
 <div id="wrap">
   <div id="target">🎯 이 숫자에서 멈춰!</div>
   <div id="targetN">–</div>
+  <div id="chainTag"></div>
   <div id="cur">–</div>
   <div id="seq"></div>
   <div id="cseq"></div>
@@ -95,18 +138,35 @@
   <div id="hint"></div>
 </div>
 
-<div id="start">
-  <h1>멈춰라 숫자</h1>
-  <div class="sub">숫자가 <b>규칙</b>대로 바뀝니다. 수열을 읽고 <b style="color:#7cf6ff">목표</b>에서 <b>탭</b>!<br/>가끔 <b style="color:#c9a3ff">⚡ 롤링</b>은 빙글빙글 돌아요 — <b>목표에서 탭!</b></div>
-  <div class="sub" style="opacity:.85;font-size:13.5px;"><b style="color:#ffd34d">⚡ 롤링 성공 = 💛 생명 +1!</b> 실수해도 생명이 있으면 계속 이어가요</div>
-  <div class="sub" style="opacity:.6;font-size:13px;">틀리거나 놓치면 끝(생명 0일 때) · 갈수록 빨라짐<br/><b style="color:#ff9a5a">처음 2판만 슬로모로 도와줘요 · 3판부터 실전!</b></div>
-  <button class="btn" id="startBtn">시작</button>
-  <div class="sub" style="margin-top:6px;">최고 <b id="best2">0</b> · 💰 <b id="coins" style="color:#ffd34d">0</b></div>
-  <div style="display:flex;gap:10px;margin-top:10px">
-    <button class="btn" id="lbBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:11px 22px;font-size:16px">🏆 랭킹</button>
-    <button class="btn" id="shopBtn" style="background:#2a2109;box-shadow:0 6px 0 #141005;padding:11px 22px;font-size:16px">🎨 상점</button>
+<div id="start" style="justify-content:flex-start;overflow-y:auto;padding-top:calc(18px + env(safe-area-inset-top,0px));padding-bottom:28px">
+  <h1 style="font-size:34px">멈춰라 숫자</h1>
+  <div id="rankCard">
+    <div id="rankTop"><span id="rankName">🥉 브론즈</span><span id="rankPts" style="font-size:13px;color:#8892b0">0</span></div>
+    <div id="rankBar"><div id="rankFill"></div></div>
+    <div id="rankSub">다음 랭크까지 –</div>
   </div>
-  <div id="changelog">🆕 <b id="clVer">v1.11.2</b> · <span id="clNote">🐛 선택형 <b>틀렸을 때 낡은 숫자 깜빡임</b> 수정 · 결과창까지 정답 하이라이트 유지</span></div>
+  <div class="sub" style="font-size:14px">수열을 읽고 <b style="color:#7cf6ff">목표 숫자</b>에서 <b>탭</b>! · <b style="color:#ffd34d">최고 <span id="best2">0</span></b> · 💰 <b id="coins" style="color:#ffd34d">0</b></div>
+  <button class="btn" id="startBtn">시작</button>
+  <div id="boostRow"></div>
+  <div style="display:flex;gap:8px;margin-top:10px">
+    <button class="btn" id="lbBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:10px 16px;font-size:15px">🏆 랭킹</button>
+    <button class="btn" id="shopBtn" style="background:#2a2109;box-shadow:0 6px 0 #141005;padding:10px 16px;font-size:15px">🛒 상점</button>
+    <button class="btn" id="helpBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:10px 16px;font-size:15px">📖 방법</button>
+  </div>
+  <div id="dailyBox"></div>
+  <div id="changelog">🆕 <b id="clVer">v2.0</b> · <span id="clNote"><b>랭크 승급</b>·<b>일일 미션</b>·<b>부스터</b> 추가 · <b>🔗 체인 목표</b>로 후반 재미 강화</span></div>
+</div>
+
+<div id="help" class="hidden">
+  <h1>📖 게임 방법</h1>
+  <div class="hrow">① 숫자가 <b>일정한 규칙</b>으로 올라갑니다. 아래 수열(<b>3 → 6 → 9</b>)을 보고 규칙을 읽으세요.</div>
+  <div class="hrow">② 화면 위 <b>목표 숫자</b>와 <b>똑같아지는 순간</b> 아무 곳이나 탭! 지나치거나 다른 숫자에서 멈추면 실패입니다.</div>
+  <div class="hrow">③ <b style="color:#ffe14d">PERFECT</b>(목표 도달 직후 반응)를 연속하면 점수 배수가 <b>최대 ×5</b>까지 올라갑니다.</div>
+  <div class="hrow">④ <b style="color:#c9a3ff">⚡ 롤링</b>은 숫자가 빙글빙글 — 감으로 목표에서 STOP. 성공하면 <b style="color:#ffd34d">💛 생명 +1</b>(최대 3), 실패해도 손해 없습니다.</div>
+  <div class="hrow">⑤ <b style="color:#7cf6ff">🔢 선택형</b>은 수열의 다음 숫자를 버튼으로 고르세요(제한시간 있음).</div>
+  <div class="hrow">⑥ 후반엔 <b style="color:#ffd34d">🔗 체인 목표</b>가 나옵니다. 목표를 연달아 맞히면 보너스가 크게 붙습니다.</div>
+  <div class="hrow">⑦ 점수는 <b>누적 랭크</b>로 쌓이고, 코인으로 <b>테마·부스터</b>를 살 수 있어요.</div>
+  <button class="btn" id="helpClose" style="align-self:center">알겠어요</button>
 </div>
 
 <div id="over" class="hidden">
@@ -114,15 +174,19 @@
   <div class="miss" id="overMsg"></div>
   <div class="sub">점수 <b id="overScore">0</b> <span id="overRec"></span></div>
   <div class="sub" id="overCoin" style="min-height:20px"></div>
+  <div class="sub" id="overRankUp" style="font-weight:800;min-height:0"></div>
+  <div class="sub" id="overMission" style="color:#5cffb0;font-weight:800;min-height:0"></div>
   <div class="sub" id="overRank" style="color:#ffd34d;font-weight:800;min-height:20px"></div>
   <div class="sub" style="opacity:.7">최고 <b id="overBest">0</b></div>
   <div class="sub" id="overLbTitle" style="margin-top:6px;font-weight:800;color:#ffd34d">🏆 랭킹</div>
   <div id="overLbList"></div>
   <button class="btn" id="reviveBtn" style="background:#2ec77a;box-shadow:0 6px 0 #1a8a52;display:none">🎬 광고 보고 이어하기</button>
-  <div style="display:flex;gap:10px;margin-top:8px">
-    <button class="btn" id="retryBtn" style="padding:14px 22px;font-size:18px">한 판 더</button>
-    <button class="btn" id="shareBtn" style="padding:14px 22px;font-size:18px;background:#20263c;box-shadow:0 6px 0 #10131f">🏆 공유</button>
+  <div style="display:flex;gap:8px;margin-top:8px">
+    <button class="btn" id="retryBtn" style="padding:13px 20px;font-size:18px">한 판 더</button>
+    <button class="btn" id="homeBtn" style="padding:13px 18px;font-size:17px;background:#20263c;box-shadow:0 6px 0 #10131f">🏠 홈</button>
+    <button class="btn" id="shareBtn" style="padding:13px 18px;font-size:17px;background:#20263c;box-shadow:0 6px 0 #10131f">🏆 공유</button>
   </div>
+  <div class="sub" style="font-size:12px;opacity:.6;margin-top:2px">🏠 홈에서 랭크·일일 미션·부스터를 확인할 수 있어요</div>
 </div>
 
 <div id="lb" class="hidden">
@@ -135,12 +199,13 @@
 
 <div id="shop" class="hidden">
   <div id="shopX" role="button" aria-label="닫기">✕</div>
-  <h1>🎨 테마 상점</h1>
+  <h1 style="font-size:32px">🛒 상점</h1>
   <div class="sub">보유 💰 <b id="shopCoins" style="color:#ffd34d">0</b> · 한 판 하면 코인이 쌓여요</div>
+  <div id="shopTabs"><button class="stab on" data-tab="theme">🎨 테마</button><button class="stab" data-tab="boost">⚡ 부스터</button></div>
   <div id="shopList"></div>
   <button class="btn" id="shopClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v1.14 · 이어하기(부활) 광고완료 시에만 소비·중복클릭 방지</div>
+<div id="ver">v2.0 · 랭크·일일미션·부스터·체인 목표</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -303,12 +368,30 @@ let owned=(function(){ try{ return JSON.parse(localStorage.getItem('num_owned')|
 let curTheme=(function(){ try{ return localStorage.getItem('num_theme')||'default'; }catch(e){ return 'default'; } })();
 function saveOwned(){ try{ localStorage.setItem('num_owned',JSON.stringify(owned)); }catch(e){} }
 function applyTheme(id){ const t=THEMES.find(x=>x.id===id)||THEMES[0]; document.body.style.background=t.bg; document.body.style.backgroundAttachment='fixed'; const tn=$('targetN'); if(tn) tn.style.color=t.accent; curTheme=t.id; try{ localStorage.setItem('num_theme',t.id); }catch(e){} }
-function renderCoins(){ const a=$('coins'), b=$('coinsOver'); if(a)a.textContent=coins; if(b)b.textContent=coins; }
-function addCoins(pts){ runCoins += Math.max(1, Math.ceil(pts/8)); }
-function commitCoins(){ if(runCoins>0){ coins+=runCoins; try{ localStorage.setItem('num_coins',coins); }catch(e){} } renderCoins(); }
+function saveCoins(){ try{ localStorage.setItem('num_coins',coins); }catch(e){} const a=$('coins'); if(a)a.textContent=coins; const s=$('shopCoins'); if(s)s.textContent=coins; }
+function renderCoins(){ const a=$('coins'); if(a)a.textContent=coins; const s=$('shopCoins'); if(s)s.textContent=coins; }
+let runEarned=0;
+function addCoins(pts){ runCoins += Math.max(1, Math.ceil(pts/8)) * (runBoost&&runBoost.coin2?2:1); }
+function commitCoins(){ if(runCoins>0){ runEarned+=runCoins; coins+=runCoins; runCoins=0; saveCoins(); } renderCoins(); }
+let shopTab='theme';
 function openShop(){ $('shop').classList.remove('hidden'); renderShop(); }
-function closeShop(){ $('shop').classList.add('hidden'); }
-function renderShop(){ $('shopCoins').textContent=coins; const box=$('shopList'); box.innerHTML=THEMES.map(t=>{
+function closeShop(){ $('shop').classList.add('hidden'); renderBoostRow(); }
+function renderShop(){
+  $('shopCoins').textContent=coins;
+  document.querySelectorAll('#shopTabs .stab').forEach(b=>b.classList.toggle('on', b.dataset.tab===shopTab));
+  if(shopTab==='boost') return renderBoostShop();
+  renderThemeShop();
+}
+function renderBoostShop(){ const box=$('shopList');
+  box.innerHTML='<div class="sub" style="font-size:12.5px;opacity:.7;margin-bottom:4px">사면 보유하고, 시작 화면에서 <b>장착</b>한 것만 그 판에 소모돼요</div>'
+    + BOOSTS.map(B=>{ const n=bst[B.id]||0;
+      return '<div class="boostrow"><span class="bi">'+B.i+'</span><span class="bn">'+B.n+(n?' <span style="color:#5cffb0">×'+n+'</span>':'')+'<div class="bd">'+B.d+'</div></span>'
+        + (coins>=B.cost? '<button class="sbtn buyb" data-id="'+B.id+'">💰 '+B.cost+'</button>' : '<span style="color:#5a6684">🔒 '+B.cost+'</span>')+'</div>'; }).join('');
+  box.querySelectorAll('.sbtn.buyb').forEach(b=>b.onclick=()=>{ const B=BOOSTS.find(x=>x.id===b.dataset.id);
+    if(coins<B.cost) return; coins-=B.cost; bst[B.id]=(bst[B.id]||0)+1; eqb[B.id]=true; saveBoost(); saveCoins(); renderShop(); renderBoostRow();
+    floatText(B.i+' '+B.n+' 획득!','#5cffb0'); vib([15,30,15]); tone(880,0.1,'triangle',0.07); });
+}
+function renderThemeShop(){ const box=$('shopList'); box.innerHTML=THEMES.map(t=>{
     const own=owned.includes(t.id), sel=curTheme===t.id;
     const btn = sel? '<span style="color:#5cffb0;font-weight:900">✓ 사용중</span>'
       : own? '<button class="sbtn use" data-id="'+t.id+'">사용</button>'
@@ -320,55 +403,186 @@ function renderShop(){ $('shopCoins').textContent=coins; const box=$('shopList')
   box.querySelectorAll('.sbtn.use').forEach(b=>b.onclick=()=>{ applyTheme(b.dataset.id); renderShop(); });
 }
 applyTheme(curTheme); renderCoins();
+
+// ───────────────── 🏅 랭크 (누적 점수로 영구 승급) ─────────────────
+let total=+(localStorage.getItem('num_total')||0), totalCommitted=0;
+const RANKS=[
+  {n:'브론즈',      i:'🥉', at:0,      c:'#c88a5a'},
+  {n:'실버',        i:'🥈', at:3000,   c:'#cfd8e3'},
+  {n:'골드',        i:'🥇', at:10000,  c:'#ffd34d'},
+  {n:'플래티넘',    i:'💎', at:25000,  c:'#7cf6ff'},
+  {n:'다이아',      i:'🔷', at:60000,  c:'#5c9dff'},
+  {n:'마스터',      i:'👑', at:120000, c:'#c9a3ff'},
+  {n:'그랜드마스터',i:'🌟', at:250000, c:'#ff6ea8'},
+];
+function rankIdx(t){ let i=0; for(let k=0;k<RANKS.length;k++) if(t>=RANKS[k].at) i=k; return i; }
+function renderRankCard(){
+  const i=rankIdx(total), R=RANKS[i], N=RANKS[i+1];
+  const nm=$('rankName'); if(nm){ nm.textContent=R.i+' '+R.n; nm.style.color=R.c; }
+  const pt=$('rankPts'); if(pt) pt.textContent='누적 '+total.toLocaleString()+'점';
+  const f=$('rankFill'), s=$('rankSub');
+  if(N){ const p=Math.max(0,Math.min(100,(total-R.at)/(N.at-R.at)*100));
+    if(f) f.style.width=p.toFixed(1)+'%';
+    if(s) s.innerHTML='다음 <b style="color:'+N.c+'">'+N.i+' '+N.n+'</b>까지 <b>'+(N.at-total).toLocaleString()+'</b>점';
+  } else { if(f) f.style.width='100%'; if(s) s.innerHTML='<b style="color:#ff6ea8">최고 랭크 달성!</b> 전세계 랭킹에 도전하세요'; }
+}
+function addTotal(inc){
+  if(inc<=0) return null;
+  const b=rankIdx(total); total+=inc; try{ localStorage.setItem('num_total',total); }catch(e){}
+  const a=rankIdx(total); renderRankCard();
+  if(a>b){ const rw=(a+1)*250; coins+=rw; saveCoins(); return {R:RANKS[a], rw}; }
+  return null;
+}
+
+// ───────────────── 📋 일일 미션 ─────────────────
+const MDEF=[
+  {id:'score',  mode:'max', t:g=>'한 판에 '+g+'점 달성',      goals:[250,500,900], rw:110},
+  {id:'streak', mode:'max', t:g=>g+' 연속 달성',               goals:[10,15,22],    rw:140},
+  {id:'roll',   mode:'sum', t:g=>'⚡ 롤링 '+g+'회 성공',       goals:[2,4,6],       rw:120},
+  {id:'choice', mode:'sum', t:g=>'🔢 선택형 '+g+'회 정답',     goals:[3,6,9],       rw:100},
+  {id:'perfect',mode:'sum', t:g=>'PERFECT '+g+'회',            goals:[5,9,14],      rw:120},
+  {id:'chain',  mode:'sum', t:g=>'🔗 체인 목표 '+g+'회 완성',  goals:[2,4,7],       rw:150},
+  {id:'golden', mode:'sum', t:g=>'🌟 골든 라운드 '+g+'회',     goals:[1,2,3],       rw:160},
+  {id:'play',   mode:'sum', t:g=>g+'판 플레이',                goals:[3,5,8],       rw:80},
+];
+const MBY={}; MDEF.forEach(m=>MBY[m.id]=m);
+const DAILY_BONUS=300;
+function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+function saveDaily(){ try{ localStorage.setItem('num_daily',JSON.stringify(daily)); }catch(e){} }
+let daily=(function(){
+  let d=null; try{ d=JSON.parse(localStorage.getItem('num_daily')||'null'); }catch(e){}
+  if(d && d.d===todayStr() && Array.isArray(d.m) && d.m.length) return d;
+  const key=todayStr(); let h=7; for(let i=0;i<key.length;i++) h=(h*31+key.charCodeAt(i))&0x7fffffff;
+  const pool=MDEF.map((_,i)=>i), idx=[];
+  while(idx.length<3 && pool.length){ h=(h*1103515245+12345)&0x7fffffff; idx.push(pool.splice(h%pool.length,1)[0]); }
+  const r=rankIdx(total), gi=r<2?0:(r<4?1:2);
+  return {d:key, m:idx.map(i=>({id:MDEF[i].id, goal:MDEF[i].goals[gi], p:0, done:false})), bonus:false};
+})();
+saveDaily();
+function renderDaily(){
+  const box=$('dailyBox'); if(!box) return;
+  const doneN=daily.m.filter(m=>m.done).length;
+  box.innerHTML='<div class="dt"><span>📋 일일 미션</span><span style="color:'+(daily.bonus?'#5cffb0':'#8892b0')+'">'+doneN+'/3'+(daily.bonus?' ✓ 보너스 완료':' · 전부 완료 💰+'+DAILY_BONUS)+'</span></div>'
+    + daily.m.map(m=>{ const D=MBY[m.id]; const p=Math.min(100,m.p/m.goal*100);
+      return '<div class="mrow'+(m.done?' ok':'')+'">'+(m.done?'✅ ':'• ')+D.t(m.goal)+' <span style="opacity:.65">('+Math.min(m.p,m.goal)+'/'+m.goal+')</span> <span style="color:#ffd34d">💰'+D.rw+'</span>'
+        + '<div class="mbar"><div class="mfill" style="width:'+p.toFixed(0)+'%"></div></div></div>'; }).join('');
+}
+let mToast=[];
+function mCheckAll(){
+  if(!daily.bonus && daily.m.length && daily.m.every(m=>m.done)){ daily.bonus=true; coins+=DAILY_BONUS; saveCoins(); mToast.push('🎉 일일 미션 전부 완료! 💰+'+DAILY_BONUS); }
+  saveDaily(); renderDaily();
+}
+function mBump(id,v,mode){
+  let touched=false;
+  for(const m of daily.m){ if(m.id!==id||m.done) continue;
+    m.p = mode==='max' ? Math.max(m.p,v) : m.p+v; touched=true;
+    if(m.p>=m.goal){ m.done=true; coins+=MBY[id].rw; saveCoins(); mToast.push('✅ 미션 완료 · '+MBY[id].t(m.goal)+' 💰+'+MBY[id].rw); floatText('✅ 미션 완료! 💰+'+MBY[id].rw,'#5cffb0'); }
+  }
+  if(touched) mCheckAll();
+}
+const mprog=(id,n)=>mBump(id,n,'sum');
+const mset =(id,v)=>mBump(id,v,'max');
+
+// ───────────────── ⚡ 부스터 (코인 소비 · 런 1회용) ─────────────────
+const BOOSTS=[
+  {id:'life',  i:'💛', n:'생명 +2',   d:'생명 3개로 시작 (실수 2번 더 허용)', cost:200},
+  {id:'slow',  i:'🐢', n:'느린 시작', d:'첫 6라운드 속도 35% 느리게',        cost:120},
+  {id:'coin2', i:'💰', n:'코인 2배',  d:'이번 판 코인 획득 2배',             cost:150},
+  {id:'score2',i:'✖️', n:'점수 2배',  d:'이번 판 점수 전체 2배 (랭킹용)',    cost:300},
+];
+function _load(k,d){ try{ return JSON.parse(localStorage.getItem(k)||'null')||d; }catch(e){ return d; } }
+let bst=_load('num_boost',{}), eqb=_load('num_boost_eq',{}), runBoost={}, slowLeft=0;
+function saveBoost(){ try{ localStorage.setItem('num_boost',JSON.stringify(bst)); localStorage.setItem('num_boost_eq',JSON.stringify(eqb)); }catch(e){} }
+function renderBoostRow(){
+  const box=$('boostRow'); if(!box) return;
+  const have=BOOSTS.filter(B=>(bst[B.id]||0)>0);
+  if(!have.length){ box.innerHTML='<div class="sub" style="font-size:12px;opacity:.5">⚡ 부스터는 상점에서 살 수 있어요</div>'; return; }
+  box.innerHTML=have.map(B=>'<div class="bchip'+(eqb[B.id]?' on':'')+'" data-b="'+B.id+'">'+B.i+' '+B.n+' ×'+bst[B.id]+(eqb[B.id]?' ✓':'')+'</div>').join('');
+  box.querySelectorAll('.bchip').forEach(c=>c.onclick=()=>{ const id=c.dataset.b; eqb[id]=!eqb[id]; saveBoost(); renderBoostRow(); tone(eqb[id]?760:420,0.06,'square',0.06); });
+}
+
 let state='start', cur=0, target=0, score=0, hits=0, rule=null, ti=0, seq=[], timer=null;
+let chainAll=[], chain=[], chainIdx=0, startVal=0;   // 🔗 체인 목표
+const HEART_MAX=3;
 let mult=1, targetShownAt=0, inGap=false;   // 콤보 배수 · 목표 표시 시각 · 라운드 전환 텀
 const GAP_MS=1000;   // 스테이지 전환 텀(성공 후 다음 라운드까지)
 const now=()=>{ try{ return performance.now(); }catch(e){ return 0; } };
 function showMult(){ const m=$('mult'); if(mult>1){ m.textContent='×'+mult; m.classList.add('show'); m.classList.remove('bump'); void m.offsetWidth; m.classList.add('bump'); } else { m.classList.remove('show'); } }
 function judge(){ if(!targetShownAt) return 'GOOD'; return (now()-targetShownAt) < 190 ? 'PERFECT' : 'GOOD'; }
 let hearts=0;   // ⚡롤링 성공 시 적립되는 생명(죽을 때 1개 소모하고 이어감)
-function renderHearts(){ const e=$('hearts'); if(e) e.textContent = hearts>0 ? ('💛×'+hearts) : ''; }
+function renderHearts(){ const e=$('hearts'); if(e) e.textContent = hearts>0 ? ('💛'.repeat(Math.min(hearts,HEART_MAX))) : ''; }
 let curIsRoll=false, rollLo=0, rollHi=0, rollTO=null, slowEndShown=false;
 let inChoice=false, choiceAns=-1, cChoices=[], cTO=null; const CHOICE_MS=5000;   // 선택형 라운드
 let reviveCount=0, deathCount=0; const MAX_REVIVE=5;   // 부활 판당 5회, 전면광고 주기 카운터
 
 function baseRule(){
   const r=Math.random();
-  if(hits>=4 && r<0.20) return {type:'roll'};                 // ⚡ 감 롤링 라운드
-  if(hits>=3 && r>=0.20 && r<0.42) return {type:'choice'};    // 🔢 선택형(수열 다음 숫자)
-  if(hits>=8 && r>=0.42 && r<0.55) return {type:'mul', m:2};  // ✖️ 곱하기 ×2
+  const rollCh = hits>=4 ? (hits<14?0.20:0.11) : 0;            // ⚡ 롤링 — 후반엔 빈도↓(생명 남발 방지)
+  if(r<rollCh) return {type:'roll'};
+  if(hits>=3 && r<rollCh+0.19) return {type:'choice'};         // 🔢 선택형(수열 다음 숫자)
+  if(hits>=14 && r<rollCh+0.31) return {type:'stepup', s:pick([2,3,4])}; // 📈 계단 — 스텝이 매번 +1
+  if(hits>=8  && r<rollCh+0.41) return {type:'mul', m:2};      // ✖️ 곱하기 ×2
   if(hits<6)  return {type:'add', s:pick([2,3,4,5])};
   if(hits<11) return Math.random()<0.62? {type:'add', s:pick([2,3,4,5,6,7])} : {type:'alt', a:pick([2,3,4]), b:pick([1,2,3])};
   const q=Math.random();
-  return q<0.4? {type:'add', s:pick([-4,-3,3,4,5,6,7,8])} : q<0.78? {type:'alt', a:pick([2,3,4,5]), b:pick([1,2,3,4])} : {type:'add', s:pick([6,7,8,9])};
+  return q<0.38? {type:'add', s:pick([-4,-3,3,4,5,6,7,8])} : q<0.78? {type:'alt', a:pick([2,3,4,5]), b:pick([1,2,3,4])} : {type:'add', s:pick([6,7,8,9])};
 }
 function makeRule(){
   if(hits<2) return {type:'add',s:1};                         // 온보딩 2판
   if(hits>=6 && hits%10===0){ const g={type:'add', s:pick([3,4,5])}; g.golden=true; return g; }  // 🌟 10·20·30… 골든(점수 ×2)
   return baseRule();
 }
-function stepAt(i){ return rule.type==='add'? rule.s : rule.type==='alt'? (i%2===0? rule.a : rule.b) : 0; }
+function stepAt(i){ return rule.type==='add'? rule.s : rule.type==='alt'? (i%2===0? rule.a : rule.b) : rule.type==='stepup'? (rule.s+i) : 0; }
 function advance(c,i){ return rule.type==='mul'? c*(rule.m||2) : c + stepAt(i); }   // mul은 곱, 나머지는 덧셈
-function speed(){ return Math.max(195, 640 - hits*23); }
+// 속도는 hits 25에서 바닥 → 그 뒤 난이도는 '체인 목표·룰 복잡도'가 담당(천장 제거)
+function speed(){ let s=Math.max(210, 660 - hits*18); if(slowLeft>0) s=Math.round(s*1.35); return s; }
+// 🔗 체인 목표 — 한 라운드에 목표를 2~3개 연달아 맞히기 (후반 깊이)
+function chainCount(){
+  if(rule.type!=='add' && rule.type!=='alt' && rule.type!=='stepup') return 1;   // 롤링·선택형·곱하기는 단일 목표
+  if(hits>=22){ const r=Math.random(); return r<0.16?3:(r<0.52?2:1); }
+  if(hits>=12) return Math.random()<0.28?2:1;
+  return 1;
+}
+function renderChainTag(){
+  const el=$('chainTag'); if(!el) return;
+  if(chainAll.length<2 || curIsRoll || inChoice){ el.innerHTML=''; return; }
+  el.innerHTML='🔗 '+chainAll.map((v,i)=>'<span class="'+(i<chainIdx?'done':(i===chainIdx?'now':'todo'))+'">'+v+'</span>').join('<span class="todo"> → </span>');
+}
+function renderChase(){
+  const el=$('chase'); if(!el) return;
+  if(state!=='play' || !best){ el.textContent=''; return; }
+  if(score>best) el.textContent='🔥 신기록 진행중! +'+(score-best);
+  else if(score>=best*0.5) el.textContent='🏆 최고까지 '+(best-score)+'점';
+  else el.textContent='';
+}
 
 function newRound(keepCur){
   inGap=false;   // 새 라운드 시작 → 입력 허용
   clearTimeout(rollTO); clearTimeout(cTO); rule=makeRule(); ti=0; curIsRoll = rule.type==='roll';
   $('cur').classList.remove('miss'); $('cur').classList.remove('hit');
   $('cur').classList.toggle('roll', curIsRoll); $('wrap').classList.remove('slow');
+  chainAll=[]; chain=[]; chainIdx=0; renderChainTag();
   if(rule.type==='choice'){ setupChoice(); return; }
   $('wrap').classList.remove('choice'); inChoice=false;
   if(curIsRoll){
-    target = rnd(8,40); rollLo=target-6; rollHi=target+5; cur=rollLo; seq=[];   // 12칸(target-6~+5) 순환
+    target = rnd(8,40); rollLo=target-6; rollHi=target+5; cur=rollLo; seq=[]; startVal=cur;   // 12칸(target-6~+5) 순환
     banner('⚡ 롤링! 감으로 STOP','#c9a3ff'); vib(30);
-    // 롤링은 누를 때까지 여유있게 대기 (제한시간 없음)
+    rollTO=setTimeout(()=>{ if(state==='play' && curIsRoll && !inGap) rollMiss(true); }, ROLL_MS*12*3+500);   // 3바퀴 안에 결정
   } else {
+    const nC=chainCount();
     if(rule.type==='mul') cur=rnd(2,5);                            // 곱하기는 작게 시작(폭주 방지)
+    else if(rule.type==='add' && rule.s<0) cur = rnd(10,20) + nC*5*(-rule.s);   // 감소 수열은 목표가 음수로 안 가게 높게 시작
     else if(!keepCur || !isFinite(cur)) cur = hits<2 ? 1 : rnd(4,16);   // cur 손상(NaN) 시 복구
-    const k = rule.type==='mul' ? rnd(2,3) : rnd(3,5); let t=cur; for(let i=0;i<k;i++) t=advance(t,i); target=t; seq=[cur];
+    startVal=cur;
+    const tg=[]; let t=cur, si=0;
+    for(let c=0;c<nC;c++){ const k=rule.type==='mul'?rnd(2,3):rnd(3,5); for(let j=0;j<k;j++){ t=advance(t,si); si++; } tg.push(t); }
+    chainAll=tg.slice(); chainIdx=0; chain=tg.slice(1); target=tg[0]; seq=[cur];
     if(rule.golden){ banner('🌟 골든 라운드! 점수 ×2','#ffd34d'); vib([15,30,15]); tone(880,0.1,'triangle',0.06); }
+    else if(nC>1){ banner('🔗 체인 '+nC+'연속 목표!','#ffd34d'); vib([15,25,15]); tone(740,0.09,'triangle',0.06); }
+    else if(rule.type==='stepup'){ banner('📈 계단! 간격이 커져요','#7cf6ff'); vib(25); }
     else if(rule.type==='mul'){ banner('✖️ 곱하기! ×'+(rule.m||2),'#c9a3ff'); vib(25); }
     else if(hits>=2 && !slowEndShown){ slowEndShown=true; banner('🔥 슬로모 끝! 이제 실전','#ff9a5a'); vib([20,40,20]); }
+    renderChainTag();
   }
   render(false);
 }
@@ -376,7 +590,7 @@ function render(pulse){
   $('targetN').textContent=target;
   const c=$('cur'); c.textContent=cur;
   if(curIsRoll){
-    $('seq').textContent=''; $('hint').textContent='⚡ 감으로 멈춰!'; $('combo').textContent=hits>=2?('🔥 '+hits+' 연속'):''; $('score').textContent=score;
+    $('seq').textContent=''; $('hint').textContent='⚡ 감으로 멈춰!'; $('combo').textContent=hits>=2?('🔥 '+hits+' 연속'):''; $('score').textContent=score; renderChase();
     c.classList.toggle('ontarget', cur===target); if(cur===target) targetShownAt=now();
     $('vig').style.boxShadow='inset 0 0 90px 10px rgba(90,50,160,.55)';
     return;
@@ -387,8 +601,8 @@ function render(pulse){
   const onT = cur===target; c.classList.toggle('ontarget', onT); if(onT) targetShownAt=now();   // 목표 순간 발광 + 정밀 판정 기준시각
   if(pulse && !near){ c.classList.remove('big'); void c.offsetWidth; c.classList.add('big'); }
   $('seq').textContent=seq.join('  →  ');
-  $('score').textContent=score; $('combo').textContent=hits>=2?('🔥 '+hits+' 연속'):'';
-  $('hint').textContent = hits<2 ? (near?'⚡ 다음이 목표! 탭!' : (cur===target?'👆 지금!':'')) : '';
+  $('score').textContent=score; $('combo').textContent=hits>=2?('🔥 '+hits+' 연속'):''; renderChase();
+  $('hint').textContent = hits<2 ? (near?'⚡ 다음이 목표! 탭!' : (cur===target?'👆 지금!':'')) : (chainAll.length>1?('🔗 '+(chainIdx+1)+'/'+chainAll.length+' 번째 목표'):'');
   $('vig').style.boxShadow='inset 0 0 '+(120-heat*40)+'px 10px rgba('+Math.round(60*heat)+',0,0,'+(0.5+heat*0.35).toFixed(2)+')';
 }
 function tick(){
@@ -399,7 +613,7 @@ function tick(){
     timer=setTimeout(tick, ROLL_MS); return;   // 모든 숫자 동일 속도(목표에서 멈춤 없음)
   }
   cur=advance(cur,ti); ti++; seq.push(cur); if(seq.length>4) seq.shift();
-  const dir=Math.sign(target-(seq[0]));
+  const dir=Math.sign(target-startVal) || 1;   // 라운드 시작값 기준(수열이 길어져도 방향 판정 안 깨짐)
   if((dir>=0 && cur>target) || (dir<0 && cur<target)){ die('놓쳤다! '+target+' 지나감'); return; }
   render(true);
   const nv=advance(cur,ti), slow=(hits<2 && target-cur!==0 && nv===target);   // 슬로모는 2판까지만(그 뒤엔 실력)
@@ -410,36 +624,64 @@ function tick(){
   timer=setTimeout(tick, nd);
 }
 function nextTick(first){ clearTimeout(timer); timer=setTimeout(tick, curIsRoll?ROLL_MS:first); }
-function start(){ score=0; hits=0; hearts=1; mult=1; runCoins=0; inGap=false; showMult(); slowEndShown=false; reviveCount=0; adPlaying=false; const _rb=$('reviveBtn'); if(_rb)_rb.disabled=false; hideBanner(); $('start').classList.add('hidden'); $('over').classList.add('hidden'); state='play';
+function start(){
+  // ⚡ 장착한 부스터 소모 (보유분에서 1개씩)
+  runBoost={};
+  for(const B of BOOSTS){ if(eqb[B.id] && (bst[B.id]||0)>0){ bst[B.id]--; runBoost[B.id]=true; if(!bst[B.id]) eqb[B.id]=false; } }
+  saveBoost(); renderBoostRow();
+  score=0; hits=0; hearts=1+(runBoost.life?2:0); mult=1; runCoins=0; runEarned=0; totalCommitted=0; inGap=false; showMult(); slowEndShown=false; reviveCount=0; adPlaying=false;
+  slowLeft=runBoost.slow?6:0; chainAll=[]; chain=[]; chainIdx=0; renderChainTag();
+  const _rb=$('reviveBtn'); if(_rb)_rb.disabled=false; hideBanner(); document.body.classList.remove('menu'); $('start').classList.add('hidden'); $('over').classList.add('hidden'); state='play';
   try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
-  renderHearts(); newRound(false); if(rule.type!=='choice') nextTick(560); }
+  mprog('play',1);
+  const on=BOOSTS.filter(B=>runBoost[B.id]); if(on.length) floatText('⚡ '+on.map(B=>B.i+B.n).join(' · '),'#5cffb0');
+  renderHearts(); renderChase(); newRound(false); if(rule.type!=='choice') nextTick(560); }
 function hitOK(){
   const wasRoll=curIsRoll, wasGolden=!!(rule&&rule.golden); clearTimeout(rollTO);
   const grade=judge();   // 목표 표시 후 반응 속도로 PERFECT/GOOD
   $('cur').classList.remove('miss','ontarget'); $('cur').classList.add('hit'); setTimeout(()=>$('cur').classList.remove('hit'),220);  // 성공=초록 확실히
   hits++;
-  if(grade==='PERFECT') mult=Math.min(5, mult+1); else mult=1;   // 퍼펙트 연속 → 배수↑, 굿이면 리셋
-  const base=((wasRoll?25:10) + (hits-1)*2) * (wasGolden?2:1);   // 🌟 골든 라운드 점수 ×2
-  score += base*mult; showMult(); addCoins(base*mult);
+  if(grade==='PERFECT'){ mult=Math.min(5, mult+1); mprog('perfect',1); } else mult=1;   // 퍼펙트 연속 → 배수↑, 굿이면 리셋
+  if(slowLeft>0) slowLeft--;
+  const link = chainAll.length>1 ? (1 + 0.5*chainIdx) : 1;        // 🔗 체인 뒷 링크일수록 배점↑
+  const base=((wasRoll?25:10) + (hits-1)*2) * (wasGolden?2:1);    // 🌟 골든 라운드 점수 ×2
+  const gain=Math.round(base*mult*link*(runBoost.score2?2:1));
+  score += gain; showMult(); addCoins(gain);
+  mset('score',score); mset('streak',hits);
   const [x,y]=centerXY();
-  if(wasRoll){ hearts++; renderHearts(); burst(x,y,'#ffd34d',52,9); hitFlash('#ffd34d'); floatText('⚡ 롤링 성공! 💛 생명 +1','#ffd34d'); chord(523); setTimeout(()=>chord(784),120); vib([20,40,20,40,60]); shake=6; }
+  if(wasRoll){ const was=hearts; hearts=Math.min(HEART_MAX,hearts+1); renderHearts(); mprog('roll',1);
+    burst(x,y,'#ffd34d',52,9); hitFlash('#ffd34d'); floatText(hearts>was?'⚡ 롤링 성공! 💛 생명 +1':'⚡ 롤링 성공! (생명 최대)','#ffd34d'); chord(523); setTimeout(()=>chord(784),120); vib([20,40,20,40,60]); shake=6; }
   else if(grade==='PERFECT'){ burst(x,y,'#ffe14d',46,9); hitFlash('#ffe14d'); floatText('PERFECT!'+(mult>1?('  ×'+mult):''),'#ffe14d'); chord(660); setTimeout(()=>tone(990,0.08,'triangle',0.06),90); vib([12,26,12]); shake=8; }
   else if(hits%5===0){ burst(x,y,'#ffd34d',48,8); hitFlash('#ffd34d'); floatText('🔥 '+hits+' 연속!','#ffd34d'); chord(440); vib([15,30,15]); shake=8; }
   else { burst(x,y,'#5cffb0',28,6); hitFlash('#5cffb0'); floatText(pick(['GOOD!','NICE!','좋아!','정확!']),'#5cffb0'); tone(720+hits*8,0.07,'square',0.07); vib(18); }
+  // 🔗 체인 — 다음 목표가 남으면 전환 텀 없이 바로 이어서(긴장 유지)
+  if(chain.length){
+    chainIdx++; target=chain.shift(); renderChainTag();
+    tone(940,0.07,'triangle',0.07); render(false); nextTick(Math.max(200, speed()));
+    return;
+  }
+  if(chainAll.length>1){   // 체인 완성 보너스
+    const cb=Math.round(base*chainAll.length*0.6*(runBoost.score2?2:1));
+    score+=cb; addCoins(cb); mset('score',score); mprog('chain',1);
+    burst(x,y,'#ffd34d',56,10); floatText('🔗 체인 완성! +'+cb,'#ffd34d'); chord(880); vib([20,40,20,40,80]); shake=10;
+  }
+  if(wasGolden) mprog('golden',1);
   inGap=true; clearTimeout(timer); clearTimeout(rollTO);   // 전환 텀(약 1초) — 그 사이 입력 무시
   setTimeout(()=>{ if(state!=='play') return; newRound(true); if(rule.type!=='choice') nextTick(Math.max(220, speed())); }, GAP_MS);
+}
+// ⚡ 롤링 실패(탭 미스/시간초과) — 페널티 없음, 다음 라운드로
+function rollMiss(timeout){
+  inGap=true; clearTimeout(timer); clearTimeout(rollTO);
+  floatText(timeout?'⏰ 롤링 놓침 (손해 없음)':'아깝다! (롤링)','#c9a3ff'); tone(220,0.12,'sawtooth',0.07); vib(25);
+  setTimeout(()=>{ if(state!=='play') return; newRound(false); nextTick(Math.max(320, speed())); }, GAP_MS);
 }
 function tap(){
   if(state!=='play'){ start(); return; }
   if(inGap) return;      // 라운드 전환 텀 중에는 입력 무시(중복 성공 방지)
   if(inChoice) return;   // 선택형은 버튼으로만
   if(curIsRoll){
-    if(cur===target){ hitOK(); }   // 롤링도 정확히 목표일 때만 성공(±1 허용 제거)
-    else { // 롤링은 '이벤트' — 못 맞춰도 페널티 없음(생명·점수·콤보 유지, 다음 라운드로)
-      inGap=true; clearTimeout(timer); clearTimeout(rollTO);
-      floatText('아깝다! (롤링)','#c9a3ff'); tone(220,0.12,'sawtooth',0.07); vib(25);
-      setTimeout(()=>{ if(state!=='play') return; newRound(false); nextTick(Math.max(320, speed())); }, GAP_MS);
-    }
+    if(cur===target) hitOK();      // 롤링도 정확히 목표일 때만 성공(±1 허용 제거)
+    else rollMiss(false);          // 롤링은 '이벤트' — 못 맞춰도 페널티 없음(생명·점수·콤보 유지)
     return;
   }
   if(cur===target){ hitOK(); }
@@ -448,10 +690,13 @@ function tap(){
 function setupChoice(){
   clearTimeout(timer); clearTimeout(rollTO); clearTimeout(cTO); inChoice=true; curIsRoll=false;
   $('wrap').classList.add('choice'); $('cur').classList.remove('roll','miss','hit');
-  const step=pick([1,2,3,4,5]), start0=rnd(1,9), k=3; const terms=[]; let t=start0;
-  for(let i=0;i<k;i++){ terms.push(t); t+=step; } const correct=t;
+  // 난이도: hits에 따라 항 수·간격·보기 수↑, 후반엔 '계단 수열'도 등장
+  const ladder = hits>=20 && Math.random()<0.35;
+  const step = hits<8? pick([1,2,3]) : hits<16? pick([2,3,4,5]) : pick([3,4,5,6,7]);
+  const k = hits<16?3:4, start0=rnd(1,9); const terms=[]; let t=start0, st=step;
+  for(let i=0;i<k;i++){ terms.push(t); t+=st; if(ladder) st++; } const correct=t;
   $('cseq').textContent = terms.join('  →  ')+'  →  ?';
-  const nc = hits<8?2:3;
+  const nc = hits<8?2:(hits<18?3:4);
   const set=new Set([correct]), arr=[correct]; let g=0;
   while(arr.length<nc && g++<60){ const d=correct+pick([-2,-1,1,2,step,-step]); if(d!==correct && d>0 && !set.has(d)){ set.add(d); arr.push(d); } }
   while(arr.length<nc){ const d=correct+rnd(1,6); if(!set.has(d)){ set.add(d); arr.push(d); } }
@@ -460,9 +705,10 @@ function setupChoice(){
   const box=$('cchoices'); box.innerHTML='';
   arr.forEach((v,i)=>{ const b=document.createElement('button'); b.className='cbtn'; b.textContent=v; b.onclick=(e)=>{ e.stopPropagation(); onChoice(i,b); }; box.appendChild(b); });
   $('score').textContent=score; $('combo').textContent=hits>=2?('🔥 '+hits+' 연속'):''; $('hint').textContent='';
-  banner('🔢 다음 숫자는? · 5초','#7cf6ff'); tone(660,0.08,'sine',0.06);
-  const f=$('ctfill'); f.style.transition='none'; f.style.width='100%'; void f.offsetWidth; f.style.transition='width '+CHOICE_MS+'ms linear'; f.style.width='0%';
-  cTO=setTimeout(()=>{ if(inChoice && state==='play'){ inChoice=false; const ok=$('cchoices').children[choiceAns]; if(ok)ok.classList.add('ok'); die('⏰ 시간 초과! 정답은 <b style="color:#5cffb0">'+cChoices[choiceAns]+'</b>', true); } }, CHOICE_MS);
+  const cms=Math.max(2800, CHOICE_MS - hits*90);   // 후반엔 제한시간도 짧아짐
+  banner('🔢 다음 숫자는? · '+(cms/1000).toFixed(1)+'초','#7cf6ff'); tone(660,0.08,'sine',0.06);
+  const f=$('ctfill'); f.style.transition='none'; f.style.width='100%'; void f.offsetWidth; f.style.transition='width '+cms+'ms linear'; f.style.width='0%';
+  cTO=setTimeout(()=>{ if(inChoice && state==='play'){ inChoice=false; const ok=$('cchoices').children[choiceAns]; if(ok)ok.classList.add('ok'); die('⏰ 시간 초과! 정답은 <b style="color:#5cffb0">'+cChoices[choiceAns]+'</b>', true); } }, cms);
 }
 function onChoice(i,btn){ if(!inChoice || state!=='play') return; inChoice=false; clearTimeout(cTO);
   const f=$('ctfill'); const w=getComputedStyle(f).width; f.style.transition='none'; f.style.width=w;
@@ -470,7 +716,10 @@ function onChoice(i,btn){ if(!inChoice || state!=='play') return; inChoice=false
   else { if(btn)btn.classList.add('bad'); const ok=$('cchoices').children[choiceAns]; if(ok)ok.classList.add('ok'); die('정답은 <b style="color:#5cffb0">'+cChoices[choiceAns]+'</b> (고른 값 '+cChoices[i]+')', true); }
 }
 function chooseWin(){
-  hits++; const base=15 + (hits-1)*2; score += base; addCoins(base); const x=innerWidth/2, y=innerHeight*0.4;
+  hits++; mprog('choice',1);
+  const base=15 + (hits-1)*2, gain=Math.round(base*mult*(runBoost.score2?2:1));   // 콤보 배수·부스터 일관 적용
+  score += gain; addCoins(gain); mset('score',score); mset('streak',hits); renderChase();
+  const x=innerWidth/2, y=innerHeight*0.4;
   if(hits%5===0){ burst(x,y,'#ffd34d',44,8); hitFlash('#ffd34d'); floatText('🔥 '+hits+' 연속!','#ffd34d'); chord(440); vib([15,30,15]); shake=7; }
   else { burst(x,y,'#5cffb0',28,6); hitFlash('#5cffb0'); floatText(pick(['정답!','NICE!','좋아!']),'#5cffb0'); tone(760,0.07,'square',0.07); vib(18); }
   $('score').textContent=score;
@@ -478,6 +727,7 @@ function chooseWin(){
   setTimeout(()=>{ if(state!=='play') return; $('wrap').classList.remove('choice'); newRound(true); if(rule.type!=='choice') nextTick(Math.max(220, speed())); }, GAP_MS);
 }
 function die(msg, fromChoice){
+  if(state!=='play') return;   // 이미 끝난 판에 지연 타이머가 또 들어와 점수·코인이 중복 정산되는 것 방지
   clearTimeout(timer); clearTimeout(rollTO); clearTimeout(cTO);
   mult=1; showMult();   // 콤보 배수 리셋
   const choiceMode = fromChoice || inChoice; inChoice=false;
@@ -491,6 +741,7 @@ function die(msg, fromChoice){
     overHtml = '멈춘 곳 <b style="color:#ff5a6e">'+stopped+'</b> · 목표 <b style="color:#7cf6ff">'+tgt+'</b> <span style="opacity:.7">(差 '+diff+')</span>';
   }
   hitFlash('#ff5a6e'); shake=16; vib(120); tone(200,0.16,'sawtooth',0.09);
+  $('chainTag').innerHTML=''; chainAll=[]; chain=[]; chainIdx=0;
   // 💛 생명이 있으면: 판정 보여준 뒤 소모하고 이어감(콤보 유지)
   if(hearts>0 && state==='play'){ hearts--; renderHearts();
     setTimeout(()=>{ $('cur').classList.remove('miss'); $('wrap').classList.remove('choice'); banner('💛 생명 사용! 계속 GO!','#ffd34d'); tone(660,0.12,'sine',0.09); setTimeout(()=>tone(880,0.12,'sine',0.08),110); newRound(false); if(rule.type!=='choice') nextTick(Math.max(320, speed())); }, 950);
@@ -503,14 +754,21 @@ function die(msg, fromChoice){
   $('overTitle').textContent = rec?'🏆 신기록!':'❌ 실패!';
   $('overMsg').innerHTML = overHtml;
   $('overScore').textContent=score;
-  const earned=runCoins; commitCoins(); $('overCoin').innerHTML = '💰 <b style="color:#ffd34d">+'+earned+'</b> <span style="opacity:.6">(보유 '+coins+')</span>';
+  commitCoins(); $('overCoin').innerHTML = '💰 <b style="color:#ffd34d">+'+runEarned+'</b> <span style="opacity:.6">(보유 '+coins+')</span>';
+  // 🏅 랭크: 이번 판 점수를 누적(부활로 이어간 판은 증가분만)
+  const up=addTotal(score-totalCommitted); totalCommitted=score;
+  $('overRankUp').innerHTML = up ? ('<span style="color:'+up.R.c+'">🎉 '+up.R.i+' '+up.R.n+' 승급! 💰+'+up.rw+'</span>') : '';
+  if(up){ banner('🎉 '+up.R.i+' '+up.R.n+' 승급!',up.R.c); chord(660); setTimeout(()=>chord(990),160); vib([25,50,25,50,80]); }
+  $('overMission').innerHTML = mToast.length ? mToast.join('<br/>') : ''; mToast=[];
+  renderRankCard(); renderDaily(); renderBoostRow();
   $('overRec').innerHTML = rec?'<span class="rec">최고 갱신!</span>' : (best>0?('(최고까지 '+(best-score)+'점!)'):'');
   const rank = score>0 ? insertScore(score) : 0;
   if(score>0 && fbReady){ _mineMark={name:myName,score:Math.floor(score)}; fbSubmit(myName,score); $('overRank').textContent='🌐 전세계 랭킹 등록! (랭킹 보기)'; }
   else $('overRank').textContent = rank>0 ? ('🏆 랭킹 '+rank+'위'+(rank===1?' — 1등!':(rank<=3?' 진입!':''))) : '';
   deathCount++;
-  if(deathCount%5===0) playInterstitial(()=>{});   // 5게임(판)마다 전면광고
-  showBanner();   // 결과 화면에 배너
+  renderChase();
+  // 5판마다 전면광고 → 광고가 닫힌 뒤에 배너(동시 노출 방지)
+  if(deathCount%5===0) playInterstitial(()=>showBanner()); else showBanner();
   const canRevive = reviveCount<MAX_REVIVE && score>0;
   $('reviveBtn').style.display = canRevive ? 'block' : 'none';
   if(canRevive) $('reviveBtn').textContent = '🎬 광고 보고 이어하기 ('+(MAX_REVIVE-reviveCount)+'회 남음)';
@@ -529,8 +787,16 @@ function revive(){
   });
 }
 function retryGame(){ start(); }   // 전면광고 제거(승일님 요청) — 보상형·배너만 유지
+function goHome(){ state='start'; clearTimeout(timer); clearTimeout(rollTO); clearTimeout(cTO); document.body.classList.add('menu');
+  $('over').classList.add('hidden'); $('wrap').classList.remove('choice','slow'); $('chainTag').innerHTML=''; $('chase').textContent='';
+  $('best2').textContent=best; renderRankCard(); renderDaily(); renderBoostRow(); renderCoins(); showBanner();
+  $('start').classList.remove('hidden'); $('start').scrollTop=0; }
 addEventListener('pointerdown', e=>{ if(e.target.closest('.btn')) return; if(state!=='play') return; tap(); });
 $('startBtn').onclick=()=>start();
+$('homeBtn').onclick=()=>goHome();
+$('helpBtn').onclick=()=>{ $('help').classList.remove('hidden'); };
+$('helpClose').onclick=()=>{ $('help').classList.add('hidden'); try{ localStorage.setItem('num_seen_help','1'); }catch(e){} };
+document.querySelectorAll('#shopTabs .stab').forEach(b=>b.onclick=()=>{ shopTab=b.dataset.tab; renderShop(); tone(640,0.05,'square',0.06); });
 $('retryBtn').onclick=()=>retryGame();
 $('reviveBtn').onclick=()=>revive();
 $('shareBtn').onclick=()=>shareScore();
@@ -541,5 +807,7 @@ $('shopBtn').onclick=()=>openShop();
 $('shopClose').onclick=()=>closeShop();
 $('shopX').onclick=()=>closeShop();
 $('best2').textContent=best;
+renderRankCard(); renderDaily(); renderBoostRow(); document.body.classList.add('menu');
+try{ if(!localStorage.getItem('num_seen_help')) $('help').classList.remove('hidden'); }catch(e){}
 </script>
 </body></html>
