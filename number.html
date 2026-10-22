@@ -570,7 +570,7 @@ function judge(){ if(!targetShownAt) return 'GOOD'; return (now()-targetShownAt)
 let hearts=0;   // ⚡롤링 성공 시 적립되는 생명(죽을 때 1개 소모하고 이어감)
 function renderHearts(){ const e=$('hearts'); if(e) e.textContent = hearts>0 ? ('💛'.repeat(Math.min(hearts,HEART_MAX))) : ''; }
 let curIsRoll=false, rollLo=0, rollHi=0, rollTO=null, slowEndShown=false, slowPrev=false;
-let inChoice=false, choiceAns=-1, cChoices=[], cTO=null; const CHOICE_MS=5000;   // 선택형 라운드
+let inChoice=false, choiceAns=-1, cChoices=[], cTO=null, cCd=null; const CHOICE_MS=5000;   // 선택형 라운드
 let reviveCount=0, deathCount=0; const MAX_REVIVE=5;   // 부활 판당 5회, 전면광고 주기 카운터
 
 function baseRule(){
@@ -616,7 +616,7 @@ function renderChase(){
 
 function newRound(keepCur){
   inGap=false;   // 새 라운드 시작 → 입력 허용
-  clearTimeout(rollTO); clearTimeout(cTO); rule=makeRule(); ti=0; curIsRoll = rule.type==='roll';
+  clearTimeout(rollTO); clearTimeout(cTO); clearTimeout(cCd); rule=makeRule(); ti=0; curIsRoll = rule.type==='roll';
   $('cur').classList.remove('miss'); $('cur').classList.remove('hit');
   $('cur').classList.toggle('roll', curIsRoll); $('wrap').classList.remove('slow');
   chainAll=[]; chain=[]; chainIdx=0; renderChainTag();
@@ -752,7 +752,7 @@ function tap(){
   else { die('아깝다! 목표 '+target+', '+cur+'에서 멈춤 (差 '+Math.abs(target-cur)+')'); }
 }
 function setupChoice(){
-  clearTimeout(timer); clearTimeout(rollTO); clearTimeout(cTO); inChoice=true; curIsRoll=false;
+  clearTimeout(timer); clearTimeout(rollTO); clearTimeout(cTO); clearTimeout(cCd); inChoice=true; curIsRoll=false;
   $('wrap').classList.add('choice'); $('cur').classList.remove('roll','miss','hit');
   // 난이도: hits에 따라 항 수·간격·보기 수↑, 후반엔 '계단 수열'도 등장
   const ladder = hits>=20 && Math.random()<0.35;
@@ -772,9 +772,10 @@ function setupChoice(){
   const cms=Math.max(2800, CHOICE_MS - hits*90);   // 후반엔 제한시간도 짧아짐
   banner('🔢 다음 숫자는? · '+(cms/1000).toFixed(1)+'초','#7cf6ff'); tone(660,0.08,'sine',0.06);
   const f=$('ctfill'); f.style.transition='none'; f.style.width='100%'; void f.offsetWidth; f.style.transition='width '+cms+'ms linear'; f.style.width='0%';
+  if(cms>1400) cCd=setTimeout(()=>{ if(inChoice && state==='play') sfx('countdown'); }, cms-900);   // 시간 임박 경고음
   cTO=setTimeout(()=>{ if(inChoice && state==='play'){ inChoice=false; const ok=$('cchoices').children[choiceAns]; if(ok)ok.classList.add('ok'); die('⏰ 시간 초과! 정답은 <b style="color:#5cffb0">'+cChoices[choiceAns]+'</b>', true); } }, cms);
 }
-function onChoice(i,btn){ if(!inChoice || state!=='play') return; inChoice=false; clearTimeout(cTO);
+function onChoice(i,btn){ if(!inChoice || state!=='play') return; inChoice=false; clearTimeout(cTO); clearTimeout(cCd);
   const f=$('ctfill'); const w=getComputedStyle(f).width; f.style.transition='none'; f.style.width=w;
   if(i===choiceAns){ if(btn)btn.classList.add('ok'); chooseWin(); }
   else { if(btn)btn.classList.add('bad'); const ok=$('cchoices').children[choiceAns]; if(ok)ok.classList.add('ok'); die('정답은 <b style="color:#5cffb0">'+cChoices[choiceAns]+'</b> (고른 값 '+cChoices[i]+')', true); }
@@ -792,7 +793,7 @@ function chooseWin(){
 }
 function die(msg, fromChoice){
   if(state!=='play') return;   // 이미 끝난 판에 지연 타이머가 또 들어와 점수·코인이 중복 정산되는 것 방지
-  clearTimeout(timer); clearTimeout(rollTO); clearTimeout(cTO);
+  clearTimeout(timer); clearTimeout(rollTO); clearTimeout(cTO); clearTimeout(cCd);
   mult=1; showMult();   // 콤보 배수 리셋
   const choiceMode = fromChoice || inChoice; inChoice=false;
   $('wrap').classList.remove('slow');
@@ -854,7 +855,7 @@ function revive(){
   });
 }
 function retryGame(){ start(); }   // 전면광고 제거(승일님 요청) — 보상형·배너만 유지
-function goHome(){ state='start'; clearTimeout(timer); clearTimeout(rollTO); clearTimeout(cTO); document.body.classList.add('menu');
+function goHome(){ state='start'; clearTimeout(timer); clearTimeout(rollTO); clearTimeout(cTO); clearTimeout(cCd); document.body.classList.add('menu');
   $('over').classList.add('hidden'); $('wrap').classList.remove('choice','slow'); $('chainTag').innerHTML=''; $('chase').textContent='';
   $('best2').textContent=best; renderRankCard(); renderDaily(); renderBoostRow(); renderCoins(); showBanner();
   $('start').classList.remove('hidden'); $('start').scrollTop=0; }
