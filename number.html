@@ -2,6 +2,9 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
 <title>멈춰라 숫자</title>
+<meta name="theme-color" content="#0a0e1a"/>
+<link rel="icon" type="image/png" href="img/number/ui/icon_512.png"/>
+<link rel="apple-touch-icon" href="img/number/ui/icon_512.png"/>
 <style>
   html,body{margin:0;height:100%;background:#0a0e1a;overflow:hidden;font-family:system-ui,-apple-system,sans-serif;color:#eef;touch-action:none;user-select:none;-webkit-user-select:none}
   #fx{position:fixed;inset:0;pointer-events:none;z-index:5}
@@ -163,6 +166,7 @@
 </div>
 
 <div id="start" style="justify-content:flex-start;overflow-y:auto;padding-top:calc(18px + env(safe-area-inset-top,0px));padding-bottom:28px">
+  <img src="img/number/ui/icon_512.png" alt="" width="72" height="72" style="flex-shrink:0;border-radius:18px;box-shadow:0 0 28px #7cf6ff20"/>
   <h1 style="font-size:34px">멈춰라 숫자</h1>
   <div id="rankCard" role="button">
     <div id="rankHead">
@@ -184,7 +188,7 @@
     <button class="btn" id="helpBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:10px 16px;font-size:15px">📖 방법</button>
   </div>
   <div id="dailyBox"></div>
-  <div id="changelog">🆕 <b id="clVer">v2.3</b> · <span id="clNote"><b>👑 랭크 7단계 전체 보기</b> 추가 · 엠블럼 크게 · 결과창에도 랭크 표시</span></div>
+  <div id="changelog">🆕 <b id="clVer">v2.4</b> · <span id="clNote"><b>네온 숫자 아이콘</b> · 효과음 20종 · 시작 전 사운드 준비</span></div>
 </div>
 
 <div id="help" class="hidden">
@@ -244,7 +248,7 @@
   <div id="shopList"></div>
   <button class="btn" id="shopClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v2.3 · 랭크 엠블럼 확대 · 랭크 7단계 보기</div>
+<div id="ver">v2.4 · 네온 아이콘 · 효과음 20종</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -258,20 +262,23 @@ function chord(base){ [0,4,7].forEach((s,i)=>setTimeout(()=>tone(base*Math.pow(2
 // 납품 믹스가 이미 균형이 잡혀 있어(틱이 가장 작고 STOP이 판정음보다 낮음) 개별 보정 없이 마스터만 올린다.
 // sfx()가 false면(로딩중·오프라인·구버전 APK) 호출부가 기존 절차 생성음으로 대체한다.
 const SFX_DIR='audio/number/sfx/', SFX_MASTER=2.0;
-const SFX_EAGER=['number_tick','rolling_tick','stop_tap','hit_good','hit_perfect','miss','ui_tap'];
-const SFX_REST=['game_start','countdown','slow_enter','combo_5','chain_step','chain_complete',
+const SFX_EAGER=['game_start','number_tick','rolling_tick','stop_tap','hit_good','hit_perfect','miss','ui_tap'];
+const SFX_REST=['countdown','slow_enter','combo_5','chain_step','chain_complete',
   'rolling_success','rolling_miss','golden_enter','life_continue','coin_reward','rank_up','game_over'];
 let sfxBuf={}, sfxPrimed=false;
 let sfxOn=(function(){ try{ return localStorage.getItem('num_sfx')!=='0'; }catch(e){ return true; } })();
-function actx(){ try{ if(!AC) AC=new(window.AudioContext||window.webkitAudioContext)(); if(AC.state==='suspended') AC.resume(); return AC; }catch(e){ return null; } }
+function actx(resume=true){ try{ if(!AC) AC=new(window.AudioContext||window.webkitAudioContext)(); if(resume && AC.state==='suspended') AC.resume().catch(()=>{}); return AC; }catch(e){ return null; } }
 function sfxLoad(n){
   if(n in sfxBuf) return; sfxBuf[n]=null;                       // null = 로딩중
   fetch(SFX_DIR+n+'.wav').then(r=>{ if(!r.ok) throw 0; return r.arrayBuffer(); })
-    .then(b=>{ const c=actx(); if(!c) throw 0; return c.decodeAudioData(b); })
+    .then(b=>{ const c=actx(false); if(!c) throw 0; return c.decodeAudioData(b); })
     .then(buf=>{ sfxBuf[n]=buf; }).catch(()=>{ sfxBuf[n]=false; });   // false = 실패 → 절차음 유지
 }
 function sfxPrime(){ if(sfxPrimed) return; sfxPrimed=true; actx();
   SFX_EAGER.forEach(sfxLoad); setTimeout(()=>SFX_REST.forEach(sfxLoad), 1500); }
+// 메뉴를 읽는 동안 음원만 준비하고 재생 활성화는 첫 터치에서 한다.
+SFX_EAGER.forEach(sfxLoad);
+setTimeout(()=>SFX_REST.forEach(sfxLoad), 500);
 function sfx(n,g){
   if(!sfxOn) return true;                                       // 음소거: 절차음도 울리지 않게 '처리됨'
   const b=sfxBuf[n];
