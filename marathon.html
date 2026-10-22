@@ -1382,27 +1382,32 @@ newRace(); showTitle(); requestAnimationFrame(loop);
 // ================= AdMob (Capacitor 네이티브=실제 광고 / 웹=없음) =================
 // ⚠️ AD_USE_TEST=true 는 구글 테스트 광고. 출시 시 false + 실제 유닛 ID로 교체.
 const AD_USE_TEST=true;
-const AD_BANNER = AD_USE_TEST ? 'ca-app-pub-3940256099942544/6300978111' : '';
-const AD_INTER  = AD_USE_TEST ? 'ca-app-pub-3940256099942544/1033173712' : '';
-const AD_REWARD = AD_USE_TEST ? 'ca-app-pub-3940256099942544/5224354917' : '';
+// 출시 절차: AdMob에서 광고단위 3종을 만들어 _REAL 에 채우고 AD_USE_TEST=false 로만 바꾼다.
+// _REAL 이 비어 있으면 광고 호출 자체를 건너뛴다(빈 adId 로 요청하지 않음).
+const AD_BANNER_TEST='ca-app-pub-3940256099942544/6300978111', AD_BANNER_REAL='';
+const AD_INTER_TEST ='ca-app-pub-3940256099942544/1033173712', AD_INTER_REAL ='';
+const AD_REWARD_TEST='ca-app-pub-3940256099942544/5224354917', AD_REWARD_REAL='';
+const AD_BANNER = AD_USE_TEST ? AD_BANNER_TEST : AD_BANNER_REAL;
+const AD_INTER  = AD_USE_TEST ? AD_INTER_TEST  : AD_INTER_REAL;
+const AD_REWARD = AD_USE_TEST ? AD_REWARD_TEST : AD_REWARD_REAL;
 let admobReady=false, bannerShown=false, interCount=0;
 function admob(){ const C=window.Capacitor; return (C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.AdMob)?C.Plugins.AdMob:null; }
 function adSafeBottom(){ try{ const p=document.createElement('div'); p.style.cssText='position:fixed;left:0;bottom:0;width:0;height:env(safe-area-inset-bottom,0px);visibility:hidden;pointer-events:none'; document.body.appendChild(p); const h=Math.round(p.getBoundingClientRect().height); p.remove(); return h; }catch(e){ return 0; } }
 (async function(){ const A=admob(); if(!A) return; try{ await A.initialize({initializeForTesting:AD_USE_TEST}); admobReady=true; adBanner(); }catch(e){} })();
 function adSetBannerH(h){ const nh=Math.max(0,Math.round(h||0)); if(nh!==AD_BANNER_H){ AD_BANNER_H=nh; resize(); } }
-async function adBanner(){ const A=admob(); if(!A||bannerShown) return; bannerShown=true;
+async function adBanner(){ const A=admob(); if(!AD_BANNER||!A||bannerShown) return; bannerShown=true;
   // 배너 실제 높이를 받아 게임영역을 줄임(버튼 가림 방지). 이벤트 못 받으면 추정치 사용.
   try{ A.addListener&&A.addListener('bannerAdSizeChanged', s=>{ const h=(s&&(s.height!=null?s.height:s.size&&s.size.height))||0; adSetBannerH(h?(h+adSafeBottom()):0); }); }catch(e){}
   try{ await A.showBanner({adId:AD_BANNER,adSize:'ADAPTIVE_BANNER',position:'BOTTOM_CENTER',margin:0,isTesting:AD_USE_TEST});
        // 이벤트가 안 와도 최소 공간 확보(적응형 배너 ≈ 50~60dp + 안전영역)
        setTimeout(()=>{ if(AD_BANNER_H<40) adSetBannerH(56+adSafeBottom()); }, 600);
   }catch(e){ bannerShown=false; } }
-async function adInterstitial(){ const A=admob(); if(!(admobReady&&A)) return; try{ await A.prepareInterstitial({adId:AD_INTER,isTesting:AD_USE_TEST}); await A.showInterstitial(); }catch(e){} }
+async function adInterstitial(){ const A=admob(); if(!AD_INTER||!(admobReady&&A)) return; try{ await A.prepareInterstitial({adId:AD_INTER,isTesting:AD_USE_TEST}); await A.showInterstitial(); }catch(e){} }
 // 게임오버 때 광고 자주 안 뜨게 3판마다 1회
 function adMaybeInter(){ interCount++; if(interCount%3===0) adInterstitial(); }
 // 리워드 광고: 보상 콜백. 네이티브 없으면 즉시 지급(웹 테스트)
 function adReward(cb){ const A=admob();
-  if(admobReady&&A){ (async()=>{ try{ await A.prepareRewardVideoAd({adId:AD_REWARD,isTesting:AD_USE_TEST}); const r=await A.showRewardVideoAd(); if(r&&(r.type||r.rewarded!==false)) cb(); else cb(); }catch(e){ cb(); } })(); }
+  if(AD_REWARD&&admobReady&&A){ (async()=>{ try{ await A.prepareRewardVideoAd({adId:AD_REWARD,isTesting:AD_USE_TEST}); const r=await A.showRewardVideoAd(); if(r&&(r.type||r.rewarded!==false)) cb(); else cb(); }catch(e){ cb(); } })(); }
   else { cb(); }
 }
 // finish()/rFinish() 래핑 → 결과창 뜰 때 전면광고 + 리워드(코인2배) 버튼 삽입

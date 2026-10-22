@@ -158,16 +158,23 @@ let AC; function tone(f,d,type,g){ if(muted)return; try{ if(!AC)AC=new(window.Au
 function chord(b){[0,4,7,12].forEach((s,i)=>setTimeout(()=>tone(b*Math.pow(2,s/12),0.18,'triangle',0.07),i*70));}
 function vib(m){try{navigator.vibrate&&navigator.vibrate(m);}catch(e){}}
 let heartT=0;
-// ── 광고(리워드/전면) ──
+// ── 광고(리워드/전면/배너) ──
+// 출시 절차: AdMob에서 광고단위 3종을 만들어 _REAL 에 채우고 AD_USE_TEST=false 로만 바꾼다.
+// _REAL 이 비어 있으면 광고 호출 자체를 건너뛴다(빈 adId 로 요청하지 않음).
 const AD_USE_TEST=true, AD_REWARD_TEST='ca-app-pub-3940256099942544/5224354917', AD_REWARD_REAL='';
 const AD_INTER_TEST='ca-app-pub-3940256099942544/1033173712', AD_INTER_REAL='';
+// 배너는 showBanner() 안에 테스트 ID가 직접 박혀 있어 실유닛으로 못 바꾸는 상태였다.
+const AD_BANNER_TEST='ca-app-pub-3940256099942544/6300978111', AD_BANNER_REAL='';
+const AD_BANNER = AD_USE_TEST ? AD_BANNER_TEST : AD_BANNER_REAL;
+const AD_REWARD = AD_USE_TEST ? AD_REWARD_TEST : AD_REWARD_REAL;
+const AD_INTER  = AD_USE_TEST ? AD_INTER_TEST  : AD_INTER_REAL;
 let admobReady=false, adPlaying=false, interCount=0;
 (async function(){ try{ const C=window.Capacitor; if(C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.AdMob){ await C.Plugins.AdMob.initialize({initializeForTesting:AD_USE_TEST}); admobReady=true; } }catch(e){} })();
 // 전면광고 — 게임오버 "다시 도전" 3회당 1번(너무 자주 X). 실패 시 조용히 넘어감.
-async function showInterstitial(){ const C=window.Capacitor; if(!(admobReady&&C&&C.Plugins&&C.Plugins.AdMob))return; const A=C.Plugins.AdMob; try{ await A.prepareInterstitial({adId:AD_USE_TEST?AD_INTER_TEST:AD_INTER_REAL,isTesting:AD_USE_TEST}); await A.showInterstitial(); }catch(e){} }
+async function showInterstitial(){ const C=window.Capacitor; if(!AD_INTER||!(admobReady&&C&&C.Plugins&&C.Plugins.AdMob))return; const A=C.Plugins.AdMob; try{ await A.prepareInterstitial({adId:AD_INTER,isTesting:AD_USE_TEST}); await A.showInterstitial(); }catch(e){} }
 async function playAd(cb){ if(adPlaying)return; adPlaying=true; const C=window.Capacitor;
-  if(admobReady&&C&&C.Plugins&&C.Plugins.AdMob){ const A=C.Plugins.AdMob; let ld=null,lf=null;
-    try{ await Promise.race([ Promise.resolve(A.prepareRewardVideoAd({adId:AD_USE_TEST?AD_REWARD_TEST:AD_REWARD_REAL})), new Promise((_,rj)=>setTimeout(()=>rj(new Error('ad load timeout')),10000)) ]);
+  if(AD_REWARD&&admobReady&&C&&C.Plugins&&C.Plugins.AdMob){ const A=C.Plugins.AdMob; let ld=null,lf=null;
+    try{ await Promise.race([ Promise.resolve(A.prepareRewardVideoAd({adId:AD_REWARD,isTesting:AD_USE_TEST})), new Promise((_,rj)=>setTimeout(()=>rj(new Error('ad load timeout')),10000)) ]);
       await new Promise(res=>{let d=false;const fin=()=>{if(d)return;d=true;res();};
         Promise.resolve(A.addListener('onRewardedVideoAdDismissed',fin)).then(l=>ld=l).catch(()=>{}); Promise.resolve(A.addListener('onRewardedVideoAdFailedToShow',fin)).then(l=>lf=l).catch(()=>{});
         Promise.resolve(A.showRewardVideoAd()).catch(fin); setTimeout(fin,40000);});
@@ -709,7 +716,7 @@ function renderMeta(){
 let bannerShown=false, bannerCreated=false;
 // 제스처 바(홈 인디케이터) 높이만큼 배너를 띄운다. viewport-fit=cover 필요.
 function safeBottomInset(){ try{ const p=document.createElement('div'); p.style.cssText='position:fixed;left:0;bottom:0;width:0;height:env(safe-area-inset-bottom,0px);visibility:hidden;pointer-events:none'; document.body.appendChild(p); const h=Math.round(p.getBoundingClientRect().height); p.remove(); return h; }catch(e){ return 0; } }
-async function showBanner(){ const C=window.Capacitor; if(!(C&&C.Plugins&&C.Plugins.AdMob)||bannerShown) return; bannerShown=true; try{document.body.classList.add('has-banner');}catch(e){} const _A=C.Plugins.AdMob; const _opt={adId:'ca-app-pub-3940256099942544/6300978111',adSize:'BANNER',position:'BOTTOM_CENTER',margin:safeBottomInset(),isTesting:true}; try{ if(bannerCreated){ try{ await _A.resumeBanner(); }catch(_e){ await _A.showBanner(_opt); } } else { await _A.showBanner(_opt); bannerCreated=true; } }catch(e){ bannerShown=false; try{document.body.classList.remove('has-banner');}catch(e2){} } }
+async function showBanner(){ const C=window.Capacitor; if(!AD_BANNER||!(C&&C.Plugins&&C.Plugins.AdMob)||bannerShown) return; bannerShown=true; try{document.body.classList.add('has-banner');}catch(e){} const _A=C.Plugins.AdMob; const _opt={adId:AD_BANNER,adSize:'BANNER',position:'BOTTOM_CENTER',margin:safeBottomInset(),isTesting:AD_USE_TEST}; try{ if(bannerCreated){ try{ await _A.resumeBanner(); }catch(_e){ await _A.showBanner(_opt); } } else { await _A.showBanner(_opt); bannerCreated=true; } }catch(e){ bannerShown=false; try{document.body.classList.remove('has-banner');}catch(e2){} } }
 async function hideBanner(){ const C=window.Capacitor; if(!(C&&C.Plugins&&C.Plugins.AdMob)||!bannerShown) return; bannerShown=false; try{document.body.classList.remove('has-banner');}catch(e){} try{ await C.Plugins.AdMob.hideBanner(); }catch(e){} }
 
 // ── 공유(바이럴) ──
