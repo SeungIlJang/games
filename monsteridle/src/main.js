@@ -7,6 +7,8 @@ import { initUI, refresh, toast } from './ui.js';
 import { pendingOffline, claimOffline, fmtDuration } from './offline.js';
 import { fmt } from './logmath.js';
 import { initAds, playRewarded, isNative } from './ads.js';
+import { renderSkillBar } from './ui-skills.js';
+import { showTitle } from './ui-title.js';
 
 load();
 
@@ -28,13 +30,15 @@ initUI();
 preloadFor(S.st);
 
 setEventHandler(ev => {
-  if (ev.type === 'stageClear') refresh();
+  // 클리어마다 다음 장면 자원을 예열한다 (적·배경이 5스테이지마다 바뀐다)
+  if (ev.type === 'stageClear') { refresh(); preloadFor(ev.stage + 1); }
   if (ev.type === 'death') refresh();
 });
 
-// 오프라인 보상
+// 오프라인 보상 — **타이틀을 닫은 뒤** 띄운다. 먼저 띄우면 타이틀 뒤에 가려진다.
 const off = pendingOffline();
-if (off) {
+function showOfflineReward() {
+  if (!off) return;
   const box = document.getElementById('offline');
   document.getElementById('offTime').textContent = fmtDuration(off.seconds) +
     (off.seconds > off.capped ? ' (최대 ' + B.offline.capHours + '시간까지)' : '');
@@ -56,6 +60,9 @@ if (off) {
   };
 }
 
+// 첫 화면 → (시작) → 오프라인 보상
+showTitle(showOfflineReward);
+
 enterStage(S.st, MODE.RUN);
 refresh();
 
@@ -70,6 +77,7 @@ function loop(now) {
   const sdt = dt * (S.spd || 1);
   tick(sdt);
   render(sdt);
+  renderSkillBar();        // 쿨 채움은 매 프레임 — DOM 은 구성이 바뀔 때만 다시 만든다
   acc += dt;
   if (acc > 0.25) { acc = 0; refresh(); }
   requestAnimationFrame(loop);

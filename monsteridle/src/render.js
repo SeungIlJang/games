@@ -3,7 +3,7 @@
 // 몬스터는 도감 시트에서 잘라낸 대표 포즈 1장만 있다(tools/make-monster-sprites.mjs).
 // 그래서 공격·피격 연출은 프레임이 아니라 스쿼시·런지·셰이크로 만든다(DESIGN.md §12).
 // 용사는 Idle/Attack/Hit/Dead 프레임이 멀쩡해서 프레임 애니를 그대로 쓴다.
-import { B, heroAt } from './balance.js';
+import { B, heroAt, zoneAt, sceneEvery, heroPool } from './balance.js';
 import { S } from './state.js';
 import { R } from './combat.js';
 import { pick, preload, boxOf, frameCount } from './sprites.js';
@@ -99,8 +99,7 @@ function drawCover(img) {
 
 function drawBG() {
   const gy = H * GROUND;
-  const zone = B.zones.list[Math.floor((R.stage - 1) / B.stage.bossEvery) % B.zones.list.length];
-  const img = bgImage(zone.key);
+  const img = bgImage(zoneAt(R.stage).key);
   if (img) { drawCover(img); return; }
 
   // 하늘 — 밝은 낮
@@ -273,18 +272,26 @@ export function render(dt) {
 
   const pbw = W * 0.22;
   const hpFrac = R.LhpMax > L0 ? ratio(R.Lhp, R.LhpMax) : 0;
-  bar(W * 0.34 - pbw / 2, feet - pH - 20, pbw, 8, hpFrac, hpFrac < 0.3 ? '#ff6b6b' : '#4ade80');
+  bar(W * 0.30 - pbw / 2, feet - pH - 20, pbw, 8, hpFrac, hpFrac < 0.3 ? '#ff6b6b' : '#4ade80');
+  // 배경이 밝으면(설원·풀밭) 글자가 묻힌다 — 피해 숫자와 같이 어두운 외곽선을 깐다
   ctx.textAlign = 'center';
-  ctx.fillStyle = ALLY;
-  ctx.font = '800 12px system-ui';
+  ctx.strokeStyle = 'rgba(12,18,34,.8)';
+  ctx.lineWidth = 3;
   const me = B.roster.monsters.find(m => m.key === S.mon);
-  ctx.fillText('나 · ' + (me ? me.name : '몬스터'), W * 0.34, feet - pH - 38);
-  ctx.fillStyle = '#9fb6d8';
+  const nameY = feet - pH - 38, hpY = feet - pH - 26;
+  ctx.font = '800 12px system-ui';
+  ctx.strokeText('나 · ' + (me ? me.name : '몬스터'), W * 0.30, nameY);
+  ctx.fillStyle = ALLY;
+  ctx.fillText('나 · ' + (me ? me.name : '몬스터'), W * 0.30, nameY);
   ctx.font = '600 10px system-ui';
-  ctx.fillText('HP ' + fmt(R.Lhp), W * 0.34, feet - pH - 26);
+  ctx.strokeText('HP ' + fmt(R.Lhp), W * 0.30, hpY);
+  ctx.fillStyle = '#cfdcf2';
+  ctx.fillText('HP ' + fmt(R.Lhp), W * 0.30, hpY);
 
   // ── 적 (용사) — 프레임 애니 + 피격 시 밀림 ──
-  const hero = heroAt(R.stage);
+  // 한 기마다 용사가 다르다(combat.spawnWave 가 e.hero 를 심는다). 구세이브로 들어오면
+  // e.hero 가 없으므로 예전처럼 구역 용사로 폴백한다.
+  const lead = heroAt(R.stage);
   const alive = R.enemies.filter(e => e.Lhp > L0);
   const n = alive.length;
   // 격자로 세우면 "줄" 이 보인다. 깊이를 지그재그로 주고 가로도 조금씩 어긋나게 둔다.
@@ -304,6 +311,7 @@ export function render(dt) {
     // flip 을 쓰지 않는다 — 용사 그림이 이미 왼쪽(우리 쪽)을 보게 그려져 있다.
     // 뒤집으면 무기와 장식이 반대로 가고 기사의 방패가 바깥쪽으로 돌아간다.
     const fPose = hit > 0 ? 'hit' : R.foeAtkT > 0 ? 'attack' : 'idle';
+    const hero = e.hero || lead;
     drawSprite(pick('hero', hero.key, fPose, frame + i), ex, ey + eb, h, boxOf('hero', hero.key), {
       dx: hit * 7,
       sx: 1 + hit * 0.06,
@@ -320,10 +328,18 @@ export function render(dt) {
     ctx.font = '800 13px system-ui';
     ctx.strokeStyle = 'rgba(30,20,10,.7)'; ctx.lineWidth = 3;
     // 보스는 W*0.66 에 선다(위 drawn 참고). 이름표도 같은 x 여야 머리 위에 온다.
-    ctx.strokeText('👑 ' + hero.name, W * 0.66, feet - eH - 20);
-    ctx.fillText('👑 ' + hero.name, W * 0.66, feet - eH - 20);
+    ctx.strokeText('👑 ' + lead.name, W * 0.66, feet - eH - 46);
+    ctx.fillText('👑 ' + lead.name, W * 0.66, feet - eH - 46);
   }
 
+
+  // 스킬 섬광 — 전장을 한 번 밝힌다. 숫자만으로는 "터졌다" 가 안 읽힌다.
+  if (R.skillFxT > 0) {
+    ctx.globalAlpha = Math.min(0.35, R.skillFxT);
+    ctx.fillStyle = '#b59bff';
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = 1;
+  }
 
   // ── 데미지 숫자 · 금화 ──
   for (const f of R.fx) {
@@ -341,7 +357,8 @@ export function render(dt) {
       ctx.stroke();
       continue;
     }
-    if (f.type === 'crit') { ctx.fillStyle = '#ffe24a'; ctx.font = '800 22px system-ui'; }
+    if (f.type === 'skill') { ctx.fillStyle = '#b59bff'; ctx.font = '800 20px system-ui'; }
+    else if (f.type === 'crit') { ctx.fillStyle = '#ffe24a'; ctx.font = '800 22px system-ui'; }
     else if (f.type === 'gold') { ctx.fillStyle = '#ffd34d'; ctx.font = '800 15px system-ui'; }
     else { ctx.fillStyle = '#fff'; ctx.font = '800 16px system-ui'; }
     ctx.strokeStyle = 'rgba(30,20,10,.75)';
@@ -387,4 +404,11 @@ export function render(dt) {
 export function preloadFor(stage) {
   preload('mon', S.mon);
   preload('hero', heroAt(stage).key);
+  // 적과 배경은 5스테이지마다 바뀐다. 다음 장면 것도 미리 받아둬야 교체되는 순간
+  // 몇 프레임 동안 빈 칸/맨 캔버스가 비친다. bgImage 는 캐시에 넣기만 하면 예열된다.
+  const next = stage + sceneEvery();
+  // 한 웨이브에 지금까지 등장한 용사가 섞여 나오므로 풀 전체가 필요하다 (다음 구역 것까지).
+  for (const h of heroPool(next)) preload('hero', h.key);
+  bgImage(zoneAt(stage).key);
+  bgImage(zoneAt(next).key);
 }

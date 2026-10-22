@@ -1,9 +1,9 @@
 // HUD + 패널. 강화 패널이 1단계의 핵심 화면이다.
-import { B, STAT_KEYS, chapterLabel, perWave } from './balance.js';
+import { B, STAT_KEYS, chapterLabel, perWave, zoneAt } from './balance.js';
 
 import { S, save, wipe } from './state.js';
-import { R, retry, enterStage, toughness, MODE } from './combat.js';
-import { Lcost, LcostN, Lval, nval, unlocked, maxed, affordable, buy, bestBuy, LDPS, LHP, LDEF } from './stats.js';
+import { R, retry, enterStage, toughness, MODE, AUTO_RETRY_CLEARS } from './combat.js';
+import { Lcost, LcostN, Lval, nval, unlocked, maxed, affordable, buy, bestBuy, canClear, LDPS, LHP, LDEF } from './stats.js';
 import { preloadFor } from './render.js';
 import * as G from './gacha.js';
 import * as DUN from './dungeon.js';
@@ -13,11 +13,13 @@ import { playRewarded } from './ads.js';
 import { initGrow, renderGrow } from './ui-grow.js';
 import { initGacha, renderGacha } from './ui-gacha.js';
 import { renderRoad } from './ui-road.js';
+import { nextMilestone } from './unlocks.js';
 import { fmt, L0, ratio } from './logmath.js';
 
 const $ = id => document.getElementById(id);
 let tab = 'battle';
 let buyMode = 1;        // 1 | 10 | 'max'
+let lastGoal = '';      // 목표 띠 — 바뀔 때만 다시 그린다
 
 export function toast(msg) {
   const t = $('toast');
@@ -185,7 +187,7 @@ function renderDaily() {
   }).join('');
 
   $('dailyList').innerHTML =
-    `<div class="note">자정에 초기화됩니다. 젬은 가챠에 씁니다.</div>`
+    `<div class="note">자정에 초기화됩니다. 젬은 뽑기에 씁니다.</div>`
     + quests
     + `<div style="font-size:13px;font-weight:800;margin:14px 0 2px">🎁 출석 보상</div>
        <div class="note" style="margin-bottom:0">연속 ${S.attend.streak || 0}일째${pend ? ' · 오늘 받을 수 있어요' : ' · 오늘은 받았어요'}</div>
@@ -226,6 +228,19 @@ export function refresh() {
     needTxt = mins > 600 ? '지금 전투력으로는 사실상 불가능합니다 — 강화가 더 필요해요'
       : '이 스테이지는 약 ' + Math.round(mins) + '분 걸립니다 — 강화를 더 하세요';
   }
+  // 파밍 중이라면 **왜 여기 있는지** 가 먼저다. 측정해 보니 첫 1시간의 45%가 파밍인데
+  // 그동안 화면에는 "파밍 중" 세 글자뿐이었다 — 같은 곳을 도는 이유도 언제 끝나는지도
+  // 안 보이니 반복이 그냥 정체로 읽힌다.
+  //
+  // 전투력 비율(canClear 의 생존여유)을 퍼센트로 보여줬다가 뺐다. 자동 재도전은
+  // canClear 가 아직 false 여도 3판이면 한 번 찔러보므로(그쪽이 보수적이라서),
+  // "준비 42%" 라고 써 놓고 재도전이 나가 버린다. 남은 판 수는 반드시 맞는 숫자다.
+  if (R.mode === MODE.FARM) {
+    const left = Math.max(0, AUTO_RETRY_CLEARS - (R.farmClears || 0));
+    needTxt = canClear(S.st) || left === 0
+      ? chapterLabel(S.st) + ' 재도전 준비 완료'
+      : chapterLabel(S.st) + ' 재도전까지 ' + left + '판';
+  }
   $('hint').textContent = needTxt;
 
   // 강화 목록은 메인 화면에 상시 노출된다 — 골드가 계속 늘어 구매 가능 여부가 바뀌므로 매 틱 갱신.
@@ -237,11 +252,24 @@ export function refresh() {
   const waves = R.boss ? 1 : B.stage.waves;
   const alive = R.enemies.filter(e => e.Lhp > -Infinity).length;
   const killed = R.waveIdx * per + (per - alive);
-  const prog = Math.max(0, Math.min(1, killed / (per * waves)));
+  const total = per * waves;
+  const prog = Math.max(0, Math.min(1, killed / total));
   $('sProg').style.width = (prog * 100).toFixed(1) + '%';
-  $('sName').textContent = B.zones.list[Math.floor((R.stage - 1) / B.stage.bossEvery) % B.zones.list.length].name;
+  $('sName').textContent = zoneAt(R.stage).name;
+  // 숫자로도 보여준다 — 30~60분 구간은 한 판이 약 250초라, 진행바가 한 칸 차는 데
+  // 30초가 걸린다. 몇 마리 중 몇 번째인지 보이면 같은 4분도 "진행" 으로 읽힌다.
+  $('sWave').textContent = R.boss ? '보스전'
+    : `웨이브 ${Math.min(R.waveIdx + 1, waves)}/${waves} · ${killed}/${total}`;
   $('sNum').textContent = chapterLabel(R.stage);
   $('sIcon').textContent = R.boss ? '👑' : '🚩';
+
+  // 다음 목표 — 로드맵은 눌러야 나오니 한 줄만 상시로 꺼내 둔다.
+  // "왜 계속 내려가야 하는가" 에 대한 답이 화면에 항상 있어야 한다.
+  const nm = nextMilestone();
+  const goal = nm
+    ? `${nm.ic} ${nm.what} <em>${nm.at - S.best}층 남음 ›</em>`
+    : '🏅 해금 완료 — 최고 기록에 도전 중 <em>›</em>';
+  if (goal !== lastGoal) { $('sGoal').innerHTML = goal; lastGoal = goal; }  // 초당 4번 파싱하지 않는다
   // 융합 가능한 묶음이 있으면 탭에 점을 띄운다
   const gd = $('gDot');
   if (gd) gd.style.display = G.BANNERS.some(b => G.hasFusable(b.key)) ? 'block' : 'none';

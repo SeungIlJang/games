@@ -38,6 +38,21 @@
   #stageBar:active{background:#16204a}
   .pv{color:#8ad8ff}
   .pv b{color:#7fd07f}
+  /* 스킬바 */
+  #skillBar{display:none;gap:6px;padding:6px 10px;background:#0d1328;border-bottom:1px solid #26304f;
+            align-items:center;overflow-x:auto}
+  #skillBar.on{display:flex}
+  .skAuto{flex:0 0 auto;width:42px;height:42px;border-radius:50%;border:2px solid #3a4568;
+          display:flex;flex-direction:column;align-items:center;justify-content:center;
+          font-size:9px;font-weight:800;cursor:pointer;background:#1a2242;color:#8fa6c8}
+  .skAuto.on{background:#3a3016;border-color:#d8b24a;color:#ffd34d}
+  .skSlot{flex:0 0 auto;position:relative;width:42px;height:42px;border-radius:50%;
+          background:#1a2242;border:2px solid #3a4568;display:flex;align-items:center;justify-content:center;
+          font-size:19px;cursor:pointer;overflow:hidden}
+  .skSlot.ready{border-color:#d8b24a;box-shadow:0 0 6px rgba(216,178,74,.5)}
+  /* 쿨 = 아래에서 차오르는 막 */
+  .skSlot i{position:absolute;left:0;right:0;bottom:0;background:rgba(10,14,30,.72);pointer-events:none}
+  .skSlot b{position:relative;z-index:1;font-style:normal}
   /* 몬스터 도감 */
   .mgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
   .mtile{position:relative;background:#141b38;border:2px solid #26304f;border-radius:10px;padding:6px 3px 4px;text-align:center;cursor:pointer}
@@ -70,9 +85,16 @@
   .rhint{margin-top:3px;font-size:12px;color:#ffd34d;font-weight:700}
   .sname{display:flex;align-items:center;gap:5px;font-size:12px;margin-bottom:5px}
   .sname b{color:#ffe9a8}
+  /* 남은 적 수. 깊은 스테이지는 한 판이 4분이라 진행바만으로는 멈춘 것처럼 보인다 */
+  .sname #sWave{font-size:11px;color:#8fa6c8;font-variant-numeric:tabular-nums}
   .sname #sNum{margin-left:auto;font-weight:800;color:#7fd0ff}
   .sprog{height:8px;background:#1a2040;border-radius:5px;overflow:hidden}
   .sprog i{display:block;height:100%;width:0;background:linear-gradient(90deg,#4a6bd0,#7fd0ff);transition:width .15s}
+  /* 다음 목표 — 눌러서 로드맵으로 가라는 뜻이 보이게 › 를 오른쪽에 붙인다 */
+  .sgoal{display:flex;align-items:center;gap:4px;margin-top:5px;font-size:11px;color:#9fb6d8;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sgoal b{color:#ffe9a8}
+  .sgoal em{font-style:normal;font-weight:800;color:#ffd34d;margin-left:auto;padding-left:6px}
   #mainUpg{flex:1;min-height:0;overflow-y:auto;padding:8px 10px 10px;background:#0a0d1e}
   #mainUpg .row{margin-bottom:6px}
 
@@ -125,6 +147,45 @@
   .soon{text-align:center;opacity:.5;font-size:13px;padding:40px 10px;line-height:1.9}
 
   /* 오프라인 */
+  /* ── 첫 화면 ───────────────────────────────────────────── */
+  #title{position:absolute;inset:0;z-index:60;display:none;flex-direction:column;
+         justify-content:space-between;overflow:hidden}
+  #title.on{display:flex}
+  #title.out{animation:tOut .45s ease forwards}
+  @keyframes tOut{to{opacity:0;visibility:hidden}}
+  /* 배경은 이미 있는 전투 배경을 그대로 쓴다 — 톤이 게임과 어긋나지 않는다 */
+  .tbg{position:absolute;inset:0;background:url(assets/bg/forest.png) center/cover no-repeat;
+       transform:scale(1.08);animation:tDrift 24s ease-in-out infinite alternate}
+  @keyframes tDrift{to{transform:scale(1.14) translateX(-2%)}}
+  /* 위아래를 어둡게 깔아야 글자가 읽힌다 */
+  .tveil{position:absolute;inset:0;background:
+     linear-gradient(180deg,rgba(6,9,22,.86) 0%,rgba(6,9,22,.25) 38%,rgba(6,9,22,.55) 72%,rgba(6,9,22,.95) 100%)}
+  .tmain{position:relative;padding:40px 20px 0;text-align:center;flex:0 0 auto}
+  .ttag{font-size:12px;letter-spacing:.14em;color:#9fd8ff;opacity:.9;margin-bottom:10px}
+  .tname{font-size:40px;line-height:1.1;font-weight:900;color:#fff8e1;
+         text-shadow:0 3px 0 #2a1d4a,0 0 22px rgba(120,180,255,.45);letter-spacing:-.01em}
+  .tname b{color:#ffd34d;font-size:46px;text-shadow:0 3px 0 #4a3410,0 0 26px rgba(255,200,90,.5)}
+  /* 주인공과 동료 — 게임 안 그림을 그대로 쓴다 */
+  /* 두 겹인 이유: 바깥이 남는 세로를 차지해 **가운데 정렬**하고,
+     안쪽 .trow 가 셋의 **발밑을 같은 선**에 맞춘다. 한 겹으로는 둘 다 못 한다
+     (flex-end 로 맞추면 캐릭터가 통째로 바닥으로 쏠린다). */
+  .tcast{position:relative;flex:1 1 auto;display:flex;align-items:center;justify-content:center}
+  .trow{display:flex;align-items:flex-end;justify-content:center;gap:6px}
+  .tcast img{image-rendering:auto;filter:drop-shadow(0 6px 10px rgba(0,0,0,.45))}
+  .tcast .c1{width:128px;animation:tBob 2.4s ease-in-out infinite}
+  .tcast .c2{width:62px;animation:tBob 2.4s ease-in-out .5s infinite}
+  .tcast .c3{width:62px;animation:tBob 2.4s ease-in-out .9s infinite}
+  @keyframes tBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+  .tfoot{position:relative;padding:0 24px 30px;text-align:center}
+  .tsave{font-size:12px;color:#cfdcf2;opacity:.85;margin-bottom:10px;min-height:16px}
+  #tStart{width:100%;max-width:300px;padding:15px;border:none;border-radius:14px;
+          background:linear-gradient(#49b265,#2d7d46);color:#fff;font-size:17px;font-weight:900;
+          cursor:pointer;box-shadow:0 5px 0 #1d5730,0 8px 18px rgba(0,0,0,.4);
+          animation:tPulse 2s ease-in-out infinite}
+  #tStart:active{transform:translateY(3px);box-shadow:0 2px 0 #1d5730}
+  @keyframes tPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.14)}}
+  .tver{margin-top:12px;font-size:10px;color:#8fa6c8;opacity:.6}
+
   .modal{position:absolute;inset:0;z-index:30;display:none;align-items:center;justify-content:center;
     background:rgba(5,6,14,.9);padding:20px}
   .modal.on{display:flex}
@@ -281,6 +342,28 @@
 </head>
 <body>
 <div id="wrap">
+  <!-- 첫 화면. 처음 켰을 때 게임이 뭔지 한 번에 보여준다. -->
+  <div id="title" class="on">
+    <div class="tbg"></div>
+    <div class="tveil"></div>
+    <div class="tmain">
+      <div class="ttag">인간 용사들이 숲을 침략했다</div>
+      <h1 class="tname">무럭무럭<br><b>몬스터</b></h1>
+    </div>
+    <div class="tcast">
+      <div class="trow">
+        <img class="c2" src="assets/comp/spore.png" alt="">
+        <img class="c1" src="assets/mon/slime/idle_1.png" alt="">
+        <img class="c3" src="assets/comp/bats.png" alt="">
+      </div>
+    </div>
+    <div class="tfoot">
+      <div class="tsave" id="tSave"></div>
+      <button id="tStart">시작하기</button>
+      <div class="tver" id="tVer"></div>
+    </div>
+  </div>
+
   <div id="hud">
     <div class="cell"><div class="k">스테이지</div><div class="v" id="hStage">1-1</div></div>
     <div class="cell"><div class="k">최고</div><div class="v" id="hBest">1</div></div>
@@ -297,18 +380,22 @@
   </div>
 
   <div id="stageBar">
-    <div class="sname"><span id="sIcon">🚩</span> <b id="sName">몬스터 숲</b> <span id="sNum">1-1</span></div>
+    <div class="sname"><span id="sIcon">🚩</span> <b id="sName">몬스터 숲</b> <span id="sWave"></span> <span id="sNum">1-1</span></div>
     <div class="sprog"><i id="sProg"></i></div>
+    <div class="sgoal" id="sGoal"></div>
   </div>
 
   <canvas id="game"></canvas>
 
   <!-- 강화는 메인 화면에 상시 노출한다. 별도 탭에 숨기면 메인이 '구경만 하는 화면'이 된다 -->
+  <!-- 스킬바 — 레퍼런스처럼 전장 바로 아래. 장착한 스킬이 없으면 숨긴다 -->
+  <div id="skillBar"></div>
+
   <div id="mainUpg" class="scroll"></div>
 
   <div id="nav">
     <div class="nav on" data-t="battle"><span class="ic">⚔️</span>전투</div>
-    <div class="nav" data-t="gacha" style="position:relative"><span class="ic">🎲</span>가챠<span id="gDot" style="display:none;position:absolute;top:5px;right:24%;width:8px;height:8px;background:#2d7d46;border-radius:50%"></span></div>
+    <div class="nav" data-t="gacha" style="position:relative"><span class="ic">🎲</span>뽑기<span id="gDot" style="display:none;position:absolute;top:5px;right:24%;width:8px;height:8px;background:#2d7d46;border-radius:50%"></span></div>
     <div class="nav" data-t="dun" style="position:relative"><span class="ic">🗝️</span>던전<span id="dDot" class="dot"></span></div>
     <div class="nav" data-t="daily" style="position:relative"><span class="ic">📋</span>일일<span id="qDot" class="dot"></span></div>
     <div class="nav" data-t="grow" style="position:relative"><span class="ic">🌱</span>성장<span id="grDot" class="dot" style="background:#2d7d46"></span></div>
@@ -329,7 +416,7 @@
   <!-- 가챠 -->
   <div class="panel" id="p_gacha">
     <span class="closeX" data-close>✕</span>
-    <h2>🎲 가챠</h2>
+    <h2>🎲 뽑기</h2>
     <div class="bar" id="gBanners"></div>
     <div id="gHead"></div>
     <div id="gActions"></div>
