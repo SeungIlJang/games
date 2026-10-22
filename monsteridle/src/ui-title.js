@@ -10,12 +10,15 @@ const $ = id => document.getElementById(id);
 
 /**
  * @param onStart 시작 버튼을 누른 뒤 실행할 것 (오프라인 보상 등)
+ * @param onPress 버튼을 누른 **그 순간** 동기로 실행할 것. 오디오 활성화용이다 —
+ *                모바일은 사용자 입력 핸들러 안에서 만든 AudioContext 만 울린다.
+ *                onStart 는 450ms 페이드 뒤라 이미 입력 맥락이 아니다.
  */
-export function showTitle(onStart) {
+export function showTitle(onStart, onPress) {
   const el = $('title');
   if (!el) { onStart?.(); return; }
 
-  const fresh = S.best <= 1 && S.st <= 1;
+  const fresh = S.life <= 1 && S.st <= 1;
   $('tStart').textContent = fresh ? '시작하기' : '이어하기';
   const lead = B.roster.monsters.find(m => m.key === S.mon)?.name || '';
   // 받침이 있으면 '과', 없으면 '와' — "본가드 와 함께" 처럼 어색하게 붙는 걸 막는다
@@ -26,13 +29,14 @@ export function showTitle(onStart) {
   };
   $('tSave').innerHTML = fresh
     ? '몬스터가 되어 숲을 지킨다'
-    : `최고 <b style="color:#ffd34d">${chapterLabel(S.best)}</b> · ${lead}${josa(lead)} 함께`;
+    : `최고 <b style="color:#ffd34d">${chapterLabel(S.life)}</b> · ${lead}${josa(lead)} 함께`;
   $('tVer').textContent = 'v' + B.version;
 
   let done = false;
   const go = () => {
     if (done) return;            // 연타해도 한 번만
     done = true;
+    try { onPress?.(); } catch {}   // 오디오가 실패해도 게임은 시작돼야 한다
     el.classList.add('out');
     setTimeout(() => { el.classList.remove('on', 'out'); onStart?.(); }, 450);
   };

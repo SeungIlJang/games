@@ -27,6 +27,12 @@
     "bossHpMul": 6,
     "bossAtkMul": 1.6,
     "bossGoldMul": 10,
+    "bossEnrage": {
+      "_": "보스 광폭화. 오래 끌면 공격력이 오른다 — 10스테이지마다 오는 유일한 리듬에 시간 압박을 준다. 측정상 첫 1시간 뒤로는 사망이 거의 없어 긴장이 사라져 있었다. 보스 TTK 중위가 90초라 그보다 넉넉한 뒤에 시작해 '정상 플레이' 는 벌하지 않는다.",
+      "after": 45,
+      "perSec": 0.08,
+      "cap": 4
+    },
     "_timeLimit": "없음. 제한시간은 영구 벽을 만든다(원칙 3). 실패 조건은 사망뿐."
   },
   "player": {
@@ -36,6 +42,7 @@
   "stats": {
     "atk": {
       "kind": "mul",
+      "track": "atk",
       "base": 10,
       "r": 1.018,
       "c0": 24,
@@ -45,6 +52,7 @@
     },
     "hp": {
       "kind": "mul",
+      "track": "hp",
       "base": 400,
       "r": 1.018,
       "c0": 30,
@@ -135,8 +143,57 @@
         1000
       ]
     },
+    "abyA": {
+      "kind": "mul",
+      "track": "atk",
+      "base": 1,
+      "r": 1.4,
+      "c0log": 412,
+      "g": 1.3,
+      "name": "심연공격력",
+      "icon": "🌑",
+      "reqStage": 8000,
+      "max": 30
+    },
+    "abyH": {
+      "kind": "mul",
+      "track": "hp",
+      "base": 1,
+      "r": 1.4,
+      "c0log": 876,
+      "g": 1.3,
+      "name": "심연체력",
+      "icon": "🛡️",
+      "reqStage": 17000,
+      "max": 30
+    },
+    "voidA": {
+      "kind": "mul",
+      "track": "atk",
+      "base": 1,
+      "r": 1.5,
+      "c0log": 1314,
+      "g": 1.3,
+      "name": "공허공격력",
+      "icon": "💠",
+      "reqStage": 25500,
+      "max": 30
+    },
+    "voidH": {
+      "kind": "mul",
+      "track": "hp",
+      "base": 1,
+      "r": 1.5,
+      "c0log": 1623,
+      "g": 1.3,
+      "name": "공허체력",
+      "icon": "🔷",
+      "reqStage": 31500,
+      "max": 30
+    },
     "adv": {
       "kind": "mul",
+      "track": "atk",
       "base": 1,
       "r": 1.024,
       "c0": 2000,
@@ -172,25 +229,29 @@
         "key": "equip",
         "name": "장비",
         "icon": "⚔️",
-        "slots": 3,
+        "slots": 5,
         "affects": "공격력",
         "slotUnlock": [
           1,
           1,
-          1
+          1,
+          4500,
+          22000
         ]
       },
       {
         "key": "skill",
         "name": "스킬",
         "icon": "✨",
-        "slots": 4,
+        "slots": 6,
         "affects": "보스 버스트",
         "slotUnlock": [
           1,
           20,
           60,
-          150
+          150,
+          12000,
+          28500
         ]
       },
       {
@@ -475,6 +536,15 @@
       "maxHours": 12
     }
   },
+  "prestige": {
+    "_": "환생. 스테이지·골드·강화를 버리고 영혼을 받는다. 해금(life 기준)과 가챠·마스터리·연구·수집은 남는다 — 그쪽은 하루 수입에 묶여 있어 같이 지우면 하루를 통째로 날리는 꼴이 된다.",
+    "_왜상점인가": "영혼을 자동 배수로 주면 어떤 값에서도 발산한다(영혼이 스테이지에 선형이면 환생마다 (1+복귀율)배). 복귀율 3%에서도 365일 끝점이 19,668 → 138,354 였다. 등비 가격 상점에서 사면 레벨이 영혼의 로그가 되어 수렴한다.",
+    "unlockStage": 3000,
+    "_unlockStage": "마지막 해금(이그나리온 3000층) 직후. 첫 회차는 해금 투어를 온전히 겪고 나서 환생이 열린다.",
+    "soulDiv": 10,
+    "shop": { "c0": 10, "g": 1.15, "r": 1.08 },
+    "_shop": "가격 c0×g^lv, 레벨당 피해 ×r. 시뮬 365일 검증: 환생 4회·상점 Lv.30·5판정 통과."
+  },
   "offline": {
     "capHours": 12
   },
@@ -545,70 +615,80 @@
         "sheet": "Enemy_Gloop_Slime.png",
         "dir": "Gloop_Slime",
         "name": "글룹",
-        "unlock": 1
+        "unlock": 1,
+        "ability": {"name": "균형", "desc": "모든 피해 +10%", "dmg": 1.1}
       },
       {
         "key": "goblin",
         "sheet": "Enemy_Grik_Goblin.png",
         "dir": "Grik_Goblin",
         "name": "그릭",
-        "unlock": 10
+        "unlock": 10,
+        "ability": {"name": "탐욕", "desc": "골드 +40%, 피해 -15%", "gold": 1.4, "dmg": 0.85}
       },
       {
         "key": "bat",
         "sheet": "Enemy_Nightwing_Bat.png",
         "dir": "Nightwing_Bat",
         "name": "나이트윙",
-        "unlock": 40
+        "unlock": 40,
+        "ability": {"name": "흡혈", "desc": "웨이브 회복 2배, 피해 -10%", "rec": 2.0, "dmg": 0.9}
       },
       {
         "key": "mushroom",
         "sheet": "Enemy_Sporeling_Mushroom.png",
         "dir": "Sporeling_Mushroom",
         "name": "스포어링",
-        "unlock": 100
+        "unlock": 100,
+        "ability": {"name": "포자", "desc": "잡몹 피해 +35%, 보스 피해 -20%", "nrm": 1.35, "boss": 0.8}
       },
       {
         "key": "skeleton",
         "sheet": "Enemy_Boneguard_Skeleton.png",
         "dir": "Boneguard_Skeleton",
         "name": "본가드",
-        "unlock": 200
+        "unlock": 200,
+        "ability": {"name": "뼈방패", "desc": "받는 피해 -25%, 피해 -10%", "dr": 1.33, "dmg": 0.9}
       },
       {
         "key": "wolf",
         "sheet": "Enemy_Fangwolf_Wolf.png",
         "dir": "Fangwolf_Wolf",
         "name": "팽울프",
-        "unlock": 400
+        "unlock": 400,
+        "ability": {"name": "질주", "desc": "공격속도 +25%, 치명피해 -20%", "aspd": 1.25, "cdmg": 0.8}
       },
       {
         "key": "ghost",
         "sheet": "Enemy_Wraith_Ghost.png",
         "dir": "Wraith_Ghost",
         "name": "레이스",
-        "unlock": 700
+        "unlock": 700,
+        "ability": {"name": "원혼", "desc": "치명확률 +12%p, 최대체력 -20%", "critAdd": 0.12, "hp": 0.8}
       },
       {
         "key": "orc",
         "sheet": "Enemy_Brakk_Orc.png",
         "dir": "Brakk_Orc",
         "name": "브락",
-        "unlock": 1200
+        "unlock": 1200,
+        "ability": {"name": "격노", "desc": "보스 피해 +170%, 잡몹 피해 -5%", "boss": 2.7, "nrm": 0.95}
       },
       {
         "key": "golem",
         "sheet": "Enemy_GraniteGolem.png",
         "dir": "Granite_Golem",
         "name": "그래니트",
-        "unlock": 2000
+        "unlock": 2000,
+        "ability": {"name": "암반", "desc": "최대체력 +60%, 공격속도 -15%", "hp": 1.6, "aspd": 0.85}
       },
       {
         "key": "dragon",
         "sheet": "Boss_Ignarion_RedDragon.png",
         "dir": "Ignarion_RedDragon_Boss",
         "name": "이그나리온",
-        "unlock": 3000
+        "unlock": 3000,
+        "ability": {"name": "화염", "desc": "치명피해 +60%, 치명확률 -5%p", "cdmg": 1.6, "critAdd": -0.05}
       }
     ],
     "heroes": [

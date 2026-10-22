@@ -4,7 +4,7 @@
 //   · 사망 시 직전 스테이지로 내려가 파밍하고, 플레이어가 재도전을 누른다
 import { B, perWave, isBoss, LeHP, LeATK, LeGOLD, heroAt, foeAt, chapterLabel } from './balance.js';
 import { S, save } from './state.js';
-import { LDPS, LHP, LDEF, nval, shots, critF, Linc, bestFarmStage, canClear } from './stats.js';
+import { LDPS, LHP, LDEF, nval, shots, critF, Linc, bestFarmStage, canClear, ab } from './stats.js';
 import { bump as bumpDaily } from './daily.js';
 import { recomputeGacha } from './gacha.js';
 import { crossed } from './unlocks.js';
@@ -75,6 +75,23 @@ export function enterStage(stage, mode = MODE.RUN) {
   spawnWave();
 }
 
+/**
+ * 보스 광폭화 — 오래 끌수록 보스 공격력이 오른다.
+ *
+ * 10스테이지마다 오는 보스가 체력 6배일 뿐이라 긴 잡몹 전투와 다를 게 없었다.
+ * 측정상 30일 동안 사망 12회가 전부 첫 1시간에 몰려 있었고, 그 뒤로는 공백에 쌓인
+ * 골드 때문에 영원히 과강화라 긴장이 없다. 시간 제한이 아니라 **점점 세지는 압박**이라
+ * 영구 벽이 되지 않는다(원칙 3) — 못 버티면 파밍하고 돌아오면 된다.
+ *
+ * after 를 보스 TTK 중위(90초)보다 짧게 잡아야 실제로 문다. 시뮬에서 60초는
+ * 효과가 0 이었고 45초부터 보스 사망이 생겼다(30일 기준 0회 → 8회).
+ */
+export function enrage() {
+  const e = B.stage.bossEnrage;
+  if (!R.boss || !e) return 1;
+  return Math.min(e.cap, 1 + Math.max(0, R.stageTime - e.after) * e.perSec);
+}
+
 function front() {
   for (const e of R.enemies) if (e.Lhp > L0) return e;
   return null;
@@ -97,10 +114,13 @@ function fx(type, text, x, y, delay = 0) {
 }
 
 function gainGold() {
-  S.Lg = add(S.Lg, LeGOLD(R.stage, R.boss));
+  // 리드 능력의 골드 배수(그릭 탐욕 등). 오프라인 보상은 offline.js 쪽에서 같이 건다.
+  S.Lg = add(S.Lg, LeGOLD(R.stage, R.boss) + fromNum(ab('gold')));
 }
 
 function onKill(e, idx) {
+  // 스킬 처치(fireSkill)도 이 함수를 거친다 — 여기 한 곳만 울려야 두 번 나지 않는다
+  onEvent({ type: 'kill' });
   gainGold();
   bumpDaily('kill');
   fx('gold', '+' + fmt(LeGOLD(R.stage, R.boss)), idx, -16);
@@ -142,8 +162,11 @@ function onKill(e, idx) {
   const cleared = R.stage;
   // 새로 열린 것이 있으면 사건으로 만든다. 조용히 탭이 하나 생기면 플레이어는
   // 모르고 지나간다(docs/reference-legend-of-slime.md §2).
-  const opened = cleared > S.best ? crossed(S.best, cleared) : [];
-  if (cleared > S.best) { S.best = cleared; recomputeGacha(); }   // 슬롯 해금 반영
+  // 해금 알림은 **영구 기록** 기준이다. 환생 후 다시 올라올 때 이미 가진 해금이
+  // 다시 '해금!' 으로 뜨면 거짓말이 된다.
+  const opened = cleared > S.life ? crossed(S.life, cleared) : [];
+  if (cleared > S.best) S.best = cleared;
+  if (cleared > S.life) { S.life = cleared; recomputeGacha(); }   // 슬롯 해금 반영
   S.st = cleared + 1;
   bumpDaily('stage');     // 일일퀘스트: 스테이지 클리어 (파밍 반복은 위에서 걸러진다)
   if (opened.length) banner(opened.map(o => o.ic + ' ' + o.plain).join('   '), 3.2, true);
@@ -203,7 +226,12 @@ export function tick(dt) {
 
   const f = front();
   if (!f) return;
+  const t0 = R.stageTime;
   R.stageTime += dt;
+  // 광폭화가 시작되는 순간은 **사건**이다 — 조용히 세지면 왜 죽었는지 알 수 없다
+  if (R.boss && B.stage.bossEnrage && t0 <= B.stage.bossEnrage.after && R.stageTime > B.stage.bossEnrage.after) {
+    banner('🔥 ' + R.heroName + ' 광폭화! 공격력이 계속 오른다', 2.6, true);
+  }
 
   // 플레이어 공격
   R.atkT -= dt;
@@ -226,6 +254,7 @@ export function tick(dt) {
                + fromNum(critMul * normalShare());
     f.Lhp = sub(f.Lhp, Ldmg);
     f.hitT = 0.12;
+    onEvent({ type: 'attack' });        // 실제 평타가 나간 순간 (연출이 아니라 사실)
     const idx = R.enemies.indexOf(f);
     // 발수만큼 숫자를 나눠 띄운다. 연출이 아니라 사실이다 — 피해식에 shots() 가 이미 곱해져 있다.
     // shots() 는 더블샷·트리플샷이 확률 스탯이라 1~3 사이 실수다. 소수부를 확률로 처리하면
@@ -256,10 +285,11 @@ export function tick(dt) {
     const n = aliveCount();
     if (n > 0) {
       R.foeAtkT = 0.22;
-      const Ldmg = LeATK(R.stage, R.boss) + fromNum(n) - LDEF();
+      const Ldmg = LeATK(R.stage, R.boss) + fromNum(n) - LDEF() + fromNum(enrage());
       if (Ldmg >= R.Lhp) { R.Lhp = L0; playerDied(); return; }
       R.Lhp = sub(R.Lhp, Ldmg);
       R.pHitT = 0.18;        // 피격 포즈
+      onEvent({ type: 'playerHit' });
     }
   }
 }
