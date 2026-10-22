@@ -279,7 +279,16 @@ async function hideBanner(){ const C=window.Capacitor; if(!admobReady || !(C&&C.
 // 🌐 전세계 랭킹: 아래 FB_CONFIG를 Firebase 콘솔 값으로 채우면 자동 활성화(비어있으면 로컬 Top-10로 동작)
 // 갤로그의 귀환과 같은 Firebase 프로젝트 재사용(컬렉션은 number_lb)
 window.FB_CONFIG = window.FB_CONFIG || { apiKey:"AIzaSyDUanex0x7CmvCQxBK2d3a7SkyscuEGzwY", authDomain:"gallog-return-be90f.firebaseapp.com", projectId:"gallog-return-be90f", appId:"1:317854999265:web:c78708adabdef449a08da0" };
-let myName = (function(){ try{ return localStorage.getItem('num_name')||'나'; }catch(e){ return '나'; } })();
+// ⚠️ Firestore 보안 규칙이 랭킹 문서를 {name, score, ts} 로 고정하고 있다.
+//    필드를 하나라도 더 넣으면 전세계 랭킹 등록이 통째로 거부되니 추가 금지.
+//    그래서 '1인 1기록'은 uid가 아니라 닉네임으로 묶는다 → 기본 닉네임을 기기마다 다르게 만든다.
+let myName = (function(){ try{
+  let n=localStorage.getItem('num_name');
+  if(!n){ n='도전자'+Math.random().toString(36).slice(2,6).toUpperCase(); localStorage.setItem('num_name',n); }
+  return n;
+}catch(e){ return '도전자'; } })();
+// ⚠️ 개발 중 올라간 봇 기록(2026-10-22). Firebase 콘솔에서 해당 문서를 지우면 이 배열은 비워도 된다.
+const LB_HIDE=['e2SzwUSTUSClEMXaz0CI','FkPcd9ndxcRMP8JFg8za','Un2NVSeymEATGSE4MBYF','RS8KUTQgp32Fz1UQqpnl'];
 function esc(s){ return String(s).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c])); }
 // 로컬 저장
 function loadLB(){ try{ return JSON.parse(localStorage.getItem('num_lb')||'[]'); }catch(e){ return []; } }
@@ -294,7 +303,20 @@ let fbReady=false, fbDb=null, fbApi=null;
   const app=appM.initializeApp(FB_CONFIG); fbDb=fsM.getFirestore(app); fbApi=fsM; fbReady=true;
 }catch(e){ fbReady=false; } })();
 async function fbSubmit(name,sc){ if(!fbReady) return; try{ await fbApi.addDoc(fbApi.collection(fbDb,'number_lb'),{ name:String(name).slice(0,16), score:Math.floor(sc), ts:fbApi.serverTimestamp() }); }catch(e){} }
-async function fbTop(){ if(!fbReady) return null; try{ const q=fbApi.query(fbApi.collection(fbDb,'number_lb'), fbApi.orderBy('score','desc'), fbApi.limit(20)); const s=await fbApi.getDocs(q); return s.docs.map(d=>d.data()); }catch(e){ return null; } }
+// 상위 구간을 넉넉히 읽어 '한 사람당 최고 기록 1줄'로 접는다.
+// (예전 기록은 uid가 없어서 닉네임으로 묶음 — 한 사람이 3~5줄씩 차지하던 문제 해결)
+async function fbTop(){ if(!fbReady) return null; try{
+  const q=fbApi.query(fbApi.collection(fbDb,'number_lb'), fbApi.orderBy('score','desc'), fbApi.limit(120));
+  const s=await fbApi.getDocs(q);
+  const byPlayer=new Map();
+  s.docs.forEach(d=>{
+    if(LB_HIDE.indexOf(d.id)>=0) return;
+    const v=d.data(), sc=v.score|0, nm=String(v.name||'익명').slice(0,16), key=nm.trim();
+    const cur=byPlayer.get(key);
+    if(!cur || sc>cur.score) byPlayer.set(key,{name:nm, score:sc});
+  });
+  return [...byPlayer.values()].sort((a,b)=>b.score-a.score).slice(0,20);
+}catch(e){ return null; } }
 // 공통 렌더
 function renderList(a, mineFn){ const box=$('lbList');
   if(!a || !a.length){ box.innerHTML='<div class="sub" style="opacity:.6;padding:24px">아직 기록이 없어요.<br/>첫 주인공이 되어보세요! 🎯</div>'; return; }
@@ -304,12 +326,11 @@ function renderList(a, mineFn){ const box=$('lbList');
 function lbHeader(mode){ $('lbName').innerHTML=mode+' · 닉네임: <b>'+esc(myName)+'</b><span id="lbEdit">✏️ 변경</span>'; $('lbEdit').onclick=editName; }
 function renderLB(){ lbHeader('📱 내 기기'); renderList(loadLB(), e=>e.me); }
 function editName(){ const n=prompt('닉네임 (최대 8자)', myName); if(n && n.trim()){ myName=n.trim().slice(0,8); try{localStorage.setItem('num_name',myName);}catch(e){} showLB(); } }
-let _mineMark=null;   // 방금 올린 내 기록 {name,score}
 async function showLB(){ $('lb').classList.remove('hidden');
   if(fbReady){ lbHeader('🌐 전세계'); $('lbList').innerHTML='<div class="sub" style="opacity:.6;padding:24px">🌐 전세계 순위 불러오는 중…</div>';
     const arr=await fbTop();
     if(arr===null){ $('lbList').innerHTML='<div class="sub" style="opacity:.6;padding:24px">순위를 못 불러왔어요.<br/>잠시 후 다시 시도해주세요.</div>'; return; }
-    let marked=false; renderList(arr, (e)=>{ if(marked||!_mineMark) return false; if(e.name===_mineMark.name && e.score===_mineMark.score){ marked=true; return true; } return false; });
+    renderList(arr, (e)=>e.name===myName);
   } else { renderLB(); }
 }
 function hideLB(){ $('lb').classList.add('hidden'); }
@@ -318,7 +339,7 @@ async function renderOverLB(){
   const box=$('overLbList'); if(!box) return;
   box.innerHTML='<div class="sub" style="opacity:.6;font-size:13px;padding:6px">순위 불러오는 중…</div>';
   let arr=null, mineFn=null;
-  if(fbReady){ arr=await fbTop(); if(arr){ let marked=false; mineFn=(e)=>{ if(marked||!_mineMark) return false; if(e.name===_mineMark.name && e.score===_mineMark.score){ marked=true; return true; } return false; }; } }
+  if(fbReady){ arr=await fbTop(); if(arr) mineFn=(e)=>e.name===myName; }
   if(!arr){ arr=loadLB(); mineFn=(e)=>e.me; }
   const top=(arr||[]).slice(0,6);
   box.innerHTML = top.length ? top.map((e,i)=>{ const me=mineFn&&mineFn(e,i); const medal=['🥇','🥈','🥉'][i]||('<span style="opacity:.5;display:inline-block;width:1.3em">'+(i+1)+'</span>');
@@ -763,7 +784,8 @@ function die(msg, fromChoice){
   renderRankCard(); renderDaily(); renderBoostRow();
   $('overRec').innerHTML = rec?'<span class="rec">최고 갱신!</span>' : (best>0?('(최고까지 '+(best-score)+'점!)'):'');
   const rank = score>0 ? insertScore(score) : 0;
-  if(score>0 && fbReady){ _mineMark={name:myName,score:Math.floor(score)}; fbSubmit(myName,score); $('overRank').textContent='🌐 전세계 랭킹 등록! (랭킹 보기)'; }
+  if(fbReady && score>0 && rec){ fbSubmit(myName,score); $('overRank').textContent='🌐 전세계 랭킹 갱신! (랭킹 보기)'; }
+  else if(fbReady && score>0){ $('overRank').innerHTML='🌐 내 최고 <b>'+best+'</b>점이 랭킹에 등록돼 있어요'; }
   else $('overRank').textContent = rank>0 ? ('🏆 랭킹 '+rank+'위'+(rank===1?' — 1등!':(rank<=3?' 진입!':''))) : '';
   deathCount++;
   renderChase();
