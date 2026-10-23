@@ -216,7 +216,7 @@
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <div class="deck-eyebrow">G A L L O G  /  F L I G H T  D E C K</div>
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v7.6</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v7.7</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko"  class="btn-sm">한국어</button>
       <button data-lang="en"  class="btn-sm">English</button>
@@ -419,8 +419,8 @@ function applyI18n(){
 function setLang(l){ if(!I18N[l])return; LANG=l; LANG_AUTO=false; saveLang(l); applyI18n(); if(typeof renderShop==='function'){try{renderShop();renderClasses();}catch(e){}} }
 // ===== 2단계: 설명/이름 번역 (용어사전 GLOSS + 문장/보스명 TR) =====
 const GLOSS={
- en:{'레일건':'Railgun','스플릿링':'Split Ring','초신성':'Supernova','톱날궤도':'Saw Orbit','대참격':'Great Slash','군집미사일':'Missile Swarm','삼천세계':'Trichiliocosm','특이점':'Singularity','새 무기':'New Weapon','강화':'Upgrade','진화':'Evolve','부족':'short','비공개':'Hidden','최대 강화':'MAXED','공격력':'ATK','최대체력':'Max HP','최대 체력':'Max HP','피해감소':'Dmg Reduce','유도미사일':'Homing','삼도류':'Santoryu','블랙홀':'Blackhole','충격파':'Nova','획득량':'Gain','데미지':'DMG','이동속도':'Move Spd','회복':'Heal','범위':'Range','골드':'Gold','획득':'Gain','공격':'ATK','연사':'Fire Rate','이동':'Move','사거리':'Range','관통':'Pierce','탄속':'Bullet Spd','체력':'HP','자석':'Magnet','흡혈':'Lifesteal','흡수':'Absorb','볼트':'Bolt','화살촉':'Arrow','폭풍화살':'Storm Arrow','번개':'Lightning','뇌신':'Thunder God','서리':'Frost','절대영도':'Absolute Zero','화염방사':'Flamethrower','용암지대':'Lava Field','삼수호령':'Three Guardians','삼신강림':'Three Gods Descend','산탄':'Spread','궤도':'Orbit','참격':'Slash','유도':'Homing'},
- ja:{'레일건':'レールガン','스플릿링':'スプリットリング','초신성':'超新星','톱날궤도':'鋸軌道','대참격':'大斬撃','군집미사일':'ミサイル群','삼천세계':'三千世界','특이점':'特異点','새 무기':'新武器','강화':'強化','진화':'進化','부족':'不足','비공개':'非公開','최대 강화':'最大強化','공격력':'攻撃力','최대체력':'最大体力','최대 체력':'最大体力','피해감소':'被ダメ減','유도미사일':'誘導','삼도류':'三刀流','블랙홀':'ブラックホール','충격파':'衝撃波','획득량':'獲得量','데미지':'ダメージ','이동속도':'移動速度','회복':'回復','범위':'範囲','골드':'ゴールド','획득':'獲得','공격':'攻撃','연사':'連射','이동':'移動','사거리':'射程','관통':'貫通','탄속':'弾速','체력':'体力','자석':'マグネット','흡혈':'吸血','흡수':'吸収','볼트':'ボルト','화살촉':'矢','폭풍화살':'嵐の矢','번개':'雷','뇌신':'雷神','서리':'氷','절대영도':'絶対零度','화염방사':'火炎放射','용암지대':'溶岩地帯','삼수호령':'三守護霊','삼신강림':'三神降臨','산탄':'散弾','궤도':'軌道','참격':'斬撃','유도':'誘導'}
+ en:{'레일건':'Railgun','스플릿링':'Split Ring','초신성':'Supernova','톱날궤도':'Saw Orbit','대참격':'Great Slash','군집미사일':'Missile Swarm','삼천세계':'Trichiliocosm','특이점':'Singularity','새 무기':'New Weapon','강화':'Upgrade','진화':'Evolve','부족':'short','비공개':'Hidden','최대 강화':'MAXED','공격력':'ATK','최대체력':'Max HP','최대 체력':'Max HP','피해감소':'Dmg Reduce','유도미사일':'Homing','삼도류':'Santoryu','블랙홀':'Blackhole','충격파':'Nova','획득량':'Gain','데미지':'DMG','이동속도':'Move Spd','회복':'Heal','범위':'Range','골드':'Gold','획득':'Gain','공격':'ATK','연사':'Fire Rate','이동':'Move','사거리':'Range','관통':'Pierce','탄속':'Bullet Spd','체력':'HP','자석':'Magnet','흡혈':'Lifesteal','흡수':'Absorb','볼트':'Bolt','화살촉':'Arrow','폭풍화살':'Storm Arrow','번개':'Lightning','뇌신':'Thunder God','서리':'Frost','절대영도':'Absolute Zero','화염방사':'Flamethrower','용암지대':'Lava Field','삼수호령':'Three Guardians','삼신강림':'Three Gods Descend','산탄':'Spread','궤도':'Orbit','참격':'Slash','유도':'Homing','사건의 지평선':'Event Horizon','대붕괴':'Great Collapse','벌떼포화':'Swarm Barrage','무한포화':'Endless Barrage','천검진':'Blade Array','만검진':'Myriad Blades','융합':'Fusion','슬롯':'slot'},
+ ja:{'레일건':'レールガン','스플릿링':'スプリットリング','초신성':'超新星','톱날궤도':'鋸軌道','대참격':'大斬撃','군집미사일':'ミサイル群','삼천세계':'三千世界','특이점':'特異点','새 무기':'新武器','강화':'強化','진화':'進化','부족':'不足','비공개':'非公開','최대 강화':'最大強化','공격력':'攻撃力','최대체력':'最大体力','최대 체력':'最大体力','피해감소':'被ダメ減','유도미사일':'誘導','삼도류':'三刀流','블랙홀':'ブラックホール','충격파':'衝撃波','획득량':'獲得量','데미지':'ダメージ','이동속도':'移動速度','회복':'回復','범위':'範囲','골드':'ゴールド','획득':'獲得','공격':'攻撃','연사':'連射','이동':'移動','사거리':'射程','관통':'貫通','탄속':'弾速','체력':'体力','자석':'マグネット','흡혈':'吸血','흡수':'吸収','볼트':'ボルト','화살촉':'矢','폭풍화살':'嵐の矢','번개':'雷','뇌신':'雷神','서리':'氷','절대영도':'絶対零度','화염방사':'火炎放射','용암지대':'溶岩地帯','삼수호령':'三守護霊','삼신강림':'三神降臨','산탄':'散弾','궤도':'軌道','참격':'斬撃','유도':'誘導','사건의 지평선':'事象の地平線','대붕괴':'大崩壊','벌떼포화':'群蜂砲火','무한포화':'無限砲火','천검진':'千剣陣','만검진':'万剣陣','융합':'融合','슬롯':'スロット'}
 };
 const _GK={ en:Object.keys(GLOSS.en).sort((a,b)=>b.length-a.length), ja:Object.keys(GLOSS.ja).sort((a,b)=>b.length-a.length) };
 const TR={
@@ -879,7 +879,7 @@ function reset(){
   player = { x:W/2, y:H/2, r:14, hp:100, maxhp:100,
     speed:105, fireRate:2.2, dmg:15, bulletSpeed:430, range:280,
     pierce:0, level:1, xp:0, xpNeed:5, magnet:90, lifesteal:0,
-    weapons:{ bolt:1 }, timers:{ bolt:0 }, orbs:[], novas:[], blades:[], holes:[], slashFx:[], flames:[], zaps:[], orbAngle:0, evolved:{},
+    weapons:{ bolt:1 }, timers:{ bolt:0 }, orbs:[], novas:[], blades:[], holes:[], slashFx:[], flames:[], zaps:[], orbAngle:0, evolved:{}, fuseCd:{},
     awakened:false, awakenAt:TUNE.awakenStart, awakenCount:0, dmgReduce:1, sigCd:0, cls:'hero', baseCls:'hero', invuln:0 };
   featureArt.reroll=null;featureArt.slotsFull=false;featureArt.chests=[];featureArt.rank=null;
   applyMeta(player); applyClass(player);
@@ -1146,7 +1146,8 @@ function explode(x,y,dmg,radius,color){
   shake=Math.min(shake+2,10);
 }
 // 무기 정의 (Lv6 만렙 → 진화)
-const EVOLVE = { bolt:'레일건 ⚡', arrow:'폭풍화살 🏹', spread:'스플릿링 ◍', nova:'초신성 ✵', orbit:'톱날궤도 ⚙', slash:'대참격 ✷', homing:'군집미사일 ✺', santoryu:'삼천세계 🌀', blackhole:'특이점 🕳️', lightning:'뇌신 ⚡', frost:'절대영도 🧊', flame:'용암지대 🌋', spirits:'삼신강림 🌟' };
+const EVOLVE = { bolt:'레일건 ⚡', arrow:'폭풍화살 🏹', spread:'스플릿링 ◍', nova:'초신성 ✵', orbit:'톱날궤도 ⚙', slash:'대참격 ✷', homing:'군집미사일 ✺', santoryu:'삼천세계 🌀', blackhole:'특이점 🕳️', lightning:'뇌신 ⚡', frost:'절대영도 🧊', flame:'용암지대 🌋', spirits:'삼신강림 🌟',
+  horizon:'대붕괴 🕳', swarm:'무한포화 🐝', bladearray:'만검진 ⚔' };
 // 삼수호령: 플레이어 주위를 도는 3정령 위치(뇌운령·염화령·검령) — time 기반 공전
 function ensureSpiritEnt(){ if(!player.spiritEnt||player.spiritEnt.length<3){ player.spiritEnt=[0,1,2].map(i=>({x:player.x+Math.cos(i*2.0944)*50, y:player.y+Math.sin(i*2.0944)*50})); } return player.spiritEnt; }
 function spiritPositions(){ return ensureSpiritEnt(); }
@@ -1255,15 +1256,122 @@ const WEAPONS = {
       playWeaponSound('flame',evo); } },
   spirits:{ name:'삼수호령', icon:'🌟', desc:'세 원소(번개·화염·삼도류)를 융합 · 각 원소 +1레벨 강화 · 각자 독립 발사 · 레벨마다 동시 성장 · 체력 40% 이하면 분노(폭주)', max:10,
     interval:()=>Infinity, fire:()=>{} },   // 실제 발사·이동은 updateSpirits()에서 원소별 독립 쿨다운으로 처리
+  // 융합 3종 — 실제 발사는 updateFusions()에서 재료별 독립 쿨다운으로 처리
+  horizon:{ name:'사건의 지평선', icon:'🕳', desc:'블랙홀·충격파·서리 융합 · 빨린 적은 빙결, 블랙홀이 닫힐 때 초신성', max:10,
+    interval:()=>Infinity, fire:()=>{} },
+  swarm:{ name:'벌떼포화', icon:'🐝', desc:'유도미사일·산탄·화살촉 융합 · 주기적 전방위 유도탄 일제사격', max:10,
+    interval:()=>Infinity, fire:()=>{} },
+  bladearray:{ name:'천검진', icon:'⚔', desc:'궤도·참격·볼트 융합 · 칼날이 돌 때마다 전방위 대참격', max:10,
+    interval:()=>Infinity, fire:()=>{} },
 };
 // 블랙홀 씨앗탄이 착탄한 자리에 회오리 생성(아주 작게 시작 → 점점 커짐)
 function plantHole(x,y,l,evo){
-  player.holes.push({x,y, r:2, maxr:(56+10*l)*(evo?1.3:1), pull:(150+22*l)*(evo?1.4:1), dmg:player.dmg*(0.45+0.11*l)*(evo?1.8:1), life:(3.0+0.2*l)*(evo?1.4:1), max:(3.0+0.2*l)*(evo?1.4:1), spin:0});
+  player.holes.push({x,y, r:2, maxr:(56+10*l)*(evo?1.3:1), pull:(150+22*l)*(evo?1.4:1), dmg:player.dmg*(0.45+0.11*l)*(evo?1.8:1)*fusePow('blackhole'), life:(3.0+0.2*l)*(evo?1.4:1), max:(3.0+0.2*l)*(evo?1.4:1), spin:0,
+    nova:!!player.weapons.horizon});   // 사건의 지평선: 닫힐 때 초신성으로 터진다
   tone(52,0.5,'sine',0.2,24); noise(0.35,0.16);
+}
+// ═══════ 무기 융합 (재료 3종 Lv6 → 1슬롯) ═══════
+// 슬롯 상한 6을 넣은 뒤로 융합은 "강해지는 길"이자 "자리를 되찾는 길"이 됐다.
+// 3칸을 1칸으로 줄여 주므로, 후반 빌드의 핵심 결정이 된다.
+//
+// 구현 원칙: 재료를 '버리는' 게 아니라 융합 무기 안에 넣어 둔다.
+//   - 재료는 slot에서 지우되 evolved=true 로 남겨, 이미 완성된 이펙트를 그대로 쓴다
+//   - 각 재료는 제 고유 쿨다운으로 독립 발사한다 (삼수호령과 같은 방식)
+//   - 융합 레벨은 세 재료 전부에 걸리는 공격력 배수로 들어간다
+// 덕분에 신규 이펙트 없이도 즉시 플레이 가능하다. 전용 비주얼은 디자인 의뢰로 뺐다.
+const FUSIONS=[
+  { key:'horizon', name:'사건의 지평선', icon:'🕳', color:'#c9a3ff',
+    parts:['blackhole','nova','frost'], partNames:'블랙홀·충격파·서리',
+    desc:'공간을 접는다 · 블랙홀에 빨린 적은 얼어붙고, 블랙홀이 닫힐 때 초신성으로 터진다',
+    sigCd:0.5, sig:(p)=>{   // 빨아들인 적을 얼린다 — 블랙홀 단독으로는 못 하던 것
+      for(const h of p.holes){ const rr=h.r+6;
+        for(const e of enemies){ if(e.dead||e.boss) continue;
+          if(dist2(h,e)<(rr+e.r)*(rr+e.r)){ e.slowT=Math.max(e.slowT||0,0.9); e.slowMul=0; } } } } },
+  { key:'swarm', name:'벌떼포화', icon:'🐝', color:'#ffd25c',
+    parts:['homing','spread','arrow'], partNames:'유도미사일·산탄·화살촉',
+    desc:'탄막이 멈추지 않는다 · 주기적으로 전방위 유도탄을 일제사격',
+    sigCd:3.0, sig:(p,lv)=>{ const n=6+Math.floor(lv/2);
+      for(let i=0;i<n;i++){ const a=i/n*Math.PI*2+rand(0,0.5);
+        bullets.push({x:p.x,y:p.y,vx:Math.cos(a)*240,vy:Math.sin(a)*240,dmg:p.dmg*(1.5+0.2*lv),
+          life:2.4,pierce:1,size:5,color:'#ffd25c',homing:true,fresh:true,blast:62+6*lv}); }
+      playWeaponSound('homing',true); } },
+  { key:'bladearray', name:'천검진', icon:'⚔', color:'#cdfffb',
+    parts:['orbit','slash','bolt'], partNames:'궤도·참격·볼트',
+    desc:'칼날이 한 바퀴 돌 때마다 전방위 대참격 · 궤도는 융합 중에도 계속 돈다',
+    sigCd:2.2, sig:(p,lv)=>{ const R=118+11*lv, dmg=p.dmg*(2.0+0.35*lv);
+      for(const e of enemies){ if(e.dead) continue; if(dist2(e,p)<(R+e.r)*(R+e.r)) hurtEnemy(e,dmg,'#ffffff'); }
+      for(let i=0;i<22;i++){ const a=i/22*Math.PI*2;
+        particles.push({x:p.x+Math.cos(a)*R,y:p.y+Math.sin(a)*R,vx:Math.cos(a)*60,vy:Math.sin(a)*60,life:0.24,color:'#cdfffb'}); }
+      p.slashFx.push({r:R,t:0,max:0.3,evo:true,ang0:rand(0,6.28)});
+      playWeaponSound('slash',true); } },
+];
+const FUSE_KEYS=new Set(FUSIONS.map(F=>F.key));
+// 삼수호령까지 포함한 전체 레시피 — 카드에 진행도를 띄워 '조합이 있다'를 알린다.
+// 이게 없으면 재료 3종을 전부 Lv6까지 올리는 일은 우연으로만 일어난다.
+const RECIPES=[{key:'spirits',name:'삼수호령',parts:['lightning','flame','santoryu']},
+  ...FUSIONS.map(F=>({key:F.key,name:F.name,parts:F.parts}))];
+function fuseHint(key){
+  for(const R of RECIPES){
+    if(player.weapons[R.key] || !R.parts.includes(key)) continue;
+    const have=R.parts.filter(k=>(player.weapons[k]||0)>=6).length;
+    if(!have) continue;   // 0/3부터 띄우면 첫 레벨업부터 모든 카드가 길어진다.
+                          // 재료 하나를 Lv6으로 올린 순간 "이게 재료였구나"로 알게 하는 편이 낫다.
+    const rest=R.parts.filter(k=>(player.weapons[k]||0)<6).map(k=>WEAPONS[k].name);
+    return ` · 🌟 ${R.name} 재료 ${have}/3` + (rest.length?` (남은 재료: ${rest.join('·')} Lv6)`:'');
+  }
+  return '';
+}
+// 재료로 들어간 무기의 '실효 레벨' — 궤도처럼 상시 효과인 무기가 융합 후에도 돌게 한다
+function partLv(key){
+  const own=player.weapons[key]; if(own) return own;
+  for(const F of FUSIONS) if(player.weapons[F.key] && F.parts.includes(key)) return WEAPONS[key].max;
+  return 0;
+}
+// 융합에 흡수된 재료인가 — 흡수된 뒤엔 '새 무기'로 다시 제안하지 않는다.
+// 재료는 Lv6·진화 상태로 융합 안에 들어 있으므로, 다시 집으면 Lv1인데 진화 이펙트가 나오는
+// 기괴한 상태가 되고 같은 무기가 두 번 발사된다.
+function isFused(key){
+  for(const F of FUSIONS) if(player.weapons[F.key] && F.parts.includes(key)) return true;
+  return false;
+}
+// 융합 레벨이 재료 전체에 거는 공격력 배수
+function fusePow(key){
+  for(const F of FUSIONS){ const lv=player.weapons[F.key];
+    if(lv && F.parts.includes(key)) return 1+0.12*(lv-1); }
+  return 1;
+}
+function fuse(F){
+  for(const k of F.parts){ delete player.weapons[k]; delete player.timers[k]; player.evolved[k]=true; }  // 재료는 진화 상태로 내부 보존
+  player.weapons[F.key]=1; player.timers[F.key]=0; (player.fuseCd||(player.fuseCd={}))[F.key]={};
+  player.invuln=Math.max(player.invuln||0,2);
+  // 강림 충격파 — 주변을 밀어내 숨 돌릴 공간을 준다(삼수호령과 같은 규칙)
+  for(const e of enemies){ if(e.dead) continue; const dx=e.x-player.x, dy=e.y-player.y, d=Math.hypot(dx,dy)||1;
+    if(d<200){ hurtEnemy(e, player.dmg*10, F.color); e.x=player.x+dx/d*220; e.y=player.y+dy/d*220; } }
+  killRings.push({x:player.x,y:player.y,r:240,life:.5,color:F.color}); if(killRings.length>32) killRings.shift();
+  shake=Math.min((shake||0)+7,10); rewardPulse={life:.9,color:F.color,evolution:true};
+  sfx.levelup(); banner=trDesc('🌟 '+F.name+' 융합!'); bannerT=2.2; flashT=0.8;
+}
+function updateFusions(dt){
+  if(!player.fuseCd) player.fuseCd={};
+  for(const F of FUSIONS){
+    const lv=player.weapons[F.key]; if(!lv) continue;
+    const cd=player.fuseCd[F.key]||(player.fuseCd[F.key]={});
+    for(const k of F.parts){
+      if(k==='orbit') continue;                       // 궤도는 상시 효과 — 쿨다운이 없다
+      const W=WEAPONS[k], el=W.max;
+      cd[k]=(cd[k]||0)-dt;
+      if(cd[k]<=0){ cd[k]=W.interval(player,el)/player.fireRate;
+        const save=player.dmg; player.dmg*=fusePow(k);  // 융합 레벨 보정을 재료 발사에 태운다
+        W.fire(player,el); player.dmg=save; }
+    }
+    cd.__sig=(cd.__sig||0)-dt;
+    if(cd.__sig<=0){ cd.__sig=F.sigCd; F.sig(player,lv); }
+  }
 }
 function weaponFireTick(dt){
   updateSpirits(dt);   // 🌟 삼수호령 이동 + 원소별 독립 쿨다운 발사 (여기서 전부 처리)
-  for(const key in player.weapons){ if(key==='orbit'||key==='spirits'||!WEAPONS[key]) continue; const w=WEAPONS[key], l=player.weapons[key];
+  updateFusions(dt);   // 🌟 융합 3종 — 재료별 독립 쿨다운 + 시그니처
+  for(const key in player.weapons){ if(key==='orbit'||key==='spirits'||FUSE_KEYS.has(key)||!WEAPONS[key]) continue; const w=WEAPONS[key], l=player.weapons[key];
     if(player.timers[key]==null || player.timers[key]!==player.timers[key]) player.timers[key]=0; // null/undefined/NaN 방어: 타이머 유실 시 0으로 복구 → 진화·전직 무기 발사 누락 방지
     player.timers[key]-=dt; if(player.timers[key]<=0){ player.timers[key]=w.interval(player,l)/player.fireRate; w.fire(player,l); } } // fireRate=전역 연사(모든 무기)
 }
@@ -1284,13 +1392,14 @@ function buildChoices(){
   const wpool=[], spool=[];   // wpool=무기(강화·진화·새무기) / spool=스탯업
   for(const key in WEAPONS){ const w=WEAPONS[key], owned=player.weapons[key];
     if(key==='spirits' && !player.weapons.spirits) continue;   // 미보유 삼수호령만 일반 풀 제외(융합 전용) · 보유 시 강화/진화는 허용
+    if(FUSE_KEYS.has(key) && !player.weapons[key]) continue;   // 융합 무기도 같은 규칙 — 재료를 모아야만 등장한다
     if(owned){
-      if(owned<w.max) wpool.push({weapon:key,t:`${w.icon} ${w.name} 강화 (Lv${owned}→${owned+1})`, d:w.desc, weight:3, a:()=>player.weapons[key]++});
-      else if(!player.evolved[key]) wpool.push({weapon:key,evolution:true,t:`🌟 진화 · ${w.name} → ${EVOLVE[key]}`, d:'무기가 상위 형태로 각성!', weight:6, a:()=>{ player.evolved[key]=true; rewardPulse={life:.8,color:'#ffb1e8',evolution:true};sfx.evolve(); }});
+      if(owned<w.max) wpool.push({weapon:key,t:`${w.icon} ${w.name} 강화 (Lv${owned}→${owned+1})`, d:w.desc+fuseHint(key), weight:3, a:()=>player.weapons[key]++});
+      else if(!player.evolved[key]) wpool.push({weapon:key,evolution:true,t:`🌟 진화 · ${w.name} → ${EVOLVE[key]}`, d:'무기가 상위 형태로 각성!'+fuseHint(key), weight:6, a:()=>{ player.evolved[key]=true; rewardPulse={life:.8,color:'#ffb1e8',evolution:true};sfx.evolve(); }});
     }
     // 무기 슬롯 상한 — 꽉 차면 '새 무기'를 제안하지 않는다.
     // 상한이 없으면 레벨업이 '선택'이 아니라 '수집'이 되어 모든 런이 같은 빌드로 수렴한다.
-    else if(Object.keys(player.weapons).length < (TUNE.weaponCap!=null?TUNE.weaponCap:6))
+    else if(!isFused(key) && Object.keys(player.weapons).length < (TUNE.weaponCap!=null?TUNE.weaponCap:6))
       wpool.push({weapon:key,t:`${w.icon} 새 무기 · ${w.name}`, d:w.desc, weight:key==='blackhole'?6:4, a:()=>{ player.weapons[key]=1; if(key!=='orbit') player.timers[key]=0; }});
   }
   // 🌟 삼수호령 융합 각성: 번개·화염방사·삼도류를 모두 Lv6 마스터하면 등장(우선노출) → 세 무기 소모 후 수호령 합체
@@ -1302,6 +1411,15 @@ function buildChoices(){
       for(const e of enemies){ if(e.dead)continue; const dx=e.x-player.x,dy=e.y-player.y,d=Math.hypot(dx,dy)||1; if(d<200){ hurtEnemy(e, player.dmg*12, '#ffe9a8'); e.x=player.x+dx/d*220; e.y=player.y+dy/d*220; } }
       shake=Math.min((shake||0)+7,10);
       sfx.levelup(); banner=trDesc('🌟 삼수호령 강림!'); bannerT=2.2; flashT=0.8; }});
+  }
+  // 🌟 융합 3종 — 재료 3개를 전부 Lv6으로 올리면 등장. 3슬롯 → 1슬롯이라 상한의 숨통이 된다.
+  for(const F of FUSIONS){
+    if(player.weapons[F.key]) continue;
+    if(!F.parts.every(k=>player.weapons[k]>=6)) continue;
+    wpool.push({weapon:F.key,evolution:true,weight:999,
+      t:`🌟 ${F.name} 융합! (${F.partNames})`,
+      d:`${F.desc} · 세 무기가 한 칸으로 합쳐진다 (슬롯 2칸 확보)`,
+      a:()=>fuse(F)});
   }
   for(const s of STAT_UPS) spool.push({...s, weight:2});
   // 가중치 랜덤 뽑기(해당 bag에서 제거)
@@ -1373,7 +1491,7 @@ function openLevelUp(){
     // 슬롯이 꽉 차면 '새 무기'가 왜 안 뜨는지 잠긴 카드 1장으로 보여준다.
     // 상한은 보여야 규칙이 된다 — 조용히 사라지면 버그로 읽힌다.
     if(featureArt.slotsFull){
-      const un=Object.keys(WEAPONS).filter(k=>!player.weapons[k]&&k!=='spirits');
+      const un=Object.keys(WEAPONS).filter(k=>!player.weapons[k]&&k!=='spirits'&&!FUSE_KEYS.has(k)&&!isFused(k));
       if(un.length){ const w=WEAPONS[un[0]];
         list.push({weapon:un[0],locked:true,t:`${w.icon} 새 무기 · ${w.name}`,d:w.desc,a(){}}); }
     }
@@ -1440,8 +1558,10 @@ function update(dt){
   // 대마법사 각성 시그니처: 주기적 자동 초신성
   if(player.awakened && player.baseCls==='mage'){ player.sigCd-=dt; if(player.sigCd<=0){ player.sigCd=3.5; player.novas.push({x:player.x,y:player.y,r:14,maxr:230,dmg:player.dmg*2,hit:new Set(),evo:true}); noise(0.25,0.24); tone(90,0.3,'sine',0.24,40); } }
   // 궤도(orbit) 위치 갱신
-  if(player.weapons.orbit){ const l=player.weapons.orbit, evo=player.evolved.orbit, n=(2+l)+(evo?3:0), rad=(46+7*l)+(evo?22:0); player.orbAngle+=dt*(evo?3.5:2.3); player.orbs.length=0;
-    for(let i=0;i<n;i++){ const a=player.orbAngle+i/n*Math.PI*2; player.orbs.push({x:player.x+Math.cos(a)*rad, y:player.y+Math.sin(a)*rad, dmg:player.dmg*(0.8+0.3*l)*(evo?1.9:1), evo}); }
+  // partLv: 천검진으로 융합된 뒤에도 궤도는 계속 돈다(슬롯에선 사라졌지만 융합 안에 들어 있다)
+  const orbL=partLv('orbit');
+  if(orbL){ const l=orbL, evo=player.evolved.orbit, n=(2+l)+(evo?3:0), rad=(46+7*l)+(evo?22:0); player.orbAngle+=dt*(evo?3.5:2.3); player.orbs.length=0;
+    for(let i=0;i<n;i++){ const a=player.orbAngle+i/n*Math.PI*2; player.orbs.push({x:player.x+Math.cos(a)*rad, y:player.y+Math.sin(a)*rad, dmg:player.dmg*(0.8+0.3*l)*(evo?1.9:1)*fusePow('orbit'), evo}); }
   } else player.orbs.length=0;
   // 충격파(nova) 확장 + 데미지
   for(const nv of player.novas){ nv.r+=dt*300;
@@ -1459,6 +1579,11 @@ function update(dt){
         if(!e.boss){ const pf=h.pull*dt*(1-d/R)*(e.tier==='e'?0.5:1); e.x+=dx/d*pf; e.y+=dy/d*pf; }
         hurtEnemy(e, h.dmg*dt, '#b06bff');
       } } }
+  // 사건의 지평선: 블랙홀이 닫히는 순간 초신성으로 터진다 — 모아둔 적을 한 번에 친다
+  for(const h of player.holes){ if(h.life>0||!h.nova) continue; h.nova=false;
+    player.novas.push({x:h.x,y:h.y,r:12,maxr:h.maxr*2.4,dmg:player.dmg*(3.2+0.4*(player.weapons.horizon||1))*fusePow('nova'),hit:new Set(),evo:true});
+    killRings.push({x:h.x,y:h.y,r:h.maxr*2.2,life:.4,color:'#c9a3ff'}); if(killRings.length>32) killRings.shift();
+    shake=Math.min((shake||0)+2.5,8); tone(44,0.45,'sine',0.22,20); }
   player.holes=player.holes.filter(h=>h.life>0);
   // 삼도류 검기 (플레이어 기준 부채꼴 근접 참격)
   for(const bl of player.blades){ bl.life-=dt; bl.ang+=bl.spin*dt; const cs=Math.cos(bl.ang), sn=Math.sin(bl.ang);
@@ -2159,7 +2284,10 @@ santoryu:'M5 20L5 5 8 2 8 17ZM11 22V7L14 4V19ZM17 20V5L20 2V17Z',
 blackhole:'M20 12A8 8 0 1 1 12 4Q18 4 18 10Q18 17 11 17Q7 17 7 12Q7 8 12 8Q16 8 14 13H11',
 lightning:'M13 2L4 14H11L10 22 20 9H13Z',frost:'M12 2V22M3 7L21 17M3 17L21 7M8 4L12 8 16 4M8 20L12 16 16 20',
 flame:'M12 2Q20 9 20 15A8 8 0 0 1 4 15Q4 10 8 7L9 13ZM12 13Q7 20 12 21Q17 20 12 13Z',
-spirits:'M12 3L15 8 21 10 16 15 17 21 12 18 7 21 8 15 3 10 9 8Z'};
+spirits:'M12 3L15 8 21 10 16 15 17 21 12 18 7 21 8 15 3 10 9 8Z',
+horizon:'M12 4A8 8 0 1 1 11.9 20M12 9A3 3 0 1 0 12 15A3 3 0 1 0 12 9M3 12H6M18 12H21',
+swarm:'M5 19L10 14M10 14L8 9 13 11ZM14 10L19 5M19 5H14M19 5V10M7 7L4 4M17 17L20 20',
+bladearray:'M12 2A10 10 0 1 0 12 22A10 10 0 1 0 12 2M12 6L14 12 12 18 10 12Z'};
 const iconPaths={};
 function weaponIcon(key){return '<svg class="tech-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="'+WICON[key]+'"/></svg>';}
 function canvasIcon(key,x,y,size,color){
