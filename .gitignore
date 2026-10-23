@@ -18,3 +18,8 @@ output/
 #   배포용(축소본·sfx) → assets/dolls/, assets/audio/sfx/ 에 이미 커밋됨
 doll-delivery/
 sound-delivery/
+
+# 모두의 배달 생성 원본 시트(풀사이즈) — 런타임에 쓰이지 않고 32MB다.
+#   원본 보관처: images/baedal-v1/ (v1 시트), images/baedal-v1.1/ (v1.1 개별 납품)
+#   배포 저장소에는 슬라이싱된 런타임 PNG만 올린다
+assets/baedal/originals/
