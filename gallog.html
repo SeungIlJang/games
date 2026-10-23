@@ -201,6 +201,7 @@
       <div style="font-size:14px;color:#bcd;margin-bottom:8px;">⏩ <span data-i18n="speedLabel">게임 속도</span> · <b id="speedVal" style="color:#5ce1ff;">1.0</b>x</div>
       <input id="speedSlider" type="range" min="0.5" max="2" step="0.1" value="1" aria-label="게임 속도">
       <div style="display:flex;justify-content:space-between;font-size:11px;color:#8892b0;margin-top:2px;"><span>0.5x</span><span data-i18n="speedHint">느리게=오래생존</span><span id="speedMaxLbl">2.0x</span></div>
+      <div id="speedCapNote" style="font-size:11px;color:#7f8ca3;margin-top:7px;line-height:1.45;"></div>
     </div>
     <button class="btn btn-gold" id="pauseShopBtn" data-i18n="pauseShop" style="margin-top:14px;">🪙 상점</button>
     <button id="quitBtn" data-i18n="quit" style="margin-top:14px;" class="btn-sm">포기하고 상점으로</button>
@@ -216,7 +217,7 @@
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <div class="deck-eyebrow">G A L L O G  /  F L I G H T  D E C K</div>
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v7.7</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v7.8</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko"  class="btn-sm">한국어</button>
       <button data-lang="en"  class="btn-sm">English</button>
@@ -806,6 +807,8 @@ let state = 'start'; // start | play | levelup | over
 let player, enemies, bullets, gems, particles, texts, heals, ebullets, chests=[];
 let flashT=0, hurtFlash=0, lastEarned=0, lastEndBonus=0, runGold=0, goldDoubled=false, reviveCount=0, deathT=0, rerollLeft=0;
 let stageNoHit=true, champSpawned=false;   // 스테이지 랭크 판정용 — 무피격 여부 / 챔피언 1마리 소진 여부
+let endBonusAcc=0;   // 마감 보너스: 스테이지를 지날 때마다 '그 스테이지의 골드 배수'로 적립
+const stageGoldMul=s=>Math.pow(2,Math.floor(((s||1)-1)/10));
 const MAX_REVIVE=5; // 광고 부활 판당 최대 횟수
 let lifestealAcc=0, lifestealT=0; // 흡혈 초당 회복 상한용
 let combo=0, comboTimer=0, maxCombo=0;
@@ -867,6 +870,8 @@ document.getElementById('devGoldReset').onclick=()=>devGrantGold(-1e18);  // 0�
 document.getElementById('devClose').onclick=()=>document.getElementById('devPanel').classList.add('hidden');
 let time, kills, spawnTimer, shake, lastTs, bossAlive, banner='', bannerT=0, startOffset=0, stage, stageTime, bossSpawned, catchUpStage=0, catchUpSpeed=1.2;
 let userSpeed=(()=>{ try{ const v=parseFloat(localStorage.getItem('ss_speed')); return (isFinite(v)&&v>=0.5&&v<=3)?v:1.0; }catch(e){ return 1.0; } })();   // 사용자 게임속도(일시정지 슬라이더, 0.5~현재배수)
+// 슬라이더를 직접 만진 적이 있는가 — 만졌다면 캐치업 자동가속보다 사용자 설정이 우선한다
+let speedSet=(()=>{ try{ return localStorage.getItem('ss_speed')!=null; }catch(e){ return false; } })();
 const STAGE_BOSS_DELAY=20; // 스테이지 시작 후 보스 등장까지(초)
 // 난이도 시계 = 메타 오프셋 + 스테이지 진행 (스테이지가 오를수록 상승)
 function dtime(){ return startOffset + (stage-1)*22 + stageTime; }
@@ -888,7 +893,7 @@ function reset(){
   rerollLeft=rerollMax();   // 레벨업 리롤 횟수(판당)
   chests.length=0;   // ⚠️ 배열 교체 금지 — featureArt.chests가 같은 참조를 들고 있다
   featureArt.chests=chests;
-  stageNoHit=true; champSpawned=false;
+  stageNoHit=true; champSpawned=false; endBonusAcc=0;
   flashT=0; hurtFlash=0; goldDoubled=false; reviveCount=0; combo=0; comboTimer=0; maxCombo=0; runGold=0; interCount=0;
   time=0; kills=0; spawnTimer=0; shake=0; bossAlive=false; banner='STAGE 1 ▶ '+t('bnBoss'); bannerT=2.6; startHintT=5;
   stage=1; stageTime=0; bossSpawned=false; bossQueue=[]; won=false;
@@ -1122,7 +1127,7 @@ function hurtEnemy(e,dmg,color){
   e.flash=0.06; e.hp-=dmg;
   if(e.hp<=0){ e.dead=true; kills++; killRings.push({x:e.x,y:e.y,r:e.r*(e.boss?2:1.6),life:.24,color:e.color});if(killRings.length>32)killRings.shift();
     combo++; comboTimer=2.5; if(combo>maxCombo) maxCombo=combo;
-    { const sMul=Math.pow(2,Math.floor((stage-1)/10)); const g=Math.round((e.boss?20:1)*goldMult()*sMul); meta.gold+=g; runGold+=g; } // 실시간 골드(골드획득 강화 + 10스테이지마다 ×2)
+    { const g=Math.round((e.boss?20:1)*goldMult()*stageGoldMul(stage)); meta.gold+=g; runGold+=g; } // 실시간 골드(골드획득 강화 + 10스테이지마다 ×2)
     const gv=Math.max(1,Math.round((e.gem||0)*Math.pow(1.13,stage-1)*3));  // 적 경험치(젬): 스테이지 스케일 ×3 (적 수 1/3로 줄어든 만큼 개체 경험치 보정 → 레벨 속도 유지)
     texts.push({x:e.x,y:e.y-e.r,vy:-46,life:0.7,str:e.boss?'BOSS!':'+'+gv,color:e.boss?'#ff5ce1':'#7df3ff',size:e.boss?22:14}); // +N XP텍스트=젬 시안색
     burst(e.x,e.y,color||e.color,e.big?18:8); shake=Math.min(shake+(e.boss?4:(e.big?0.5:0.12)),8);
@@ -1250,9 +1255,13 @@ const WEAPONS = {
     interval:(p,l)=>Math.max(0.9, 1.8-0.14*(l-1)),
     fire:(p,l)=>{ const evo=p.evolved.flame; const e=nearestEnemy(); const base=e?Math.atan2(e.y-p.y,e.x-p.x):-Math.PI/2;
       const dreach=70, fx=p.x+Math.cos(base)*dreach, fy=p.y+Math.sin(base)*dreach;
-      const life=(2.5+0.2*l)*(evo?1.4:1);
+      // 장판이 평균 6.6~8.8개씩 겹쳐 화면을 덮었다(반경 최대 98px).
+      // life는 데미지 판정 시간이라 수명만 줄이면 그대로 너프 → 줄인 만큼 데미지로 되돌린다.
+      // FL_LIFE × FL_DMG ≈ 1.0 이므로 총 데미지는 그대로이고 동시 장판 수만 6.6 → 4.3으로 떨어진다.
+      const FL_LIFE=0.65, FL_DMG=1.54;
+      const life=(2.5+0.2*l)*(evo?1.4:1)*FL_LIFE;
       emitWeaponFx('jet',p.x,p.y,base,evo);
-      p.flames.push({x:fx,y:fy,r:(34+6*l)*(evo?1.4:1),dmg:p.dmg*(0.5+0.12*l)*(evo?1.6:1),life,max:life,evo,burst:evo?0.8:0});
+      p.flames.push({x:fx,y:fy,r:(34+6*l)*(evo?1.4:1),dmg:p.dmg*(0.5+0.12*l)*(evo?1.6:1)*FL_DMG,life,max:life,evo,burst:evo?0.8:0});
       playWeaponSound('flame',evo); } },
   spirits:{ name:'삼수호령', icon:'🌟', desc:'세 원소(번개·화염·삼도류)를 융합 · 각 원소 +1레벨 강화 · 각자 독립 발사 · 레벨마다 동시 성장 · 체력 40% 이하면 분노(폭주)', max:10,
     interval:()=>Infinity, fire:()=>{} },   // 실제 발사·이동은 updateSpirits()에서 원소별 독립 쿨다운으로 처리
@@ -1437,6 +1446,7 @@ function stageClear(){
   { const sec=stageTime, over=Math.max(0,sec-STAGE_BOSS_DELAY);
     const grade = over>45 ? 'C' : over>20 ? 'B' : stageNoHit ? 'S' : 'A';
     featureArt.rank={grade,seconds:sec,noHit:stageNoHit,stage,startedAt:performance.now()}; }
+  endBonusAcc += stageTime*0.4*stageGoldMul(stage);   // 마감 보너스 적립(클리어한 그 스테이지의 배수로)
   stageNoHit=true; champSpawned=false;   // 다음 스테이지용 초기화
   bossAlive=false; stage++; stageTime=0; bossSpawned=false; bossQueue=[];
   // 전면광고: 배속 연동 간격(1.1×→4 … 2.0×→13스테이지) + 60초 최소 쿨다운
@@ -1461,8 +1471,7 @@ function grantLevel(){
 // 보상 상자 — 엘리트 처치 시 드롭. 획득하면 골드 뭉치 + 즉시 레벨업 1회.
 // 런 중에 "저건 꼭 잡아야 한다"는 목표를 만드는 장치다.
 function openChest(){
-  const sMul=Math.pow(2,Math.floor((stage-1)/10));
-  const g=Math.round((TUNE.chestGold!=null?TUNE.chestGold:120)*goldMult()*sMul);
+  const g=Math.round((TUNE.chestGold!=null?TUNE.chestGold:120)*goldMult()*stageGoldMul(stage));
   meta.gold+=g; runGold+=g;
   texts.push({x:player.x,y:player.y-34,vy:-52,life:1.2,str:'+'+g,color:'#ffd25c',size:19});
   flashT=0.5; rewardPulse={life:.8,color:'#ffd25c',evolution:true}; sfx.levelup();
@@ -2751,7 +2760,11 @@ function loop(ts){
   }
   if(adPlaying || state!=='play'){ lastTs=ts; if(state!=='start' && state!=='tutorial') render(); return; }
   let dt=(ts-lastTs)/1000; lastTs=ts; if(dt>0.05)dt=0.05;
-  { let sp=userSpeed; if(stage<catchUpStage) sp=Math.max(sp,catchUpSpeed); dt*=sp; }   // 사용자 속도 + 이전 최고 스테이지 전까진 최소 catchUpSpeed 가속
+  // 사용자 속도 + 이전 최고 스테이지 전까진 catchUpSpeed로 자동 가속(초반 반복 지루함↓).
+  // ⚠️ 단, 슬라이더를 직접 만진 뒤에는 그 값이 무조건 이긴다.
+  //    예전엔 max()가 걸려 있어 캐치업 구간에서 슬라이더를 내려도 안 느려졌고,
+  //    이게 "속도 조절이 안 먹는다"로 보고된 증상이었다.
+  { let sp=userSpeed; if(!speedSet && stage<catchUpStage) sp=Math.max(sp,catchUpSpeed); dt*=sp; }
   update(dt); render();
 }
 requestAnimationFrame(loop);
@@ -2762,7 +2775,11 @@ function gameOver(){ state='over';if(won)sfx.victory();else sfx.over(); showBann
   document.getElementById('pauseBtn').style.display='none'; document.getElementById('playShopBtn').style.display='none';
   const surv=Math.floor(time); let rec='';
   if(surv>best){ best=surv; try{localStorage.setItem('ss_best',best);}catch{} rec=' '+t('goRec'); }
-  lastEndBonus=Math.floor((time*0.4 + maxCombo) * goldMult()); // 마감 보너스(생존·콤보)
+  // 마감 보너스(생존·콤보). 예전엔 time*0.4 에 스테이지 배수가 전혀 안 붙어서
+  // 100스테이지 완주 시 전체 골드의 0.4%까지 떨어졌다(10스테이지에선 30%).
+  // time 은 전 스테이지 누적이라 최종 배수를 통째로 곱하면 반대로 과보정된다
+  // → 스테이지를 지날 때마다 그때의 배수로 적립해 둔 endBonusAcc 를 쓴다. 깊이와 무관하게 약 30%.
+  lastEndBonus=Math.floor((endBonusAcc + stageTime*0.4*stageGoldMul(stage) + maxCombo) * goldMult());
   meta.gold+=lastEndBonus; lastEarned=runGold+lastEndBonus; saveMeta(); renderShop();
   // 🏆 100스테이지 클리어 = 엔딩 / 그 외 = GAME OVER
   { const ttl=document.getElementById('overTitle'), es=document.getElementById('endStory');
@@ -2942,8 +2959,16 @@ function syncSpeedSlider(){ const sl=document.getElementById('speedSlider'); if(
   const mx=Math.max(1, Math.round(catchUpSpeed*10)/10);   // 상한 = 현재 배수(catchUpSpeed, 최소 1.0)
   sl.max=mx; document.getElementById('speedMaxLbl').textContent=mx.toFixed(1)+'x';
   if(userSpeed>mx){ userSpeed=mx; }   // 상한 초과 방지
-  sl.value=userSpeed; document.getElementById('speedVal').textContent=userSpeed.toFixed(1);paintSpeedSlider(); }
-(function(){ const sl=document.getElementById('speedSlider'); if(sl) sl.oninput=()=>{ userSpeed=Math.max(0.5,Math.min(3,parseFloat(sl.value)||1)); document.getElementById('speedVal').textContent=userSpeed.toFixed(1); try{localStorage.setItem('ss_speed',String(userSpeed));}catch(e){}paintSpeedSlider(); };paintSpeedSlider(); })();
+  sl.value=userSpeed; document.getElementById('speedVal').textContent=userSpeed.toFixed(1);
+  // 상한이 왜 1.1x인지 보이지 않으면 "슬라이더가 고장났다"로 읽힌다 — 해금 규칙을 적어 준다
+  const note=document.getElementById('speedCapNote');
+  if(note){ const bs=meta.bestStage||0;
+    note.textContent = mx>=2 ? featureLabel('최고 배속 해금 완료','Max speed unlocked','最高倍速 解放済み')
+      : featureLabel(`상한 ${mx.toFixed(1)}x · 최고 기록 10스테이지마다 +0.1x (현재 최고 ${bs}st, 다음 해금 ${(Math.floor(Math.max(1,bs)/10)+1)*10}st)`,
+                     `Cap ${mx.toFixed(1)}x · +0.1x per 10 best stages (best ${bs}, next at ${(Math.floor(Math.max(1,bs)/10)+1)*10})`,
+                     `上限 ${mx.toFixed(1)}x · 最高記録10ステージごとに +0.1x (最高 ${bs}, 次は ${(Math.floor(Math.max(1,bs)/10)+1)*10})`); }
+  paintSpeedSlider(); }
+(function(){ const sl=document.getElementById('speedSlider'); if(sl) sl.oninput=()=>{ userSpeed=Math.max(0.5,Math.min(3,parseFloat(sl.value)||1)); speedSet=true; document.getElementById('speedVal').textContent=userSpeed.toFixed(1); try{localStorage.setItem('ss_speed',String(userSpeed));}catch(e){}paintSpeedSlider(); };paintSpeedSlider(); })();
 document.getElementById('pauseBtn').onclick=()=>{ if(state!=='play') return; state='paused'; syncSpeedSlider(); document.getElementById('paused').classList.remove('hidden'); };
 document.getElementById('playShopBtn').onclick=()=>{ if(state!=='play') return; state='paused'; shopReturnTo='play'; document.getElementById('potionBtn').style.display='block'; document.getElementById('ingameShop').classList.remove('hidden'); renderShop(); };
 document.getElementById('resumeBtn').onclick=()=>{ if(state!=='paused') return; document.getElementById('paused').classList.add('hidden'); state='play'; lastTs=performance.now(); };
