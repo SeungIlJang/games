@@ -7,3 +7,14 @@
 # 납품 원본(풀사이즈)은 images/number/ 와 number-app/assets/ 에 보관 — 배포 저장소에는 축소본(ui/)만 올린다
 img/number/neon-v2/
 audio/number/neon-v1/
+
+# 에셋 생성 작업 산출물 — 500MB 이상으로 커진다. git add -A 한 번에 들어가면
+# Pages 저장소 clone 이 사실상 불가능해지므로 무시한다
+output/
+
+# 납품 스테이징(모두의 뽑기) — 보관처가 따로 있어 여기 올릴 이유가 없다.
+#   512px 원본 마스터 → ppopgi-app/docs/doll-design/src-512/
+#   효과음 원본·제작 지침 → ppopgi-app/www/assets/audio/, ppopgi-app/docs/sound-design/
+#   배포용(축소본·sfx) → assets/dolls/, assets/audio/sfx/ 에 이미 커밋됨
+doll-delivery/
+sound-delivery/
