@@ -119,6 +119,18 @@
   #help{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,10,22,.95);gap:8px;padding:26px;text-align:left;z-index:13}
   #help h1{font-size:28px;align-self:center}
   .art{vertical-align:middle;object-fit:contain;display:inline-block;flex:0 0 auto}
+  /* 플레이 배경 — 두 겹을 교차 페이드해서 라운드마다 분위기를 바꾼다 */
+  .pbg{position:fixed;inset:0;z-index:0;background-size:cover;background-position:center;
+       opacity:0;transition:opacity .45s ease-out;pointer-events:none}
+  body.menu .pbg{visibility:hidden}
+  /* 목표 조준링 — 가운데가 비어 있어 목표 숫자가 그 안에 들어간다 */
+  #targetWrap{width:132px;height:132px;display:flex;align-items:center;justify-content:center;
+    background-size:contain;background-repeat:no-repeat;background-position:center;margin:-6px 0 -8px}
+  /* 숫자 무대 — 현재 숫자가 이 패널 위에 얹힌다 */
+  #curWrap{width:min(88vw,330px);height:186px;display:flex;align-items:center;justify-content:center;
+    background-size:contain;background-repeat:no-repeat;background-position:center;margin:6px 0 0}
+  #curWrap #cur{margin:0}
+  #wrap.choice #targetWrap,#wrap.choice #curWrap{display:none}
   #muteBtn{position:fixed;top:calc(46px + env(safe-area-inset-top,0px));right:12px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:17px;border-radius:50%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);z-index:14;cursor:pointer}
   #muteBtn:active{background:rgba(255,255,255,.22)}
   #muteBtn.off{opacity:.45}
@@ -145,6 +157,7 @@
   #help b{color:#7cf6ff}
 </style></head>
 <body>
+<div id="pbgA" class="pbg"></div><div id="pbgB" class="pbg"></div>
 <div id="vig"></div>
 <div id="flash"></div>
 <canvas id="fx"></canvas>
@@ -155,9 +168,9 @@
 <div id="muteBtn" role="button" aria-label="소리 켜기 끄기">🔊</div>
 <div id="wrap">
   <div id="target">🎯 이 숫자에서 멈춰!</div>
-  <div id="targetN">–</div>
+  <div id="targetWrap"><div id="targetN">–</div></div>
   <div id="chainTag"></div>
-  <div id="cur">–</div>
+  <div id="curWrap"><div id="cur">–</div></div>
   <div id="seq"></div>
   <div id="cseq"></div>
   <div id="ctbar"><div id="ctfill"></div></div>
@@ -188,7 +201,7 @@
     <button class="btn" id="helpBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:10px 16px;font-size:15px">📖 방법</button>
   </div>
   <div id="dailyBox"></div>
-  <div id="changelog">🆕 <b id="clVer">v2.4</b> · <span id="clNote"><b>네온 숫자 아이콘</b> · 효과음 20종 · 시작 전 사운드 준비</span></div>
+  <div id="changelog">🆕 <b id="clVer">v2.5</b> · <span id="clNote"><b>플레이 화면이 바뀌었어요</b> · 라운드마다 배경 전환 · 목표는 <b>조준링</b> 안에 · 숫자는 <b>네온 무대</b> 위에</span></div>
 </div>
 
 <div id="help" class="hidden">
@@ -248,7 +261,7 @@
   <div id="shopList"></div>
   <button class="btn" id="shopClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v2.4 · 네온 아이콘 · 효과음 20종</div>
+<div id="ver">v2.5 · 플레이 화면 아트(배경·조준링·숫자 무대)</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -287,6 +300,27 @@ function sfx(n,g){
   try{ const src=c.createBufferSource(), v=c.createGain(); src.buffer=b;
     v.gain.value=(g==null?1:g)*SFX_MASTER; src.connect(v); v.connect(c.destination); src.start(); return true;
   }catch(e){ return false; }
+}
+// ── 플레이 화면 아트 ──────────────────────────────────────────────
+// 못 불러와도(구버전 APK·오프라인) 배경이 비어 보일 뿐 진행에는 지장이 없다.
+const PLAY_DIR='img/number/play/';
+let bgKind='', bgTop=false, ringLocked=null;
+function setBG(kind){
+  if(kind===bgKind) return; bgKind=kind;
+  const show=$(bgTop?'pbgA':'pbgB'), hide=$(bgTop?'pbgB':'pbgA');
+  if(!show||!hide) return;
+  show.style.backgroundImage='url('+PLAY_DIR+'play_bg_'+kind+'.png)';
+  show.style.opacity='1'; hide.style.opacity='0'; bgTop=!bgTop;
+}
+function setRing(locked){
+  if(locked===ringLocked) return; ringLocked=locked;
+  const el=$('targetWrap'); if(el) el.style.backgroundImage='url('+PLAY_DIR+(locked?'target_ring_locked':'target_ring')+'.png)';
+}
+function initPlayArt(){
+  const cw=$('curWrap'); if(cw) cw.style.backgroundImage='url('+PLAY_DIR+'number_stage.png)';
+  setRing(false); setBG('normal');
+  setTimeout(()=>['golden','roll'].forEach(k=>{ const i=new Image(); i.src=PLAY_DIR+'play_bg_'+k+'.png'; }), 1200);
+  const i=new Image(); i.src=PLAY_DIR+'target_ring_locked.png';
 }
 function renderMute(){ const b=$('muteBtn'); if(b){ b.textContent=sfxOn?'\u{1F50A}':'\u{1F507}'; b.classList.toggle('off',!sfxOn); } }
 function vib(ms){ try{ navigator.vibrate&&navigator.vibrate(ms); }catch(e){} }
@@ -687,6 +721,7 @@ function newRound(keepCur){
   $('cur').classList.remove('miss'); $('cur').classList.remove('hit');
   $('cur').classList.toggle('roll', curIsRoll); $('wrap').classList.remove('slow');
   chainAll=[]; chain=[]; chainIdx=0; renderChainTag();
+  setBG(rule.type==='roll' ? 'roll' : (rule.golden ? 'golden' : 'normal'));
   if(rule.type==='choice'){ setupChoice(); return; }
   $('wrap').classList.remove('choice'); inChoice=false;
   if(curIsRoll){
@@ -711,19 +746,23 @@ function newRound(keepCur){
   }
   render(false);
 }
+// 자릿수가 늘어도 숫자 무대·조준링 밖으로 삐져나가지 않게 글자 크기를 맞춘다
+function fitNum(el, v, sizes){ const n=String(v).replace('-','').length; el.style.fontSize=(sizes[Math.min(n,sizes.length)-1])+'px'; }
 function render(pulse){
-  $('targetN').textContent=target;
-  const c=$('cur'); c.textContent=cur;
+  $('targetN').textContent=target; fitNum($('targetN'), target, [46,46,38,30]);
+  const c=$('cur'); c.textContent=cur; fitNum(c, cur, [126,126,104,80]);
   if(curIsRoll){
     $('seq').textContent=''; $('hint').textContent='⚡ 감으로 멈춰!'; $('combo').textContent=hits>=2?('🔥 '+hits+' 연속'):''; $('score').textContent=score; renderChase();
     c.classList.toggle('ontarget', cur===target); if(cur===target) targetShownAt=now();
+    setRing(cur===target);
     $('vig').style.boxShadow='inset 0 0 90px 10px rgba(90,50,160,.55)';
     return;
   }
   const heat=Math.min(1,hits/14); c.style.color='rgb('+Math.round(238+17*heat)+','+Math.round(238-130*heat)+','+Math.round(255-210*heat)+')';
   const nextVal=advance(cur,ti); const near=hits<2 && (target-cur)!==0 && nextVal===target;   // 텔레그래프도 2판까지만
   c.classList.toggle('near', !!near);
-  const onT = cur===target; c.classList.toggle('ontarget', onT); if(onT) targetShownAt=now();   // 목표 순간 발광 + 정밀 판정 기준시각
+  const onT = cur===target; c.classList.toggle('ontarget', onT); if(onT) targetShownAt=now();
+  setRing(onT);   // 목표 순간 발광 + 정밀 판정 기준시각
   if(pulse && !near){ c.classList.remove('big'); void c.offsetWidth; c.classList.add('big'); }
   $('seq').textContent=seq.join('  →  ');
   $('score').textContent=score; $('combo').textContent=hits>=2?('🔥 '+hits+' 연속'):''; renderChase();
@@ -760,7 +799,7 @@ function start(){
   slowLeft=runBoost.slow?6:0; chainAll=[]; chain=[]; chainIdx=0; renderChainTag();
   const _rb=$('reviveBtn'); if(_rb)_rb.disabled=false; hideBanner(); document.body.classList.remove('menu'); $('start').classList.add('hidden'); $('over').classList.add('hidden'); state='play';
   try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
-  mprog('play',1); slowPrev=false;
+  mprog('play',1); slowPrev=false; initPlayArt();
   if(!sfx('game_start')) chord(523);
   const on=BOOSTS.filter(B=>runBoost[B.id]); if(on.length) floatText('⚡ '+on.map(B=>B.i+B.n).join(' · '),'#5cffb0');
   renderHearts(); renderChase(); newRound(false); if(rule.type!=='choice') nextTick(560); }
