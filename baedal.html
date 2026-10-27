@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="ko"><head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
-<title>모두의 배달</title>
+<title>모두??배달</title>
 <link rel="icon" href="assets/baedal/icon-a-192.png"/>
 <style>
   html,body{margin:0;height:100%;background:#0e1626;overflow:hidden;font-family:system-ui,-apple-system,sans-serif;color:#fff;touch-action:none;user-select:none;-webkit-user-select:none}
@@ -50,7 +50,7 @@
 </style></head>
 <body>
 <canvas id="cv"></canvas>
-<div id="muteBtn" style="position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:12px;z-index:9;font-size:22px;cursor:pointer;pointer-events:auto;opacity:.85;text-shadow:0 1px 4px rgba(0,0,0,.6)">🔊</div>
+<div id="muteBtn" style="position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:12px;z-index:9;font-size:22px;cursor:pointer;pointer-events:auto;opacity:.85;text-shadow:0 1px 4px rgba(0,0,0,.6)">?��</div>
 <div id="wallet"></div>
 <div id="top">
   <div id="stage"></div>
@@ -59,67 +59,67 @@
 </div>
 <div id="hint"></div>
 <div id="bar">
-  <button class="btn d sm" id="resetBtn">↺ 초기화</button>
-  <button class="btn y sm" id="navBtn">💡 힌트</button>
-  <button class="btn g" id="goBtn" disabled>🛵 출발!</button>
+  <button class="btn d sm" id="resetBtn">??초기??/button>
+  <button class="btn y sm" id="navBtn">?�� ?�트</button>
+  <button class="btn g" id="goBtn" disabled>?�� 출발!</button>
 </div>
-<div id="ver">v0.7.0 · 코인·업그레이드·오늘의도전·경로분석</div>
+<div id="ver">v0.7.0 · 코인·?�그?�이?�·오?�의?�전·경로분석</div>
 
 <div id="start">
-  <img class="brand-art" src="assets/baedal/icon-a-192.png" alt="빨간 스쿠터 배달 라이더"/><h1>모두의 배달</h1>
-  <div class="sub"><b>같은 번호 음식점에서 픽업 → 그 집에 배달!</b></div>
+  <img class="brand-art" src="assets/baedal/icon-a-192.png" alt="빨간 ?�쿠??배달 ?�이??/><h1>모두??배달</h1>
+  <div class="sub"><b>같�? 번호 ?�식?�에???�업 ??�?집에 배달!</b></div>
   <div id="rec" class="sub" style="color:#ffd34d;font-weight:800"></div>
   <div class="modes">
-    <button class="btn g" id="startBtn" style="padding:15px 20px;font-size:19px">🛵 이어서 배달하기</button>
+    <button class="btn g" id="startBtn" style="padding:15px 20px;font-size:19px">?�� ?�어??배달?�기</button>
     <div style="display:flex;gap:9px">
-      <button class="btn y sm" id="dailyBtn" style="flex:1">📅 오늘의 도전</button>
-      <button class="btn d sm" id="shopBtn" style="flex:1">🏪 장비 상점</button>
+      <button class="btn y sm" id="dailyBtn" style="flex:1">?�� ?�늘???�전</button>
+      <button class="btn d sm" id="shopBtn" style="flex:1">?�� ?�비 ?�점</button>
     </div>
   </div>
-  <button class="btn d sm" id="howtoBtn" style="padding:8px 14px;font-size:13px">📖 하는 법</button>
+  <button class="btn d sm" id="howtoBtn" style="padding:8px 14px;font-size:13px">?�� ?�는 �?/button>
   <div id="howto" class="hidden">
-    🍔 <b>음식점</b>과 🏠 <b>집</b>이 <b>색깔·번호 짝</b>으로 놓여 있어요<br>
-    👆 방문할 순서대로 탭 — <b style="color:#7cf6ff">같은 색 음식점을 먼저</b> 들러 픽업!<br>
-    🚫 픽업 전 집은 <b>탭이 막혀요</b> — 실수로 죽지 않아요<br>
-    🔴 경로가 <b style="color:#ff6a7a">빨갛게 꼬이면</b> 돌아가는 길 = 음식이 식어요<br>
-    🛵 <b>출발!</b> → 관전(화면 탭 = ⏩빨리감기)<br>
-    ⭐ <b>최적 경로에 가까울수록</b> 별이 많아요 (별3 = 완벽)<br>
-    🪙 별·효율로 <b>코인</b>을 벌어 🏪상점에서 장비를 올리세요<br>
-    💡 <b>힌트</b>는 지금 상황에서 <b>가장 좋은 다음 목적지</b>를 알려줘요
+    ?�� <b>?�식??/b>�??�� <b>�?/b>??<b>?�깔·번호 �?/b>?�로 ?�여 ?�어??br>
+    ?�� 방문???�서?��?????<b style="color:#7cf6ff">같�? ???�식?�을 먼�?</b> ?�러 ?�업!<br>
+    ?�� ?�업 ??집�? <b>??�� 막�???/b> ???�수�?죽�? ?�아??br>
+    ?�� 경로가 <b style="color:#ff6a7a">빨갛�?꼬이�?/b> ?�아가??�?= ?�식???�어??br>
+    ?�� <b>출발!</b> ??관???�면 ??= ?�빨리감�?<br>
+    �?<b>최적 경로??가까울?�록</b> 별이 많아??(�? = ?�벽)<br>
+    ?�� 별·효?�로 <b>코인</b>??벌어 ?��?�점?�서 ?�비�??�리?�요<br>
+    ?�� <b>?�트</b>??지�??�황?�서 <b>가??좋�? ?�음 목적지</b>�??�려줘요
   </div>
-  <div id="changelog">🆕 <b>v0.7.0</b> · 🪙<b>코인+장비 업그레이드</b> · 📅<b>오늘의 도전</b>(전국 동일 문제) · 🔍<b>결정적 실수 분석</b> · 💡힌트 · 난이도 비례 제한시간/별기준 · 즉사 제거</div>
+  <div id="changelog">?�� <b>v0.7.0</b> · ?��<b>코인+?�비 ?�그?�이??/b> · ?��<b>?�늘???�전</b>(?�국 ?�일 문제) · ?��<b>결정???�수 분석</b> · ?��?�트 · ?�이??비�? ?�한?�간/별기준 · 즉사 ?�거</div>
 </div>
 
 <div id="shopUI" class="hidden">
-  <h1 style="font-size:28px">🏪 장비 상점</h1>
-  <div class="sub" style="margin-top:-4px">🪙 <b id="shopCoin" style="color:#ffd34d">0</b> 코인</div>
+  <h1 style="font-size:28px">?�� ?�비 ?�점</h1>
+  <div class="sub" style="margin-top:-4px">?�� <b id="shopCoin" style="color:#ffd34d">0</b> 코인</div>
   <div id="upList" style="display:flex;flex-direction:column;gap:9px"></div>
-  <button class="btn g" id="shopCloseBtn" style="margin-top:4px">닫기</button>
+  <button class="btn g" id="shopCloseBtn" style="margin-top:4px">?�기</button>
 </div>
 
 <div id="over" class="hidden">
-  <div id="overTitle">배달 완료!</div>
-  <img id="resultArt" class="result-art" alt="배달 결과"/><div id="stars">⭐⭐⭐</div>
+  <div id="overTitle">배달 ?�료!</div>
+  <img id="resultArt" class="result-art" alt="배달 결과"/><div id="stars">⭐⭐�?/div>
   <div id="overMsg"></div>
   <div id="coinMsg" style="font-size:17px;font-weight:800;color:#ffd34d"></div>
-  <button class="btn y sm" id="dblBtn" style="display:none">📺 광고 보고 코인 2배</button>
-  <button class="btn g" id="timeAdBtn" style="display:none">📺 광고 보고 +20초</button>
-  <button class="btn d sm" id="ansBtn">🔍 내 경로 vs 정답 비교</button>
+  <button class="btn y sm" id="dblBtn" style="display:none">?�� 광고 보고 코인 2�?/button>
+  <button class="btn g" id="timeAdBtn" style="display:none">?�� 광고 보고 +20�?/button>
+  <button class="btn d sm" id="ansBtn">?�� ??경로 vs ?�답 비교</button>
   <div style="display:flex;gap:9px;margin-top:2px">
-    <button class="btn" id="retryBtn">🔥 별3 도전</button>
-    <button class="btn g" id="nextBtn">다음 →</button>
+    <button class="btn" id="retryBtn">?�� �? ?�전</button>
+    <button class="btn g" id="nextBtn">?�음 ??/button>
   </div>
   <div style="display:flex;gap:9px">
-    <button class="btn d sm" id="shopBtn2">🏪 상점</button>
-    <button class="btn d sm" id="shareBtn" style="display:none">📤 결과 공유</button>
-    <button class="btn d sm" id="homeBtn">🏠 처음</button>
+    <button class="btn d sm" id="shopBtn2">?�� ?�점</button>
+    <button class="btn d sm" id="shareBtn" style="display:none">?�� 결과 공유</button>
+    <button class="btn d sm" id="homeBtn">?�� 처음</button>
   </div>
 </div>
-<button class="btn g" id="ansClose" style="position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:11;display:none">✕ 닫기</button>
+<button class="btn g" id="ansClose" style="position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:11;display:none">???�기</button>
 
 <script>
 const $=id=>document.getElementById(id);
-// BAEDAL_ART_V1 — original canvas drawings remain as loading/error fallback.
+// BAEDAL_ART_V1 ??original canvas drawings remain as loading/error fallback.
 const art={};
 for(const [name,count] of Object.entries({shops:8,homes:8,badges:3,scooter:8,upgrades:4,stamps:3,district:6,exhaust:4,sparkles:4})){
  art[name]=Array.from({length:count},(_,i)=>{const im=new Image();im.src='assets/baedal/'+name+'-'+(name==='district'?i+1:i)+'.png';return im;});
@@ -127,7 +127,7 @@ for(const [name,count] of Object.entries({shops:8,homes:8,badges:3,scooter:8,upg
 function artDraw(name,index,x,y,w,h){const im=art[name]?.[index];if(!im?.complete||!im.naturalWidth)return false;ctx.drawImage(im,x,y,w,h||w);return true;}
 function artNode(n,num,done,picked){const group=n.type==='shop'?'shops':'homes',im=art[group][n.pair];if(!im.complete||!im.naturalWidth)return false;
  ctx.save();if(done)ctx.globalAlpha=.45;ctx.fillStyle=PAIRCOL[n.pair]+'28';ctx.beginPath();ctx.arc(n.x,n.y,24,0,Math.PI*2);ctx.fill();artDraw(group,n.pair,n.x-25,n.y-26,50,50);
- ctx.globalAlpha=1;ctx.font='bold 10px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#0e1626';roundRect(n.x-22,n.y+25,44,14,6);ctx.fill();ctx.fillStyle=PAIRCOL[n.pair];ctx.fillText((n.type==='shop'?'픽업 ':'배달 ')+(n.pair+1),n.x,n.y+32);
+ ctx.globalAlpha=1;ctx.font='bold 10px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#0e1626';roundRect(n.x-22,n.y+25,44,14,6);ctx.fill();ctx.fillStyle=PAIRCOL[n.pair];ctx.fillText((n.type==='shop'?'?�업 ':'배달 ')+(n.pair+1),n.x,n.y+32);
  const status=done?2:(n.type==='home'?(picked?1:0):-1);if(status>=0)artDraw('badges',status,n.x+9,n.y+6,20,20);
  if(num>0)badge(n.x+18,n.y-22,num);ctx.restore();return true;
 }
@@ -138,18 +138,18 @@ function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.im
 const LS={ get(k,d){ try{ const v=localStorage.getItem(k); return v===null?d:v; }catch(e){ return d; } }, set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} } };
 
 let muted=LS.get('baedal_mute','0')==='1';
-function renderMute(){ const b=$('muteBtn'); if(b) b.textContent=muted?'🔇':'🔊'; }
+function renderMute(){ const b=$('muteBtn'); if(b) b.textContent=muted?'?��':'?��'; }
 let AC; function tone(f,d,t,g){ if(muted)return; try{ if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)(); const o=AC.createOscillator(),v=AC.createGain(); o.type=t||'square'; o.frequency.value=f; v.gain.value=g||0.06; o.connect(v);v.connect(AC.destination); const s=AC.currentTime;o.start(s);v.gain.setValueAtTime(v.gain.value,s);v.gain.exponentialRampToValueAtTime(0.0001,s+(d||0.1));o.stop(s+(d||0.1)); }catch(e){} }
 function chord(b){ [0,4,7,12].forEach((s,i)=>setTimeout(()=>tone(b*Math.pow(2,s/12),0.16,'triangle',0.06),i*70)); }
 function vib(m){ try{navigator.vibrate&&navigator.vibrate(m);}catch(e){} }
 
-// ===== AdMob (Capacitor 앱에서만 동작, 웹/터널은 무시) =====
-// 출시 절차: AdMob에서 광고단위 3종을 만들어 _REAL 에 채우고 AD_USE_TEST=false 로만 바꾼다.
-// _REAL 이 비어 있으면 showBanner/showInterstitial/리워드가 호출 자체를 건너뛴다(빈 adId 로 요청하지 않음).
-const AD_USE_TEST=true;
-const AD_BANNER_TEST='ca-app-pub-3940256099942544/6300978111', AD_BANNER_REAL='';
-const AD_INTER_TEST ='ca-app-pub-3940256099942544/1033173712', AD_INTER_REAL ='';
-const AD_REWARD_TEST='ca-app-pub-3940256099942544/5224354917', AD_REWARD_REAL='';  // 리워드(시간/코인/힌트)
+// ===== AdMob (Capacitor ?�에?�만 ?�작, ???�널?� 무시) =====
+// 출시 ?�차: AdMob?�서 광고?�위 3종을 만들??_REAL ??채우�?AD_USE_TEST=false 로만 바꾼??
+// _REAL ??비어 ?�으�?showBanner/showInterstitial/리워?��? ?�출 ?�체�?건너?�다(�?adId �??�청?��? ?�음).
+const AD_USE_TEST=false; // �Ǳ��� (AdMob �� ~2745227539)
+const AD_BANNER_TEST='ca-app-pub-3940256099942544/6300978111', AD_BANNER_REAL='ca-app-pub-9017259597860535/3298268010';
+const AD_INTER_TEST ='ca-app-pub-3940256099942544/1033173712', AD_INTER_REAL ='ca-app-pub-9017259597860535/3924953970';
+const AD_REWARD_TEST='ca-app-pub-3940256099942544/5224354917', AD_REWARD_REAL='ca-app-pub-9017259597860535/2124165029';  // 리워???�간/코인/?�트)
 const AD_BANNER = AD_USE_TEST ? AD_BANNER_TEST : AD_BANNER_REAL;
 const AD_INTER  = AD_USE_TEST ? AD_INTER_TEST  : AD_INTER_REAL;
 const AD_REWARD = AD_USE_TEST ? AD_REWARD_TEST : AD_REWARD_REAL;
@@ -158,49 +158,49 @@ function safeBottomInset(){ try{ const p=document.createElement('div'); p.style.
 (async function(){ try{ const C=window.Capacitor; if(C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.AdMob){ await C.Plugins.AdMob.initialize({initializeForTesting:AD_USE_TEST}); admobReady=true; showBanner(); } }catch(e){} })();
 async function showBanner(){ const C=window.Capacitor; if(!AD_BANNER||!(C&&C.Plugins&&C.Plugins.AdMob)||bannerShown) return; bannerShown=true; try{document.body.classList.add('has-banner');}catch(e){} try{ await C.Plugins.AdMob.showBanner({adId:AD_BANNER,adSize:'BANNER',position:'BOTTOM_CENTER',margin:safeBottomInset(),isTesting:AD_USE_TEST}); }catch(e){ bannerShown=false; try{document.body.classList.remove('has-banner');}catch(e2){} } }
 async function showInterstitial(){ const C=window.Capacitor; if(!AD_INTER||!(admobReady&&C&&C.Plugins&&C.Plugins.AdMob)) return; try{ await C.Plugins.AdMob.prepareInterstitial({adId:AD_INTER,isTesting:AD_USE_TEST}); await C.Plugins.AdMob.showInterstitial(); }catch(e){} }
-// 리워드 광고: 보상 지급 여부 반환. 웹/미설정 시 true(바로 보상)로 폴백.
+// 리워??광고: 보상 지�??��? 반환. ??미설????true(바로 보상)�??�백.
 async function showRewarded(){ const C=window.Capacitor; if(!AD_REWARD||!(admobReady&&C&&C.Plugins&&C.Plugins.AdMob)) return true; try{ await C.Plugins.AdMob.prepareRewardVideoAd({adId:AD_REWARD,isTesting:AD_USE_TEST}); const r=await C.Plugins.AdMob.showRewardVideoAd(); return !!r; }catch(e){ return false; } }
 
 const cv=$('cv'), ctx=cv.getContext('2d'); let W=412,H=740,DPR=1;
 function resize(){ DPR=Math.min(devicePixelRatio||1,2); const vw=innerWidth,vh=innerHeight; W=412; H=Math.round(W*vh/vw); cv.width=W*DPR;cv.height=H*DPR; cv.style.width=vw+'px';cv.style.height=vh+'px'; ctx.setTransform(DPR,0,0,DPR,0,0); }
 addEventListener('resize',resize);
-// 오늘의 도전은 기기마다 같은 문제가 나와야 하므로 필드 비율을 고정한다.
+// ?�늘???�전?� 기기마다 같�? 문제가 ?��????��?�??�드 비율??고정?�다.
 function field(){ const b={x:20, y:H*0.13, w:W-40, h:H*0.62};
   if(!daily) return b;
   const h=Math.min(b.h, b.w*1.2); return {x:b.x, y:b.y+(b.h-h)/2, w:b.w, h:h}; }
 
 const PAIRCOL=['#ff6b6b','#4dabf7','#ffd43b','#51cf66','#cc5de8','#ff922b','#22d3ee','#f472b6'];
 const PAIRDARK=['#c0392b','#1c6fb0','#c99a10','#2c9c50','#8e3fb0','#c26418','#0e8ea0','#b83a7e'];
-const PAIRFOOD=['🍗','🍣','🍕','🥗','🍜','🍔','🧋','🍰'];
-// 동네 테마 로테이션(버라이어티) — 3단계마다 새 동네
+const PAIRFOOD=['?��','?��','?��','?��','?��','?��','?��','?��'];
+// ?�네 ?�마 로테?�션(버라?�어?? ??3?�계마다 ???�네
 const DISTRICTS=[
-  {n:'🏙️ 강남동', a:'#16233c', b:'#0b1220'},
-  {n:'🌊 해변동', a:'#123246', b:'#08161e'},
-  {n:'🌃 야시장', a:'#2a1636', b:'#140a1e'},
-  {n:'🌸 벚꽃동', a:'#331824', b:'#1a0c12'},
-  {n:'🏔️ 산동네', a:'#14261c', b:'#0a140e'},
-  {n:'🎡 놀이동', a:'#2e2410', b:'#161006'},
+  {n:'?���?강남??, a:'#16233c', b:'#0b1220'},
+  {n:'?�� ?��???, a:'#123246', b:'#08161e'},
+  {n:'?�� ?�시??, a:'#2a1636', b:'#140a1e'},
+  {n:'?�� 벚꽃??, a:'#331824', b:'#1a0c12'},
+  {n:'?���??�동??, a:'#14261c', b:'#0a140e'},
+  {n:'?�� ?�?�동', a:'#2e2410', b:'#161006'},
 ];
-function district(){ return daily ? {n:'📅 오늘의 동네', a:'#1d2140', b:'#0c0e1e'} : DISTRICTS[Math.floor((stage-1)/3)%DISTRICTS.length]; }
+function district(){ return daily ? {n:'?�� ?�늘???�네', a:'#1d2140', b:'#0c0e1e'} : DISTRICTS[Math.floor((stage-1)/3)%DISTRICTS.length]; }
 
-// ===== 영구 진행: 코인 + 장비 업그레이드 =====
+// ===== ?�구 진행: 코인 + ?�비 ?�그?�이??=====
 const UPGRADES=[
-  {k:'bag', ic:'🧊', nm:'보온가방',   ds:'별 기준 완화 (+1.5%p / Lv)',  max:5, cost:l=>Math.round(140*Math.pow(1.85,l))},
-  {k:'nav', ic:'🧭', nm:'내비게이션', ds:'계획 제한시간 +7초 / Lv',     max:5, cost:l=>Math.round(110*Math.pow(1.80,l))},
-  {k:'reg', ic:'💰', nm:'단골 손님',  ds:'코인 획득 +12% / Lv',         max:8, cost:l=>Math.round(130*Math.pow(1.70,l))},
-  {k:'sen', ic:'💡', nm:'배달 감각',  ds:'판당 무료 힌트 +1회 / Lv',    max:3, cost:l=>Math.round(240*Math.pow(2.10,l))},
+  {k:'bag', ic:'?��', nm:'보온가�?,   ds:'�?기�? ?�화 (+1.5%p / Lv)',  max:5, cost:l=>Math.round(140*Math.pow(1.85,l))},
+  {k:'nav', ic:'?��', nm:'?�비게이??, ds:'계획 ?�한?�간 +7�?/ Lv',     max:5, cost:l=>Math.round(110*Math.pow(1.80,l))},
+  {k:'reg', ic:'?��', nm:'?�골 ?�님',  ds:'코인 ?�득 +12% / Lv',         max:8, cost:l=>Math.round(130*Math.pow(1.70,l))},
+  {k:'sen', ic:'?��', nm:'배달 감각',  ds:'?�당 무료 ?�트 +1??/ Lv',    max:3, cost:l=>Math.round(240*Math.pow(2.10,l))},
 ];
 let coin=+LS.get('baedal_coin',0)||0;
 let ups=(()=>{ try{ return JSON.parse(LS.get('baedal_up','{}'))||{}; }catch(e){ return {}; } })();
 const upLv=k=>ups[k]|0;
 function saveProgress(){ LS.set('baedal_coin',coin); LS.set('baedal_up',JSON.stringify(ups)); }
 function addCoin(n){ coin=Math.max(0,coin+n); saveProgress(); renderWallet(); }
-function renderWallet(){ $('wallet').textContent = (state==='start'||state==='shop') ? '' : ('🪙 '+coin); $('shopCoin').textContent=coin; }
+function renderWallet(){ $('wallet').textContent = (state==='start'||state==='shop') ? '' : ('?�� '+coin); $('shopCoin').textContent=coin; }
 
 const HINT_COST=40;
 let hintsLeft=0, hintNode=-1, hintPulse=0;
 
-// ===== 상태 =====
+// ===== ?�태 =====
 let state='start';   // start|plan|run|result|fail|answer|shop
 let stage=+LS.get('baedal_stage',1)||1;
 let totalStars=+LS.get('baedal_stars',0)||0;
@@ -214,17 +214,17 @@ let shake=0;
 let stageTime=60, timeLeft=60, lastTick=999;
 
 function dist(a,b){ return Math.hypot(a.x-b.x,a.y-b.y); }
-// 완만한 난이도 곡선: 2,2,3,3,4,4,5,5,6,6,7… (캡 7건 = 노드 14개)
+// ?�만???�이??곡선: 2,2,3,3,4,4,5,5,6,6,7??(�?7�?= ?�드 14�?
 function pairsForStage(s){ return daily ? 5 : clamp(1+Math.ceil(s/2), 2, 7); }
 function planTimeFor(p){ return 30 + 9*p + 7*upLv('nav'); }
-// 별 기준은 건수에 비례해 완화 + 보온가방 업그레이드로 추가 완화
+// �?기�??� 건수??비�????�화 + 보온가�??�그?�이?�로 추�? ?�화
 function thresholds(){ const bag=upLv('bag');
   const t3 = 1.10 + 0.012*Math.max(0,pairs-2) + 0.015*bag;
   const t2 = t3 + 0.22 + 0.02*bag;
   return [t3,t2]; }
 
-// ===== 최적 경로 DP (역방향 Held-Karp, 타입드 배열) =====
-// G[mask*N+i] = 노드 i 에 있고 mask 를 이미 방문했을 때, 남은 전부를 도는 최소 추가거리
+// ===== 최적 경로 DP (??��??Held-Karp, ?�?�드 배열) =====
+// G[mask*N+i] = ?�드 i ???�고 mask �??��? 방문?�을 ?? ?��? ?��?�??�는 최소 추�?거리
 let G=null, GN=0, SHOP=null;
 function buildDP(){
   const N=nodes.length; GN=N; const SZ=1<<N, FULL=SZ-1;
@@ -232,7 +232,7 @@ function buildDP(){
   const D=new Float64Array(N*N);
   for(let i=0;i<N;i++) for(let j=0;j<N;j++) D[i*N+j]=dist(nodes[i],nodes[j]);
   const need=new Int32Array(N);
-  nodes.forEach((n,i)=>{ need[i] = n.type==='home' ? (1<<SHOP[n.pair]) : 0; });   // 집은 같은 색 음식점 선행
+  nodes.forEach((n,i)=>{ need[i] = n.type==='home' ? (1<<SHOP[n.pair]) : 0; });   // 집�? 같�? ???�식???�행
   const g=new Float64Array(SZ*N).fill(Infinity);
   for(let i=0;i<N;i++) g[FULL*N+i]=0;
   for(let mask=FULL-1;mask>=0;mask--){ const base=mask*N;
@@ -243,7 +243,7 @@ function buildDP(){
       g[base+i]=best; } }
   G=g;
 }
-// 현재 상태(mask, 위치)에서 "가장 좋은 다음 목적지" — 힌트와 최적경로 복원에 공용
+// ?�재 ?�태(mask, ?�치)?�서 "가??좋�? ?�음 목적지" ???�트?� 최적경로 복원??공용
 function bestNext(mask,cur){ const N=nodes.length; let bv=Infinity,bj=-1;
   for(let j=0;j<N;j++){ if(mask&(1<<j)) continue; const nj=nodes[j];
     if(nj.type==='home' && !(mask&(1<<SHOP[nj.pair]))) continue;
@@ -252,7 +252,7 @@ function bestNext(mask,cur){ const N=nodes.length; let bv=Infinity,bj=-1;
 function bestRoute(){ let mask=0,cur=start,seq=[],L=0;
   for(;;){ const j=bestNext(mask,cur); if(j<0) break; L+=dist(cur,nodes[j]); mask|=(1<<j); cur=nodes[j]; seq.push(j); }
   return {seq,len:L}; }
-// 욕심쟁이(가까운 곳부터) 경로 — 퍼즐이 "풀 가치가 있는지" 판정용
+// ?�심?�이(가까운 곳�??? 경로 ???�즐??"?� 가치�? ?�는지" ?�정??
 function greedyLen(){ let mask=0,cur=start,L=0;
   for(;;){ let bd=Infinity,bj=-1;
     for(let j=0;j<nodes.length;j++){ if(mask&(1<<j)) continue; const nj=nodes[j];
@@ -260,7 +260,7 @@ function greedyLen(){ let mask=0,cur=start,L=0;
       const d=dist(cur,nodes[j]); if(d<bd){ bd=d; bj=j; } }
     if(bj<0) break; L+=bd; mask|=(1<<bj); cur=nodes[bj]; }
   return L; }
-// 플레이어 순서에서 "되돌릴 수 없게 된 첫 선택"(1-based). 0 = 끝까지 최적
+// ?�레?�어 ?�서?�서 "?�돌�????�게 ??�??�택"(1-based). 0 = ?�까지 최적
 function analyzeOrder(seq){ if(!G) return 0;
   let mask=0, cur=start, len=0;
   for(let k=0;k<seq.length;k++){ const i=seq[k]; len+=dist(cur,nodes[i]); mask|=(1<<i); cur=nodes[i];
@@ -268,19 +268,19 @@ function analyzeOrder(seq){ if(!G) return 0;
   return 0; }
 
 function genOnce(){ const f=field(); nodes=[]; start={x:f.x+f.w/2, y:f.y+f.h-14};
-  const minSep=Math.max(44, 56-(pairs-2)*3);   // 노드 많을수록 간격 좁힘
+  const minSep=Math.max(44, 56-(pairs-2)*3);   // ?�드 많을?�록 간격 좁힘
   const place=()=>{ let t=0; while(t++<4000){ const p={x:rnd(f.x+34,f.x+f.w-34), y:rnd(f.y+32,f.y+f.h-58)}; if(dist(p,start)<60) continue; if(nodes.some(nd=>dist(nd,p)<minSep)) continue; return p; } return {x:rnd(f.x+34,f.x+f.w-34), y:rnd(f.y+32,f.y+f.h-58)}; };
   for(let i=0;i<pairs;i++){ const sp=place(); nodes.push({type:'shop',pair:i,x:sp.x,y:sp.y}); const hp=place(); nodes.push({type:'home',pair:i,x:hp.x,y:hp.y}); }
   buildDP(); const br=bestRoute(); optOrder=br.seq; optLen=br.len||1; greedyRatio=greedyLen()/optLen; }
-// 퍼즐 품질 게이트 — 핵심 개선.
-// 완전 랜덤 배치는 "가까운 곳부터 찍기"만으로 별3이 50~90% 나온다(= 풀 거리가 없는 판).
-// 욕심쟁이 경로가 별3 기준보다 확실히 나쁜 판이 나올 때까지 다시 뽑아, 매 판 생각할 거리를 보장한다.
-// 너무 쉬운 판(= 생각할 게 없음)도, 너무 악랄한 판(= 욕심쟁이 플레이가 통과조차 못 함)도 거른다.
-// 목표 구간: 욕심쟁이 플레이 = 별2 통과, 머리 쓴 플레이 = 별3.
+// ?�즐 ?�질 게이?????�심 개선.
+// ?�전 ?�덤 배치??"가까운 곳�???찍기"만으�?�???50~90% ?�온??= ?� 거리가 ?�는 ??.
+// ?�심?�이 경로가 �? 기�?보다 ?�실???�쁜 ?�이 ?�올 ?�까지 ?�시 뽑아, �????�각??거리�?보장?�다.
+// ?�무 ?�운 ??= ?�각??�??�음)?? ?�무 ?�랄????= ?�심?�이 ?�레?��? ?�과조차 �?????거른??
+// 목표 구간: ?�심?�이 ?�레??= �? ?�과, 머리 ???�레??= �?.
 function genStage(){ pairs=pairsForStage(stage);
   const tries = pairs>=7 ? 12 : (pairs>=6 ? 16 : 24);
   const t3=thresholds()[0];
-  const lo = pairs<=2 ? 0 : t3 + (pairs<=3 ? 0.005 : 0.03);   // 1~2단계(2건)는 몸풀기라 게이트 없음
+  const lo = pairs<=2 ? 0 : t3 + (pairs<=3 ? 0.005 : 0.03);   // 1~2?�계(2�???몸�?기라 게이???�음
   const hi = pairs<=2 ? 99 : lo + 0.17;
   const mid=(lo+hi)/2; let snap=null;
   const take=()=>({gr:greedyRatio, nodes, start, optOrder, optLen, G, GN, SHOP});
@@ -300,84 +300,84 @@ function newStage(regen){ if(regen) genStage(); order=[]; pickedSet=new Set(); c
   if(!daily && stage>bestStage){ bestStage=stage; LS.set('baedal_best',bestStage); }
   stageTime=planTimeFor(pairs); timeLeft=stageTime; lastTick=999; updateTimer();
   $('over').classList.add('hidden'); $('bar').classList.remove('hidden'); updateHUD(); refreshBtns(); renderWallet();
-  $('hint').textContent='👆 같은 색 음식점→집 순서로 탭 (음식점 먼저!)';
-  if(!daily && stage>1 && (stage-1)%3===0) setTimeout(()=>{ flash('🎉 새 동네! '+district().n,'#ffd34d'); chord(440); },250);
+  $('hint').textContent='?�� 같�? ???�식?�→�??�서�???(?�식??먼�?!)';
+  if(!daily && stage>1 && (stage-1)%3===0) setTimeout(()=>{ flash('?�� ???�네! '+district().n,'#ffd34d'); chord(440); },250);
 }
-function updateTimer(){ const t=Math.max(0,Math.ceil(timeLeft)); const m=Math.floor(t/60), s=t%60; $('timer').textContent='⏱️ '+m+':'+(s<10?'0':'')+s; $('timer').classList.toggle('warn', timeLeft<=10 && state==='plan'); }
+function updateTimer(){ const t=Math.max(0,Math.ceil(timeLeft)); const m=Math.floor(t/60), s=t%60; $('timer').textContent='?�️ '+m+':'+(s<10?'0':'')+s; $('timer').classList.toggle('warn', timeLeft<=10 && state==='plan'); }
 function updateHUD(){
-  $('stage').textContent = daily ? ('📅 오늘의 도전 · 배달 '+pairs+'건') : (district().n+' · '+stage+'단계 · 배달 '+pairs+'건');
-  const comboTxt = combo>=2 ? '  🔥'+combo+'연속' : '';
+  $('stage').textContent = daily ? ('?�� ?�늘???�전 · 배달 '+pairs+'�?) : (district().n+' · '+stage+'?�계 · 배달 '+pairs+'�?);
+  const comboTxt = combo>=2 ? '  ?��'+combo+'?�속' : '';
   if(order.length){ const L=routeLen(order); const eff=optLen/L;
-    $('info').textContent='효율 '+Math.round(clamp(eff,0,1)*100)+'% · 별3 '+Math.round(100/thresholds()[0])+'%↑'+(crossPairs.size?' ⚠️꼬임':'')+comboTxt; }
-  else $('info').textContent='⭐ 누적 '+totalStars+' · 별3 기준 효율 '+Math.round(100/thresholds()[0])+'%↑'+comboTxt;
+    $('info').textContent='?�율 '+Math.round(clamp(eff,0,1)*100)+'% · �? '+Math.round(100/thresholds()[0])+'%??+(crossPairs.size?' ?�️꼬임':'')+comboTxt; }
+  else $('info').textContent='�??�적 '+totalStars+' · �? 기�? ?�율 '+Math.round(100/thresholds()[0])+'%??+comboTxt;
   renderWallet(); }
 function refreshBtns(){ const plan=state==='plan';
   $('goBtn').disabled = !(plan && order.length===nodes.length);
   $('navBtn').disabled = !plan || order.length===nodes.length;
-  $('navBtn').textContent = hintsLeft>0 ? ('💡 힌트 '+hintsLeft) : ('💡 🪙'+HINT_COST); }
+  $('navBtn').textContent = hintsLeft>0 ? ('?�� ?�트 '+hintsLeft) : ('?�� ?��'+HINT_COST); }
 
 addEventListener('pointerdown',e=>{
   if(e.target&&e.target.closest&&(e.target.closest('.btn')||e.target.id==='muteBtn')) return;
-  if(state==='run'){ runSpeed=runSpeed>1?1:4; $('hint').textContent=runSpeed>1?'⏩ 빨리감기':''; return; }
+  if(state==='run'){ runSpeed=runSpeed>1?1:4; $('hint').textContent=runSpeed>1?'??빨리감기':''; return; }
   if(state!=='plan') return;
   const r=cv.getBoundingClientRect(); const x=(e.clientX-r.left)*(W/r.width), y=(e.clientY-r.top)*(H/r.height);
   let hit=-1,bd=32; nodes.forEach((n,i)=>{ const d=Math.hypot(n.x-x,n.y-y); if(d<bd){bd=d;hit=i;} });
   if(hit<0) return;
   const already=order.indexOf(hit);
-  if(already>=0){ // 다시 누르면 취소 — 그 지점부터 이후 경로 리셋
+  if(already>=0){ // ?�시 ?�르�?취소 ??�?지?��????�후 경로 리셋
     order=order.slice(0,already); pickedSet=new Set(); order.forEach(i=>{ if(nodes[i].type==='shop') pickedSet.add(nodes[i].pair); });
     hintNode=-1; updateCross(); tone(300,0.07,'sine',0.07); vib(14); updateHUD(); refreshBtns();
-    $('hint').textContent = order.length ? '↩️ 취소됨 · 이어서 탭하세요' : '👆 같은 색 음식점→집 순서로 탭 (음식점 먼저!)';
+    $('hint').textContent = order.length ? '?�️ 취소??· ?�어????��?�요' : '?�� 같�? ???�식?�→�??�서�???(?�식??먼�?!)';
     return;
   }
   const nd=nodes[hit];
-  if(nd.type==='home' && !pickedSet.has(nd.pair)){   // 즉사 대신 "탭 차단" — 실수로 판을 날리지 않게
-    $('hint').textContent='🚫 '+PAIRFOOD[nd.pair]+' 같은 색 음식점을 먼저 들러야 해요!';
+  if(nd.type==='home' && !pickedSet.has(nd.pair)){   // 즉사 ?�??"??차단" ???�수�??�을 ?�리지 ?�게
+    $('hint').textContent='?�� '+PAIRFOOD[nd.pair]+' 같�? ???�식?�을 먼�? ?�러???�요!';
     tone(220,0.12,'sawtooth',0.07); vib([18,40,18]); shake=Math.max(shake,7); return; }
   order.push(hit); if(nd.type==='shop') pickedSet.add(nd.pair);
   if(hintNode===hit) hintNode=-1;
   updateCross(); tone(nd.type==='shop'?520:760,0.05,'square',0.08); vib(10); updateHUD(); refreshBtns();
-  if(order.length===nodes.length) $('hint').textContent='🛵 출발!을 눌러 배달 시작';
-  else $('hint').textContent = nd.type==='shop' ? ('📦 '+PAIRFOOD[nd.pair]+' 픽업! 다음 목적지는?') : '✅ 배달 완료! 다음 목적지는?';
+  if(order.length===nodes.length) $('hint').textContent='?�� 출발!???�러 배달 ?�작';
+  else $('hint').textContent = nd.type==='shop' ? ('?�� '+PAIRFOOD[nd.pair]+' ?�업! ?�음 목적지??') : '??배달 ?�료! ?�음 목적지??';
 });
-$('resetBtn').onclick=()=>{ if(state!=='plan')return; order=[]; pickedSet=new Set(); crossPairs=new Set(); hintNode=-1; tone(320,0.06,'sine',0.07); updateHUD(); refreshBtns(); $('hint').textContent='👆 같은 색 음식점→집 순서로 탭 (음식점 먼저!)'; };
+$('resetBtn').onclick=()=>{ if(state!=='plan')return; order=[]; pickedSet=new Set(); crossPairs=new Set(); hintNode=-1; tone(320,0.06,'sine',0.07); updateHUD(); refreshBtns(); $('hint').textContent='?�� 같�? ???�식?�→�??�서�???(?�식??먼�?!)'; };
 $('goBtn').onclick=()=>{ if(state==='plan'&&order.length===nodes.length) startRun(); };
 $('navBtn').onclick=()=>{ if(state!=='plan'||order.length===nodes.length) return;
-  if(hintsLeft<=0){ if(coin<HINT_COST){ flash('🪙 코인이 부족해요','#ff9a5a'); tone(200,0.14,'sine',0.08); return; } addCoin(-HINT_COST); }
+  if(hintsLeft<=0){ if(coin<HINT_COST){ flash('?�� 코인??부족해??,'#ff9a5a'); tone(200,0.14,'sine',0.08); return; } addCoin(-HINT_COST); }
   else hintsLeft--;
   let mask=0,cur=start; for(const i of order){ mask|=(1<<i); cur=nodes[i]; }
   hintNode=bestNext(mask,cur); hintPulse=0;
-  $('hint').textContent='💡 지금 상황에서 가장 좋은 다음 목적지!'; tone(900,0.1,'triangle',0.08); vib(12); refreshBtns(); };
+  $('hint').textContent='?�� 지�??�황?�서 가??좋�? ?�음 목적지!'; tone(900,0.1,'triangle',0.08); vib(12); refreshBtns(); };
 
-function startRun(){ state='run'; runSpeed=1; hintNode=-1; $('hint').textContent='👆 화면을 탭하면 ⏩ 빨리감기'; $('timer').classList.remove('warn'); $('bar').classList.add('hidden'); refreshBtns();
+function startRun(){ state='run'; runSpeed=1; hintNode=-1; $('hint').textContent='?�� ?�면????���???빨리감기'; $('timer').classList.remove('warn'); $('bar').classList.add('hidden'); refreshBtns();
   scoot={path:[start,...order.map(i=>nodes[i])], seg:0, t:0, x:start.x, y:start.y, dist0:0, visited:0, carried:0, pickupDist:{}, carriedPairs:new Set(), myLen:routeLen(order)};
   lastMyOrder=order.slice(); tone(700,0.1,'sawtooth',0.09); vib([10,30]);
 }
-function pickFx(p,col){ flashSmall(PAIRFOOD[p.pair]||'📦',p.x,p.y-24); tone(660,0.08,'square',0.08); vib(12); for(let i=0;i<7;i++){const a=Math.random()*6.28,s=rnd(1,4);parts.push({x:p.x,y:p.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-1,life:0.7,c:col,r:2+Math.random()*2});} }
-function dropFx(p,fresh){ deliveryBursts.push({x:p.x,y:p.y,t:performance.now()}); const em=fresh>0.66?'🔥':fresh>0.4?'😋':'🥶'; flashSmall(em,p.x,p.y-24); tone(fresh>0.5?900:280,0.12,fresh>0.5?'triangle':'sine',0.09); vib(fresh>0.5?[10,20]:30); shake=Math.max(shake,5);
+function pickFx(p,col){ flashSmall(PAIRFOOD[p.pair]||'?��',p.x,p.y-24); tone(660,0.08,'square',0.08); vib(12); for(let i=0;i<7;i++){const a=Math.random()*6.28,s=rnd(1,4);parts.push({x:p.x,y:p.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-1,life:0.7,c:col,r:2+Math.random()*2});} }
+function dropFx(p,fresh){ deliveryBursts.push({x:p.x,y:p.y,t:performance.now()}); const em=fresh>0.66?'?��':fresh>0.4?'?��':'?��'; flashSmall(em,p.x,p.y-24); tone(fresh>0.5?900:280,0.12,fresh>0.5?'triangle':'sine',0.09); vib(fresh>0.5?[10,20]:30); shake=Math.max(shake,5);
   const col=fresh>0.5?'#ffd34d':'#9fb0c0'; for(let i=0;i<10;i++){const a=Math.random()*6.28,s=rnd(2,6);parts.push({x:p.x,y:p.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-2,life:0.9,c:col,r:2+Math.random()*3});} }
 function flashSmall(t,x,y){ parts.push({txt:t,x,y,vy:-0.7,life:1.1}); }
 function flash(t,c){ const d=document.createElement('div');d.className='flash';d.textContent=t;d.style.color=c||'#fff';document.body.appendChild(d);setTimeout(()=>d.remove(),1100); }
 function confetti(x,y,n){ const cols=['#ffd34d','#7cffb0','#5ab0ff','#ff8a5a','#c9a3ff','#fff']; for(let i=0;i<n;i++){const a=Math.random()*6.28,s=rnd(2,9);parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-5,life:1.5,c:cols[i%cols.length],r:3+Math.random()*4});} }
 function freshOf(carryDist){ return clamp(1 - carryDist/(optLen*0.85), 0, 1); }
 
-// 650ms 뒤 결과창 — 그 사이 상태가 바뀌었으면(비교뷰·광고보상 등) 띄우지 않는다
-function showOver(){ const stamp=state==='fail'?2:(lastStars===3?0:1);$('resultArt').src='assets/baedal/stamps-'+stamp+'.png';$('resultArt').alt=['완벽 배달 별 세 개','따끈한 배달 별 두 개','차갑게 식은 배달'][stamp]; const s=state; setTimeout(()=>{ if(state!==s) return; $('over').classList.remove('hidden'); $('bar').classList.add('hidden'); },650); }
-function failTime(){ state='fail'; combo=0; $('shareBtn').style.display='none'; $('dblBtn').style.display='none'; flash('⏰ 시간 초과!','#ff5a6e'); tone(150,0.4,'sawtooth',0.1); vib([40,60,40]); shake=16; $('timer').classList.remove('warn');
-  $('overTitle').textContent='⏰ 시간 초과!'; $('overTitle').style.color='#ff6a7a'; $('stars').textContent='⌛';
-  $('overMsg').innerHTML='제한 시간 <b>'+stageTime+'초</b> 안에 출발하지 못했어요!<br><span style="color:#ff9a5a">🧭 내비게이션을 올리면 시간이 늘어나요</span>';
+// 650ms ??결과�???�??�이 ?�태가 바뀌었?�면(비교뷰·광고보???? ?�우지 ?�는??
+function showOver(){ const stamp=state==='fail'?2:(lastStars===3?0:1);$('resultArt').src='assets/baedal/stamps-'+stamp+'.png';$('resultArt').alt=['?�벽 배달 �???�?,'?�끈??배달 �???�?,'차갑�??��? 배달'][stamp]; const s=state; setTimeout(()=>{ if(state!==s) return; $('over').classList.remove('hidden'); $('bar').classList.add('hidden'); },650); }
+function failTime(){ state='fail'; combo=0; $('shareBtn').style.display='none'; $('dblBtn').style.display='none'; flash('???�간 초과!','#ff5a6e'); tone(150,0.4,'sawtooth',0.1); vib([40,60,40]); shake=16; $('timer').classList.remove('warn');
+  $('overTitle').textContent='???�간 초과!'; $('overTitle').style.color='#ff6a7a'; $('stars').textContent='??;
+  $('overMsg').innerHTML='?�한 ?�간 <b>'+stageTime+'�?/b> ?�에 출발?��? 못했?�요!<br><span style="color:#ff9a5a">?�� ?�비게이?�을 ?�리�??�간???�어?�요</span>';
   $('coinMsg').textContent='';
-  $('retryBtn').style.display='block'; $('retryBtn').textContent='↺ 다시 도전'; $('nextBtn').style.display='none';
-  $('timeAdBtn').style.display = adUsedThisStage ? 'none' : 'block'; $('timeAdBtn').textContent='📺 광고 보고 +20초';
+  $('retryBtn').style.display='block'; $('retryBtn').textContent='???�시 ?�전'; $('nextBtn').style.display='none';
+  $('timeAdBtn').style.display = adUsedThisStage ? 'none' : 'block'; $('timeAdBtn').textContent='?�� 광고 보고 +20�?;
   showOver(); }
 function failRun(node){ state='fail'; combo=0; $('timeAdBtn').style.display='none'; $('shareBtn').style.display='none'; $('dblBtn').style.display='none'; const col=PAIRCOL[node.pair], nx=node.x, ny=node.y; scoot=null;
-  flash('❌ 배달 실수!','#ff5a6e'); tone(150,0.4,'sawtooth',0.1); vib([40,60,40]); shake=18;
+  flash('??배달 ?�수!','#ff5a6e'); tone(150,0.4,'sawtooth',0.1); vib([40,60,40]); shake=18;
   for(let i=0;i<16;i++){const a=Math.random()*6.28,s=rnd(2,7);parts.push({x:nx,y:ny,vx:Math.cos(a)*s,vy:Math.sin(a)*s-2,life:1.1,c:'#ff5a6e',r:2+Math.random()*3});}
-  flashSmall('❌',nx,ny-24);
-  $('overTitle').textContent='❌ 배달 실수!'; $('overTitle').style.color='#ff6a7a'; $('stars').textContent='💥';
-  $('overMsg').innerHTML='이 <b style="color:'+col+'">집</b>의 음식을 아직 픽업하지 않았어요!';
+  flashSmall('??,nx,ny-24);
+  $('overTitle').textContent='??배달 ?�수!'; $('overTitle').style.color='#ff6a7a'; $('stars').textContent='?��';
+  $('overMsg').innerHTML='??<b style="color:'+col+'">�?/b>???�식???�직 ?�업?��? ?�았?�요!';
   $('coinMsg').textContent='';
-  $('retryBtn').style.display='block'; $('retryBtn').textContent='↺ 다시 도전'; $('nextBtn').style.display='none';
+  $('retryBtn').style.display='block'; $('retryBtn').textContent='???�시 ?�전'; $('nextBtn').style.display='none';
   showOver(); }
 
 function coinFor(stars,ratio){ const base=8+5*pairs;
@@ -399,39 +399,39 @@ function finishRun(myLen){ $('timeAdBtn').style.display='none'; $('bar').classLi
     else combo=0;
     totalStars+=stars+bonus; LS.set('baedal_stars',totalStars);
     lastCoin=coinFor(stars,ratio); addCoin(lastCoin);
-    $('stars').textContent='⭐'.repeat(stars)+'☆'.repeat(3-stars);
-    $('nextBtn').style.display = daily?'none':'block'; $('retryBtn').textContent='🔥 별3 도전';
+    $('stars').textContent='�?.repeat(stars)+'??.repeat(3-stars);
+    $('nextBtn').style.display = daily?'none':'block'; $('retryBtn').textContent='?�� �? ?�전';
     $('dblBtn').style.display = dblUsedThisStage?'none':'block';
-    if(stars===3){ $('overTitle').textContent = combo>=2 ? ('🔥 '+combo+'연속 별3!') : '🔥 완벽 배달!'; $('overTitle').style.color='#7cffb0';
-      flash(combo>=2?('🔥 콤보 '+combo+'!'):'🔥 별 3개!','#7cffb0'); chord(523); if(combo>=3)setTimeout(()=>chord(784),160);
+    if(stars===3){ $('overTitle').textContent = combo>=2 ? ('?�� '+combo+'?�속 �?!') : '?�� ?�벽 배달!'; $('overTitle').style.color='#7cffb0';
+      flash(combo>=2?('?�� 콤보 '+combo+'!'):'?�� �?3�?','#7cffb0'); chord(523); if(combo>=3)setTimeout(()=>chord(784),160);
       confetti(W/2,H*0.4,combo>=3?120:80); shake=combo>=3?16:12; $('retryBtn').style.display='none'; }
-    else { $('overTitle').textContent='😋 따끈하게 배달!'; $('overTitle').style.color='#ffd34d'; tone(520,0.2,'sine',0.09); $('retryBtn').style.display='block'; }
+    else { $('overTitle').textContent='?�� ?�끈?�게 배달!'; $('overTitle').style.color='#ffd34d'; tone(520,0.2,'sine',0.09); $('retryBtn').style.display='block'; }
     const nearGap=Math.round(myLen-optLen*t3);
-    $('overMsg').innerHTML='내 경로 <b style="color:#7cf6ff">'+Math.round(myLen)+'</b> · 최적 <b style="color:#7cffb0">'+Math.round(optLen)+'</b> · 효율 <b>'+eff+'%</b>'
-      + (stars<3 ? ('<br><span style="color:#ff9a5a">😖 '+Math.max(1,nearGap)+'만 더 짧으면 별 3개!</span>') : '<br><span style="color:#7cffb0">최적에 가까운 완벽한 동선!</span>')
-      + (mistakeAt ? ('<br><span style="color:#9fd0ff">🔍 <b>'+mistakeAt+'번째 선택</b>부터 최적에서 벗어났어요</span>') : '');
-    $('coinMsg').innerHTML='🪙 +'+lastCoin+(bonus?' <span style="color:#7cffb0">(콤보 +1⭐)</span>':'');
+    $('overMsg').innerHTML='??경로 <b style="color:#7cf6ff">'+Math.round(myLen)+'</b> · 최적 <b style="color:#7cffb0">'+Math.round(optLen)+'</b> · ?�율 <b>'+eff+'%</b>'
+      + (stars<3 ? ('<br><span style="color:#ff9a5a">?�� '+Math.max(1,nearGap)+'�???짧으�?�?3�?</span>') : '<br><span style="color:#7cffb0">최적??가까운 ?�벽???�선!</span>')
+      + (mistakeAt ? ('<br><span style="color:#9fd0ff">?�� <b>'+mistakeAt+'번째 ?�택</b>부??최적?�서 벗어?�어??/span>') : '');
+    $('coinMsg').innerHTML='?�� +'+lastCoin+(bonus?' <span style="color:#7cffb0">(콤보 +1�?</span>':'');
   } else { combo=0; lastCoin=0;
-    $('overTitle').textContent='🥶 음식이 식었어요!'; $('overTitle').style.color='#9fd0ff'; $('stars').textContent='🥶';
-    flash('🥶 배달 실패','#9fd0ff'); tone(200,0.32,'sine',0.09); vib(120); shake=10;
-    $('retryBtn').style.display='block'; $('retryBtn').textContent='↺ 다시 도전'; $('nextBtn').style.display='none'; $('dblBtn').style.display='none';
-    $('overMsg').innerHTML='동선이 너무 길어 <b>음식이 식었어요</b> (효율 '+eff+'%)<br><span style="color:#ff9a5a">최적 대비 '+Math.round(t2*100)+'% 이내로 배달해야 통과!</span>'
-      + (mistakeAt ? ('<br><span style="color:#9fd0ff">🔍 <b>'+mistakeAt+'번째 선택</b>부터 꼬였어요</span>') : '');
-    $('coinMsg').innerHTML='<span style="color:#9ab">🧊 보온가방을 올리면 기준이 완화돼요</span>';
+    $('overTitle').textContent='?�� ?�식???�었?�요!'; $('overTitle').style.color='#9fd0ff'; $('stars').textContent='?��';
+    flash('?�� 배달 ?�패','#9fd0ff'); tone(200,0.32,'sine',0.09); vib(120); shake=10;
+    $('retryBtn').style.display='block'; $('retryBtn').textContent='???�시 ?�전'; $('nextBtn').style.display='none'; $('dblBtn').style.display='none';
+    $('overMsg').innerHTML='?�선???�무 길어 <b>?�식???�었?�요</b> (?�율 '+eff+'%)<br><span style="color:#ff9a5a">최적 ?��?'+Math.round(t2*100)+'% ?�내�?배달?�야 ?�과!</span>'
+      + (mistakeAt ? ('<br><span style="color:#9fd0ff">?�� <b>'+mistakeAt+'번째 ?�택</b>부??꼬�??�요</span>') : '');
+    $('coinMsg').innerHTML='<span style="color:#9ab">?�� 보온가방을 ?�리�?기�????�화?�요</span>';
   }
   if(daily){ dailyDone=true; const prev=+LS.get('baedal_daily_'+dailyKey,0)||0; if(eff>prev) LS.set('baedal_daily_'+dailyKey,eff); }
   showOver();
 }
 
-// ===== 결과 비교 뷰 / 상점 / 공유 =====
+// ===== 결과 비교 �?/ ?�점 / 공유 =====
 let ansPrev='result';
-$('ansBtn').onclick=()=>{ ansPrev=state; state='answer'; $('over').classList.add('hidden'); $('ansClose').style.display='block'; $('hint').textContent='🟢 정답(최단) · 🟠 내 경로'; };
+$('ansBtn').onclick=()=>{ ansPrev=state; state='answer'; $('over').classList.add('hidden'); $('ansClose').style.display='block'; $('hint').textContent='?�� ?�답(최단) · ?�� ??경로'; };
 $('ansClose').onclick=()=>{ state=ansPrev; $('ansClose').style.display='none'; $('hint').textContent=''; $('over').classList.remove('hidden'); };
 $('retryBtn').onclick=()=>{ $('ansClose').style.display='none'; newStage(false); };
 $('nextBtn').onclick=()=>{ $('ansClose').style.display='none'; interCount++; if(interCount%3===0) showInterstitial(); stage++; LS.set('baedal_stage',stage); newStage(true); };
 $('homeBtn').onclick=()=>{ $('ansClose').style.display='none'; $('over').classList.add('hidden'); $('bar').classList.add('hidden'); daily=false; RNG=Math.random; state='start'; renderRec(); $('start').classList.remove('hidden'); renderWallet(); };
 $('startBtn').onclick=()=>{ try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){} daily=false; RNG=Math.random; $('start').classList.add('hidden'); newStage(true); };
-$('dailyBtn').onclick=()=>{ try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){} daily=true; dailyKey=todayKey(); RNG=mulberry32(dailyKey*2654435761%4294967296); $('start').classList.add('hidden'); newStage(true); flash('📅 오늘의 도전!','#ffd34d'); };
+$('dailyBtn').onclick=()=>{ try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){} daily=true; dailyKey=todayKey(); RNG=mulberry32(dailyKey*2654435761%4294967296); $('start').classList.add('hidden'); newStage(true); flash('?�� ?�늘???�전!','#ffd34d'); };
 $('howtoBtn').onclick=()=>{ $('howto').classList.toggle('hidden'); };
 $('shopBtn').onclick=openShop; $('shopBtn2').onclick=openShop;
 $('shopCloseBtn').onclick=()=>{ $('shopUI').classList.add('hidden'); state=shopPrev; renderWallet();
@@ -445,23 +445,23 @@ function renderShop(){ const box=$('upList'); box.innerHTML=''; $('shopCoin').te
   UPGRADES.forEach(u=>{ const l=upLv(u.k), maxed=l>=u.max, c=u.cost(l), can=!maxed&&coin>=c;
     const el=document.createElement('div'); el.className='up';
     el.innerHTML='<div class="ic"><img src="assets/baedal/upgrades-'+UPGRADES.indexOf(u)+'.png" alt=""/></div><div><div class="nm">'+u.nm+'</div><div class="ds">'+u.ds+'</div>'
-      +'<div class="lvdots">'+'●'.repeat(l)+'○'.repeat(u.max-l)+' Lv'+l+'</div></div>';
-    const b=document.createElement('button'); b.className='by'; b.textContent = maxed?'MAX':('🪙'+c); b.disabled=!can;
+      +'<div class="lvdots">'+'??.repeat(l)+'??.repeat(u.max-l)+' Lv'+l+'</div></div>';
+    const b=document.createElement('button'); b.className='by'; b.textContent = maxed?'MAX':('?��'+c); b.disabled=!can;
     b.onclick=()=>{ if(coin<c||upLv(u.k)>=u.max) return; addCoin(-c); ups[u.k]=l+1; saveProgress(); renderShop();
       tone(880,0.1,'square',0.1); vib(16); flash(u.ic+' '+u.nm+' Lv'+(l+1)+'!','#7cffb0'); };
     el.appendChild(b); box.appendChild(el); }); }
 function todayKey(){ const d=new Date(); return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate(); }
-$('shareBtn').onclick=async()=>{ const bars='⭐'.repeat(lastStars)+'☆'.repeat(3-lastStars);
-  const txt='🛵 모두의 배달 — 오늘의 도전 #'+dailyKey+'\n'+bars+' 효율 '+lastEff+'%\n배달 '+pairs+'건 · '+(mistakeAt?('첫 실수 '+mistakeAt+'번째'):'완벽한 동선!')+'\n너도 해볼래? ';
+$('shareBtn').onclick=async()=>{ const bars='�?.repeat(lastStars)+'??.repeat(3-lastStars);
+  const txt='?�� 모두??배달 ???�늘???�전 #'+dailyKey+'\n'+bars+' ?�율 '+lastEff+'%\n배달 '+pairs+'�?· '+(mistakeAt?('�??�수 '+mistakeAt+'번째'):'?�벽???�선!')+'\n?�도 ?�볼?? ';
   try{ if(navigator.share){ await navigator.share({text:txt}); return; } }catch(e){}
-  try{ await navigator.clipboard.writeText(txt); flash('📋 복사했어요!','#7cffb0'); }catch(e){ flash('공유를 지원하지 않아요','#ff9a5a'); } };
+  try{ await navigator.clipboard.writeText(txt); flash('?�� 복사?�어??','#7cffb0'); }catch(e){ flash('공유�?지?�하지 ?�아??,'#ff9a5a'); } };
 $('timeAdBtn').onclick=async()=>{ const b=$('timeAdBtn'); if(b.disabled)return; b.disabled=true; const ok=await showRewarded(); b.disabled=false;
   if(ok){ adUsedThisStage=true; b.style.display='none'; $('over').classList.add('hidden'); $('bar').classList.remove('hidden'); timeLeft=20; lastTick=999; state='plan'; updateTimer(); refreshBtns();
-    flash('⏱️ +20초! 이어서 짜보세요','#7cffb0'); tone(700,0.1,'triangle',0.08); $('hint').textContent='👆 이어서 순서를 완성하고 🛵 출발!'; }
-  else flash('광고를 끝까지 봐야 시간이 추가돼요','#ffd34d'); };
+    flash('?�️ +20�? ?�어??짜보?�요','#7cffb0'); tone(700,0.1,'triangle',0.08); $('hint').textContent='?�� ?�어???�서�??�성?�고 ?�� 출발!'; }
+  else flash('광고�??�까지 봐야 ?�간??추�??�요','#ffd34d'); };
 $('dblBtn').onclick=async()=>{ const b=$('dblBtn'); if(b.disabled)return; b.disabled=true; const ok=await showRewarded(); b.disabled=false;
-  if(ok){ dblUsedThisStage=true; b.style.display='none'; addCoin(lastCoin); $('coinMsg').innerHTML='🪙 +'+(lastCoin*2)+' <span style="color:#7cffb0">(2배!)</span>'; flash('🪙 코인 2배!','#ffd34d'); chord(659); }
-  else flash('광고를 끝까지 봐야 보상을 받아요','#ffd34d'); };
+  if(ok){ dblUsedThisStage=true; b.style.display='none'; addCoin(lastCoin); $('coinMsg').innerHTML='?�� +'+(lastCoin*2)+' <span style="color:#7cffb0">(2�?)</span>'; flash('?�� 코인 2�?','#ffd34d'); chord(659); }
+  else flash('광고�??�까지 봐야 보상??받아??,'#ffd34d'); };
 $('muteBtn').onclick=()=>{ muted=!muted; LS.set('baedal_mute',muted?'1':'0'); renderMute(); if(!muted) tone(660,0.05,'square',0.08); }; renderMute();
 
 let last=performance.now();
@@ -499,7 +499,7 @@ function draw(){ ctx.clearRect(0,0,W,H);
   ctx.strokeStyle='rgba(120,170,230,.28)'; ctx.lineWidth=2; roundRect(f.x,f.y,f.w,f.h,18); ctx.stroke();
   const answer = state==='answer';
   const activeOrder = answer ? optOrder : order;
-  if(answer){   // 비교 뷰: 내 경로(주황 점선) 위에 정답(초록 실선)
+  if(answer){   // 비교 �? ??경로(주황 ?�선) ?�에 ?�답(초록 ?�선)
     drawRoute([start,...lastMyOrder.map(i=>nodes[i])],'rgba(255,150,70,.85)',4,[9,7],1);
     drawRoute([start,...optOrder.map(i=>nodes[i])],'rgba(90,230,150,.95)',4.5,[],1);
   } else {
@@ -510,18 +510,18 @@ function draw(){ ctx.clearRect(0,0,W,H);
   }
   nodes.forEach((n,i)=>{ const oi=activeOrder.indexOf(i); const done=!answer&&scoot&&oi>=0&&oi<scoot.visited;
     if(n.type==='shop') drawShop(n,oi>=0?oi+1:0,done); else drawHome(n, oi>=0?oi+1:0, done, pickedSet.has(n.pair)); });
-  // 결정적 실수 지점 표시(비교 뷰)
+  // 결정???�수 지???�시(비교 �?
   if(answer && mistakeAt>0 && lastMyOrder[mistakeAt-1]!=null){ const mn=nodes[lastMyOrder[mistakeAt-1]];
     ctx.save(); ctx.strokeStyle='#ff6a7a'; ctx.lineWidth=3; ctx.setLineDash([5,4]); ctx.beginPath(); ctx.arc(mn.x,mn.y,30,0,6.28); ctx.stroke(); ctx.restore();
-    ctx.fillStyle='#ff9aa6'; ctx.font='bold 12px system-ui'; ctx.textAlign='center'; ctx.fillText('여기서 꼬임', mn.x, mn.y+45); }
-  // 힌트 링
+    ctx.fillStyle='#ff9aa6'; ctx.font='bold 12px system-ui'; ctx.textAlign='center'; ctx.fillText('?�기??꼬임', mn.x, mn.y+45); }
+  // ?�트 �?
   if(hintNode>=0 && state==='plan'){ const hn=nodes[hintNode]; const r=26+Math.sin(hintPulse*5)*5;
     ctx.save(); ctx.strokeStyle='#ffd34d'; ctx.lineWidth=3.5; ctx.globalAlpha=.9; ctx.beginPath(); ctx.arc(hn.x,hn.y,r,0,6.28); ctx.stroke();
-    ctx.fillStyle='#ffd34d'; ctx.font='bold 13px system-ui'; ctx.textAlign='center'; ctx.fillText('💡 여기!', hn.x, hn.y-r-7); ctx.restore(); }
+    ctx.fillStyle='#ffd34d'; ctx.font='bold 13px system-ui'; ctx.textAlign='center'; ctx.fillText('?�� ?�기!', hn.x, hn.y-r-7); ctx.restore(); }
   deliveryBursts=deliveryBursts.filter(b=>performance.now()-b.t<480);for(const b of deliveryBursts){const frame=Math.min(3,Math.floor((performance.now()-b.t)/120));artDraw('sparkles',frame,b.x-30,b.y-30,60);}
   drawStart();
   if(answer){ ctx.fillStyle='#7cffb0'; ctx.font='bold 14px system-ui'; ctx.textAlign='center';
-    ctx.fillText('🟢 정답 '+Math.round(optLen)+'  ·  🟠 내 경로 '+Math.round(routeLen(lastMyOrder)), W/2, f.y+18); }
+    ctx.fillText('?�� ?�답 '+Math.round(optLen)+'  ·  ?�� ??경로 '+Math.round(routeLen(lastMyOrder)), W/2, f.y+18); }
   if(scoot){ const b=scoot.path[Math.min(scoot.seg+1,scoot.path.length-1)]; drawScooter(scoot.x,scoot.y, Math.atan2(b.y-scoot.y,b.x-scoot.x), 1.15);
     if(scoot.carried>0){ ctx.fillStyle='#ffd34d'; ctx.font='bold 12px system-ui'; ctx.textAlign='center'; ctx.fillText('×'+scoot.carried, scoot.x, scoot.y-30); } }
   for(const p of parts){ ctx.globalAlpha=Math.max(0,p.life); if(p.txt){ ctx.font='22px system-ui'; ctx.textAlign='center'; ctx.fillText(p.txt,p.x,p.y); } else { ctx.fillStyle=p.c; ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,6.28);ctx.fill(); } } ctx.globalAlpha=1;
@@ -531,8 +531,8 @@ function drawShop(n,num,done){ if(artNode(n,num,done,false))return; const c=PAIR
   ctx.fillStyle=c+'33'; ctx.beginPath(); ctx.arc(n.x,n.y,s+9,0,6.28); ctx.fill();
   ctx.fillStyle=c; roundRect(n.x-s,n.y-s*0.4,s*2,s*1.3,5); ctx.fill();
   ctx.fillStyle=cd; roundRect(n.x-s,n.y-s*0.7,s*2,7,3); ctx.fill();                 // 차양
-  ctx.fillStyle='rgba(255,255,255,.92)'; ctx.font='bold 13px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(PAIRFOOD[n.pair]||'🍔',n.x,n.y);
-  ctx.fillStyle=c; ctx.font='bold 10px system-ui'; ctx.fillText('픽업',n.x,n.y+s+8);
+  ctx.fillStyle='rgba(255,255,255,.92)'; ctx.font='bold 13px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(PAIRFOOD[n.pair]||'?��',n.x,n.y);
+  ctx.fillStyle=c; ctx.font='bold 10px system-ui'; ctx.fillText('?�업',n.x,n.y+s+8);
   if(num>0) badge(n.x+s,n.y-s,num); ctx.restore();
 }
 function drawHome(n,num,done,picked){ if(artNode(n,num,done,picked))return; const c=PAIRCOL[n.pair], cd=PAIRDARK[n.pair], s=15; ctx.save(); if(done)ctx.globalAlpha=.45;
@@ -541,14 +541,14 @@ function drawHome(n,num,done,picked){ if(artNode(n,num,done,picked))return; cons
   ctx.fillStyle=cd; ctx.beginPath(); ctx.moveTo(n.x-s-3,n.y-s*0.35); ctx.lineTo(n.x,n.y-s*1.45); ctx.lineTo(n.x+s+3,n.y-s*0.35); ctx.closePath(); ctx.fill();
   ctx.fillStyle='rgba(255,255,255,.9)'; roundRect(n.x-4,n.y+s*0.2,8,s*0.75,2); ctx.fill();
   if(!done && !picked && state==='plan'){ ctx.globalAlpha=.9; ctx.fillStyle='#0c1020'; ctx.beginPath(); ctx.arc(n.x+s-1,n.y+s*0.95,8,0,6.28); ctx.fill();
-    ctx.font='9px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('🔒',n.x+s-1,n.y+s*0.95); ctx.globalAlpha=done?.45:1; }
+    ctx.font='9px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('?��',n.x+s-1,n.y+s*0.95); ctx.globalAlpha=done?.45:1; }
   else if(!done && picked && state==='plan'){ ctx.fillStyle='#0c1020'; ctx.beginPath(); ctx.arc(n.x+s-1,n.y+s*0.95,8,0,6.28); ctx.fill();
-    ctx.font='9px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('📦',n.x+s-1,n.y+s*0.95); }
-  if(done){ ctx.globalAlpha=1; ctx.fillStyle='#fff'; ctx.font='bold 15px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('✓',n.x,n.y+s*0.5); }
+    ctx.font='9px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('?��',n.x+s-1,n.y+s*0.95); }
+  if(done){ ctx.globalAlpha=1; ctx.fillStyle='#fff'; ctx.font='bold 15px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('??,n.x,n.y+s*0.5); }
   if(num>0) badge(n.x+s,n.y-s,num); ctx.restore();
 }
 function badge(x,y,num){ ctx.globalAlpha=1; ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(x,y,10,0,6.28); ctx.fill(); ctx.strokeStyle='#20140a'; ctx.lineWidth=1.5; ctx.stroke(); ctx.fillStyle='#20140a'; ctx.font='bold 12px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(num,x,y); }
-function drawStart(){ if(scoot) return;   // 주행 중엔 출발 오토바이 숨김
+function drawStart(){ if(scoot) return;   // 주행 중엔 출발 ?�토바이 ?��?
   drawScooter(start.x, start.y-5, Math.PI/2, 1.0);
   ctx.fillStyle='rgba(255,255,255,.65)'; ctx.font='bold 11px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('출발', start.x, start.y+16); }
 function drawScooter(x,y,dir,sc){
@@ -557,7 +557,7 @@ function drawScooter(x,y,dir,sc){
   if(state==='run'){const frame=Math.floor(performance.now()/110)%4;artDraw('exhaust',frame,x-Math.cos(dir)*24-12,y-Math.sin(dir)*24-12,24);}
   artDraw('scooter',heading,x-28*(sc||1),y-31*(sc||1),56*(sc||1));return;
  }
- sc=sc||1; ctx.save(); ctx.translate(x,y); ctx.scale(sc,sc);   // 정면 뷰(앞을 바라봄) — 대칭이라 방향 무관
+ sc=sc||1; ctx.save(); ctx.translate(x,y); ctx.scale(sc,sc);   // ?�면 �??�을 바라�? ???��?��??방향 무�?
   ctx.fillStyle='rgba(0,0,0,.28)'; ctx.beginPath(); ctx.ellipse(0,24,16,4.5,0,0,6.28); ctx.fill();
   ctx.fillStyle='#16b5a3'; roundRect(-12,-26,24,21,4); ctx.fill();
   ctx.fillStyle='#0e8d7f'; roundRect(-12,-26,24,5.5,4); ctx.fill();
@@ -581,15 +581,15 @@ function drawScooter(x,y,dir,sc){
 function roundRect(x,y,w,h,r){ ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath(); }
 
 function renderRec(){ const dKey=todayKey(), dBest=+LS.get('baedal_daily_'+dKey,0)||0;
-  $('rec').innerHTML='🪙 <b>'+coin+'</b> · 🏆 최고 <b>'+bestStage+'단계</b> · 🔥 최고콤보 <b>'+bestCombo+'</b> · ⭐ '+totalStars
-    + (stage>1?('<br>▶ <b>'+stage+'단계</b>부터 이어서'):'')
-    + (dBest?('<br>📅 오늘의 도전 최고 효율 <b>'+dBest+'%</b>'):''); }
+  $('rec').innerHTML='?�� <b>'+coin+'</b> · ?�� 최고 <b>'+bestStage+'?�계</b> · ?�� 최고콤보 <b>'+bestCombo+'</b> · �?'+totalStars
+    + (stage>1?('<br>??<b>'+stage+'?�계</b>부???�어??):'')
+    + (dBest?('<br>?�� ?�늘???�전 최고 ?�율 <b>'+dBest+'%</b>'):''); }
 
 // Illustrated first-run guide; starts only after an explicit user choice.
-const guideCopy=[['음식점 먼저, 집은 다음','같은 번호의 음식점과 집이 한 쌍이에요. 음식점을 먼저 누르고 집을 눌러요.'],['짧고 깔끔한 길을 만들어요','꼬이는 길은 음식이 식기 쉬워요. 초록 경로처럼 짧게 연결해 보세요.'],['따끈하게 배달하고 성장해요','출발을 누르면 라이더가 달려요. 별과 코인을 모아 장비를 업그레이드하세요.']];
-function openGuide(after){let step=0;const overlay=document.createElement('div');overlay.id='onboard';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','배달 안내');overlay.innerHTML='<div class="card"><img id="guideImg" alt=""/><div class="step" id="guideStep"></div><h2 id="guideTitle"></h2><p id="guideDesc"></p><div class="actions"><button class="btn d sm" id="guideSkip">건너뛰기</button><button class="btn d sm" id="guideBack">이전</button><button class="btn g sm" id="guideNext">다음 →</button></div></div>';document.body.appendChild(overlay);
+const guideCopy=[['?�식??먼�?, 집�? ?�음','같�? 번호???�식?�과 집이 ???�이?�요. ?�식?�을 먼�? ?�르�?집을 ?�러??'],['짧고 깔끔??길을 만들?�요','꼬이??길�? ?�식???�기 ?�워?? 초록 경로처럼 짧게 ?�결??보세??'],['?�끈?�게 배달?�고 ?�장?�요','출발???�르�??�이?��? ?�려?? 별과 코인??모아 ?�비�??�그?�이?�하?�요.']];
+function openGuide(after){let step=0;const overlay=document.createElement('div');overlay.id='onboard';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','배달 ?�내');overlay.innerHTML='<div class="card"><img id="guideImg" alt=""/><div class="step" id="guideStep"></div><h2 id="guideTitle"></h2><p id="guideDesc"></p><div class="actions"><button class="btn d sm" id="guideSkip">건너?�기</button><button class="btn d sm" id="guideBack">?�전</button><button class="btn g sm" id="guideNext">?�음 ??/button></div></div>';document.body.appendChild(overlay);
  const close=()=>{LS.set('baedal_art_guide','1');overlay.remove();if(after)after();else $('howtoBtn').focus();};
- function paint(){$('guideImg').src='assets/baedal/onboarding-'+(step+1)+'.png';$('guideImg').alt=guideCopy[step][1];$('guideStep').textContent=(step+1)+' / 3';$('guideTitle').textContent=guideCopy[step][0];$('guideDesc').textContent=guideCopy[step][1];$('guideBack').disabled=step===0;$('guideNext').textContent=step===2?'배달 시작!':'다음 →';}
+ function paint(){$('guideImg').src='assets/baedal/onboarding-'+(step+1)+'.png';$('guideImg').alt=guideCopy[step][1];$('guideStep').textContent=(step+1)+' / 3';$('guideTitle').textContent=guideCopy[step][0];$('guideDesc').textContent=guideCopy[step][1];$('guideBack').disabled=step===0;$('guideNext').textContent=step===2?'배달 ?�작!':'?�음 ??;}
  $('guideSkip').onclick=close;$('guideBack').onclick=()=>{step=Math.max(0,step-1);paint();};$('guideNext').onclick=()=>{if(step===2)close();else{step++;paint();}};paint();$('guideNext').focus();
 }
 const startWithArt=$('startBtn').onclick;$('startBtn').onclick=()=>{if(LS.get('baedal_art_guide','0')!=='1')openGuide(startWithArt);else startWithArt();};
