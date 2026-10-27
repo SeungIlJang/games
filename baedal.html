@@ -27,7 +27,10 @@
   body.has-banner #start,body.has-banner #over,body.has-banner #shopUI{padding-bottom:calc(70px + env(safe-area-inset-bottom,0px))}
   .flash{position:fixed;left:50%;top:34%;transform:translateX(-50%);font-size:32px;font-weight:900;z-index:8;pointer-events:none;text-align:center;white-space:nowrap;animation:fl 1.1s ease-out forwards}
   @keyframes fl{0%{opacity:0;transform:translate(-50%,14px) scale(.7)}18%{opacity:1;transform:translate(-50%,-4px) scale(1.12)}100%{opacity:0;transform:translate(-50%,-60px) scale(1)}}
-  #start,#over,#shopUI{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px;background:rgba(10,16,28,.95);z-index:10;text-align:center;padding:22px;overflow-y:auto}
+  #hearts{font-size:17px;letter-spacing:3px;min-height:22px;margin-top:2px}
+  #hearts.hit{animation:hh .55s ease-out}
+  @keyframes hh{0%{transform:scale(1.6);filter:brightness(2.2)}60%{transform:scale(.92)}100%{transform:scale(1)}}
+  #start,#over,#shopUI,#runover{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px;background:rgba(10,16,28,.95);z-index:10;text-align:center;padding:22px;overflow-y:auto}
   .hidden{display:none!important}
   h1{font-size:38px;margin:0;color:#ff9a3a;text-shadow:0 0 22px rgba(255,154,58,.5)}
   .sub{color:#bcd;opacity:.92;font-size:15px;line-height:1.55}
@@ -54,6 +57,7 @@
 <div id="wallet"></div>
 <div id="top">
   <div id="stage"></div>
+  <div id="hearts"></div>
   <div id="info"></div>
   <div id="timer"></div>
 </div>
@@ -63,7 +67,7 @@
   <button class="btn y sm" id="navBtn">💡 힌트</button>
   <button class="btn g" id="goBtn" disabled>🛵 출발!</button>
 </div>
-<div id="ver">v0.7.0 · 코인·업그레이드·오늘의도전·경로분석</div>
+<div id="ver">v0.8.0 · 하트3·런 구조·코인·업그레이드·오늘의도전</div>
 
 <div id="start">
   <img class="brand-art" src="assets/baedal/icon-a-192.png" alt="빨간 스쿠터 배달 라이더"/><h1>모두의 배달</h1>
@@ -80,14 +84,16 @@
   <div id="howto" class="hidden">
     🍔 <b>음식점</b>과 🏠 <b>집</b>이 <b>색깔·번호 짝</b>으로 놓여 있어요<br>
     👆 방문할 순서대로 탭 — <b style="color:#7cf6ff">같은 색 음식점을 먼저</b> 들러 픽업!<br>
-    🚫 픽업 전 집은 <b>탭이 막혀요</b> — 실수로 죽지 않아요<br>
+    ❤️ <b>하트 3개</b> — 순서 실수·시간 초과·음식 식음마다 1개씩 잃어요<br>
+    🚫 <b>1~2단계</b>는 픽업 전 집이 아예 안 눌려요 (연습 구간)<br>
+    ⚠️ <b>3단계부터</b>는 눌리지만, 그대로 출발하면 💔 하트를 잃어요<br>
     🔴 경로가 <b style="color:#ff6a7a">빨갛게 꼬이면</b> 돌아가는 길 = 음식이 식어요<br>
     🛵 <b>출발!</b> → 관전(화면 탭 = ⏩빨리감기)<br>
     ⭐ <b>최적 경로에 가까울수록</b> 별이 많아요 (별3 = 완벽)<br>
     🪙 별·효율로 <b>코인</b>을 벌어 🏪상점에서 장비를 올리세요<br>
     💡 <b>힌트</b>는 지금 상황에서 <b>가장 좋은 다음 목적지</b>를 알려줘요
   </div>
-  <div id="changelog">🆕 <b>v0.7.0</b> · 🪙<b>코인+장비 업그레이드</b> · 📅<b>오늘의 도전</b>(전국 동일 문제) · 🔍<b>결정적 실수 분석</b> · 💡힌트 · 난이도 비례 제한시간/별기준 · 즉사 제거</div>
+  <div id="changelog">🆕 <b>v0.8.0</b> · ❤️<b>하트 3개</b>로 런 구조 도입 — 순서 실수·시간 초과·식음마다 하트 1개, 0이 되면 배달 종료(단계는 유지) · 3단계부터 픽업 전 집도 찍을 수 있고 출발 전 한 번 더 확인 · 📺광고로 하트 1개 이어하기</div>
 </div>
 
 <div id="shopUI" class="hidden">
@@ -114,6 +120,14 @@
     <button class="btn d sm" id="shareBtn" style="display:none">📤 결과 공유</button>
     <button class="btn d sm" id="homeBtn">🏠 처음</button>
   </div>
+</div>
+<div id="runover" class="hidden">
+  <div style="font-size:54px;line-height:1">💔</div>
+  <div style="font-size:30px;font-weight:900;color:#ff6a7a">배달 종료</div>
+  <div id="runStat" class="sub"></div>
+  <button class="btn y" id="runAdBtn" style="display:none">📺 광고 보고 하트 1개 받고 이어하기</button>
+  <button class="btn g" id="runNewBtn">🛵 새 배달 시작</button>
+  <button class="btn d sm" id="runHomeBtn">🏠 처음으로</button>
 </div>
 <button class="btn g" id="ansClose" style="position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:11;display:none">✕ 닫기</button>
 
@@ -199,6 +213,32 @@ function saveProgress(){ LS.set('baedal_coin',coin); LS.set('baedal_up',JSON.str
 function addCoin(n){ coin=Math.max(0,coin+n); saveProgress(); renderWallet(); }
 function renderWallet(){ $('wallet').textContent = (state==='start'||state==='shop') ? '' : ('🪙 '+coin); $('shopCoin').textContent=coin; }
 
+function saveRun(){ LS.set('baedal_hearts',hearts); LS.set('baedal_runstages',runStages);
+  LS.set('baedal_runcoins',runCoins); LS.set('baedal_bestrun',bestRun); LS.set('baedal_revive',reviveUsed?'1':'0'); }
+function renderHearts(){ const el=$('hearts'); if(!el) return;
+  el.textContent = (daily||state==='start') ? '' : '❤️'.repeat(hearts)+'🤍'.repeat(MAX_HEARTS-hearts); }
+// 하트 1개 차감. 0이 되면 true(런 종료) 반환. 오늘의 도전은 하트를 쓰지 않는다.
+function loseHeart(){ if(daily) return false;
+  hearts=Math.max(0,hearts-1); saveRun(); renderHearts();
+  const el=$('hearts'); if(el){ el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit'); }
+  flash('💔 하트 -1','#ff6a7a'); vib([30,60,30]);
+  return hearts<=0; }
+function startNewRun(){ hearts=MAX_HEARTS; runStages=0; runCoins=0; reviveUsed=false; combo=0; runEnded=false; saveRun(); renderHearts(); }
+function showRunOver(){ runEnded=false;
+  if(runStages>bestRun){ bestRun=runStages; saveRun(); }
+  $('runStat').innerHTML='이번 배달 <b style="color:#ffd34d">'+runStages+'단계</b> 연속 클리어 · 🪙 <b style="color:#ffd34d">'+runCoins+'</b> 획득'
+    +'<br><span style="font-size:13px;color:#9ab">최고 기록 '+bestRun+'단계 · 현재 '+stage+'단계는 그대로 이어집니다</span>';
+  $('runAdBtn').style.display = reviveUsed ? 'none' : 'block';
+  $('over').classList.add('hidden'); $('bar').classList.add('hidden');
+  $('runover').classList.remove('hidden');
+  tone(180,0.5,'sawtooth',0.1); vib([60,80,60]); }
+// 픽업 전에 들르는 집이 순서에 있으면 그 순번(1-based), 없으면 0
+function badHomeAt(){ const picked=new Set();
+  for(let k=0;k<order.length;k++){ const n=nodes[order[k]];
+    if(n.type==='shop') picked.add(n.pair);
+    else if(!picked.has(n.pair)) return k+1; }
+  return 0; }
+
 const HINT_COST=40;
 let hintsLeft=0, hintNode=-1, hintPulse=0;
 
@@ -208,6 +248,18 @@ let stage=+LS.get('baedal_stage',1)||1;
 let totalStars=+LS.get('baedal_stars',0)||0;
 let bestStage=+LS.get('baedal_best',1)||1;
 let combo=0, bestCombo=+LS.get('baedal_combo',0)||0;
+// ===== 하트(런) =====
+// 3단계부터는 픽업 전 집도 찍을 수 있고, 그대로 출발하면 배달 실수로 하트를 잃는다.
+// 순서 실수 / 시간 초과 / 음식 식음 각각 하트 1개. 0이 되면 런 종료.
+// 단계와 코인은 유지되고, 끊기는 것은 연속 기록과 콤보 배수다.
+const MAX_HEARTS=3, STRICT_FROM=3;   // STRICT_FROM 단계부터 탭 차단 해제
+let hearts=+LS.get('baedal_hearts',MAX_HEARTS); if(!(hearts>=0&&hearts<=MAX_HEARTS)) hearts=MAX_HEARTS;   // 0 은 아래 런 종료 가드가 처리한다
+let runStages=+LS.get('baedal_runstages',0)||0, runCoins=+LS.get('baedal_runcoins',0)||0;
+let bestRun=+LS.get('baedal_bestrun',0)||0, reviveUsed=LS.get('baedal_revive','0')==='1';
+// 하트 0 으로 저장돼 있으면 런이 이미 끝난 상태다. 새 런으로 초기화한다.
+// (이걸 안 하면 새로고침만으로 광고 없이 연속 기록을 유지한 채 이어하기가 된다)
+if(hearts<=0){ hearts=MAX_HEARTS; runStages=0; runCoins=0; reviveUsed=false; }
+let runEnded=false, confirmedBad=false;
 let daily=false, dailyKey=0, dailyDone=false;
 let pairs=2, nodes=[], order=[], pickedSet=new Set(), start=null, optLen=0, optOrder=[], crossPairs=new Set();
 let greedyRatio=1, mistakeAt=0, lastMyOrder=[], lastStars=0, lastEff=0;
@@ -298,6 +350,7 @@ function updateCross(){ crossPairs=new Set(); const pts=[start,...order.map(i=>n
 
 function newStage(regen){ if(regen) genStage(); order=[]; pickedSet=new Set(); crossPairs=new Set(); scoot=null; parts=[]; runSpeed=1; state='plan';
   adUsedThisStage=false; dblUsedThisStage=false; mistakeAt=0; hintNode=-1; hintsLeft=upLv('sen');
+  runEnded=false; confirmedBad=false; $('runover').classList.add('hidden'); renderHearts();
   $('timeAdBtn').style.display='none'; $('dblBtn').style.display='none'; $('ansClose').style.display='none';
   if(!daily && stage>bestStage){ bestStage=stage; LS.set('baedal_best',bestStage); }
   stageTime=planTimeFor(pairs); timeLeft=stageTime; lastTick=999; updateTimer();
@@ -312,7 +365,7 @@ function updateHUD(){
   if(order.length){ const L=routeLen(order); const eff=optLen/L;
     $('info').textContent='효율 '+Math.round(clamp(eff,0,1)*100)+'% · 별3 '+Math.round(100/thresholds()[0])+'%↑'+(crossPairs.size?' ⚠️꼬임':'')+comboTxt; }
   else $('info').textContent='⭐ 누적 '+totalStars+' · 별3 기준 효율 '+Math.round(100/thresholds()[0])+'%↑'+comboTxt;
-  renderWallet(); }
+  renderWallet(); renderHearts(); }
 function refreshBtns(){ const plan=state==='plan';
   $('goBtn').disabled = !(plan && order.length===nodes.length);
   $('navBtn').disabled = !plan || order.length===nodes.length;
@@ -333,17 +386,26 @@ addEventListener('pointerdown',e=>{
     return;
   }
   const nd=nodes[hit];
-  if(nd.type==='home' && !pickedSet.has(nd.pair)){   // 즉사 대신 "탭 차단" — 실수로 판을 날리지 않게
+  const badHome = nd.type==='home' && !pickedSet.has(nd.pair);
+  if(badHome && !daily && stage<STRICT_FROM){   // 1~2단계는 규칙을 익히는 구간 — 아예 못 찍게 막는다
     $('hint').textContent='🚫 '+PAIRFOOD[nd.pair]+' 같은 색 음식점을 먼저 들러야 해요!';
     tone(220,0.12,'sawtooth',0.07); vib([18,40,18]); shake=Math.max(shake,7); return; }
   order.push(hit); if(nd.type==='shop') pickedSet.add(nd.pair);
-  if(hintNode===hit) hintNode=-1;
-  updateCross(); tone(nd.type==='shop'?520:760,0.05,'square',0.08); vib(10); updateHUD(); refreshBtns();
-  if(order.length===nodes.length) $('hint').textContent='🛵 출발!을 눌러 배달 시작';
+  if(hintNode===hit) hintNode=-1; confirmedBad=false;
+  updateCross(); tone(badHome?300:(nd.type==='shop'?520:760),badHome?0.1:0.05,badHome?'sawtooth':'square',0.08);
+  vib(badHome?20:10); updateHUD(); refreshBtns();
+  if(badHome) $('hint').textContent='⚠️ 픽업 안 한 집! 이대로 출발하면 💔 하트를 잃어요';
+  else if(order.length===nodes.length) $('hint').textContent='🛵 출발!을 눌러 배달 시작';
   else $('hint').textContent = nd.type==='shop' ? ('📦 '+PAIRFOOD[nd.pair]+' 픽업! 다음 목적지는?') : '✅ 배달 완료! 다음 목적지는?';
 });
-$('resetBtn').onclick=()=>{ if(state!=='plan')return; order=[]; pickedSet=new Set(); crossPairs=new Set(); hintNode=-1; tone(320,0.06,'sine',0.07); updateHUD(); refreshBtns(); $('hint').textContent='👆 같은 색 음식점→집 순서로 탭 (음식점 먼저!)'; };
-$('goBtn').onclick=()=>{ if(state==='plan'&&order.length===nodes.length) startRun(); };
+$('resetBtn').onclick=()=>{ if(state!=='plan')return; order=[]; pickedSet=new Set(); crossPairs=new Set(); hintNode=-1; confirmedBad=false; tone(320,0.06,'sine',0.07); updateHUD(); refreshBtns(); $('hint').textContent='👆 같은 색 음식점→집 순서로 탭 (음식점 먼저!)'; };
+$('goBtn').onclick=()=>{ if(!(state==='plan'&&order.length===nodes.length)) return;
+  const bad=badHomeAt();
+  if(bad && !confirmedBad){ confirmedBad=true;
+    $('goBtn').textContent='⚠️ 그대로 출발';
+    $('hint').textContent='⚠️ '+bad+'번째가 아직 픽업 안 한 집이에요. 한 번 더 누르면 💔 하트를 잃습니다';
+    tone(260,0.14,'sawtooth',0.08); vib([25,50,25]); shake=Math.max(shake,8); return; }
+  startRun(); };
 $('navBtn').onclick=()=>{ if(state!=='plan'||order.length===nodes.length) return;
   if(hintsLeft<=0){ if(coin<HINT_COST){ flash('🪙 코인이 부족해요','#ff9a5a'); tone(200,0.14,'sine',0.08); return; } addCoin(-HINT_COST); }
   else hintsLeft--;
@@ -364,15 +426,17 @@ function confetti(x,y,n){ const cols=['#ffd34d','#7cffb0','#5ab0ff','#ff8a5a','#
 function freshOf(carryDist){ return clamp(1 - carryDist/(optLen*0.85), 0, 1); }
 
 // 650ms 뒤 결과창 — 그 사이 상태가 바뀌었으면(비교뷰·광고보상 등) 띄우지 않는다
-function showOver(){ const stamp=state==='fail'?2:(lastStars===3?0:1);$('resultArt').src='assets/baedal/stamps-'+stamp+'.png';$('resultArt').alt=['완벽 배달 별 세 개','따끈한 배달 별 두 개','차갑게 식은 배달'][stamp]; const s=state; setTimeout(()=>{ if(state!==s) return; $('over').classList.remove('hidden'); $('bar').classList.add('hidden'); },650); }
-function failTime(){ state='fail'; combo=0; $('shareBtn').style.display='none'; $('dblBtn').style.display='none'; flash('⏰ 시간 초과!','#ff5a6e'); tone(150,0.4,'sawtooth',0.1); vib([40,60,40]); shake=16; $('timer').classList.remove('warn');
+function showOver(){ const stamp=state==='fail'?2:(lastStars===3?0:1);$('resultArt').src='assets/baedal/stamps-'+stamp+'.png';$('resultArt').alt=['완벽 배달 별 세 개','따끈한 배달 별 두 개','차갑게 식은 배달'][stamp]; const s=state; setTimeout(()=>{ if(state!==s) return;
+    if(runEnded){ showRunOver(); return; }
+    $('over').classList.remove('hidden'); $('bar').classList.add('hidden'); },650); }
+function failTime(){ state='fail'; combo=0; runEnded=loseHeart(); $('shareBtn').style.display='none'; $('dblBtn').style.display='none'; flash('⏰ 시간 초과!','#ff5a6e'); tone(150,0.4,'sawtooth',0.1); vib([40,60,40]); shake=16; $('timer').classList.remove('warn');
   $('overTitle').textContent='⏰ 시간 초과!'; $('overTitle').style.color='#ff6a7a'; $('stars').textContent='⌛';
   $('overMsg').innerHTML='제한 시간 <b>'+stageTime+'초</b> 안에 출발하지 못했어요!<br><span style="color:#ff9a5a">🧭 내비게이션을 올리면 시간이 늘어나요</span>';
   $('coinMsg').textContent='';
   $('retryBtn').style.display='block'; $('retryBtn').textContent='↺ 다시 도전'; $('nextBtn').style.display='none';
   $('timeAdBtn').style.display = adUsedThisStage ? 'none' : 'block'; $('timeAdBtn').textContent='📺 광고 보고 +20초';
   showOver(); }
-function failRun(node){ state='fail'; combo=0; $('timeAdBtn').style.display='none'; $('shareBtn').style.display='none'; $('dblBtn').style.display='none'; const col=PAIRCOL[node.pair], nx=node.x, ny=node.y; scoot=null;
+function failRun(node){ state='fail'; combo=0; runEnded=loseHeart(); $('timeAdBtn').style.display='none'; $('shareBtn').style.display='none'; $('dblBtn').style.display='none'; const col=PAIRCOL[node.pair], nx=node.x, ny=node.y; scoot=null;
   flash('❌ 배달 실수!','#ff5a6e'); tone(150,0.4,'sawtooth',0.1); vib([40,60,40]); shake=18;
   for(let i=0;i<16;i++){const a=Math.random()*6.28,s=rnd(2,7);parts.push({x:nx,y:ny,vx:Math.cos(a)*s,vy:Math.sin(a)*s-2,life:1.1,c:'#ff5a6e',r:2+Math.random()*3});}
   flashSmall('❌',nx,ny-24);
@@ -401,6 +465,7 @@ function finishRun(myLen){ $('timeAdBtn').style.display='none'; $('bar').classLi
     else combo=0;
     totalStars+=stars+bonus; LS.set('baedal_stars',totalStars);
     lastCoin=coinFor(stars,ratio); addCoin(lastCoin);
+    if(!daily){ runStages++; runCoins+=lastCoin; saveRun(); }
     $('stars').textContent='⭐'.repeat(stars)+'☆'.repeat(3-stars);
     $('nextBtn').style.display = daily?'none':'block'; $('retryBtn').textContent='🔥 별3 도전';
     $('dblBtn').style.display = dblUsedThisStage?'none':'block';
@@ -413,7 +478,7 @@ function finishRun(myLen){ $('timeAdBtn').style.display='none'; $('bar').classLi
       + (stars<3 ? ('<br><span style="color:#ff9a5a">😖 '+Math.max(1,nearGap)+'만 더 짧으면 별 3개!</span>') : '<br><span style="color:#7cffb0">최적에 가까운 완벽한 동선!</span>')
       + (mistakeAt ? ('<br><span style="color:#9fd0ff">🔍 <b>'+mistakeAt+'번째 선택</b>부터 최적에서 벗어났어요</span>') : '');
     $('coinMsg').innerHTML='🪙 +'+lastCoin+(bonus?' <span style="color:#7cffb0">(콤보 +1⭐)</span>':'');
-  } else { combo=0; lastCoin=0;
+  } else { combo=0; lastCoin=0; runEnded=loseHeart();
     $('overTitle').textContent='🥶 음식이 식었어요!'; $('overTitle').style.color='#9fd0ff'; $('stars').textContent='🥶';
     flash('🥶 배달 실패','#9fd0ff'); tone(200,0.32,'sine',0.09); vib(120); shake=10;
     $('retryBtn').style.display='block'; $('retryBtn').textContent='↺ 다시 도전'; $('nextBtn').style.display='none'; $('dblBtn').style.display='none';
@@ -464,6 +529,14 @@ $('timeAdBtn').onclick=async()=>{ const b=$('timeAdBtn'); if(b.disabled)return; 
 $('dblBtn').onclick=async()=>{ const b=$('dblBtn'); if(b.disabled)return; b.disabled=true; const ok=await showRewarded(); b.disabled=false;
   if(ok){ dblUsedThisStage=true; b.style.display='none'; addCoin(lastCoin); $('coinMsg').innerHTML='🪙 +'+(lastCoin*2)+' <span style="color:#7cffb0">(2배!)</span>'; flash('🪙 코인 2배!','#ffd34d'); chord(659); }
   else flash('광고를 끝까지 봐야 보상을 받아요','#ffd34d'); };
+$('runNewBtn').onclick=()=>{ $('runover').classList.add('hidden'); startNewRun(); newStage(true); };
+$('runHomeBtn').onclick=()=>{ $('runover').classList.add('hidden'); startNewRun(); daily=false; RNG=Math.random;
+  state='start'; renderRec(); $('start').classList.remove('hidden'); $('bar').classList.add('hidden'); renderWallet(); renderHearts(); };
+$('runAdBtn').onclick=async()=>{ const b=$('runAdBtn'); if(b.disabled)return; b.disabled=true; const ok=await showRewarded(); b.disabled=false;
+  if(ok){ reviveUsed=true; hearts=1; saveRun(); renderHearts(); b.style.display='none';
+    $('runover').classList.add('hidden'); newStage(false);
+    flash('❤️ 하트 1개 획득!','#7cffb0'); chord(523); }
+  else flash('광고를 끝까지 봐야 하트를 받아요','#ffd34d'); };
 $('muteBtn').onclick=()=>{ muted=!muted; LS.set('baedal_mute',muted?'1':'0'); renderMute(); if(!muted) tone(660,0.05,'square',0.08); }; renderMute();
 
 let last=performance.now();
