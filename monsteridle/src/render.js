@@ -7,7 +7,7 @@ import { B, heroAt, zoneAt, sceneEvery, heroPool } from './balance.js';
 import { S } from './state.js';
 import { R, enrage } from './combat.js';
 import { pick, preload, boxOf, frameCount } from './sprites.js';
-import { activeCompanions, compImage } from './companions.js';
+import { activeCompanions, compImage, monTier } from './companions.js';
 import { L0, ratio, fmt } from './logmath.js';
 
 const WAVES = B.stage.waves;
@@ -79,6 +79,27 @@ function pine(x, baseY, h, dark) {
 // assets/bg/<zone>.png 가 있으면 그걸 쓴다. 없으면 아래 캔버스 그림이 그대로 나온다.
 // 404 는 한 번만 확인하고 기억해서, 없는 파일을 매 프레임 다시 요청하지 않는다.
 const BG = new Map();
+
+// 패럴랙스 층 — assets/bg/layers/<zone>_{1_sky,2_mid,3_ground}.png.
+// 셋이 **다 준비됐을 때만** 쓴다. 한 장이라도 없으면 통짜 배경으로 폴백한다
+// (아트가 한 지역씩 들어와도 게임이 안 깨지게).
+const LAYER_SPEED = [0.15, 0.45, 1.00];
+const LAYER_NAME = ['1_sky', '2_mid', '3_ground'];
+const LAYERS = new Map();
+function bgLayers(key) {
+  if (!LAYERS.has(key)) {
+    LAYERS.set(key, LAYER_NAME.map(n => {
+      const im = new Image();
+      im.src = new URL(`../assets/bg/layers/${key}_${n}.png`, import.meta.url).href;
+      im.onerror = () => { im.failed = true; };
+      return im;
+    }));
+  }
+  const set = LAYERS.get(key);
+  if (set.some(im => im.failed)) return null;
+  return set.every(im => im.complete && im.naturalWidth > 0) ? set : null;
+}
+
 function bgImage(key) {
   if (!BG.has(key)) {
     const im = new Image();
@@ -97,10 +118,68 @@ function drawCover(img) {
   ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
 }
 
-function drawBG() {
+// ── 배경 스크롤 — "앞으로 나아가는" 느낌의 전부 ─────────────
+// 레퍼런스(Legend of Slime)는 배경을 통짜로 그리지 않는다. 벽·바닥·소품 조각
+// (bg_ch1_in_wall_01/02/03, in_ground_gray/wood, bookshelf, candlestick…)을
+// 이어 붙여 **흘려보낸다.** 캐릭터가 움직여서가 아니라 세상이 흘러서 전진으로 읽힌다.
+//
+// 우리 배경은 1080×600 통짜라 가로로 이을 수 없다. 대신 **거울 타일링**을 쓴다 —
+// 원본과 좌우반전본을 번갈아 깔면 맞닿는 가장자리가 같은 픽셀이라 이음매가 없다.
+// 어떤 그림에도 통하고, 새 아트가 필요 없다.
+let bgX = 0;        // 누적 이동 거리(px)
+let bgRush = 0;     // 전진 가속 잔여 시간(초)
+const BG_WALK = 10; // 평소 걷는 속도(px/초) — 있는 줄도 모를 만큼 느려야 어지럽지 않다
+const BG_RUSH = 190; // 웨이브·스테이지를 깼을 때의 가속
+
+/** 전진 연출. 진척이 생긴 순간에만 부른다(웨이브/스테이지 클리어). */
+export function bgAdvance(sec = 0.55) { bgRush = Math.max(bgRush, sec); }
+
+/**
+ * 층 하나를 offset 만큼 밀어서 깐다.
+ * **offset 은 받기만 한다** — 누적은 drawBG 에서 프레임당 한 번만 한다.
+ * 층마다 누적하면 이동 속도가 층 수만큼 곱해진다(아트 담당이 짚어 준 함정).
+ */
+function drawScroll(img, offset) {
+  const ar = img.naturalWidth / img.naturalHeight;
+  let dw = W, dh = W / ar;
+  if (dh < H) { dh = H; dw = H * ar; }
+  const y = (H - dh) / 2;
+
+  // 주기는 원본+반전 = 2칸. 그 안에서만 돌면 offset 이 아무리 커져도 정밀도가 상하지 않는다
+  const period = dw * 2;
+  let bgX = ((offset % period) + period) % period;
+  // **보이는 칸만** 그린다. 화면 밖까지 그리면 배경 한 장이 매 프레임 6번 깔려
+  // 폰에서 채우기 비용이 그대로 늘어난다(여긴 전체 화면 크기다).
+  let i = Math.floor(bgX / dw);          // 지금 왼쪽 끝에 걸친 칸
+  for (let x = i * dw - bgX; x < W; x += dw, i++) {
+    if (i % 2) {                          // 홀수 칸은 좌우반전 — 맞닿는 가장자리가 같은 픽셀이라 이음매가 없다
+      ctx.save();
+      ctx.translate(x + dw, y);
+      ctx.scale(-1, 1);
+      ctx.drawImage(img, 0, 0, dw, dh);
+      ctx.restore();
+    } else {
+      ctx.drawImage(img, x, y, dw, dh);
+    }
+  }
+}
+
+function drawBG(dt) {
   const gy = H * GROUND;
-  const img = bgImage(zoneAt(R.stage).key);
-  if (img) { drawCover(img); return; }
+  const key = zoneAt(R.stage).key;
+
+  // 누적은 **여기서 한 번만.** 아래 층들은 이 값에 배속만 곱해 쓴다.
+  if (bgRush > 0) bgRush -= dt;
+  bgX += (BG_WALK + (bgRush > 0 ? BG_RUSH : 0)) * dt;
+
+  const set = bgLayers(key);
+  if (set) {                       // 먼 하늘은 거의 안 움직이고 발밑 땅은 제 속도로 흐른다
+    for (let i = 0; i < set.length; i++) drawScroll(set[i], bgX * LAYER_SPEED[i]);
+    ambTick(dt, key);
+    return;
+  }
+  const img = bgImage(key);        // 층이 아직 없는 지역 — 통짜 배경을 단층으로 흘린다
+  if (img) { drawScroll(img, bgX); ambTick(dt, key); return; }
 
   // 하늘 — 밝은 낮
   const sky = ctx.createLinearGradient(0, 0, 0, gy);
@@ -201,6 +280,137 @@ function bar(x, y, w, h, frac, color) {
   ctx.fillRect(x, y, w * Math.max(0, Math.min(1, frac)), h);
 }
 
+// ── 레벨에 따른 외형 변화 ──
+// 레벨 1마다 바꾸면 변화가 안 읽히므로 **마일스톤 티어**(10·25·50·75·100)를 단위로 쓴다.
+// 그 지점은 이미 공격력 보너스를 주는 자리라, 보이는 변화와 보상이 같이 온다.
+// 진짜 진화 그림이 오기 전까지의 몫이다 — 그림 없이 캔버스로만 티를 낸다.
+const TIER_COL = [null, '#c98a5a', '#dfe6f2', '#ffd34d', '#b59bff', '#ff7ad5'];
+const tierScale = tier => 1 + tier * 0.03;        // 티어마다 3% 씩 커진다
+
+/** 발밑 고리 + 반짝임 + 배지. size 는 그 유닛의 그린 높이. */
+function drawTier(cx, cy, size, tier) {
+  if (!tier) return;
+  const col = TIER_COL[Math.min(tier, TIER_COL.length - 1)];
+  ctx.save();
+  // 발밑 고리 — 티어가 오를수록 진해진다
+  ctx.globalAlpha = 0.25 + tier * 0.1;
+  ctx.strokeStyle = col;
+  ctx.lineWidth = 1.5 + tier * 0.4;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, size * 0.42, size * 0.15, 0, 0, 7);
+  ctx.stroke();
+  // 티어 3 부터 주위에 반짝임이 돈다
+  if (tier >= 3) {
+    ctx.globalAlpha = 0.8;
+    ctx.fillStyle = col;
+    for (let i = 0; i < tier; i++) {
+      const a = t * 1.6 + i * (6.28 / tier);
+      ctx.beginPath();
+      ctx.arc(cx + Math.cos(a) * size * 0.45, cy - size * 0.5 + Math.sin(a) * size * 0.2, 1.6, 0, 7);
+      ctx.fill();
+    }
+  }
+  // 최고 티어는 머리 위에 표식
+  if (tier >= TIER_COL.length - 1) {
+    ctx.globalAlpha = 1;
+    ctx.font = Math.round(size * 0.3) + 'px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('✦', cx, cy - size * 1.02);
+  }
+  ctx.restore();
+}
+
+// ── 환경 입자 ── 배경이 흐르기만 하고 그 안엔 아무것도 안 움직이고 있었다.
+// 레퍼런스는 fx_dust·fx_autumn_leaf·fx_cloud 같은 걸 상시 띄운다. 지역마다 색과
+// 종류만 바꿔(balance.json 의 zones.list[].amb) 같은 코드로 돌린다.
+const AMB_N = 18;
+let ambZone = '', amb = [];
+function ambTick(dt, zone) {
+  if (ambZone !== zone) {                 // 지역이 바뀌면 통째로 새로 뿌린다
+    ambZone = zone;
+    amb = Array.from({ length: AMB_N }, () => ({
+      x: Math.random(), y: Math.random(), r: 0.5 + Math.random() * 1.6,
+      vx: -0.004 - Math.random() * 0.012, vy: (Math.random() - 0.5) * 0.006,
+      ph: Math.random() * 6.28, sp: 0.6 + Math.random() * 1.6,
+    }));
+  }
+  const cfg = (B.zones.list.find(z => z.key === zone) || {}).amb;
+  if (!cfg) return;
+  const kind = cfg.kind;
+  ctx.save();
+  ctx.fillStyle = cfg.color;
+  for (const p of amb) {
+    // 눈·재는 떨어지고 나머지는 옆으로 흐른다
+    const fall = kind === 'snow' || kind === 'leaf' ? 0.016 : kind === 'ember' ? -0.022 : 0;
+    p.x += p.vx * dt * 60 * 0.016;
+    p.y += (p.vy + fall) * dt * 60 * 0.016;
+    p.ph += dt * p.sp;
+    if (p.x < -0.05) { p.x = 1.05; p.y = Math.random(); }
+    if (p.y < -0.05) p.y = 1.05;
+    if (p.y > 1.05) p.y = -0.05;
+    const px = (p.x + Math.sin(p.ph) * 0.012) * W;
+    const py = p.y * H * GROUND * 1.25;           // 지면 아래로는 안 내려간다
+    ctx.globalAlpha = (kind === 'ember' ? 0.75 : 0.42) * (0.6 + 0.4 * Math.sin(p.ph * 1.3));
+    if (kind === 'leaf') {                         // 잎 — 길쭉하게 회전
+      ctx.save(); ctx.translate(px, py); ctx.rotate(p.ph);
+      ctx.fillRect(-p.r * 2, -p.r * 0.7, p.r * 4, p.r * 1.4);
+      ctx.restore();
+    } else {
+      ctx.beginPath(); ctx.arc(px, py, p.r, 0, 7); ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+// 적 인덱스 → 화면 좌표. 매 프레임 적을 그리며 채우고, 투사체·파편이 그대로 쓴다.
+// 숫자 연출은 예전처럼 인덱스 근사 위치를 쓰지만 투사체는 실제로 맞아야 해서 좌표가 필요하다.
+const foePos = [];
+
+/** 투사체 한 발. 모양은 리드 몬스터의 bolt.shape, 색은 bolt.color (balance.json). */
+function drawBolt(x, y, u, b, size) {
+  const mon = B.roster.monsters.find(m => m.key === S.mon);
+  const col = mon?.bolt?.color || '#9ae6b4';
+  const shape = mon?.bolt?.shape || 'orb';
+  const r = size * (b.crit ? 0.11 : 0.085);
+  // 꼬리 — 지나온 쪽으로 옅게 늘어뜨린다. 점 하나만 날면 너무 빈약하다.
+  ctx.save();
+  ctx.globalAlpha = 0.3;
+  ctx.strokeStyle = col;
+  ctx.lineWidth = r * 1.1;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x - r * 2.6, y + r * 0.5);
+  ctx.lineTo(x, y);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
+  ctx.fillStyle = col;
+  ctx.shadowColor = col;
+  ctx.shadowBlur = b.crit ? 12 : 6;
+  if (shape === 'wedge') {                 // 쐐기 — 날아가는 방향으로 뾰족하게
+    ctx.translate(x, y);
+    ctx.beginPath();
+    ctx.moveTo(r * 1.5, 0); ctx.lineTo(-r, -r * 0.8); ctx.lineTo(-r * 0.4, 0); ctx.lineTo(-r, r * 0.8);
+    ctx.closePath(); ctx.fill();
+  } else if (shape === 'shard') {          // 조각 — 회전하는 마름모
+    ctx.translate(x, y);
+    ctx.rotate(b.ph + u * 9);
+    ctx.beginPath();
+    ctx.moveTo(0, -r * 1.3); ctx.lineTo(r * 0.8, 0); ctx.lineTo(0, r * 1.3); ctx.lineTo(-r * 0.8, 0);
+    ctx.closePath(); ctx.fill();
+  } else if (shape === 'coin') {           // 금화 — 납작하게 돌아간다
+    ctx.translate(x, y);
+    ctx.scale(Math.abs(Math.cos(b.ph + u * 11)) * 0.8 + 0.2, 1);
+    ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#b07d10'; ctx.lineWidth = 1.5; ctx.stroke();
+  } else {                                  // orb
+    ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+    ctx.globalAlpha = 0.5; ctx.beginPath(); ctx.arc(x, y, r * 1.5, 0, 7); ctx.fill();
+  }
+  ctx.restore();
+}
+
 export function render(dt) {
   if (!ctx || !W || !H) return;
   t += dt;
@@ -211,7 +421,7 @@ export function render(dt) {
     const s = R.shake * 14;
     ctx.translate((Math.random() - 0.5) * s, (Math.random() - 0.5) * s);
   }
-  drawBG();
+  drawBG(dt);
 
   const feet = laneY(0.45);          // 리드가 서는 깊이
   const base = Math.min(W, H);
@@ -238,9 +448,10 @@ export function render(dt) {
   const drawComp = c => {
     const e = (elapsed - c.delay) / ATK_DUR;
     const lunge = e > 0 && e < 1 ? Math.sin(e * Math.PI) : 0;
-    const h = base * 0.125 * c.s * laneS(c.d);
+    const h = base * 0.125 * c.s * laneS(c.d) * tierScale(c.tier || 0);
     const cx = W * (0.30 + c.dx);
     const cy = laneY(c.d) + Math.sin(t * 3 + c.phase) * h * 0.025;
+    drawTier(cx, cy, h, c.tier || 0);
     // 고리는 리드에게만 준다 — 여섯 개가 겹치면 바닥이 고리밭이 되고
     // 정작 "누가 주인공인지" 가 흐려진다.
     const opt = { dx: lunge * W * 0.03, sx: 1 + lunge * 0.08, sy: 1 - lunge * 0.06, alpha: 0.92 };
@@ -262,7 +473,11 @@ export function render(dt) {
   // 포즈 그림이 이미 런지를 그리고 있으면 변형을 약하게 준다 — 둘 다 세게 주면 과장된다
   const k = hasPose && pose !== 'idle' ? 0.35 : 1;
   const bob = Math.sin(t * 3) * pH * 0.02;
-  drawSprite(pImg, W * 0.30, feet + bob, pH, boxOf('mon', S.mon), {
+  // 리드도 레벨(마일스톤 티어)에 따라 커지고 표식이 붙는다
+  const leadTier = monTier(S.mon);
+  const pHt = pH * tierScale(leadTier);
+  drawTier(W * 0.30, feet, pHt, leadTier);
+  drawSprite(pImg, W * 0.30, feet + bob, pHt, boxOf('mon', S.mon), {
     dx: lungePhase * W * 0.05 * k,
     sx: 1 + lungePhase * 0.1 * k,
     sy: 1 - lungePhase * 0.08 * k,
@@ -292,33 +507,67 @@ export function render(dt) {
   // 한 기마다 용사가 다르다(combat.spawnWave 가 e.hero 를 심는다). 구세이브로 들어오면
   // e.hero 가 없으므로 예전처럼 구역 용사로 폴백한다.
   const lead = heroAt(R.stage);
-  const alive = R.enemies.filter(e => e.Lhp > L0);
-  const n = alive.length;
-  // 격자로 세우면 "줄" 이 보인다. 깊이를 지그재그로 주고 가로도 조금씩 어긋나게 둔다.
-  // 뒤 레인은 작고 위에, 앞 레인은 크고 아래에 — 그래야 한 바닥면 위에 흩어진 것으로 보인다.
-  const drawn = alive.map((e, i) => {
-    // 보스는 한 기뿐이다 — 흩을 이유가 없고 가운데 크게 서야 한다
-    if (R.boss) return { e, i, d: 0.5, x: W * 0.66 };
-    const d = FOE_LANES[i % FOE_LANES.length];
-    return { e, i, d, x: W * (0.56 + (i % 3) * 0.13 + (d - 0.5) * 0.06) };
-  }).sort((a, b) => a.d - b.d);           // 뒤에 있는 것부터 그린다
+  // 쓰러지는 중인 적도 그린다 — dead 포즈가 끝나야 사라진다.
+  // 레인은 **R.enemies 안의 제자리 번호**로 고른다. 살아있는 것만 세서 고르면
+  // 하나가 죽을 때마다 남은 적들이 레인을 갈아타며 툭 튄다.
+  const shown = [];
+  R.enemies.forEach((e, idx) => {
+    if (!(e.Lhp > L0 || e.deadT > 0)) return;
+    const d = R.boss ? 0.5 : FOE_LANES[idx % FOE_LANES.length];
+    const x = R.boss ? W * 0.66 : W * (0.56 + (idx % 3) * 0.13 + (d - 0.5) * 0.06);
+    shown.push({ e, idx, d, x });
+  });
+  shown.sort((a, b) => a.d - b.d);        // 뒤에 있는 것부터 그린다
 
-  for (const { e, i, d, x: ex } of drawn) {
+  // 보스 발밑 오라 — 상시 맥동한다. 보스가 "큰 적" 이 아니라 "보스" 로 읽히게 한다.
+  if (R.boss && shown.length) {
+    const d0 = shown[0].d, bx = shown[0].x, by = laneY(d0);
+    const pulse = 0.72 + 0.28 * Math.sin(t * 4.2);
+    const rw = eH * 0.72 * pulse, rh = rw * 0.3;
+    ctx.save();
+    const g = ctx.createRadialGradient(bx, by, 0, bx, by, rw);
+    const hot = enrage() > 1;                       // 광폭화하면 붉게 달아오른다
+    g.addColorStop(0, hot ? 'rgba(255,90,60,.55)' : 'rgba(255,190,80,.45)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.ellipse(bx, by, rw, rh, 0, 0, 7); ctx.fill();
+    ctx.restore();
+  }
+
+  for (const { e, idx, d, x: ex } of shown) {
     const ey = laneY(d);
     const h = eH * laneS(d);
     const eb = Math.sin(t * 2.4 + e.ph) * h * 0.015;
     const hit = e.hitT > 0 ? e.hitT / 0.12 : 0;
+    const dying = e.deadT > 0 ? e.deadT / (B.combatFx?.deathSec || 0.32) : 0;
+    foePos[idx] = { x: ex, y: ey - h * 0.55 };   // 투사체·파편이 겨눌 몸통 가운데
     // flip 을 쓰지 않는다 — 용사 그림이 이미 왼쪽(우리 쪽)을 보게 그려져 있다.
     // 뒤집으면 무기와 장식이 반대로 가고 기사의 방패가 바깥쪽으로 돌아간다.
-    const fPose = hit > 0 ? 'hit' : R.foeAtkT > 0 ? 'attack' : 'idle';
+    const fPose = dying > 0 ? 'dead' : hit > 0 ? 'hit' : R.foeAtkT > 0 ? 'attack' : 'idle';
     const hero = e.hero || lead;
-    drawSprite(pick('hero', hero.key, fPose, frame + i), ex, ey + eb, h, boxOf('hero', hero.key), {
-      dx: hit * 7,
+    if (dying > 0) ctx.globalAlpha = Math.max(0, dying);   // 쓰러지며 옅어진다
+    drawSprite(pick('hero', hero.key, fPose, frame + idx), ex, ey + eb, h, boxOf('hero', hero.key), {
+      dx: hit * 7 + (1 - dying) * (dying > 0 ? 14 : 0),    // 맞은 쪽으로 밀리며 쓰러진다
       sx: 1 + hit * 0.06,
-      ring: FOE,
+      ring: dying > 0 ? null : FOE,
     });
+    ctx.globalAlpha = 1;
+    if (dying > 0) continue;              // 쓰러지는 적은 체력바를 지운다
     const bw = h * 0.62;
     bar(ex - bw / 2, ey - h - 7, bw, 4, ratio(e.Lhp, e.Lmax), '#ff5a6e');
+  }
+
+  // ── 투사체 ── 리드에서 적까지 날아가고 꼬리를 남긴다.
+  // 피해는 이미 끝나 있고 이건 눈에 보이는 몫만 담당한다(combat.js 참조).
+  const boltFrom = { x: W * 0.30, y: feet - pH * 0.55 };
+  for (const b of R.bolts) {
+    const to = foePos[b.idx];
+    if (!to || b.t > b.dur) continue;
+    const u = Math.min(1, b.t / b.dur);
+    const bx = boltFrom.x + (to.x - boltFrom.x) * u;
+    // 살짝 포물선을 그려야 '날아간다' 로 읽힌다
+    const by = boltFrom.y + (to.y - boltFrom.y) * u - Math.sin(u * Math.PI) * pH * 0.30;
+    drawBolt(bx, by, u, b, pH);
   }
 
   ctx.textAlign = 'center';
@@ -337,11 +586,77 @@ export function render(dt) {
 
 
   // 스킬 섬광 — 전장을 한 번 밝힌다. 숫자만으로는 "터졌다" 가 안 읽힌다.
+  // ── 스킬 연출 ── 6종이 전부 같은 보라 섬광이면 무엇이 터졌는지 안 읽힌다.
+  // 모양·색은 balance.json 의 skills.fx 가 정한다(연출 전용, 피해와 무관).
   if (R.skillFxT > 0) {
-    ctx.globalAlpha = Math.min(0.35, R.skillFxT);
-    ctx.fillStyle = '#b59bff';
-    ctx.fillRect(0, 0, W, H);
-    ctx.globalAlpha = 1;
+    const def = (B.skills.fx || {})[R.skillFx] || ['#b59bff', 'flash'];
+    const [col, kind] = def;
+    const u = 1 - R.skillFxT / 0.35;             // 0 → 1
+    const a = Math.min(0.42, R.skillFxT);
+    const cy = H * GROUND * 0.92, cx = W * 0.66;
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.fillStyle = col; ctx.strokeStyle = col;
+    if (kind === 'streak') {                      // 돌풍 — 가로로 긋는 선
+      ctx.lineWidth = 3;
+      for (let i = 0; i < 5; i++) {
+        const yy = H * (0.28 + i * 0.1);
+        const x0 = W * (u * 1.5 - 0.5 + i * 0.05);
+        ctx.beginPath(); ctx.moveTo(x0 * W / W, yy); ctx.lineTo(x0 + W * 0.3, yy); ctx.stroke();
+      }
+    } else if (kind === 'ring') {                 // 비명 — 퍼지는 고리
+      ctx.lineWidth = 4;
+      for (let i = 0; i < 3; i++) {
+        ctx.globalAlpha = a * (1 - i * 0.3);
+        ctx.beginPath(); ctx.arc(cx, cy, W * (0.08 + u * 0.5) - i * 14, 0, 7); ctx.stroke();
+      }
+    } else if (kind === 'cone') {                 // 숨결 — 리드에서 뻗는 부채꼴
+      ctx.beginPath();
+      ctx.moveTo(W * 0.30, cy);
+      ctx.lineTo(W * (0.30 + u * 0.75), cy - H * 0.16);
+      ctx.lineTo(W * (0.30 + u * 0.75), cy + H * 0.10);
+      ctx.closePath(); ctx.fill();
+    } else if (kind === 'crack') {                // 지진 — 지면 균열
+      ctx.lineWidth = 3;
+      for (let i = 0; i < 4; i++) {
+        const bx = W * (0.45 + i * 0.13);
+        ctx.beginPath(); ctx.moveTo(bx, cy);
+        ctx.lineTo(bx + (i % 2 ? 10 : -10), cy - H * 0.08 * u);
+        ctx.lineTo(bx + (i % 2 ? -6 : 6), cy - H * 0.15 * u);
+        ctx.stroke();
+      }
+    } else if (kind === 'grip') {                 // 포박 — 조여드는 테두리
+      ctx.lineWidth = 10 * (1 - u * 0.6);
+      const m = W * 0.06 * u;
+      ctx.strokeRect(m, m, W - m * 2, H - m * 2);
+    } else if (kind === 'splash') {               // 산성 — 번지는 얼룩
+      for (let i = 0; i < 7; i++) {
+        const an = i * 0.9 + u * 2;
+        ctx.globalAlpha = a * (1 - u) * 1.4;
+        ctx.beginPath();
+        ctx.arc(cx + Math.cos(an) * W * 0.18 * u, cy + Math.sin(an) * H * 0.10 * u, 10 + u * 16, 0, 7);
+        ctx.fill();
+      }
+    } else {                                      // 폴백 — 예전 전체 섬광
+      ctx.globalAlpha = Math.min(0.35, R.skillFxT);
+      ctx.fillRect(0, 0, W, H);
+    }
+    ctx.restore();
+  }
+
+  // ── 버프 가시화 ── 배속은 숫자로만 있어서 켜 둔 줄도 모른다. 가장자리에 속도선을 깐다.
+  if ((S.spd || 1) > 1) {
+    ctx.save();
+    ctx.globalAlpha = 0.16 + 0.06 * Math.sin(t * 9);
+    ctx.strokeStyle = '#ffd34d';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 6; i++) {
+      const yy = H * (0.1 + i * 0.16) + Math.sin(t * 6 + i) * 4;
+      const len = W * 0.09;
+      const x0 = (t * 320 + i * 140) % (W + len) - len;
+      ctx.beginPath(); ctx.moveTo(x0, yy); ctx.lineTo(x0 + len, yy); ctx.stroke();
+    }
+    ctx.restore();
   }
 
   // ── 데미지 숫자 · 금화 ──
@@ -358,6 +673,12 @@ export function render(dt) {
       ctx.strokeStyle = '#b07d10';
       ctx.lineWidth = 1.5;
       ctx.stroke();
+      continue;
+    }
+    if (f.type === 'shard') {           // 명중 파편 — 리드 색으로 튄다
+      const mon = B.roster.monsters.find(m => m.key === S.mon);
+      ctx.fillStyle = mon?.bolt?.color || '#9ae6b4';
+      ctx.fillRect(fx - 2, fy - 2, 4, 4);
       continue;
     }
     if (f.type === 'skill') { ctx.fillStyle = '#b59bff'; ctx.font = '800 20px system-ui'; }
@@ -399,6 +720,61 @@ export function render(dt) {
     ctx.strokeText(R.banner, W * 0.5, H * 0.18);
     ctx.fillText(R.banner, W * 0.5, H * 0.18);
     ctx.globalAlpha = 1;
+  }
+
+  // ── 보스 전용 체력바 ── 머리 위 작은 바로는 "보스" 가 안 읽힌다. 화면 위에 길게 깐다.
+  if (R.boss) {
+    const live = R.enemies.find(e => e.Lhp > L0);
+    if (live) {
+      const bw = W * 0.74, bx = (W - bw) / 2, by = H * 0.055;
+      const fr = ratio(live.Lhp, live.Lmax);
+      ctx.save();
+      ctx.fillStyle = 'rgba(8,11,24,.72)';
+      ctx.fillRect(bx - 3, by - 3, bw + 6, 14);
+      ctx.fillStyle = '#2a1118';
+      ctx.fillRect(bx, by, bw, 8);
+      const hot = enrage() > 1;
+      const g = ctx.createLinearGradient(bx, 0, bx + bw, 0);
+      g.addColorStop(0, hot ? '#ff4a3a' : '#ff5a6e');
+      g.addColorStop(1, hot ? '#ffb14a' : '#ff9a9a');
+      ctx.fillStyle = g;
+      ctx.fillRect(bx, by, bw * Math.max(0, Math.min(1, fr)), 8);
+      ctx.restore();
+    }
+  }
+
+  // ── 보스 등장 경고 ── 들어선 순간 1초. 가로 띠가 위아래로 열린다.
+  if (R.bossIntroT > 0) {
+    const u = 1 - R.bossIntroT / 1.0;                 // 0 → 1
+    const open = Math.min(1, u * 3);                  // 빠르게 열리고
+    const fade = R.bossIntroT < 0.3 ? R.bossIntroT / 0.3 : 1;   // 끝에서 사라진다
+    const bh = H * 0.17 * open;
+    ctx.save();
+    ctx.globalAlpha = 0.82 * fade;
+    ctx.fillStyle = 'rgba(14,4,8,.9)';
+    ctx.fillRect(0, H * 0.42 - bh / 2, W, bh);
+    ctx.strokeStyle = '#ff5a4a'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, H * 0.42 - bh / 2); ctx.lineTo(W, H * 0.42 - bh / 2);
+    ctx.moveTo(0, H * 0.42 + bh / 2); ctx.lineTo(W, H * 0.42 + bh / 2);
+    ctx.stroke();
+    if (open > 0.6) {
+      ctx.globalAlpha = fade;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#ffd34d';
+      ctx.font = '800 22px system-ui';
+      ctx.fillText('👑 보스 ' + R.heroName, W / 2, H * 0.42 + 8);
+    }
+    ctx.restore();
+  }
+
+  // ── 보스 처치 섬광 ──
+  if (R.bossSlainT > 0) {
+    ctx.save();
+    ctx.globalAlpha = Math.min(0.75, R.bossSlainT * 1.5);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
   }
 
   ctx.restore();

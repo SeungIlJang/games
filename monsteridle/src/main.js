@@ -2,7 +2,7 @@
 import { B } from './balance.js';
 import { S, load, save } from './state.js';
 import { enterStage, tick, setEventHandler, MODE, R } from './combat.js';
-import { initRender, render, preloadFor, resize } from './render.js';
+import { initRender, render, preloadFor, resize, bgAdvance } from './render.js';
 import { initUI, refresh, toast } from './ui.js';
 import { pendingOffline, claimOffline, fmtDuration } from './offline.js';
 import { fmt } from './logmath.js';
@@ -19,11 +19,14 @@ initAds().then(ok => console.log('[ads]', ok ? 'AdMob 초기화 완료' : (isNat
 const { recomputeGacha, ensureDaily: ensureFreePulls } = await import('./gacha.js');
 const { ensureKeys } = await import('./dungeon.js');
 const { ensureDaily } = await import('./daily.js');
+const EV = await import('./events.js');
 const { ensureLayer2 } = await import('./layer2.js');
 recomputeGacha();
 ensureFreePulls();
 ensureKeys();
 ensureDaily();
+EV.ensureEvent();
+EV.validate();          // 데이터가 젬 예산을 넘으면 콘솔 경고
 ensureLayer2();
 
 initRender(document.getElementById('game'));
@@ -34,11 +37,13 @@ preloadFor(S.st);
 // 전투 로직이 재생 실패에 얽힌다. 기존 동작(클리어 시 갱신·예열)은 그대로 둔다.
 setEventHandler(ev => {
   switch (ev.type) {
-    case 'attack':    sfx.attack(); break;
+    case 'attack':    break;                    // 발사 자체는 조용하다 — 소리는 닿을 때 난다
+    case 'impact':    sfx.attack(); break;      // 투사체가 맞은 순간
     case 'playerHit': sfx.playerHit(); break;
     case 'kill':      sfx.kill(); break;
+    case 'wave':      bgAdvance(); break;        // 웨이브를 넘길 때 한 걸음 더
     // 클리어마다 다음 장면 자원을 예열한다 (적·배경이 5스테이지마다 바뀐다)
-    case 'stageClear': refresh(); preloadFor(ev.stage + 1); break;
+    case 'stageClear': refresh(); preloadFor(ev.stage + 1); bgAdvance(1.1); break;   // 스테이지는 더 길게
     case 'death':      refresh(); break;
   }
 });

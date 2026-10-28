@@ -424,7 +424,7 @@
     "_quest": "일일퀘스트 3종 × 150 = 450",
     "bossRushBase": 250,
     "bossRushPerDiff": 10,
-    "_bossRush": "키 2회 = 약 500. 광고 2회를 더 보면 약 1,000",
+    "_bossRush": "키 2회 = 약 500. 광고 2회를 더 보면 약 1,000. bossRushPerDiff 는 난이도의 **로그**에 곱한다 — 선형이면 난이도가 본편을 따라가는 순간 젬이 예산을 수십 배로 넘는다.",
     "attendCycle": [
       80,
       120,
@@ -463,6 +463,8 @@
     "_왜": "스킬 배너는 지금까지 \"보스 버스트\" 라는 숫자로만 존재했다. 동료 때와 같이 이미 있는 수치에 몸을 준다. 피해를 더하면 로그 곡선상 의미도 없고(배속 검증 참고) 판정을 다시 받아야 한다.",
     "dpsShare": 0.35,
     "_dpsShare": "스킬이 가져가는 총 DPS 비율. 장착한 스킬이 없으면 0 이고 평타가 100% 를 낸다. 너무 높이면 쿨 사이에 피해가 끊겨 체감이 나빠진다.",
+    "fx": {"acid": ["#8ae06a", "splash"], "gust": ["#bfe9ff", "streak"], "shriek": ["#ff9ad5", "ring"], "grasp": ["#b59bff", "grip"], "breath": ["#ff8a4a", "cone"], "quake": ["#d9b06a", "crack"]},
+    "_fx": "스킬별 화면 연출. 6종이 전부 같은 섬광이면 무엇이 터졌는지 안 읽힌다. 연출 전용이라 피해와 무관하다.",
     "_cd": "스킬별 쿨타임(초). 서로 다르게 둬야 바가 번갈아 차오른다. 쿨이 길수록 한 방이 크다 — 몫이 쿨에 비례한다.",
     "cd": {
       "acid": 5,
@@ -546,8 +548,129 @@
     "shop": { "c0": 10, "g": 1.15, "r": 1.08 },
     "_shop": "가격 c0×g^lv, 레벨당 피해 ×r. 시뮬 365일 검증: 환생 4회·상점 Lv.30·5판정 통과."
   },
+  "events": {
+    "_": "반복 가능한 이벤트 틀. 코드는 하나뿐이고 아래 list 만 갈아 끼우면 새 이벤트가 된다.",
+    "_포인트원천": "처치·클리어 수는 깊이에 따라 70배까지 벌어져(2일차 +1,625층 vs 300일차 +24층) 트랙 기준이 될 수 없다. 그래서 포인트는 '참여'에서만 나온다 — 일일퀘스트와 출석은 깊이와 무관하다.",
+    "pointPer": {
+      "quest": 10,
+      "attend": 20
+    },
+    "gemBudgetPerDay": 0.35,
+    "_gemBudgetPerDay": "이벤트가 하루 평균 더 줄 수 있는 젬 = 평소 수입 대비 비율 상한. 시뮬은 이 값으로 검증하고, 개별 이벤트가 (트랙 총젬 ÷ 기간)으로 이걸 넘으면 부팅 때 콘솔에 경고한다.",
+    "list": [
+      {
+        "id": "harvest26",
+        "name": "가을 수확제",
+        "icon": "🍂",
+        "color": "#ff9a5a",
+        "from": "2026-10-20",
+        "to": "2026-11-03",
+        "track": [
+          {
+            "at": 50,
+            "gem": 200
+          },
+          {
+            "at": 120,
+            "gem": 300
+          },
+          {
+            "at": 200,
+            "gem": 400
+          },
+          {
+            "at": 290,
+            "gem": 500
+          },
+          {
+            "at": 380,
+            "gem": 600
+          },
+          {
+            "at": 470,
+            "gem": 800
+          },
+          {
+            "at": 550,
+            "gem": 900
+          },
+          {
+            "at": 610,
+            "gem": 1200
+          },
+          {
+            "at": 660,
+            "gem": 1500
+          },
+          {
+            "at": 690,
+            "gem": 1930
+          }
+        ]
+      },
+      {
+        "id": "winter26",
+        "name": "겨울 축제",
+        "icon": "❄️",
+        "color": "#8ad8ff",
+        "from": "2026-12-18",
+        "to": "2027-01-01",
+        "track": [
+          {
+            "at": 50,
+            "gem": 200
+          },
+          {
+            "at": 120,
+            "gem": 300
+          },
+          {
+            "at": 200,
+            "gem": 400
+          },
+          {
+            "at": 290,
+            "gem": 500
+          },
+          {
+            "at": 380,
+            "gem": 600
+          },
+          {
+            "at": 470,
+            "gem": 800
+          },
+          {
+            "at": 550,
+            "gem": 900
+          },
+          {
+            "at": 610,
+            "gem": 1200
+          },
+          {
+            "at": 660,
+            "gem": 1500
+          },
+          {
+            "at": 690,
+            "gem": 1930
+          }
+        ]
+      }
+    ]
+  },
   "offline": {
     "capHours": 12
+  },
+  "combatFx": {
+    "_": "전투 타격 연출. 피해는 발사 즉시 적용되고 여기 값들은 **보이는 것만** 바꾼다 — 밸런스와 무관하다.",
+    "boltSec": 0.16,
+    "_boltSec": "투사체 비행 시간(초). 이만큼 숫자·피격·소리가 늦게 온다. 길면 굼떠 보이고 짧으면 안 보인다.",
+    "deathSec": 0.32,
+    "_deathSec": "적이 쓰러지는 연출 길이. dead 포즈 그림이 이미 있는데 안 쓰고 즉시 사라지고 있었다.",
+    "shards": 4,
+    "_shards": "명중 시 튀는 파편 수."
   },
   "anim": {
     "monster": {
@@ -568,43 +691,43 @@
     "list": [
       {
         "key": "forest",
-        "name": "몬스터 숲"
+        "name": "몬스터 숲", "amb": {"color": "#d8f5a0", "kind": "leaf"}
       },
       {
         "key": "swamp",
-        "name": "버섯 늪"
+        "name": "버섯 늪", "amb": {"color": "#9ae6ff", "kind": "mote"}
       },
       {
         "key": "highland",
-        "name": "바람 언덕"
+        "name": "바람 언덕", "amb": {"color": "#ffffff", "kind": "mote"}
       },
       {
         "key": "cave",
-        "name": "해골 동굴"
+        "name": "해골 동굴", "amb": {"color": "#8ad8ff", "kind": "mote"}
       },
       {
         "key": "canyon",
-        "name": "불타는 협곡"
+        "name": "불타는 협곡", "amb": {"color": "#ffb36b", "kind": "ember"}
       },
       {
         "key": "frost",
-        "name": "서리 평원"
+        "name": "서리 평원", "amb": {"color": "#ffffff", "kind": "snow"}
       },
       {
         "key": "shadow",
-        "name": "그림자 숲"
+        "name": "그림자 숲", "amb": {"color": "#b59bff", "kind": "mote"}
       },
       {
         "key": "ruins",
-        "name": "폐허 마을"
+        "name": "폐허 마을", "amb": {"color": "#d9cfae", "kind": "dust"}
       },
       {
         "key": "lava",
-        "name": "용암 지대"
+        "name": "용암 지대", "amb": {"color": "#ff7a4a", "kind": "ember"}
       },
       {
         "key": "sky",
-        "name": "하늘 성채"
+        "name": "하늘 성채", "amb": {"color": "#fff3b0", "kind": "mote"}
       }
     ]
   },
@@ -617,7 +740,8 @@
         "dir": "Gloop_Slime",
         "name": "글룹",
         "unlock": 1,
-        "ability": {"name": "균형", "desc": "모든 피해 +10%", "dmg": 1.1}
+        "ability": {"name": "균형", "desc": "모든 피해 +10%", "dmg": 1.1},
+        "bolt": {"color": "#7fe08a", "shape": "orb"}
       },
       {
         "key": "goblin",
@@ -625,7 +749,8 @@
         "dir": "Grik_Goblin",
         "name": "그릭",
         "unlock": 10,
-        "ability": {"name": "탐욕", "desc": "골드 +40%, 피해 -15%", "gold": 1.4, "dmg": 0.85}
+        "ability": {"name": "탐욕", "desc": "골드 +40%, 피해 -15%", "gold": 1.4, "dmg": 0.85},
+        "bolt": {"color": "#ffd34d", "shape": "coin"}
       },
       {
         "key": "bat",
@@ -633,7 +758,8 @@
         "dir": "Nightwing_Bat",
         "name": "나이트윙",
         "unlock": 40,
-        "ability": {"name": "흡혈", "desc": "웨이브 회복 2배, 피해 -10%", "rec": 2.0, "dmg": 0.9}
+        "ability": {"name": "흡혈", "desc": "웨이브 회복 2배, 피해 -10%", "rec": 2.0, "dmg": 0.9},
+        "bolt": {"color": "#c98bff", "shape": "orb"}
       },
       {
         "key": "mushroom",
@@ -641,7 +767,8 @@
         "dir": "Sporeling_Mushroom",
         "name": "스포어링",
         "unlock": 100,
-        "ability": {"name": "포자", "desc": "잡몹 피해 +35%, 보스 피해 -20%", "nrm": 1.35, "boss": 0.8}
+        "ability": {"name": "포자", "desc": "잡몹 피해 +35%, 보스 피해 -20%", "nrm": 1.35, "boss": 0.8},
+        "bolt": {"color": "#9ae6b4", "shape": "orb"}
       },
       {
         "key": "skeleton",
@@ -649,7 +776,8 @@
         "dir": "Boneguard_Skeleton",
         "name": "본가드",
         "unlock": 200,
-        "ability": {"name": "뼈방패", "desc": "받는 피해 -25%, 피해 -10%", "dr": 1.33, "dmg": 0.9}
+        "ability": {"name": "뼈방패", "desc": "받는 피해 -25%, 피해 -10%", "dr": 1.33, "dmg": 0.9},
+        "bolt": {"color": "#dfe6f2", "shape": "shard"}
       },
       {
         "key": "wolf",
@@ -657,7 +785,8 @@
         "dir": "Fangwolf_Wolf",
         "name": "팽울프",
         "unlock": 400,
-        "ability": {"name": "질주", "desc": "공격속도 +25%, 치명피해 -20%", "aspd": 1.25, "cdmg": 0.8}
+        "ability": {"name": "질주", "desc": "공격속도 +25%, 치명피해 -20%", "aspd": 1.25, "cdmg": 0.8},
+        "bolt": {"color": "#8ad8ff", "shape": "wedge"}
       },
       {
         "key": "ghost",
@@ -665,7 +794,8 @@
         "dir": "Wraith_Ghost",
         "name": "레이스",
         "unlock": 700,
-        "ability": {"name": "원혼", "desc": "치명확률 +12%p, 최대체력 -20%", "critAdd": 0.12, "hp": 0.8}
+        "ability": {"name": "원혼", "desc": "치명확률 +12%p, 최대체력 -20%", "critAdd": 0.12, "hp": 0.8},
+        "bolt": {"color": "#b0a7ff", "shape": "orb"}
       },
       {
         "key": "orc",
@@ -673,7 +803,8 @@
         "dir": "Brakk_Orc",
         "name": "브락",
         "unlock": 1200,
-        "ability": {"name": "격노", "desc": "보스 피해 +170%, 잡몹 피해 -5%", "boss": 2.7, "nrm": 0.95}
+        "ability": {"name": "격노", "desc": "보스 피해 +170%, 잡몹 피해 -5%", "boss": 2.7, "nrm": 0.95},
+        "bolt": {"color": "#ff8a5a", "shape": "wedge"}
       },
       {
         "key": "golem",
@@ -681,7 +812,8 @@
         "dir": "Granite_Golem",
         "name": "그래니트",
         "unlock": 2000,
-        "ability": {"name": "암반", "desc": "최대체력 +60%, 공격속도 -15%", "hp": 1.6, "aspd": 0.85}
+        "ability": {"name": "암반", "desc": "최대체력 +60%, 공격속도 -15%", "hp": 1.6, "aspd": 0.85},
+        "bolt": {"color": "#b9a07a", "shape": "shard"}
       },
       {
         "key": "dragon",
@@ -689,7 +821,8 @@
         "dir": "Ignarion_RedDragon_Boss",
         "name": "이그나리온",
         "unlock": 3000,
-        "ability": {"name": "화염", "desc": "치명피해 +60%, 치명확률 -5%p", "cdmg": 1.6, "critAdd": -0.05}
+        "ability": {"name": "화염", "desc": "치명피해 +60%, 치명확률 -5%p", "cdmg": 1.6, "critAdd": -0.05},
+        "bolt": {"color": "#ff5a4a", "shape": "orb"}
       }
     ],
     "heroes": [
