@@ -756,21 +756,22 @@ function toTitle(){   // 오버 화면 → 타이틀(무기/강화 변경)
 // prompt()는 안드로이드 WebView나 '추가 대화상자 차단'이 켜진 브라우저에서 조용히 무시된다
 // (클릭해도 아무 반응이 없는 것처럼 보인다) → 네이티브 대화상자 대신 페이지 안에서 입력받는다.
 const DEV_PASS='799879';
-let devOn=false, devGod=false, devAuto=false, devSlowF=1, devForce='';
+let devGod=false, devAuto=false, devSlowF=1, devForce='';
+// 열 때마다 매번 묻는다 — 인증을 세션에 남기지 않는다.
 function devTryOpen(){
-  const gate=document.getElementById('devGate'), err=document.getElementById('devErr');
   document.getElementById('dev').classList.add('on');   // 어떤 경우든 화면은 즉시 뜬다
-  if(devOn){ gate.style.display='none'; buildDev(); return; }
-  gate.style.display=''; document.getElementById('devBody').innerHTML=''; err.textContent='';
-  const i=document.getElementById('devPass'); i.value=''; setTimeout(()=>{ try{ i.focus(); }catch(e){} },60);
+  document.getElementById('devGate').style.display='';
+  document.getElementById('devBody').innerHTML='';
+  document.getElementById('devErr').textContent='';
+  // 방금 보이게 한 요소라 즉시 focus가 실패할 수 있다 → 지금 한 번, 다음 틱에 한 번 더
+  const i=document.getElementById('devPass'); i.value='';
+  const f=()=>{ try{ i.focus(); }catch(e){} }; f(); requestAnimationFrame(f); setTimeout(f,60);
 }
 function devSubmit(){
   const i=document.getElementById('devPass');
   if(i.value.trim()!==DEV_PASS){ document.getElementById('devErr').textContent='비밀번호가 틀렸습니다'; i.value=''; i.focus(); return; }
-  devOn=true; document.getElementById('devGate').style.display='none'; buildDev();
+  i.value=''; document.getElementById('devGate').style.display='none'; buildDev();
 }
-function openDev(){ document.getElementById('dev').classList.add('on');
-  document.getElementById('devGate').style.display='none'; buildDev(); }
 function closeDev(){ document.getElementById('dev').classList.remove('on'); if(state==='start') refreshTitle(); }
 const dvNum=(l,id,v)=>'<div class="dvrow"><label>'+l+'</label><input type="number" id="'+id+'" value="'+v+'"></div>';
 const dvGet=id=>{ const e=document.getElementById(id); return e? (parseFloat(e.value)||0) : 0; };
