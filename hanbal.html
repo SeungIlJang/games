@@ -148,6 +148,27 @@
   .lbhead .btn2{margin:0;padding:5px 11px;font-size:11.5px}
   #lbSeason{font-size:10px;color:#ff9a3c;font-weight:800}
   #lbList{font-size:13px;line-height:1.8;text-align:left;color:#dfe8ff;min-height:30px}
+  /* ── 개발자 모드 ───────────────────────────────────────── */
+  #dev{position:fixed;inset:0;z-index:120;background:rgba(4,6,14,.95);overflow-y:auto;display:none;
+    padding:max(env(safe-area-inset-top),14px) 12px calc(20px + env(safe-area-inset-bottom,0px));
+    font-family:ui-monospace,Menlo,Consolas,monospace;color:#cfe0ff;font-size:12px}
+  #dev.on{display:block}
+  #dev h2{font-size:14px;color:#ff9a3c;margin:14px 0 7px;letter-spacing:1px;border-bottom:1px solid #263154;padding-bottom:5px}
+  #dev h2:first-child{margin-top:0}
+  .dvrow{display:flex;align-items:center;gap:6px;margin:5px 0}
+  .dvrow label{flex:0 0 94px;color:#8a9ac4}
+  .dvrow input[type=number]{flex:1;min-width:0;background:#121a2e;border:1px solid #2a3454;color:#dfe8ff;
+    border-radius:7px;padding:6px 8px;font:inherit}
+  .dvb{background:#243054;border:1px solid #33406b;color:#cfe0ff;border-radius:7px;padding:6px 9px;
+    font:inherit;font-weight:700;cursor:pointer;white-space:nowrap}
+  .dvb:active{transform:translateY(1px)}
+  .dvb.go{background:#2ec26a;border-color:#2ec26a;color:#fff}
+  .dvb.warn{background:#c0392b;border-color:#c0392b;color:#fff}
+  .dvb.on{background:#ff7a2c;border-color:#ff7a2c;color:#fff}
+  .dvgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:5px}
+  #devInfo{background:#0c1322;border:1px solid #233055;border-radius:9px;padding:9px;line-height:1.65;
+    white-space:pre-wrap;color:#9fe8c8;font-size:11.5px}
+  #devClose{position:sticky;top:0;width:100%;margin-bottom:10px}
   /* 튜토리얼 */
   #tutorial{background:rgba(6,8,18,.88);backdrop-filter:blur(3px)}
   .tut{width:min(88vw,360px);background:rgba(16,22,40,.96);border:1px solid #2b3350;border-radius:16px;padding:20px 18px;pointer-events:auto}
@@ -162,7 +183,7 @@
 <canvas id="game"></canvas>
 
 <div id="start" class="center scroll on">
-  <h1>모두의 한방</h1>
+  <h1 id="title" style="pointer-events:auto;cursor:pointer">모두의 한방</h1>
   <div class="trail"></div>
   <div id="verTop" class="verTop"></div>
   <div class="stats">
@@ -218,6 +239,7 @@
 </div>
 
 <div class="ver" id="verBot"></div>
+<div id="dev"><button class="dvb warn" id="devClose">✕ 개발자 모드 닫기</button><div id="devBody"></div></div>
 <script>
 const cv=document.getElementById('game'), ctx=cv.getContext('2d');
 // 버전 표기는 한 곳에서만 — 시작화면/좌하단이 어긋나지 않게
@@ -536,7 +558,8 @@ function spawnTarget(){
   // 구조물(장애물) — 항상 이동, 총알을 막음. 패턴 랜덤(처치수별 언락)
   const sr=Math.max(18, 30 - kills*0.22);
   let kind='solid';
-  if(!boss){
+  if(devForce){ kind=devForce; }            // 개발자 모드 강제 (보스 웨이브여도 적용)
+  else if(!boss){
     if(kills>=SLOT_FROM && Math.random()<SLOT_CHANCE) kind='slot';
     else if(kills>=GATE_FROM && Math.random()<GATE_CHANCE) kind='gate';
   }
@@ -641,7 +664,7 @@ function hit(perfect, tgt){
 }
 function breakCombo(){ combo = up('combo') ? Math.floor(combo/2) : 0; fever=0; }
 function miss(){
-  breakCombo(); lives--; sfxMiss(); shake=Math.min(shake+0.25,0.9); hitFlash=0; banner='MISS'; bannerT=0.6; bannerCol='#ff5a6e';
+  breakCombo(); if(!devGod) lives--; sfxMiss(); shake=Math.min(shake+0.25,0.9); hitFlash=0; banner='MISS'; bannerT=0.6; bannerCol='#ff5a6e';
   bullet=null;
   if(lives<=0){ gameOver(); return; }
   spawnTarget();
@@ -655,7 +678,7 @@ function blocked(){
     rings.push({x:bx,y:aimY,r:10,max:70,life:1,col:'#9fe8c8'});
     spawnTarget(); return;
   }
-  breakCombo(); lives--; sfxMiss(); shake=Math.min(shake+0.3,0.9); banner='BLOCKED'; bannerT=0.6; bannerCol='#ff5a6e';
+  breakCombo(); if(!devGod) lives--; sfxMiss(); shake=Math.min(shake+0.3,0.9); banner='BLOCKED'; bannerT=0.6; bannerCol='#ff5a6e';
   if(lives<=0){ gameOver(); return; }
   spawnTarget();
 }
@@ -718,6 +741,120 @@ function toTitle(){   // 오버 화면 → 타이틀(무기/강화 변경)
   state='start'; refreshTitle(); showBanner();
 }
 
+// ---- 개발자 모드 ----
+// 타이틀 3연타(2초 내) → 비밀번호. 한 번 눌렀다고 프롬프트가 뜨면 실사용자에게 곤란해서 연타로 둔다.
+const DEV_PASS='799879';
+let devOn=false, devGod=false, devAuto=false, devSlowF=1, devForce='';
+let _tapN=0, _tapT=0;
+function devTryOpen(){
+  const t=performance.now(); if(t-_tapT>2000) _tapN=0; _tapT=t;
+  if(++_tapN<3) return; _tapN=0;
+  if(devOn){ openDev(); return; }
+  const p=prompt('개발자 모드 비밀번호'); if(p===null) return;
+  if(p!==DEV_PASS){ alert('비밀번호가 틀렸습니다'); return; }
+  devOn=true; openDev();
+}
+function openDev(){ buildDev(); document.getElementById('dev').classList.add('on'); }
+function closeDev(){ document.getElementById('dev').classList.remove('on'); if(state==='start') refreshTitle(); }
+const dvNum=(l,id,v)=>'<div class="dvrow"><label>'+l+'</label><input type="number" id="'+id+'" value="'+v+'"></div>';
+const dvGet=id=>{ const e=document.getElementById(id); return e? (parseFloat(e.value)||0) : 0; };
+function buildDev(){
+  const b=document.getElementById('devBody');
+  b.innerHTML=
+    '<h2>런 상태 — 플레이 중 즉시 반영</h2>'
+    + dvNum('처치 kills','dvKills',kills) + dvNum('점수 score','dvScore',score)
+    + dvNum('콤보','dvCombo',combo) + dvNum('목숨','dvLives',lives) + dvNum('보호막','dvShield',shield)
+    + '<div class="dvrow"><button class="dvb go" id="dvApplyRun">적용</button>'
+    + '<button class="dvb" id="dvFever">피버 4초</button>'
+    + '<button class="dvb" id="dvKill">웨이브 격파</button></div>'
+    + '<h2>영구 데이터</h2>'
+    + dvNum('골드','dvGold',gold) + dvNum('최고 점수','dvBest',best) + dvNum('최다 처치','dvBK',bestKills)
+    + '<div class="dvrow"><button class="dvb go" id="dvApplySave">저장하고 적용</button></div>'
+    + '<h2>영구 강화</h2><div id="dvUps"></div>'
+    + '<h2>무기 — 잠금 무시</h2><div class="dvgrid" id="dvGuns"></div>'
+    + '<h2>구조물 강제</h2><div class="dvgrid" id="dvKinds"></div>'
+    + '<div class="dvrow"><button class="dvb" id="dvSpawn">지금 다시 스폰</button></div>'
+    + '<h2>치트</h2><div class="dvgrid" id="dvCheats"></div>'
+    + '<h2>초기화</h2><div class="dvgrid" id="dvResets"></div>'
+    + '<h2>실시간</h2><div id="devInfo">…</div>';
+  // 강화
+  const u=document.getElementById('dvUps'); u.innerHTML='';
+  UPGRADES.forEach(g=>{
+    const r=document.createElement('div'); r.className='dvrow';
+    r.innerHTML='<label>'+g.icon+' '+g.name+'</label>';
+    const minus=document.createElement('button'), lv=document.createElement('span'), plus=document.createElement('button');
+    minus.className=plus.className='dvb'; minus.textContent='−'; plus.textContent='+';
+    lv.style.cssText='min-width:52px;text-align:center;color:#ffd34d;font-weight:700';
+    const draw=()=>{ lv.textContent='Lv '+up(g.id)+'/'+g.max; };
+    minus.onclick=()=>{ ups[g.id]=Math.max(0,up(g.id)-1); saveUps(); draw(); };
+    plus.onclick =()=>{ ups[g.id]=Math.min(g.max,up(g.id)+1); saveUps(); draw(); };
+    draw(); r.appendChild(minus); r.appendChild(lv); r.appendChild(plus); u.appendChild(r);
+  });
+  // 무기
+  const gw=document.getElementById('dvGuns'); gw.innerHTML='';
+  GUNS.forEach((g,i)=>{ const btn=document.createElement('button');
+    btn.className='dvb'+(i===selGun?' on':''); btn.textContent=g.icon+' '+g.name;
+    btn.onclick=()=>{ selGun=i; localStorage.setItem('hanbal_gun',i); buildDev(); };
+    gw.appendChild(btn); });
+  // 구조물 종류 강제
+  const kw=document.getElementById('dvKinds'); kw.innerHTML='';
+  [['','자동'],['solid','solid'],['slot','slot'],['gate','gate']].forEach(([k,n])=>{
+    const btn=document.createElement('button'); btn.className='dvb'+(devForce===k?' on':''); btn.textContent=n;
+    btn.onclick=()=>{ devForce=k; if(state==='play') spawnTarget(); buildDev(); };
+    kw.appendChild(btn); });
+  // 치트 토글
+  const cw=document.getElementById('dvCheats'); cw.innerHTML='';
+  const tog=(label,get,set)=>{ const btn=document.createElement('button');
+    btn.className='dvb'+(get()?' on':''); btn.textContent=label;
+    btn.onclick=()=>{ set(!get()); buildDev(); }; cw.appendChild(btn); };
+  tog('무적', ()=>devGod, v=>devGod=v);
+  tog('자동발사', ()=>devAuto, v=>devAuto=v);
+  tog('슬로우 0.3x', ()=>devSlowF===0.3, v=>devSlowF=v?0.3:1);
+  tog('빠름 2x', ()=>devSlowF===2, v=>devSlowF=v?2:1);
+  // 초기화
+  const rw=document.getElementById('dvResets'); rw.innerHTML='';
+  const rb=(label,fn,cls)=>{ const btn=document.createElement('button'); btn.className='dvb'+(cls||'');
+    btn.textContent=label; btn.onclick=fn; rw.appendChild(btn); };
+  rb('일일보너스 리셋', ()=>{ try{localStorage.removeItem('hanbal_daily');}catch(e){} checkDaily(); alert('일일 보너스 복구'); });
+  rb('튜토리얼 리셋', ()=>{ try{localStorage.removeItem('hanbal_tut');}catch(e){} alert('다음 시작 때 튜토리얼'); });
+  rb('전체 삭제', ()=>{ if(!confirm('저장 데이터를 전부 지웁니다. 계속할까요?')) return;
+    Object.keys(localStorage).filter(k=>k.indexOf('hanbal')===0).forEach(k=>localStorage.removeItem(k));
+    location.reload(); }, ' warn');
+  // 버튼 배선
+  document.getElementById('dvApplyRun').onclick=()=>{
+    kills=Math.max(0,dvGet('dvKills')|0); score=Math.max(0,dvGet('dvScore')|0);
+    combo=Math.max(0,dvGet('dvCombo')|0); if(combo>maxCombo) maxCombo=combo;
+    lives=Math.max(1,dvGet('dvLives')|0); shield=Math.max(0,dvGet('dvShield')|0);
+    if(state==='play') spawnTarget();
+  };
+  document.getElementById('dvFever').onclick=()=>{ combo=Math.max(combo,FEVER_AT); fever=FEVER_TIME; };
+  document.getElementById('dvKill').onclick=()=>{ if(state!=='play') return;
+    while(targets.length) hit(false,targets[0]); };
+  document.getElementById('dvApplySave').onclick=()=>{
+    gold=Math.max(0,dvGet('dvGold')|0); best=Math.max(0,dvGet('dvBest')|0); bestKills=Math.max(0,dvGet('dvBK')|0);
+    saveGold(); try{ localStorage.setItem('hanbal_best',best); localStorage.setItem('hanbal_bestkills',bestKills); }catch(e){}
+    buildDev(); if(state==='start') refreshTitle();
+  };
+  document.getElementById('dvSpawn').onclick=()=>{ if(state==='play') spawnTarget(); };
+}
+// 실시간 정보 — 패널이 열려 있을 때만 갱신
+setInterval(()=>{
+  const el=document.getElementById('devInfo');
+  if(!el || !document.getElementById('dev').classList.contains('on')) return;
+  const s=structure, br=BULLET_R*GUNS[selGun].rMul;
+  let L=['상태 '+state+'   처치 '+kills+'   점수 '+score+'   콤보 '+combo+(fever>0?'  🔥FEVER':''),
+         '목숨 '+lives+'   보호막 '+shield+'   이번 판 골드 '+runGold,
+         '총 '+GUNS[selGun].name+' (탄반경 '+br.toFixed(1)+')   배율 x'+comboMul(),
+         '테마 '+themeKey()+'   그레이즈폭 '+grazeW()+'px'];
+  if(s){
+    L.push('구조물 '+s.kind+(devForce?' (강제)':'')+'   반지름 '+s.r.toFixed(1));
+    if(s.kind==='slot')      L.push('  채널반높이 '+s.slotH.toFixed(1)+'   회전 '+s.spinSpd.toFixed(2)+' rad/s   지금통과 '+(slotAligned()?'O':'X'));
+    else if(s.kind==='gate') L.push('  통로반높이 '+s.gateH.toFixed(1)+'   여유 '+(s.gateH-Math.abs(s.y-aimY)-br).toFixed(1)+'px   지금통과 '+((s.gateH-Math.abs(s.y-aimY)-br)>=0?'O':'X'));
+    else                     L.push('  패턴 '+s.pat+'   조준선거리 '+Math.abs(s.y-aimY).toFixed(1)+'px');
+  }
+  el.textContent=L.join('\n');
+},200);
+
 // ---- input ----
 function tap(){ if(state==='play') fire(); }
 cv.addEventListener('pointerdown',e=>{ e.preventDefault(); if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}} tap(); },{passive:false});
@@ -730,6 +867,8 @@ document.getElementById('tabGun').onclick=()=>showTab('gun');
 document.getElementById('tabShop').onclick=()=>showTab('shop');
 document.getElementById('howBtn').onclick=()=>showTutorial(true);
 document.getElementById('tutNext').onclick=tutNext;
+document.getElementById('title').onclick=devTryOpen;
+document.getElementById('devClose').onclick=closeDev;
 document.getElementById('lbNameBtn').onclick=()=>{ const n=prompt('이름을 입력하세요 (최대 16자)', getName()); if(n&&n.trim()){ localStorage.setItem('hanbal_name', n.trim().slice(0,16)); submitScore().then(renderLB).catch(()=>renderLB()); } };
 refreshTitle();
 
@@ -1016,7 +1155,7 @@ function drawHUD(){
 function loop(now){
   let dt=(now-lastTs)/1000; lastTs=now; if(dt>0.05)dt=0.05;
   tnow+=dt;
-  if(state==='play'){ update(dt*(slow>0?0.35:1)); }
+  if(state==='play'){ if(devAuto && !bullet) fire(); update(dt*(slow>0?0.35:1)*devSlowF); }
   render();
   requestAnimationFrame(loop);
 }
