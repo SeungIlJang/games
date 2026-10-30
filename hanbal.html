@@ -169,6 +169,9 @@
   #devInfo{background:#0c1322;border:1px solid #233055;border-radius:9px;padding:9px;line-height:1.65;
     white-space:pre-wrap;color:#9fe8c8;font-size:11.5px}
   #devClose{position:sticky;top:0;width:100%;margin-bottom:10px}
+  #devPass{width:100%;background:#121a2e;border:1px solid #2a3454;color:#dfe8ff;border-radius:9px;
+    padding:11px 12px;font:inherit;font-size:16px;letter-spacing:3px;text-align:center}
+  #devErr{color:#ff6a6a;font-size:11.5px;min-height:16px;margin-top:8px;text-align:center}
   /* 튜토리얼 */
   #tutorial{background:rgba(6,8,18,.88);backdrop-filter:blur(3px)}
   .tut{width:min(88vw,360px);background:rgba(16,22,40,.96);border:1px solid #2b3350;border-radius:16px;padding:20px 18px;pointer-events:auto}
@@ -239,7 +242,14 @@
 </div>
 
 <div class="ver" id="verBot"></div>
-<div id="dev"><button class="dvb warn" id="devClose">✕ 개발자 모드 닫기</button><div id="devBody"></div></div>
+<div id="dev"><button class="dvb warn" id="devClose">✕ 개발자 모드 닫기</button>
+  <div id="devGate">
+    <div style="font-size:15px;font-weight:800;color:#ff9a3c;margin:18px 0 10px">개발자 모드</div>
+    <input type="password" id="devPass" inputmode="numeric" autocomplete="off" placeholder="비밀번호" />
+    <button class="dvb go" id="devGo" style="width:100%;margin-top:9px;padding:10px">확인</button>
+    <div id="devErr"></div>
+  </div>
+  <div id="devBody"></div></div>
 <script>
 const cv=document.getElementById('game'), ctx=cv.getContext('2d');
 // 버전 표기는 한 곳에서만 — 시작화면/좌하단이 어긋나지 않게
@@ -743,15 +753,24 @@ function toTitle(){   // 오버 화면 → 타이틀(무기/강화 변경)
 
 // ---- 개발자 모드 ----
 // 타이틀 클릭 → 비밀번호. 한 번 인증하면 그 세션 동안은 바로 열린다.
+// prompt()는 안드로이드 WebView나 '추가 대화상자 차단'이 켜진 브라우저에서 조용히 무시된다
+// (클릭해도 아무 반응이 없는 것처럼 보인다) → 네이티브 대화상자 대신 페이지 안에서 입력받는다.
 const DEV_PASS='799879';
 let devOn=false, devGod=false, devAuto=false, devSlowF=1, devForce='';
 function devTryOpen(){
-  if(devOn){ openDev(); return; }
-  const p=prompt('개발자 모드 비밀번호'); if(p===null) return;   // 취소면 조용히 종료
-  if(p!==DEV_PASS){ alert('비밀번호가 틀렸습니다'); return; }
-  devOn=true; openDev();
+  const gate=document.getElementById('devGate'), err=document.getElementById('devErr');
+  document.getElementById('dev').classList.add('on');   // 어떤 경우든 화면은 즉시 뜬다
+  if(devOn){ gate.style.display='none'; buildDev(); return; }
+  gate.style.display=''; document.getElementById('devBody').innerHTML=''; err.textContent='';
+  const i=document.getElementById('devPass'); i.value=''; setTimeout(()=>{ try{ i.focus(); }catch(e){} },60);
 }
-function openDev(){ buildDev(); document.getElementById('dev').classList.add('on'); }
+function devSubmit(){
+  const i=document.getElementById('devPass');
+  if(i.value.trim()!==DEV_PASS){ document.getElementById('devErr').textContent='비밀번호가 틀렸습니다'; i.value=''; i.focus(); return; }
+  devOn=true; document.getElementById('devGate').style.display='none'; buildDev();
+}
+function openDev(){ document.getElementById('dev').classList.add('on');
+  document.getElementById('devGate').style.display='none'; buildDev(); }
 function closeDev(){ document.getElementById('dev').classList.remove('on'); if(state==='start') refreshTitle(); }
 const dvNum=(l,id,v)=>'<div class="dvrow"><label>'+l+'</label><input type="number" id="'+id+'" value="'+v+'"></div>';
 const dvGet=id=>{ const e=document.getElementById(id); return e? (parseFloat(e.value)||0) : 0; };
@@ -866,6 +885,8 @@ document.getElementById('howBtn').onclick=()=>showTutorial(true);
 document.getElementById('tutNext').onclick=tutNext;
 document.getElementById('title').onclick=devTryOpen;
 document.getElementById('devClose').onclick=closeDev;
+document.getElementById('devGo').onclick=devSubmit;
+document.getElementById('devPass').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); devSubmit(); } });
 document.getElementById('lbNameBtn').onclick=()=>{ const n=prompt('이름을 입력하세요 (최대 16자)', getName()); if(n&&n.trim()){ localStorage.setItem('hanbal_name', n.trim().slice(0,16)); submitScore().then(renderLB).catch(()=>renderLB()); } };
 refreshTitle();
 
@@ -890,7 +911,8 @@ function update(dt){
   } else {
     slotGlow = Math.max(0,slotGlow-dt*7);
     // 그레이즈 존 안내: 조준선이 PERFECT 구간에 들어오면 밝게 빛난다
-    const gap=Math.abs(structure.y-aimY), inner=structure.r+BULLET_R, outer=structure.r+BULLET_R+grazeW();
+    const br=BULLET_R*GUNS[selGun].rMul;
+    const gap=Math.abs(structure.y-aimY), inner=structure.r+br, outer=structure.r+br+grazeW();
     grazeGlow = (gap>=inner && gap<outer) ? Math.min(1,grazeGlow+dt*9) : Math.max(0,grazeGlow-dt*7);
   }
   // 타겟 이동 — 초반 고정, 후반/다중 이동
@@ -940,7 +962,7 @@ function update(dt){
             ? (bullet.minPd!==undefined && bullet.minPd < (structure.slotH-br)*0.4)
             : structure.kind==='gate'
             ? (bullet.minClear!==undefined && bullet.minClear < grazeW())
-            : (bullet.gap < structure.r+BULLET_R+grazeW());
+            : (bullet.gap < structure.r+br+grazeW());   // 탄반경은 총마다 달라서 br 기준 — 모든 총이 같은 폭
           hit(perfect, hitT); break;
         }
         const minX = targets.length? Math.min.apply(null, targets.map(t=>t.x-t.r)) : 0;
@@ -1073,11 +1095,12 @@ function drawStructure(){
   if(structure.kind==='gate'){ drawGate(); return; }
   const sx=structure.x, sy=structure.y, r=structure.r, gw=grazeW();
   const isSlot = structure.kind==='slot';
-  // 그레이즈 띠: 구조물 바깥 [r+BULLET_R, r+BULLET_R+gw] 링. 여길 스쳐 통과하면 PERFECT
+  // 그레이즈 띠: 구조물 바깥 [r+탄반경, +gw] 링. 여길 스쳐 통과하면 PERFECT
   // 슬롯에서는 그리지 않는다 — '바깥을 스쳐라'가 '가운데로 가라'와 정반대 지시라서.
   if(!isSlot){
     ctx.save();
-    const inner=r+BULLET_R, outer=inner+gw;
+    // 띠 안쪽 경계 = 실제 차단 경계. 상수로 그리면 탄이 큰 캐논은 '스쳐도 되는 곳'이 실제론 즉사 구간이 된다.
+    const inner=r+BULLET_R*GUNS[selGun].rMul, outer=inner+gw;
     const gg=ctx.createRadialGradient(sx,sy,inner,sx,sy,outer);
     const a=0.10+grazeGlow*0.40;
     gg.addColorStop(0,'rgba(255,211,77,'+a.toFixed(3)+')');
@@ -1088,7 +1111,7 @@ function drawStructure(){
     ctx.restore();
   }
   // 코어
-  const blocking=!isSlot && Math.abs(sy-aimY) < r+BULLET_R;
+  const blocking=!isSlot && Math.abs(sy-aimY) < r+BULLET_R*GUNS[selGun].rMul;   // 붉은 차단 표시도 쓰는 총 기준
   ctx.save(); ctx.translate(sx,sy); ctx.rotate(structure.spin);
   ctx.shadowColor='#ff5a3c'; ctx.shadowBlur=blocking?20:9;
   const img=spr('core_'+themeKey());
