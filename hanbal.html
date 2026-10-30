@@ -62,7 +62,7 @@
 
 <div id="start" class="center on">
   <h1>모두의 한방</h1>
-  <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v0.16 · 3판마다 전면광고 추가</div>
+  <div id="verTop" style="font-size:11px;opacity:.5;margin-bottom:6px;"></div>
   <div class="sub">🟠 <b>움직이는 구조물</b>의 틈이 열릴 때<br>🔵 <b>타겟</b>을 맞추세요! (리드샷 타이밍)<br>구조물에 막히면 실패 · 화면 탭 = 발사</div>
   <div id="gunsel" class="guns"></div>
   <button class="btn" id="startBtn">시작</button>
@@ -82,16 +82,24 @@
   </div>
 </div>
 
-<div class="ver">v0.14 · 세이프영역 여백 (HUD·버전 겹침 수정)</div>
+<div class="ver" id="verBot"></div>
 <script>
 const cv=document.getElementById('game'), ctx=cv.getContext('2d');
-let W=0,H=0,DPR=1,safeTop=0;
+// 버전 표기는 한 곳에서만 — 시작화면/좌하단이 어긋나지 않게
+const VER='v0.17 · 화면 회전·리사이즈 레이아웃 복구';
+{ const a=document.getElementById('verTop'), b=document.getElementById('verBot');
+  if(a) a.textContent=VER; if(b) b.textContent=VER; }
+let W=0,H=0,DPR=1,safeTop=0,prevW=0;
 const _safeProbe=document.createElement('div');
 _safeProbe.style.cssText='position:fixed;top:0;left:0;width:0;height:0;visibility:hidden;pointer-events:none;padding-top:env(safe-area-inset-top,0px);';
 document.body.appendChild(_safeProbe);
-function resize(){ DPR=Math.min(devicePixelRatio||1,2); W=innerWidth; H=innerHeight; cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
+function resize(){ prevW=W; DPR=Math.min(devicePixelRatio||1,2); W=innerWidth; H=innerHeight; cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
   safeTop=parseFloat(getComputedStyle(_safeProbe).paddingTop)||0; }
-addEventListener('resize',resize); resize();
+// 회전·리사이즈: 캔버스만 늘리면 총/조준선/구조물이 옛 좌표에 남는다 → 진행 중인 판을 그대로 재배치
+function onViewportChange(){ resize(); relayout(); }
+addEventListener('resize',onViewportChange);
+addEventListener('orientationchange',()=>setTimeout(onViewportChange,200));   // 일부 안드로이드 웹뷰는 즉시 읽으면 값이 옛것
+resize();   // 최초 1회는 상태 변수 선언 전이라 relayout 없이 캔버스 메트릭만
 
 // ---- audio ----
 let actx=null;
@@ -227,6 +235,27 @@ function spawnTarget(){
   structure={ x:W*0.52, r:sr, y:aimY, phase:Math.random()*6.28, pat:pickPattern(),
     speed: Math.min(5.4, 1.7 + score*0.075),
     range: sr + Math.min(H*0.24, 40 + score*2.4) };
+}
+// 회전·리사이즈로 W/H가 바뀌면 총·조준선·구조물·타겟을 새 화면에 맞춰 옮긴다(난이도 공식은 spawn과 동일)
+function relayout(){
+  gunX=W-46; aimY=H*0.52;
+  if(structure){
+    structure.x=W*0.52;
+    structure.range=structure.r + Math.min(H*0.24, 40 + score*2.4);
+    structure.y=aimY + patOffset(structure.pat, structure.phase)*structure.range;
+  }
+  const sc=Math.max(0, score-BOTH_MOVE_FROM);
+  for(const t of targets){
+    if(t.moving){
+      t.range = t.boss ? Math.min(H*0.22, H*0.10 + score*2) : Math.min(H*0.30, H*0.12 + sc*3.2);
+      t.y = aimY + Math.sin(t.phase)*t.range;
+    } else t.y = aimY;
+  }
+  if(bullet){
+    // 구조물 통과 전이면 가로 비율 유지, 통과 후면 타겟이 고정 x라 그대로 둔다(억울한 MISS 방지)
+    if(!bullet.passed && prevW>0 && W!==prevW){ const k=W/prevW; bullet.x*=k; if(bullet.trail) for(const s of bullet.trail) s.x*=k; }
+    bullet.y=aimY; if(bullet.trail) for(const s of bullet.trail) s.y=aimY;
+  }
 }
 function fire(){
   if(state!=='play'||bullet) return;    // 한 번에 한 발
