@@ -148,6 +148,29 @@
   .lbhead .btn2{margin:0;padding:5px 11px;font-size:11.5px}
   #lbSeason{font-size:10px;color:#ff9a3c;font-weight:800}
   #lbList{font-size:13px;line-height:1.8;text-align:left;color:#dfe8ff;min-height:30px}
+  /* ── 스테이지 선택 ─────────────────────────────────────── */
+  .chap{width:min(88vw,330px);margin-top:14px;text-align:left}
+  .chap .ct{font-size:12px;color:#8a9ac4;font-weight:800;letter-spacing:1px;margin:0 2px 7px}
+  .stgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+  .stg{position:relative;aspect-ratio:1;border-radius:12px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:2px;cursor:pointer;pointer-events:auto;
+    background:linear-gradient(180deg,#16203a,#111829);border:1.5px solid #273253;color:#dfe8ff}
+  .stg .sn{font-size:17px;font-weight:900;line-height:1}
+  .stg .ss{font-size:9px;letter-spacing:1px;color:#39415e}
+  .stg.done{border-color:#2ec26a}
+  .stg.done .sn{color:#9fe8c8}
+  .stg.lock{opacity:.4;cursor:not-allowed}
+  .stg .ss .f{color:#ffd34d}
+  .stg .ss .e{color:#39415e}
+  /* ── 클리어 화면 ───────────────────────────────────────── */
+  #clTitle{font-size:26px;font-weight:900;color:#9fe8c8;text-shadow:0 0 10px #2ec26a,0 0 26px #1a7a40;letter-spacing:2px}
+  #clStars{font-size:38px;letter-spacing:6px;margin-top:10px;color:#39415e}
+  #clStars .on{color:#ffd34d;text-shadow:0 0 14px rgba(255,211,77,.7)}
+  #clCond{width:min(88vw,330px);margin-top:12px;padding:12px;text-align:left;font-size:12px;line-height:1.9;
+    background:linear-gradient(180deg,#16203a,#111829);border:1px solid #273253;border-radius:13px;color:#73809f}
+  #clCond .ok{color:#9fe8c8;font-weight:700}
+  #clGold{margin-top:11px;font-size:16px;font-weight:800;color:#ffd34d}
+  #clUnlock{margin-top:8px;font-size:13px;font-weight:800;color:#ff9a3c;min-height:18px}
   /* ── 개발자 모드 ───────────────────────────────────────── */
   #dev{position:fixed;inset:0;z-index:120;background:rgba(4,6,14,.95);overflow-y:auto;display:none;
     padding:max(env(safe-area-inset-top),14px) 12px calc(20px + env(safe-area-inset-bottom,0px));
@@ -210,16 +233,18 @@
   </div>
   <div id="dailyTag" class="sub hidden" style="color:#2ec26a;font-weight:800">🎁 오늘 첫 판 — 골드 2배!</div>
   <div class="tabs">
-    <button class="tab on" id="tabGun">무기</button>
+    <button class="tab on" id="tabStage">스테이지</button>
+    <button class="tab" id="tabGun">무기</button>
     <button class="tab" id="tabShop">강화</button>
   </div>
-  <div id="gunWrap">
+  <div id="stageWrap"></div>
+  <div id="gunWrap" style="display:none">
     <div id="gunsel" class="guns"></div>
   </div>
   <div id="shopWrap" style="display:none">
     <div id="shop" class="shop"></div>
   </div>
-  <button class="btn" id="startBtn">시작</button>
+  <button class="btn" id="startBtn">▶ 이어하기</button>
   <button class="btn2" id="howBtn">❓ 조작법 다시 보기</button>
 </div>
 
@@ -255,6 +280,18 @@
   </div>
 </div>
 
+<div id="clear" class="center scroll hidden">
+  <div id="clTitle"></div>
+  <div class="trail"></div>
+  <div id="clStars"></div>
+  <div id="clCond"></div>
+  <div id="clGold"></div>
+  <div id="clUnlock"></div>
+  <button class="btn" id="clNext">다음 스테이지</button>
+  <button class="btn2" id="clRetry">다시 도전</button>
+  <button class="btn2" id="clList">🗺 스테이지 선택</button>
+</div>
+
 <div class="ver" id="verBot"></div>
 <div id="dev"><button class="dvb warn" id="devClose">✕ 개발자 모드 닫기</button>
   <div id="devGate">
@@ -271,7 +308,7 @@
 <script>
 const cv=document.getElementById('game'), ctx=cv.getContext('2d');
 // 버전 표기는 한 곳에서만 — 시작화면/좌하단이 어긋나지 않게
-const VER='v1.3 · 슬롯·게이트 구조물 · 내부 도구';
+const VER='v2.0 · 스테이지 모드 · 1~2장 16단계';
 { const a=document.getElementById('verTop'), b=document.getElementById('verBot');
   if(a) a.textContent=VER; if(b) b.textContent=VER; }
 let W=0,H=0,DPR=1,safeTop=0,prevW=0;
@@ -304,6 +341,16 @@ let state='start';
 let best=+(localStorage.getItem('hanbal_best')||0);
 let bestKills=Math.max(+(localStorage.getItem('hanbal_bestkills')||0), best); // 시즌1 기록으로 해금 승계
 let gold=+(localStorage.getItem('hanbal_gold')||0);
+// 무한 모드 → 스테이지 모드 전환 보상. 기존 기록이 리더보드에서 사라지는 대신 골드로 환산한다.
+let migrateBonus=0;
+try{
+  if(!localStorage.getItem('hanbal_mig')){
+    const ob=+(localStorage.getItem('hanbal_best')||0);
+    if(ob>0){ migrateBonus=Math.min(3000, 100+ob*20); gold+=migrateBonus;
+      localStorage.setItem('hanbal_gold',gold); }
+    localStorage.setItem('hanbal_mig','1');
+  }
+}catch(e){}
 let score=0,kills=0,combo=0,maxCombo=0,lives=3,shield=0,runGold=0,fever=0,feverFlash=0;
 let gunX=0,aimY=0,targets=[],structure=null,bullet=null,parts=[],pops=[],rings=[],bgdots=[];
 let shake=0,hitFlash=0,slow=0,muzzle=0,hitStop=0,comboPulse=0,banner='',bannerT=0,bannerCol='#ff5a6e',perfectT=0,lastTs=0,grazeGlow=0,slotGlow=0,tnow=0;
@@ -407,7 +454,9 @@ function iconInto(el, name, emoji){
 function getUid(){ let u=localStorage.getItem('hanbal_uid'); if(!u){ u='h'+Math.random().toString(36).slice(2,10); localStorage.setItem('hanbal_uid',u); } return u; }
 function getName(){ let n=localStorage.getItem('hanbal_name'); if(!n){ n='플레이어'+getUid().slice(-4); localStorage.setItem('hanbal_name',n); } return n; }
 function esc(s){ return String(s).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])); }
-async function submitScore(){ if(!(window.LB&&window.LB.ready)) return; if(best<=0) return; await window.LB.submit(getUid(), getName(), best, bestKills); }
+async function submitScore(){ if(!(window.LB&&window.LB.ready)) return;
+  const stars=totalStars(); if(stars<=0) return;
+  await window.LB.submit(getUid(), getName(), stars, Object.keys(prog).length); }   // score=별 총합, kills=클리어 수
 async function renderLB(){
   const el=document.getElementById('lbList'); if(!el) return;
   const sl=document.getElementById('lbSeason'); if(sl) sl.textContent=(window.LB&&window.LB.label)||'';
@@ -469,13 +518,15 @@ async function hideBanner(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Pl
 async function showInterstitial(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)) return; const interId=AD_USE_TEST?AD_INTER_TEST:AD_INTER_REAL; if(!interId) return; const A=C.Plugins.AdMob; try{ await A.prepareInterstitial({ adId:interId, isTesting:AD_USE_TEST }); await A.showInterstitial(); }catch(e){} }
 
 // ---- 타이틀 UI ----
-function gunUnlocked(g){ return bestKills>=g.unlock; }
+function gunUnlocked(g){ const i=GUNS.indexOf(g)+1, need=GUN_STAGE[i]||0;
+  return need===0 ? (i===1 || totalStars()>=999) : cleared(need); }   // 레일건(need 0)은 3장에서 해금
 function renderGunSelect(){
   const box=document.getElementById('gunsel'); if(!box) return; box.innerHTML='';
   GUNS.forEach((g,i)=>{
     const lk=!gunUnlocked(g); const el=document.createElement('div');
     el.className='gunbtn'+(i===selGun&&!lk?' sel':'')+(lk?' lock':'');
-    el.innerHTML='<div class="gi"></div><div class="gn">'+g.name+'</div><div class="gd">'+(lk?('🔒 처치 '+g.unlock):g.desc)+'</div>';
+    const need=GUN_STAGE[i+1]||0;
+    el.innerHTML='<div class="gi"></div><div class="gn">'+g.name+'</div><div class="gd">'+(lk?(need?('🔒 '+need+'단계'):'🔒 3장'):g.desc)+'</div>';
     iconInto(el.querySelector('.gi'), 'gun_'+g.id, g.icon);
     if(!lk) el.onclick=()=>{ selGun=i; localStorage.setItem('hanbal_gun',i); renderGunSelect(); };
     box.appendChild(el);
@@ -501,17 +552,19 @@ function refreshTitle(){
   document.getElementById('goldNum').textContent=gold;
   document.getElementById('bestNum').textContent=best;
   document.getElementById('bkNum').textContent=bestKills;
-  document.getElementById('dailyTag').classList.toggle('hidden', !dailyBonus);
-  renderGunSelect(); renderShop();
+  const dt=document.getElementById('dailyTag');
+  if(migrateBonus>0){ dt.classList.remove('hidden');
+    dt.textContent='🎁 이전 기록 보상 — 골드 '+migrateBonus+' 지급'; }
+  else dt.classList.toggle('hidden', !dailyBonus);
+  renderGunSelect(); renderShop(); renderStages();
 }
 function showTab(which){
-  const g=which==='gun';
-  document.getElementById('tabGun').classList.toggle('on',g);
-  document.getElementById('tabShop').classList.toggle('on',!g);
-  document.getElementById('gunWrap').style.display=g?'':'none';
-  document.getElementById('shopWrap').style.display=g?'none':'';
+  [['tabStage','stageWrap'],['tabGun','gunWrap'],['tabShop','shopWrap']].forEach(([t,w])=>{
+    const on=t==='tab'+which;
+    document.getElementById(t).classList.toggle('on',on);
+    document.getElementById(w).style.display=on?'':'none';
+  });
 }
-
 // ---- 튜토리얼 ----
 const TUT=[
   {h:'화면을 탭하면 발사', d:'총은 오른쪽에 고정되어 있고, 탭할 때마다 <b>한 발</b>씩 왼쪽으로 날아갑니다.<br>앞선 총알이 사라져야 다음 발을 쏠 수 있어요.'},
@@ -542,15 +595,54 @@ function tutNext(){
 }
 
 // ---- 런 초기화 ----
-function reset(){
+// ───────── 스테이지 ─────────
+// 난이도를 kills 누적 곡선이 아니라 스테이지별 명시값으로 둔다.
+// 곡선이면 "스테이지 12가 어떤 느낌인지" 계산해야 알지만, 표면 눈으로 보이고 개별 튜닝이 된다.
+//  sr/spd/rng = 솔리드 구조물,  gH/gSpd/gRng = 게이트,  tr/n/tSpd/tRng = 타겟
+//  boss:1 = 마지막 웨이브가 보스,  pf = ★★★에 필요한 PERFECT 횟수
+const STAGES=[
+  // ── 1장 · 심해: 솔리드만. 코어를 가르친다
+  {ch:1,w:5, kinds:['solid'],pats:['sine'],              sr:30,spd:1.0,rng:55,  tr:26,n:1,tSpd:0,  tRng:0,  boss:0,pf:1},
+  {ch:1,w:6, kinds:['solid'],pats:['sine'],              sr:29,spd:1.6,rng:70,  tr:25,n:1,tSpd:0,  tRng:0,  boss:0,pf:2},
+  {ch:1,w:6, kinds:['solid'],pats:['sine','ease'],       sr:28,spd:2.0,rng:85,  tr:24,n:1,tSpd:0,  tRng:0,  boss:0,pf:2},
+  {ch:1,w:7, kinds:['solid'],pats:['ease'],              sr:27,spd:2.3,rng:95,  tr:23,n:1,tSpd:1.4,tRng:60, boss:0,pf:3},
+  {ch:1,w:6, kinds:['solid'],pats:['sine','ease'],       sr:26,spd:2.4,rng:100, tr:22,n:1,tSpd:1.6,tRng:70, boss:1,pf:2},
+  {ch:1,w:7, kinds:['solid'],pats:['sine','ease','center'],sr:25,spd:2.7,rng:105,tr:21,n:1,tSpd:1.9,tRng:80,boss:0,pf:3},
+  {ch:1,w:8, kinds:['solid'],pats:['sine','ease','center'],sr:24,spd:2.9,rng:110,tr:20,n:2,tSpd:2.2,tRng:90,boss:0,pf:3},
+  {ch:1,w:8, kinds:['solid'],pats:['sine','ease','center'],sr:23,spd:3.1,rng:115,tr:19,n:2,tSpd:2.4,tRng:95,boss:1,pf:4},
+  // ── 2장 · 보랏빛: 게이트. 통로가 하나뿐이라 피할 길이 없다
+  {ch:2,w:6, kinds:['gate'],         pats:['sine'],      gH:34,gSpd:1.2,gRng:70, tr:20,n:1,tSpd:1.6,tRng:70, boss:0,pf:2},
+  {ch:2,w:8, kinds:['solid','gate'], pats:['sine','ease'],sr:23,spd:3.0,rng:110,gH:32,gSpd:1.4,gRng:80, tr:19,n:1,tSpd:2.0,tRng:80,boss:0,pf:3},
+  {ch:2,w:8, kinds:['solid','gate'], pats:['ease','center','snap'],sr:22,spd:3.2,rng:115,gH:31,gSpd:1.5,gRng:85,tr:19,n:1,tSpd:2.2,tRng:85,boss:0,pf:3},
+  {ch:2,w:8, kinds:['gate'],         pats:['sine'],      gH:29,gSpd:1.7,gRng:95, tr:18,n:1,tSpd:2.3,tRng:90, boss:0,pf:4},
+  {ch:2,w:8, kinds:['solid','gate'], pats:['center','snap'],sr:21,spd:3.4,rng:120,gH:28,gSpd:1.8,gRng:100,tr:18,n:1,tSpd:2.4,tRng:90,boss:1,pf:3},
+  {ch:2,w:9, kinds:['solid','gate'], pats:['sine','ease','center','snap'],sr:21,spd:3.6,rng:125,gH:27,gSpd:1.9,gRng:105,tr:17,n:2,tSpd:2.6,tRng:95,boss:0,pf:4},
+  {ch:2,w:9, kinds:['solid','gate'], pats:['ease','center','snap'],sr:20,spd:3.8,rng:130,gH:26,gSpd:2.0,gRng:115,tr:17,n:2,tSpd:2.8,tRng:100,boss:0,pf:4},
+  {ch:2,w:10,kinds:['solid','gate'], pats:['sine','ease','center','snap'],sr:20,spd:4.0,rng:135,gH:25,gSpd:2.0,gRng:125,tr:16,n:2,tSpd:3.0,tRng:105,boss:1,pf:5},
+];
+const CHAPTERS=[{n:1,name:'심해',from:1,to:8},{n:2,name:'보랏빛',from:9,to:16}];
+const GUN_STAGE={1:0, 2:5, 3:12, 4:0};            // 무기 해금 스테이지 (레일건은 3장에서)
+let curStage=1, waveNo=0, ST=STAGES[0];
+let stPerfect=0, stDamaged=false;                  // ★★ 노데미지 / ★★★ 정밀 판정용
+let prog={};                                       // {스테이지: 별수}
+try{ prog=JSON.parse(localStorage.getItem('hanbal_prog')||'{}')||{}; }catch(e){ prog={}; }
+function saveProg(){ try{ localStorage.setItem('hanbal_prog',JSON.stringify(prog)); }catch(e){} }
+const starsOf=n=>prog[n]|0;
+const cleared=n=>starsOf(n)>0;
+const unlocked=n=>n===1||cleared(n-1);             // 직전 스테이지를 깨야 열린다
+const totalStars=()=>STAGES.reduce((s,_,i)=>s+starsOf(i+1),0);
+
+function startStage(n){
+  curStage=Math.max(1,Math.min(STAGES.length,n)); ST=STAGES[curStage-1];
   score=0; kills=0; combo=0; maxCombo=0; shake=0; hitFlash=0; slow=0; muzzle=0; hitStop=0; comboPulse=0;
-  banner=''; bannerT=0; perfectT=0; fever=0; feverFlash=0; grazeGlow=0; runGold=0;
+  banner=''; bannerT=0; perfectT=0; fever=0; feverFlash=0; grazeGlow=0; slotGlow=0; runGold=0;
   lives=3+up('life'); shield=up('shield');
+  stPerfect=0; stDamaged=false;
   reviveCount=0; doubledRun=false;
   gunX=W-46; aimY=H*0.52;
   bullet=null; parts=[]; pops=[]; rings=[];
   initBgDots();
-  spawnTarget();
+  waveNo=1; spawnWave();
 }
 function initBgDots(){
   bgdots=[]; const n=46;
@@ -564,57 +656,42 @@ function patOffset(pat, ph){
   if(pat==='snap')   return Math.sin(ph+0.7*Math.sin(ph));          // 비대칭 급이동
   return s;                                                          // sine(기본)
 }
-function pickPattern(){
-  const pool=['sine'];
-  if(kills>=3)  pool.push('ease');
-  if(kills>=7)  pool.push('center');
-  if(kills>=12) pool.push('snap');
-  return pool[Math.floor(Math.random()*pool.length)];
-}
+function pickPattern(){ const p=(ST&&ST.pats)||['sine']; return p[Math.floor(Math.random()*p.length)]; }
 function makeTarget(idx, n, boss){
-  const both = kills>=BOTH_MOVE_FROM || boss || n>1; // 다중일 땐 겹치지 않게 강제 이동
-  const tr=Math.max(14, 26 - kills*0.28);
-  const sc=Math.max(0, kills-BOTH_MOVE_FROM);
-  return { x:52 + idx*46, r: boss? tr+12 : tr, y:aimY, boss:!!boss, hp: boss?3:1, moving:both, phase:Math.random()*6.28, pulse:Math.random()*6.28,
-    speed: both? (boss? Math.min(3.4,1.1+kills*0.05) : Math.min(4.6, 1.3+sc*0.09)):0,
-    range: both? (boss? Math.min(H*0.22,H*0.10+kills*2) : Math.min(H*0.30, H*0.12+sc*3.2)):0 };
+  const tr = boss ? ST.tr+12 : ST.tr;
+  const moving = (ST.tSpd>0) || boss || n>1;        // 다중일 땐 겹치지 않게 강제 이동
+  return { x:52 + idx*46, r:tr, y:aimY, boss:!!boss, hp: boss?3:1, moving, phase:Math.random()*6.28, pulse:Math.random()*6.28,
+    speed: moving ? (boss ? Math.max(1.1, (ST.tSpd||1.6)*0.7) : Math.max(1.0, ST.tSpd||1.6)) : 0,
+    range: moving ? (boss ? Math.min(H*0.22, (ST.tRng||70)*0.7) : Math.min(H*0.30, ST.tRng||70)) : 0 };
 }
-function spawnTarget(){
-  const boss = kills>0 && kills%6===0;               // 6처치마다 보스(여러 방)
+// 한 웨이브를 만든다. 난이도는 전부 ST(현재 스테이지 기술자)에서 온다.
+function spawnWave(){
+  const boss = !!ST.boss && waveNo===ST.w;           // 보스는 스테이지 마지막 웨이브
   if(boss){ targets=[ makeTarget(0,1,true) ]; }
-  else { const n = kills>=MULTI_FROM ? 2 : 1; targets=[]; for(let i=0;i<n;i++) targets.push(makeTarget(i,n,false)); }
-  // 구조물(장애물) — 항상 이동, 총알을 막음. 패턴 랜덤(처치수별 언락)
-  const sr=Math.max(18, 30 - kills*0.22);
-  let kind='solid';
-  if(devForce){ kind=devForce; }            // 개발자 모드 강제 (보스 웨이브여도 적용)
-  else if(!boss){
-    if(kills>=SLOT_FROM && Math.random()<SLOT_CHANCE) kind='slot';
-    else if(kills>=GATE_FROM && Math.random()<GATE_CHANCE) kind='gate';
-  }
+  else { const n=ST.n||1; targets=[]; for(let i=0;i<n;i++) targets.push(makeTarget(i,n,false)); }
+  const kinds=ST.kinds||['solid'];
+  const kind = devForce || (boss ? 'solid' : kinds[Math.floor(Math.random()*kinds.length)]);
+  const sr = ST.sr || 24;
   if(kind==='gate'){
-    const over=Math.max(0, kills-GATE_FROM);
     structure={ kind:'gate', x:W*0.52, r:sr, y:aimY, spin:0, pat:'sine', phase:Math.random()*6.28,
-      halfW: 17,                                        // 기둥 두께의 절반
-      gateH: Math.max(GATE_MIN_H, 34 - over*0.35),      // 통로 반높이 — 캐논도 지나갈 수 있게 바닥값
-      speed: Math.min(2.0, 1.3 + over*0.025),
-      range: Math.min(H*0.20, 70 + over*1.5) };
-    banner='통로는 하나!'; bannerT=1.1; bannerCol='#4de08a';
+      halfW:17,                                       // 기둥 두께의 절반
+      gateH:Math.max(GATE_MIN_H, ST.gH||30),          // 통로 반높이 — 캐논도 지나갈 수 있게 바닥값
+      speed:ST.gSpd||1.4, range:Math.min(H*0.20, ST.gRng||80) };
+    if(waveNo===1) { banner='통로는 하나!'; bannerT=1.1; bannerCol='#4de08a'; }
   } else if(kind==='slot'){
-    const over=kills-SLOT_FROM;
-    // 슬롯은 코어를 크게 키운다. 채널 최소 높이가 캐논 탄에 묶여 있어서(SLOT_MIN_H),
-    // 보통 크기 코어에 뚫으면 채널이 코어를 다 먹어 '통로'로 안 보이고 통과각도 너무 넓어진다.
+    // 슬롯은 코어를 키운다. 채널 최소 높이가 캐논 탄반경에 묶여 있어 보통 크기에 뚫으면
+    // 채널이 코어를 다 먹어 '통로'로 안 보이고 통과각도 너무 넓어진다.
     structure={ kind:'slot', x:W*0.52, r:sr*1.7, y:aimY, phase:0, pat:'sine', spin:Math.random()*6.28,
-      speed:0, range:0,                                  // 수직 고정 — 조준선 위에 그대로 선다
-      spinSpd: Math.min(3.2, 1.35 + over*0.035),         // 난이도는 회전 속도와
-      slotH: Math.max(SLOT_MIN_H, 22 - over*0.22) };     // 채널 폭으로만 준다
-    banner='가운데로 통과!'; bannerT=1.1; bannerCol='#4de08a';
+      speed:0, range:0, spinSpd:ST.sSpin||1.6, slotH:Math.max(SLOT_MIN_H, ST.sH||20) };
+    if(waveNo===1) { banner='가운데로 통과!'; bannerT=1.1; bannerCol='#4de08a'; }
   } else {
     structure={ kind:'solid', x:W*0.52, r:sr, y:aimY, phase:Math.random()*6.28, pat:pickPattern(), spin:0,
-      speed: Math.min(5.4, 1.7 + kills*0.075),
-      range: sr + Math.min(H*0.24, 40 + kills*2.4) };
+      speed:ST.spd||2.0, range:sr + Math.min(H*0.24, ST.rng||90) };
   }
   if(boss){ banner='⚠ BOSS'; bannerT=1.0; bannerCol='#ffd34d'; }
 }
+// 웨이브를 깼을 때만 진행. 실패(미스·막힘)는 같은 웨이브를 다시 세운다.
+function nextWave(){ waveNo++; if(waveNo>ST.w){ stageClear(); return; } spawnWave(); }
 // 지금 쏘면 채널을 통과할 수 있는 각도인가 — 채널이 기울수록 유효 통로가 좁아진다
 function slotAligned(){
   if(!structure || structure.kind!=='slot') return false;
@@ -628,18 +705,18 @@ function relayout(){
     structure.x=W*0.52;
     if(structure.kind==='slot'){ structure.range=0; structure.y=aimY; }   // 슬롯은 수직 고정
     else if(structure.kind==='gate'){
-      structure.range=Math.min(H*0.20, 70 + Math.max(0,kills-GATE_FROM)*1.5);
+      structure.range=Math.min(H*0.20, ST.gRng||80);
       structure.y=aimY + patOffset(structure.pat, structure.phase)*structure.range;
     }
     else {
-      structure.range=structure.r + Math.min(H*0.24, 40 + kills*2.4);
+      structure.range=structure.r + Math.min(H*0.24, ST.rng||90);
       structure.y=aimY + patOffset(structure.pat, structure.phase)*structure.range;
     }
   }
-  const sc=Math.max(0, kills-BOTH_MOVE_FROM);
+  const tR=ST.tRng||70;
   for(const t of targets){
     if(t.moving){
-      t.range = t.boss ? Math.min(H*0.22, H*0.10 + kills*2) : Math.min(H*0.30, H*0.12 + sc*3.2);
+      t.range = t.boss ? Math.min(H*0.22, tR*0.7) : Math.min(H*0.30, tR);
       t.y = aimY + Math.sin(t.phase)*t.range;
     } else t.y = aimY;
   }
@@ -684,18 +761,18 @@ function hit(perfect, tgt){
   const mulTag = mul>1 ? ' x'+mul : '';
   pops.push({x:tx,y:ty-tgt.r-8,txt:(perfect?'PERFECT +'+gain:(boss?'BOSS +'+gain:'+'+gain))+mulTag,col:big?'#ffd34d':'#7dffb0',life:1,big:big});
   shake=Math.min(shake+(big?0.5:0.3),0.9); hitFlash=big?0.35:0.2; hitStop=big?0.09:0.05;
-  if(perfect){ slow=0.5; perfectT=0.9; sfxPerfect(); } else sfxHit();
+  if(perfect){ slow=0.5; perfectT=0.9; stPerfect++; sfxPerfect(); } else sfxHit();
   if(boss){ banner='BOSS 격파! +'+gain; bannerT=0.9; bannerCol='#ffd34d'; }
   targets = targets.filter(t=>t!==tgt);   // 맞힌 타겟만 제거
   bullet=null;
-  if(targets.length===0) spawnTarget();    // 웨이브 다 처리하면 새 웨이브
+  if(targets.length===0) nextWave();       // 웨이브를 깼다 → 다음 웨이브(마지막이면 클리어)
 }
 function breakCombo(){ combo = up('combo') ? Math.floor(combo/2) : 0; fever=0; }
 function miss(){
-  breakCombo(); if(!devGod) lives--; sfxMiss(); shake=Math.min(shake+0.25,0.9); hitFlash=0; banner='MISS'; bannerT=0.6; bannerCol='#ff5a6e';
+  breakCombo(); stDamaged=true; if(!devGod) lives--; sfxMiss(); shake=Math.min(shake+0.25,0.9); hitFlash=0; banner='MISS'; bannerT=0.6; bannerCol='#ff5a6e';
   bullet=null;
   if(lives<=0){ gameOver(); return; }
-  spawnTarget();
+  spawnWave();
 }
 function blocked(){
   const bx=bullet?bullet.x:structure.x;
@@ -704,38 +781,63 @@ function blocked(){
   if(shield>0){   // 보호막: 막힘 1회를 목숨 대신 소모 (콤보도 지킨다)
     shield--; sfxShield(); banner='🛡️ 보호막!'; bannerT=0.7; bannerCol='#9fe8c8';
     rings.push({x:bx,y:aimY,r:10,max:70,life:1,col:'#9fe8c8'});
-    spawnTarget(); return;
+    spawnWave(); return;
   }
-  breakCombo(); if(!devGod) lives--; sfxMiss(); shake=Math.min(shake+0.3,0.9); banner='BLOCKED'; bannerT=0.6; bannerCol='#ff5a6e';
+  breakCombo(); stDamaged=true; if(!devGod) lives--; sfxMiss(); shake=Math.min(shake+0.3,0.9); banner='BLOCKED'; bannerT=0.6; bannerCol='#ff5a6e';
   if(lives<=0){ gameOver(); return; }
-  spawnTarget();
+  spawnWave();
 }
-function gameOver(){
-  state='over';
+function payout(){                       // 런 중 모은 골드를 지갑으로
   const wasDaily=dailyBonus;
   gold+=runGold; saveGold(); consumeDaily(); checkDaily();
+  return wasDaily;
+}
+// 스테이지 클리어 — 이 게임에 없던 '승리' 상태
+function stageClear(){
+  state='clear';
+  const wasDaily=payout();
+  let st=1;                                      // ★ 클리어
+  if(!stDamaged) st++;                           // ★★ 노데미지
+  if(stPerfect>=ST.pf) st++;                     // ★★★ 정밀
+  const prev=starsOf(curStage), first=prev===0, gained=Math.max(0,st-prev);
+  if(st>prev){ prog[curStage]=st; saveProg(); }
+  const bonus=(first?60+curStage*12:0) + gained*40;   // 첫 클리어 + 늘어난 별만큼
+  if(bonus>0){ gold+=bonus; saveGold(); }
   if(score>best){ best=score; localStorage.setItem('hanbal_best',best); }
-  if(kills>bestKills){ bestKills=kills; localStorage.setItem('hanbal_bestkills',bestKills); }
-  document.getElementById('ovScoreK').textContent='점수';   // 2배를 받았던 직전 판의 라벨을 되돌린다
+  const unlockedGun=GUNS.findIndex((g,i)=>GUN_STAGE[i+1]===curStage);
+  document.getElementById('clTitle').textContent='스테이지 '+curStage+' 클리어!';
+  document.getElementById('clStars').innerHTML=[0,1,2].map(i=>'<span class="'+(i<st?'on':'')+'">★</span>').join('');
+  document.getElementById('clCond').innerHTML=
+    '<div class="'+(true?'ok':'')+'">★ 클리어</div>'+
+    '<div class="'+(!stDamaged?'ok':'')+'">★★ 목숨 유지 '+(stDamaged?'(실패)':'')+'</div>'+
+    '<div class="'+(stPerfect>=ST.pf?'ok':'')+'">★★★ PERFECT '+stPerfect+' / '+ST.pf+'</div>';
+  document.getElementById('clGold').textContent='🪙 +'+(runGold+bonus)+(wasDaily?' ×2':'')+(bonus?'  (보너스 '+bonus+')':'');
+  document.getElementById('clNext').classList.toggle('hidden', curStage>=STAGES.length);
+  document.getElementById('clUnlock').textContent = unlockedGun>=0 ? ('🔓 '+GUNS[unlockedGun].icon+' '+GUNS[unlockedGun].name+' 해금!') : '';
+  show('clear'); interCount++; if(interCount%3===0) showInterstitial(); showBanner();
+}
+// 스테이지 실패 — 그 스테이지만 다시 한다. 처음부터가 아니다.
+function gameOver(){
+  state='over';
+  const wasDaily=payout();
+  if(score>best){ best=score; localStorage.setItem('hanbal_best',best); }
+  document.getElementById('ovScoreK').textContent='점수';
   document.getElementById('ovScore').textContent=score;
-  document.getElementById('ovKills').textContent=kills;
+  document.getElementById('ovKills').textContent=(waveNo-1)+' / '+ST.w;
   document.getElementById('ovCombo').textContent=maxCombo;
-  document.getElementById('ovBest').textContent=best;
+  document.getElementById('ovBest').textContent='스테이지 '+curStage;
   document.getElementById('ovGold').textContent='+'+runGold+(wasDaily?' ×2':'');
   const rb=document.getElementById('reviveBtn');
-  rb.classList.toggle('hidden', reviveCount>=MAX_REVIVE);      // 부활은 판당 최대 5회
-  rb.textContent='🎬 광고 보고 부활 (남은 '+(MAX_REVIVE-reviveCount)+'회)';
-  document.getElementById('dblBtn').classList.toggle('hidden', doubledRun);    // 2배도 판당 1회
-  document.getElementById('over').classList.remove('hidden');
-  document.getElementById('over').classList.add('on');
-  interCount++; if(interCount%3===0) showInterstitial();   // 3판마다 전면광고
-  showBanner();   // 결과 화면에 배너
-  submitScore().then(renderLB).catch(()=>renderLB()); // 리더보드 제출·갱신
+  rb.classList.toggle('hidden', reviveCount>=MAX_REVIVE);
+  rb.textContent='🎬 광고 보고 이어하기 (남은 '+(MAX_REVIVE-reviveCount)+'회)';
+  document.getElementById('dblBtn').classList.add('hidden');   // 스테이지 모드엔 점수 2배 없음
+  show('over');
+  interCount++; if(interCount%3===0) showInterstitial();
+  showBanner();
 }
 function reviveGame(){ if(reviveCount>=MAX_REVIVE) return; playAd(()=>{
-  reviveCount++; lives=2; combo=0; fever=0; bullet=null; parts=[]; pops=[]; rings=[]; targets=[]; spawnTarget();
-  state='play'; hideBanner();
-  document.getElementById('over').classList.add('hidden'); document.getElementById('over').classList.remove('on');
+  reviveCount++; lives=2; combo=0; fever=0; bullet=null; parts=[]; pops=[]; rings=[]; targets=[]; spawnWave();
+  state='play'; hideBanner(); show(null);
   lastTs=performance.now();
 }); }
 function doubleScore(){ if(doubledRun) return; playAd(()=>{
@@ -748,27 +850,48 @@ function doubleScore(){ if(doubledRun) return; playAd(()=>{
   document.getElementById('dblBtn').classList.add('hidden');
   submitScore().then(renderLB).catch(()=>renderLB()); // 2배 점수 리더보드 반영
 }); }
-function startGame(){
-  if(!gunUnlocked(GUNS[selGun])) selGun=0;   // 잠긴 총이면 기본으로
-  if(!localStorage.getItem('hanbal_tut')){ showTutorial(false); return; }  // 첫 플레이는 튜토리얼 먼저
-  beginRun();
+// 화면 전환 — 한 번에 하나만 보이게
+function show(which){
+  [['start','start'],['over','over'],['clear','clear']].forEach(([id])=>{
+    const e=document.getElementById(id);
+    e.classList.toggle('hidden', id!==which); e.classList.toggle('on', id===which);
+  });
 }
-function beginRun(){
-  reset(); state='play'; hideBanner();
-  document.getElementById('start').classList.add('hidden');
-  document.getElementById('start').classList.remove('on');
-  document.getElementById('over').classList.add('hidden');
-  document.getElementById('over').classList.remove('on');
+function renderStages(){
+  const box=document.getElementById('stageWrap'); if(!box) return; box.innerHTML='';
+  CHAPTERS.forEach(c=>{
+    const wrap=document.createElement('div'); wrap.className='chap';
+    const done=Array.from({length:c.to-c.from+1},(_,k)=>cleared(c.from+k)).filter(Boolean).length;
+    wrap.innerHTML='<div class="ct">'+c.n+'장 · '+c.name+'  '+done+'/'+(c.to-c.from+1)+'</div>';
+    const g=document.createElement('div'); g.className='stgrid';
+    for(let n=c.from;n<=c.to;n++){
+      const el=document.createElement('div'); const open=unlocked(n), st=starsOf(n);
+      el.className='stg'+(st>0?' done':'')+(open?'':' lock');
+      const stars=[0,1,2].map(k=>'<span class="'+(k<st?'f':'e')+'">★</span>').join('');
+      el.innerHTML='<div class="sn">'+(open?n:'🔒')+'</div><div class="ss">'+(open?stars:'')+'</div>';
+      if(open) el.onclick=()=>beginStage(n);
+      g.appendChild(el);
+    }
+    wrap.appendChild(g); box.appendChild(wrap);
+  });
+}
+function beginStage(n){
+  if(!unlocked(n)) return;
+  if(!gunUnlocked(GUNS[selGun])) selGun=0;
+  pendingStage=n;
+  if(!localStorage.getItem('hanbal_tut')){ showTutorial(false); return; }  // 첫 플레이는 튜토리얼 먼저
+  launchStage(n);
+}
+function launchStage(n){
+  startStage(n); state='play'; hideBanner(); show(null);
   lastTs=performance.now();
 }
-function toTitle(){   // 오버 화면 → 타이틀(무기/강화 변경)
-  document.getElementById('over').classList.add('hidden');
-  document.getElementById('over').classList.remove('on');
-  document.getElementById('start').classList.remove('hidden');
-  document.getElementById('start').classList.add('on');
-  state='start'; refreshTitle(); showBanner();
+let pendingStage=1;
+function startGame(){ beginStage(pendingStage); }        // 튜토리얼 종료 후 복귀 지점
+function beginRun(){ launchStage(pendingStage); }
+function toTitle(){
+  state='start'; show('start'); refreshTitle(); showBanner();
 }
-
 // ---- 개발자 모드 ----
 // 타이틀 클릭 → 비밀번호. 한 번 인증하면 그 세션 동안은 바로 열린다.
 // prompt()는 안드로이드 WebView나 '추가 대화상자 차단'이 켜진 브라우저에서 조용히 무시된다
@@ -894,13 +1017,19 @@ setInterval(()=>{
 // ---- input ----
 function tap(){ if(state==='play') fire(); }
 cv.addEventListener('pointerdown',e=>{ e.preventDefault(); if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}} tap(); },{passive:false});
-document.getElementById('startBtn').onclick=startGame;
-document.getElementById('retryBtn').onclick=startGame;
+document.getElementById('startBtn').onclick=()=>{
+  let n=1; for(let i=1;i<=STAGES.length;i++) if(unlocked(i)) n=i;   // 가장 앞선 해금 단계
+  beginStage(n); };
+document.getElementById('retryBtn').onclick=()=>beginStage(curStage);
 document.getElementById('toTitleBtn').onclick=toTitle;
 document.getElementById('reviveBtn').onclick=reviveGame;
 document.getElementById('dblBtn').onclick=doubleScore;
-document.getElementById('tabGun').onclick=()=>showTab('gun');
-document.getElementById('tabShop').onclick=()=>showTab('shop');
+document.getElementById('tabStage').onclick=()=>showTab('Stage');
+document.getElementById('tabGun').onclick=()=>showTab('Gun');
+document.getElementById('tabShop').onclick=()=>showTab('Shop');
+document.getElementById('clNext').onclick=()=>beginStage(Math.min(STAGES.length,curStage+1));
+document.getElementById('clRetry').onclick=()=>beginStage(curStage);
+document.getElementById('clList').onclick=toTitle;
 document.getElementById('howBtn').onclick=()=>showTutorial(true);
 document.getElementById('tutNext').onclick=tutNext;
 document.getElementById('title').onclick=devTryOpen;
