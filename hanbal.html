@@ -51,6 +51,11 @@
   .center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#eaf2ff;pointer-events:none}
   .center.on{pointer-events:auto}
   .scroll{justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),16px) 0 34px}
+  /* 네이티브 AdMob 배너는 WebView 위에 따로 그려진다 — 웹은 그 존재를 모르므로
+     배너가 떠 있는 동안에만 그 높이(50dp + 제스처바)만큼 아래를 비워둔다 */
+  body.adbanner .scroll{padding-bottom:calc(34px + 56px + env(safe-area-inset-bottom,0px))}
+  body.adbanner #dev{padding-bottom:calc(20px + 56px + env(safe-area-inset-bottom,0px))}
+  body.adbanner .ver{bottom:calc(6px + 56px + env(safe-area-inset-bottom,0px))}
   /* ── 타이틀 ───────────────────────────────────────────── */
   /* letter-spacing 은 마지막 글자 뒤에도 붙어서 가운데 정렬이 왼쪽으로 밀린다 → 절반만큼 되돌린다 */
   h1{font-size:38px;margin:0 -5px 0 0;letter-spacing:5px;font-weight:900;color:#eafcff;
@@ -308,7 +313,7 @@
 <script>
 const cv=document.getElementById('game'), ctx=cv.getContext('2d');
 // 버전 표기는 한 곳에서만 — 시작화면/좌하단이 어긋나지 않게
-const VER='v2.0 · 스테이지 모드 · 1~2장 16단계';
+const VER='v2.1 · 스테이지 모드 · 배너 여백 보정';
 { const a=document.getElementById('verTop'), b=document.getElementById('verBot');
   if(a) a.textContent=VER; if(b) b.textContent=VER; }
 let W=0,H=0,DPR=1,safeTop=0,prevW=0;
@@ -513,8 +518,8 @@ async function playAd(onReward){
 let bannerShown=false, bannerCreated=false;
 // 제스처 바(홈 인디케이터) 높이만큼 배너를 띄운다. viewport-fit=cover 필요.
 function safeBottomInset(){ try{ const p=document.createElement('div'); p.style.cssText='position:fixed;left:0;bottom:0;width:0;height:env(safe-area-inset-bottom,0px);visibility:hidden;pointer-events:none'; document.body.appendChild(p); const h=Math.round(p.getBoundingClientRect().height); p.remove(); return h; }catch(e){ return 0; } }
-async function showBanner(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)||bannerShown) return; const bannerId=AD_USE_TEST?AD_BANNER_TEST:AD_BANNER_REAL; if(!bannerId) return; bannerShown=true; const _A=C.Plugins.AdMob; const _opt={ adId: bannerId, adSize:'BANNER', position:'BOTTOM_CENTER', margin:safeBottomInset(), isTesting:AD_USE_TEST }; try{ if(bannerCreated){ try{ await _A.resumeBanner(); }catch(_e){ await _A.showBanner(_opt); } } else { await _A.showBanner(_opt); bannerCreated=true; } }catch(e){ bannerShown=false; } }
-async function hideBanner(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)||!bannerShown) return; bannerShown=false; try{ await C.Plugins.AdMob.hideBanner(); }catch(e){} }
+async function showBanner(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)||bannerShown) return; const bannerId=AD_USE_TEST?AD_BANNER_TEST:AD_BANNER_REAL; if(!bannerId) return; bannerShown=true; document.body.classList.add('adbanner'); const _A=C.Plugins.AdMob; const _opt={ adId: bannerId, adSize:'BANNER', position:'BOTTOM_CENTER', margin:safeBottomInset(), isTesting:AD_USE_TEST }; try{ if(bannerCreated){ try{ await _A.resumeBanner(); }catch(_e){ await _A.showBanner(_opt); } } else { await _A.showBanner(_opt); bannerCreated=true; } }catch(e){ bannerShown=false; document.body.classList.remove('adbanner'); } }
+async function hideBanner(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)||!bannerShown) return; bannerShown=false; document.body.classList.remove('adbanner'); try{ await C.Plugins.AdMob.hideBanner(); }catch(e){} }
 async function showInterstitial(){ const C=window.Capacitor; if(!admobReady||!(C&&C.Plugins&&C.Plugins.AdMob)) return; const interId=AD_USE_TEST?AD_INTER_TEST:AD_INTER_REAL; if(!interId) return; const A=C.Plugins.AdMob; try{ await A.prepareInterstitial({ adId:interId, isTesting:AD_USE_TEST }); await A.showInterstitial(); }catch(e){} }
 
 // ---- 타이틀 UI ----
