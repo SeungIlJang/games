@@ -1,0 +1,2 @@
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./web-CSq6tQlB.js","./dist-DWDprDZE.js"])))=>i.map(i=>d[i]);
+import{t as e}from"./index-I-GIUBj4.js";import{n as t}from"./dist-DWDprDZE.js";var n=t(`Preferences`,{web:()=>e(()=>import(`./web-CSq6tQlB.js`).then(e=>new e.PreferencesWeb),__vite__mapDeps([0,1]),import.meta.url)});export{n as Preferences};
