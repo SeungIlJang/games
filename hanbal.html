@@ -243,7 +243,7 @@
 <script>
 const cv=document.getElementById('game'), ctx=cv.getContext('2d');
 // 버전 표기는 한 곳에서만 — 시작화면/좌하단이 어긋나지 않게
-const VER='v1.2 · 슬롯·게이트 구조물 추가';
+const VER='v1.3 · 슬롯·게이트 구조물 · 내부 도구';
 { const a=document.getElementById('verTop'), b=document.getElementById('verBot');
   if(a) a.textContent=VER; if(b) b.textContent=VER; }
 let W=0,H=0,DPR=1,safeTop=0,prevW=0;
@@ -742,15 +742,12 @@ function toTitle(){   // 오버 화면 → 타이틀(무기/강화 변경)
 }
 
 // ---- 개발자 모드 ----
-// 타이틀 3연타(2초 내) → 비밀번호. 한 번 눌렀다고 프롬프트가 뜨면 실사용자에게 곤란해서 연타로 둔다.
+// 타이틀 클릭 → 비밀번호. 한 번 인증하면 그 세션 동안은 바로 열린다.
 const DEV_PASS='799879';
 let devOn=false, devGod=false, devAuto=false, devSlowF=1, devForce='';
-let _tapN=0, _tapT=0;
 function devTryOpen(){
-  const t=performance.now(); if(t-_tapT>2000) _tapN=0; _tapT=t;
-  if(++_tapN<3) return; _tapN=0;
   if(devOn){ openDev(); return; }
-  const p=prompt('개발자 모드 비밀번호'); if(p===null) return;
+  const p=prompt('개발자 모드 비밀번호'); if(p===null) return;   // 취소면 조용히 종료
   if(p!==DEV_PASS){ alert('비밀번호가 틀렸습니다'); return; }
   devOn=true; openDev();
 }
