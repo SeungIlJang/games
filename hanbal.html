@@ -51,38 +51,103 @@
   .center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#eaf2ff;pointer-events:none}
   .center.on{pointer-events:auto}
   .scroll{justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),16px) 0 34px}
-  h1{font-size:34px;margin:0;letter-spacing:3px;color:#eafcff;text-shadow:0 0 10px #ff9a3c,0 0 26px #ff5a2c}
+  /* ── 타이틀 ───────────────────────────────────────────── */
+  /* letter-spacing 은 마지막 글자 뒤에도 붙어서 가운데 정렬이 왼쪽으로 밀린다 → 절반만큼 되돌린다 */
+  h1{font-size:38px;margin:0 -5px 0 0;letter-spacing:5px;font-weight:900;color:#eafcff;
+     text-shadow:0 0 10px #ff9a3c,0 0 26px #ff5a2c}
+  /* 타이틀 밑을 가로지르는 탄환 트레일 — 로고(hanbal_logo)와 같은 아이덴티티 */
+  .trail{position:relative;width:min(70vw,250px);height:3px;border-radius:2px;margin:13px 0 0;
+    background:linear-gradient(90deg,rgba(255,242,160,.95) 0,rgba(255,211,77,.55) 22%,rgba(255,211,77,.18) 58%,rgba(255,211,77,0) 100%)}
+  .trail::before{content:'';position:absolute;left:-4px;top:50%;transform:translateY(-50%);
+    width:9px;height:9px;border-radius:50%;background:#fff;box-shadow:0 0 10px #ffd34d,0 0 22px #ff9a3c}
+  .verTop{font-size:10.5px;color:#49537a;margin-top:11px;letter-spacing:.2px}
+  /* 내용이 짧으면 세로 가운데로, 길어지면 위에서부터 — auto 마진이라 넘쳐도 잘리지 않는다 */
+  #start::before,#start::after{content:'';display:block;margin-top:auto}
   .sub{opacity:.8;font-size:14px;margin-top:8px;line-height:1.6}
-  .btn{margin-top:18px;background:#ff7a2c;color:#fff;border:none;border-radius:16px;padding:14px 32px;font-size:18px;font-weight:800;box-shadow:0 6px 0 #b8410f;cursor:pointer;pointer-events:auto}
-  .btn:active{transform:translateY(3px);box-shadow:0 3px 0 #b8410f}
-  .hidden{display:none}
+  /* ── 기록 패널 ─────────────────────────────────────────── */
+  .stats{display:flex;margin-top:15px;width:min(88vw,330px);padding:11px 2px;
+    background:linear-gradient(180deg,rgba(23,31,56,.92),rgba(14,19,36,.92));
+    border:1px solid #273253;border-radius:15px;box-shadow:0 3px 16px rgba(0,0,0,.4)}
+  .stat{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+  .stat+.stat{border-left:1px solid #222c49}
+  .stat .k{font-size:10px;color:#73809f;letter-spacing:.3px}
+  .stat .v{font-size:20px;font-weight:900;color:#dfe8ff;line-height:1}
+  .stat.g .v{color:#ffd34d;text-shadow:0 0 13px rgba(255,211,77,.5)}
+  #dailyTag{width:fit-content;margin:11px auto 0;padding:5px 15px;font-size:12.5px;opacity:1;
+    background:rgba(46,194,106,.13);border:1px solid rgba(46,194,106,.42);border-radius:999px}
+  /* ── 버튼 ─────────────────────────────────────────────── */
+  .btn{margin-top:18px;background:linear-gradient(180deg,#ff9a4a,#ff6f1e);color:#fff;border:none;
+    border-radius:16px;padding:14px 34px;font-size:18px;font-weight:900;letter-spacing:.5px;
+    box-shadow:0 5px 0 #b8410f;cursor:pointer;pointer-events:auto}
+  .btn:active{transform:translateY(3px);box-shadow:0 2px 0 #b8410f}
+  @keyframes startGlow{0%,100%{box-shadow:0 5px 0 #b8410f,0 7px 20px rgba(255,110,30,.32)}
+                       50%   {box-shadow:0 5px 0 #b8410f,0 9px 30px rgba(255,150,70,.6)}}
+  #startBtn{margin-top:20px;padding:16px 54px;font-size:20px;letter-spacing:3px;
+    animation:startGlow 2.6s ease-in-out infinite}
+  #startBtn:active{animation:none}
+  .btn2{margin-top:11px;background:#1b2340;color:#a9bae4;border:1px solid #2a3454;border-radius:12px;
+    padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;pointer-events:auto}
+  .btn2:active{transform:translateY(2px)}
+  .hidden{display:none !important}
   .big{font-size:30px;font-weight:800}
   .ver{position:absolute;left:8px;bottom:calc(6px + env(safe-area-inset-bottom,0px));font-size:10px;color:#4a5578}
-  .btn2{margin-top:10px;background:#2a3350;color:#cfe0ff;border:none;border-radius:13px;padding:10px 20px;font-size:14px;font-weight:700;cursor:pointer;pointer-events:auto}
-  .guns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px;max-width:340px;pointer-events:auto}
-  .gunbtn{width:100px;background:#141c30;border:2px solid #263154;border-radius:12px;padding:8px 6px;color:#dfe8ff;font-size:12px;cursor:pointer;line-height:1.35}
-  .gunbtn .gi{font-size:22px}
-  .gunbtn .gn{font-weight:800;font-size:13px}
-  .gunbtn .gd{opacity:.6;font-size:10px}
-  .gunbtn.sel{border-color:#ff9a3c;box-shadow:0 0 12px rgba(255,140,60,.5);background:#25202a}
+  /* ── 무기 선택 ─────────────────────────────────────────── */
+  .guns{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:13px;
+    width:min(88vw,330px);pointer-events:auto}
+  .gunbtn{position:relative;background:linear-gradient(180deg,#16203a,#111829);border:1.5px solid #273253;
+    border-radius:14px;padding:11px 8px 10px;color:#dfe8ff;font-size:12px;cursor:pointer;line-height:1.35;
+    transition:border-color .16s,box-shadow .16s,background .16s}
+  .gunbtn .gi{font-size:38px;line-height:1;height:42px;display:flex;align-items:center;justify-content:center}
+  .gunbtn .gn{font-weight:800;font-size:13.5px;margin-top:5px}
+  .gunbtn .gd{opacity:.55;font-size:10px;margin-top:1px}
+  .gunbtn.sel{border-color:#ff9a3c;background:linear-gradient(180deg,#2b2133,#1a1626);
+    box-shadow:0 0 0 1px rgba(255,154,60,.3),0 0 18px rgba(255,140,60,.4)}
   .gunbtn.lock{opacity:.5;filter:grayscale(.7);cursor:not-allowed}
-  /* 탭 */
-  .tabs{display:flex;gap:6px;justify-content:center;margin-top:12px;pointer-events:auto}
-  .tab{background:#20263c;color:#9fb4e8;border:1px solid #2b3350;border-radius:9px;padding:7px 18px;font-size:13px;font-weight:800;cursor:pointer}
-  .tab.on{background:#ff7a2c;color:#fff;border-color:#ff7a2c}
-  /* 강화 상점 */
-  .shop{display:flex;flex-direction:column;gap:7px;margin-top:10px;width:min(90vw,340px);pointer-events:auto}
-  .up{display:flex;align-items:center;gap:10px;background:#141c30;border:1px solid #263154;border-radius:12px;padding:9px 11px;text-align:left}
-  .up .ui{font-size:21px;width:26px;text-align:center}
+  /* ── 탭 (세그먼트 컨트롤) ──────────────────────────────── */
+  .tabs{display:inline-flex;gap:4px;margin-top:15px;padding:4px;background:#121a2e;
+    border:1px solid #242e4d;border-radius:13px;pointer-events:auto}
+  .tab{background:transparent;color:#8a9ac4;border:none;border-radius:10px;padding:8px 26px;
+    font-size:13.5px;font-weight:800;cursor:pointer;transition:background .16s,color .16s}
+  .tab.on{background:linear-gradient(180deg,#ff8f45,#ff6f1e);color:#fff;
+    box-shadow:0 2px 9px rgba(255,122,44,.45)}
+  /* ── 강화 상점 ─────────────────────────────────────────── */
+  .shop{display:flex;flex-direction:column;gap:8px;margin-top:13px;width:min(88vw,330px);pointer-events:auto}
+  .up{display:flex;align-items:center;gap:11px;background:linear-gradient(180deg,#16203a,#111829);
+    border:1px solid #273253;border-radius:13px;padding:10px 12px;text-align:left}
+  .up .ui{font-size:32px;width:40px;text-align:center;line-height:1}   /* width도 같이 키워야 1em 이미지가 안 잘린다 */
   .up .ut{flex:1;line-height:1.3}
   .up .un{font-weight:800;font-size:13px;color:#dfe8ff}
   .up .ud{font-size:10.5px;opacity:.62;color:#cfe0ff}
   .up .ulv{font-size:10px;color:#ffd34d;font-weight:800}
-  .up button{background:#2ec26a;color:#fff;border:none;border-radius:9px;padding:8px 11px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;box-shadow:0 3px 0 #1a7a40}
+  .up button{background:#2ec26a;color:#fff;border:none;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;box-shadow:0 3px 0 #1a7a40}
   .up button:active{transform:translateY(2px);box-shadow:0 1px 0 #1a7a40}
   .up button.no{background:#39415e;box-shadow:0 3px 0 #252b40;color:#8d99bb}
   .up button.max{background:#c9a227;box-shadow:0 3px 0 #8a6f16}
   .gold{font-size:19px;font-weight:800;color:#ffd34d;margin-top:6px}
+  /* ── 결과 화면 ─────────────────────────────────────────── */
+  /* 시작화면과 같은 언어: 트레일 모티프 + .stats 패널 + 카드 그라데이션 */
+  #over::before,#over::after{content:'';display:block;margin-top:auto}
+  /* 타이틀과 달리 뒤에 마지막 플레이 프레임(탄환·파티클·팝업)이 남아 패널과 섞인다 → 살짝 눌러준다 */
+  #over{background:rgba(7,10,22,.62)}
+  .ohead{font-size:31px;font-weight:900;letter-spacing:4px;margin:0 -4px 0 0;color:#ffdccf;
+    text-shadow:0 0 10px #ff5a3c,0 0 26px #b83418}
+  .trail.red{background:linear-gradient(90deg,rgba(255,160,130,.95) 0,rgba(255,90,60,.5) 22%,rgba(255,90,60,.16) 58%,rgba(255,90,60,0) 100%)}
+  .trail.red::before{box-shadow:0 0 10px #ff6a4a,0 0 22px #ff5a3c}
+  .orow{display:flex;gap:9px;margin-top:11px;width:min(88vw,330px)}
+  .orow>span{flex:1;padding:9px 6px;font-size:12px;color:#8a97ba;border-radius:12px;
+    background:linear-gradient(180deg,#16203a,#111829);border:1px solid #273253}
+  .orow b{font-size:15px;font-weight:900;margin-left:3px}
+  .obest b{color:#dfe8ff}
+  .ogold b{color:#ffd34d;text-shadow:0 0 12px rgba(255,211,77,.5)}
+  .btn.green{background:linear-gradient(180deg,#43d47f,#22a95c);box-shadow:0 5px 0 #15703a}
+  .btn.green:active{box-shadow:0 2px 0 #15703a}
+  .panel{margin-top:15px;width:min(88vw,330px);padding:12px 13px;pointer-events:auto;
+    background:linear-gradient(180deg,rgba(23,31,56,.92),rgba(14,19,36,.92));
+    border:1px solid #273253;border-radius:15px;box-shadow:0 3px 16px rgba(0,0,0,.4)}
+  .lbhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;font-size:14px}
+  .lbhead .btn2{margin:0;padding:5px 11px;font-size:11.5px}
+  #lbSeason{font-size:10px;color:#ff9a3c;font-weight:800}
+  #lbList{font-size:13px;line-height:1.8;text-align:left;color:#dfe8ff;min-height:30px}
   /* 튜토리얼 */
   #tutorial{background:rgba(6,8,18,.88);backdrop-filter:blur(3px)}
   .tut{width:min(88vw,360px);background:rgba(16,22,40,.96);border:1px solid #2b3350;border-radius:16px;padding:20px 18px;pointer-events:auto}
@@ -98,13 +163,17 @@
 
 <div id="start" class="center scroll on">
   <h1>모두의 한방</h1>
-  <div id="verTop" style="font-size:11px;opacity:.5;margin-bottom:4px;"></div>
-  <div class="gold">🪙 <span id="goldNum">0</span></div>
-  <div class="sub" style="margin-top:4px">🏆 최고 <b id="bestNum">0</b> · 🎯 최다 처치 <b id="bkNum">0</b></div>
-  <div id="dailyTag" class="sub hidden" style="color:#2ec26a;font-weight:800;margin-top:4px">🎁 오늘 첫 판 — 골드 2배!</div>
+  <div class="trail"></div>
+  <div id="verTop" class="verTop"></div>
+  <div class="stats">
+    <div class="stat g"><div class="k">🪙 골드</div><div class="v" id="goldNum">0</div></div>
+    <div class="stat"><div class="k">🏆 최고</div><div class="v" id="bestNum">0</div></div>
+    <div class="stat"><div class="k">🎯 최다 처치</div><div class="v" id="bkNum">0</div></div>
+  </div>
+  <div id="dailyTag" class="sub hidden" style="color:#2ec26a;font-weight:800">🎁 오늘 첫 판 — 골드 2배!</div>
   <div class="tabs">
-    <button class="tab on" id="tabGun">🔫 무기</button>
-    <button class="tab" id="tabShop">🏪 강화</button>
+    <button class="tab on" id="tabGun">무기</button>
+    <button class="tab" id="tabShop">강화</button>
   </div>
   <div id="gunWrap">
     <div id="gunsel" class="guns"></div>
@@ -127,17 +196,24 @@
 </div>
 
 <div id="over" class="center scroll hidden">
-  <div class="big">게임 오버</div>
-  <div class="sub" id="overScore">점수 0</div>
-  <div class="sub" id="overBest" style="color:#ffd25c">최고 0</div>
-  <div class="sub" id="overGold" style="color:#ffd34d;font-weight:800">🪙 +0</div>
-  <button class="btn" id="reviveBtn" style="background:#2ec26a;box-shadow:0 6px 0 #1a7a40">🎬 광고 보고 부활</button>
+  <div class="ohead">게임 오버</div>
+  <div class="trail red"></div>
+  <div class="stats">
+    <div class="stat g"><div class="k" id="ovScoreK">점수</div><div class="v" id="ovScore">0</div></div>
+    <div class="stat"><div class="k">🎯 처치</div><div class="v" id="ovKills">0</div></div>
+    <div class="stat"><div class="k">🔥 최대 콤보</div><div class="v" id="ovCombo">0</div></div>
+  </div>
+  <div class="orow">
+    <span class="obest">🏆 최고<b id="ovBest">0</b></span>
+    <span class="ogold">🪙 획득<b id="ovGold">+0</b></span>
+  </div>
+  <button class="btn green" id="reviveBtn">🎬 광고 보고 부활</button>
   <button class="btn2" id="dblBtn">🎬 광고 보고 점수 2배</button>
   <button class="btn" id="retryBtn">다시하기</button>
   <button class="btn2" id="toTitleBtn">🔫 무기 · 강화</button>
-  <div id="lbBox" style="margin-top:14px;width:min(86vw,320px);background:rgba(22,26,44,.6);border:1px solid #2b3350;border-radius:12px;padding:10px 12px;pointer-events:auto">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b>🏆 리더보드 <span style="font-size:10px;color:#ff9a3c" id="lbSeason"></span></b><button class="btn2" id="lbNameBtn" style="margin:0;padding:5px 10px;font-size:12px">✏️ 이름</button></div>
-    <div id="lbList" style="font-size:13px;line-height:1.7;text-align:left;color:#dfe8ff">불러오는 중…</div>
+  <div id="lbBox" class="panel">
+    <div class="lbhead"><b>🏆 리더보드 <span id="lbSeason"></span></b><button class="btn2" id="lbNameBtn">✏️ 이름</button></div>
+    <div id="lbList">불러오는 중…</div>
   </div>
 </div>
 
@@ -145,7 +221,7 @@
 <script>
 const cv=document.getElementById('game'), ctx=cv.getContext('2d');
 // 버전 표기는 한 곳에서만 — 시작화면/좌하단이 어긋나지 않게
-const VER='v1.0 · 그레이즈 가시화 · 콤보 배율 · 영구 강화';
+const VER='v1.2 · 슬롯·게이트 구조물 추가';
 { const a=document.getElementById('verTop'), b=document.getElementById('verBot');
   if(a) a.textContent=VER; if(b) b.textContent=VER; }
 let W=0,H=0,DPR=1,safeTop=0,prevW=0;
@@ -180,8 +256,16 @@ let bestKills=Math.max(+(localStorage.getItem('hanbal_bestkills')||0), best); //
 let gold=+(localStorage.getItem('hanbal_gold')||0);
 let score=0,kills=0,combo=0,maxCombo=0,lives=3,shield=0,runGold=0,fever=0,feverFlash=0;
 let gunX=0,aimY=0,targets=[],structure=null,bullet=null,parts=[],pops=[],rings=[],bgdots=[];
-let shake=0,hitFlash=0,slow=0,muzzle=0,hitStop=0,comboPulse=0,banner='',bannerT=0,bannerCol='#ff5a6e',perfectT=0,lastTs=0,grazeGlow=0,tnow=0;
+let shake=0,hitFlash=0,slow=0,muzzle=0,hitStop=0,comboPulse=0,banner='',bannerT=0,bannerCol='#ff5a6e',perfectT=0,lastTs=0,grazeGlow=0,slotGlow=0,tnow=0;
 const BULLET_R=6, BOTH_MOVE_FROM=6, MULTI_FROM=10; // BOTH_MOVE_FROM=타겟 이동 시작 / MULTI_FROM=동시 2개 시작
+// 슬롯 구조물 — '피해 가기'가 아니라 '가운데 채널로 통과'. 중앙이 가장 위험하던 규칙이 뒤집힌다.
+// 수직은 고정하고 회전만으로 난이도를 준다: 채널 각도가 눈에 보여서 타이밍을 읽을 수 있기 때문.
+const SLOT_FROM=18, SLOT_CHANCE=0.35;
+// 캐논 탄반경이 9.6px이라 이보다 얇으면 캐논으로는 물리적으로 통과 불가 → 바닥값으로 막는다
+const SLOT_MIN_H=15;
+// 게이트 구조물 — 기둥이 화면을 위아래로 다 막고 통로 하나만 뚫려 있다.
+// 솔리드는 위/아래 두 갈래로 피할 수 있지만 게이트는 통로가 유일해서 탈출구가 없다.
+const GATE_FROM=12, GATE_CHANCE=0.30, GATE_MIN_H=22;
 const FEVER_AT=11, FEVER_TIME=4;                   // 콤보 11에서 피버 진입, 명중마다 갱신
 
 // ---- 영구 강화 (골드로 구매, localStorage 보존) ----
@@ -222,10 +306,11 @@ const MAX_REVIVE=5;
 
 // ---- 배경 테마 (처치 수에 따라 서서히 바뀜) ----
 const THEMES=[
-  {at:0,  top:[17,24,52],  bot:[8,10,20],  grid:[90,120,220]},
-  {at:16, top:[42,20,64],  bot:[13,7,24],  grid:[190,120,255]},
-  {at:36, top:[58,20,16],  bot:[21,6,4],   grid:[255,120,70]},
+  {at:0,  key:'deep', top:[17,24,52],  bot:[8,10,20],  grid:[90,120,220]},
+  {at:16, key:'void', top:[42,20,64],  bot:[13,7,24],  grid:[190,120,255]},
+  {at:36, key:'lava', top:[58,20,16],  bot:[21,6,4],   grid:[255,120,70]},
 ];
+function themeKey(){ let k='deep'; for(const t of THEMES) if(kills>=t.at) k=t.key; return k; }
 function lerp(a,b,t){ return a+(b-a)*t; }
 function themeNow(){
   let i=0; for(let k=0;k<THEMES.length;k++) if(kills>=THEMES[k].at) i=k;
@@ -235,6 +320,38 @@ function themeNow(){
   return { top:mix(A.top,B.top), bot:mix(A.bot,B.bot), grid:mix(A.grid,B.grid) };
 }
 const rgb=(c,a)=>'rgba('+c[0]+','+c[1]+','+c[2]+','+a+')';
+
+// ---- 스프라이트 로더 (3단 폴백) ----
+// ① assets/hanbal/<name>.png  상대경로 → 앱 번들 / Pages (오프라인 OK)
+//      ↓ onerror (앱 번들에 아직 없는 신규 에셋 등)
+// ② Pages 절대경로            → 앱 재배포 없이 새 에셋 투입 가능
+//      ↓ onerror (오프라인·404)
+// ③ 기존 Canvas 도형 렌더      → 항상 성공. 이 경로는 절대 지우지 않는다.
+// document.write는 문서 URL을 바꾸지 않으므로(검증 완료) ①의 상대경로는
+// OTA로 받은 HTML에서도 '로더가 있는 곳' 기준으로 해석된다 = 앱 번들.
+const SPR_VER=2;                                   // 에셋 교체 시 +1 (Pages max-age 우회). 2: core_* 128→192px
+const SPR_LOCAL='assets/hanbal/';
+const SPR_CDN='https://seungiljang.github.io/games/assets/hanbal/';
+const SPR=Object.create(null);                     // name -> Image | undefined
+function loadSprite(name){
+  const img=new Image(); let stage=0;
+  img.onload =()=>{ SPR[name]=img; };
+  img.onerror=()=>{ if(stage++===0) img.src=SPR_CDN+name+'.png?v='+SPR_VER; else delete SPR[name]; };
+  img.src=SPR_LOCAL+name+'.png?v='+SPR_VER;
+}
+function spr(name){ const i=SPR[name]; return (i&&i.complete&&i.naturalWidth>0)?i:null; }
+['core_deep','core_void','core_lava','target','boss'].forEach(loadSprite);
+// DOM 아이콘: 이모지를 먼저 깔고, 스프라이트가 도착하면 그때 교체한다.
+// (깨진 이미지 아이콘이 한순간도 보이지 않고, 실패해도 이모지가 그대로 남는다)
+const SPR_MISS=Object.create(null);   // 없는 걸로 판명된 이름은 재요청하지 않는다(상점 재렌더마다 404 반복 방지)
+function iconInto(el, name, emoji){
+  el.textContent=emoji;
+  if(SPR_MISS[name]) return;
+  const img=new Image(); let stage=0;
+  img.onload =()=>{ img.style.cssText='width:1em;height:1em;vertical-align:-.12em;display:inline-block'; el.textContent=''; el.appendChild(img); };
+  img.onerror=()=>{ if(stage++===0) img.src=SPR_CDN+name+'.png?v='+SPR_VER; else SPR_MISS[name]=1; };   // 끝까지 실패하면 이모지 유지
+  img.src=SPR_LOCAL+name+'.png?v='+SPR_VER;
+}
 
 // ---- 리더보드 (Firebase) ----
 function getUid(){ let u=localStorage.getItem('hanbal_uid'); if(!u){ u='h'+Math.random().toString(36).slice(2,10); localStorage.setItem('hanbal_uid',u); } return u; }
@@ -308,7 +425,8 @@ function renderGunSelect(){
   GUNS.forEach((g,i)=>{
     const lk=!gunUnlocked(g); const el=document.createElement('div');
     el.className='gunbtn'+(i===selGun&&!lk?' sel':'')+(lk?' lock':'');
-    el.innerHTML='<div class="gi">'+g.icon+'</div><div class="gn">'+g.name+'</div><div class="gd">'+(lk?('🔒 처치 '+g.unlock):g.desc)+'</div>';
+    el.innerHTML='<div class="gi"></div><div class="gn">'+g.name+'</div><div class="gd">'+(lk?('🔒 처치 '+g.unlock):g.desc)+'</div>';
+    iconInto(el.querySelector('.gi'), 'gun_'+g.id, g.icon);
     if(!lk) el.onclick=()=>{ selGun=i; localStorage.setItem('hanbal_gun',i); renderGunSelect(); };
     box.appendChild(el);
   });
@@ -318,9 +436,10 @@ function renderShop(){
   UPGRADES.forEach(u=>{
     const l=up(u.id), maxed=l>=u.max, cost=upCost(u), can=!maxed&&gold>=cost;
     const el=document.createElement('div'); el.className='up';
-    el.innerHTML='<div class="ui">'+u.icon+'</div><div class="ut"><div class="un">'+u.name+
+    el.innerHTML='<div class="ui"></div><div class="ut"><div class="un">'+u.name+
       ' <span class="ulv">Lv.'+l+'/'+u.max+'</span></div><div class="ud">'+(l>0?u.desc(l):'아직 없음')+
       (maxed?'':' → <b style="color:#9fe8c8">'+u.desc(l+1)+'</b>')+'</div></div>';
+    iconInto(el.querySelector('.ui'), 'up_'+u.id, u.icon);
     const b=document.createElement('button');
     b.textContent = maxed? 'MAX' : ('🪙 '+cost);
     b.className = maxed? 'max' : (can? '' : 'no');
@@ -416,18 +535,55 @@ function spawnTarget(){
   else { const n = kills>=MULTI_FROM ? 2 : 1; targets=[]; for(let i=0;i<n;i++) targets.push(makeTarget(i,n,false)); }
   // 구조물(장애물) — 항상 이동, 총알을 막음. 패턴 랜덤(처치수별 언락)
   const sr=Math.max(18, 30 - kills*0.22);
-  structure={ x:W*0.52, r:sr, y:aimY, phase:Math.random()*6.28, pat:pickPattern(), spin:0,
-    speed: Math.min(5.4, 1.7 + kills*0.075),
-    range: sr + Math.min(H*0.24, 40 + kills*2.4) };
+  let kind='solid';
+  if(!boss){
+    if(kills>=SLOT_FROM && Math.random()<SLOT_CHANCE) kind='slot';
+    else if(kills>=GATE_FROM && Math.random()<GATE_CHANCE) kind='gate';
+  }
+  if(kind==='gate'){
+    const over=Math.max(0, kills-GATE_FROM);
+    structure={ kind:'gate', x:W*0.52, r:sr, y:aimY, spin:0, pat:'sine', phase:Math.random()*6.28,
+      halfW: 17,                                        // 기둥 두께의 절반
+      gateH: Math.max(GATE_MIN_H, 34 - over*0.35),      // 통로 반높이 — 캐논도 지나갈 수 있게 바닥값
+      speed: Math.min(2.0, 1.3 + over*0.025),
+      range: Math.min(H*0.20, 70 + over*1.5) };
+    banner='통로는 하나!'; bannerT=1.1; bannerCol='#4de08a';
+  } else if(kind==='slot'){
+    const over=kills-SLOT_FROM;
+    // 슬롯은 코어를 크게 키운다. 채널 최소 높이가 캐논 탄에 묶여 있어서(SLOT_MIN_H),
+    // 보통 크기 코어에 뚫으면 채널이 코어를 다 먹어 '통로'로 안 보이고 통과각도 너무 넓어진다.
+    structure={ kind:'slot', x:W*0.52, r:sr*1.7, y:aimY, phase:0, pat:'sine', spin:Math.random()*6.28,
+      speed:0, range:0,                                  // 수직 고정 — 조준선 위에 그대로 선다
+      spinSpd: Math.min(3.2, 1.35 + over*0.035),         // 난이도는 회전 속도와
+      slotH: Math.max(SLOT_MIN_H, 22 - over*0.22) };     // 채널 폭으로만 준다
+    banner='가운데로 통과!'; bannerT=1.1; bannerCol='#4de08a';
+  } else {
+    structure={ kind:'solid', x:W*0.52, r:sr, y:aimY, phase:Math.random()*6.28, pat:pickPattern(), spin:0,
+      speed: Math.min(5.4, 1.7 + kills*0.075),
+      range: sr + Math.min(H*0.24, 40 + kills*2.4) };
+  }
   if(boss){ banner='⚠ BOSS'; bannerT=1.0; bannerCol='#ffd34d'; }
+}
+// 지금 쏘면 채널을 통과할 수 있는 각도인가 — 채널이 기울수록 유효 통로가 좁아진다
+function slotAligned(){
+  if(!structure || structure.kind!=='slot') return false;
+  const br=BULLET_R*GUNS[selGun].rMul;
+  return Math.abs(Math.sin(structure.spin))*structure.r + br <= structure.slotH;
 }
 // 회전·리사이즈로 W/H가 바뀌면 총·조준선·구조물·타겟을 새 화면에 맞춰 옮긴다(난이도 공식은 spawn과 동일)
 function relayout(){
   gunX=W-46; aimY=H*0.52;
   if(structure){
     structure.x=W*0.52;
-    structure.range=structure.r + Math.min(H*0.24, 40 + kills*2.4);
-    structure.y=aimY + patOffset(structure.pat, structure.phase)*structure.range;
+    if(structure.kind==='slot'){ structure.range=0; structure.y=aimY; }   // 슬롯은 수직 고정
+    else if(structure.kind==='gate'){
+      structure.range=Math.min(H*0.20, 70 + Math.max(0,kills-GATE_FROM)*1.5);
+      structure.y=aimY + patOffset(structure.pat, structure.phase)*structure.range;
+    }
+    else {
+      structure.range=structure.r + Math.min(H*0.24, 40 + kills*2.4);
+      structure.y=aimY + patOffset(structure.pat, structure.phase)*structure.range;
+    }
   }
   const sc=Math.max(0, kills-BOTH_MOVE_FROM);
   for(const t of targets){
@@ -509,9 +665,12 @@ function gameOver(){
   gold+=runGold; saveGold(); consumeDaily(); checkDaily();
   if(score>best){ best=score; localStorage.setItem('hanbal_best',best); }
   if(kills>bestKills){ bestKills=kills; localStorage.setItem('hanbal_bestkills',bestKills); }
-  document.getElementById('overScore').textContent='점수 '+score+'  ·  처치 '+kills+'  ·  최대 '+maxCombo+'콤보';
-  document.getElementById('overBest').textContent='최고 '+best;
-  document.getElementById('overGold').textContent='🪙 +'+runGold+(wasDaily?' (오늘 첫 판 2배!)':'');
+  document.getElementById('ovScoreK').textContent='점수';   // 2배를 받았던 직전 판의 라벨을 되돌린다
+  document.getElementById('ovScore').textContent=score;
+  document.getElementById('ovKills').textContent=kills;
+  document.getElementById('ovCombo').textContent=maxCombo;
+  document.getElementById('ovBest').textContent=best;
+  document.getElementById('ovGold').textContent='+'+runGold+(wasDaily?' ×2':'');
   const rb=document.getElementById('reviveBtn');
   rb.classList.toggle('hidden', reviveCount>=MAX_REVIVE);      // 부활은 판당 최대 5회
   rb.textContent='🎬 광고 보고 부활 (남은 '+(MAX_REVIVE-reviveCount)+'회)';
@@ -531,9 +690,10 @@ function reviveGame(){ if(reviveCount>=MAX_REVIVE) return; playAd(()=>{
 function doubleScore(){ if(doubledRun) return; playAd(()=>{
   doubledRun=true; score*=2; const bonus=runGold; gold+=bonus; runGold+=bonus; saveGold();
   if(score>best){ best=score; localStorage.setItem('hanbal_best',best); }
-  document.getElementById('overScore').textContent='점수 '+score+' (2배!)  ·  처치 '+kills;
-  document.getElementById('overBest').textContent='최고 '+best;
-  document.getElementById('overGold').textContent='🪙 +'+runGold+' (2배!)';
+  document.getElementById('ovScoreK').textContent='점수 ×2!';
+  document.getElementById('ovScore').textContent=score;
+  document.getElementById('ovBest').textContent=best;
+  document.getElementById('ovGold').textContent='+'+runGold+' ×2';
   document.getElementById('dblBtn').classList.add('hidden');
   submitScore().then(renderLB).catch(()=>renderLB()); // 2배 점수 리더보드 반영
 }); }
@@ -580,11 +740,23 @@ function update(dt){
   if(fever>0){ fever-=dt; if(fever<=0){ fever=0; combo=0; banner='FEVER 종료'; bannerT=0.5; bannerCol='#9fb4e8'; } }
   // 구조물(장애물) 이동 — 항상
   structure.phase += structure.speed*gdt;
-  structure.spin  += gdt*(1.2+structure.speed*0.22);
+  structure.spin  += gdt*(structure.kind==='slot' ? structure.spinSpd : 1.2+structure.speed*0.22);
   structure.y = aimY + patOffset(structure.pat, structure.phase)*structure.range;
-  // 그레이즈 존 안내: 조준선이 PERFECT 구간에 들어오면 밝게 빛난다
-  const gap=Math.abs(structure.y-aimY), inner=structure.r+BULLET_R, outer=structure.r+BULLET_R+grazeW();
-  grazeGlow = (gap>=inner && gap<outer) ? Math.min(1,grazeGlow+dt*9) : Math.max(0,grazeGlow-dt*7);
+  if(structure.kind==='slot'){
+    // 슬롯은 가운데가 통로라 그레이즈(바깥 스치기) 신호가 정반대가 된다 → 끄고 채널 정렬 신호로 대체
+    grazeGlow = Math.max(0,grazeGlow-dt*7);
+    slotGlow  = slotAligned() ? Math.min(1,slotGlow+dt*9) : Math.max(0,slotGlow-dt*7);
+  } else if(structure.kind==='gate'){
+    // 게이트는 벽 가장자리를 스칠수록 PERFECT — 솔리드와 같은 '아슬아슬하면 보상' 규칙
+    slotGlow = Math.max(0,slotGlow-dt*7);
+    const br=BULLET_R*GUNS[selGun].rMul, clear=structure.gateH - Math.abs(structure.y-aimY) - br;
+    grazeGlow = (clear>=0 && clear<grazeW()) ? Math.min(1,grazeGlow+dt*9) : Math.max(0,grazeGlow-dt*7);
+  } else {
+    slotGlow = Math.max(0,slotGlow-dt*7);
+    // 그레이즈 존 안내: 조준선이 PERFECT 구간에 들어오면 밝게 빛난다
+    const gap=Math.abs(structure.y-aimY), inner=structure.r+BULLET_R, outer=structure.r+BULLET_R+grazeW();
+    grazeGlow = (gap>=inner && gap<outer) ? Math.min(1,grazeGlow+dt*9) : Math.max(0,grazeGlow-dt*7);
+  }
   // 타겟 이동 — 초반 고정, 후반/다중 이동
   for(const t of targets){ t.pulse+=dt*3.1; if(t.moving){ t.phase += t.speed*gdt; t.y = aimY + Math.sin(t.phase)*t.range; } else t.y = aimY; }
   // 배경 입자(패럴랙스) — 총알 진행 방향으로 흘려 속도감
@@ -599,14 +771,42 @@ function update(dt){
       const br=bullet.r||BULLET_R;
       // 1) 구조물 통과 판정 (막히면 BLOCKED)
       if(!bullet.passed){
-        if(Math.hypot(bullet.x-structure.x, aimY-structure.y) < structure.r+br){ blocked(); break; }
-        else if(bullet.x <= structure.x - structure.r){ bullet.passed=true; bullet.gap=Math.abs(structure.y-aimY); }
+        const dx=bullet.x-structure.x, dy=aimY-structure.y;
+        const inDisc = Math.hypot(dx,dy) < structure.r+br;
+        if(structure.kind==='gate'){
+          // 기둥 안에 있으면 통로를 벗어났는지만 본다. 통로 바깥은 전부 벽이라 탈출구가 없다.
+          if(Math.abs(dx) < structure.halfW + br){
+            const clear=structure.gateH - Math.abs(dy) - br;
+            if(clear < 0){ blocked(); break; }
+            if(bullet.minClear===undefined || clear<bullet.minClear) bullet.minClear=clear;  // 벽에 얼마나 붙었나
+          }
+          if(bullet.x <= structure.x - structure.halfW) bullet.passed=true;
+        } else if(structure.kind==='slot'){
+          // 채널 장축으로부터의 수직거리. 서브스텝마다 재평가하므로 회전 중에도 정확하다.
+          if(inDisc){
+            const pd=Math.abs(-dx*Math.sin(structure.spin) + dy*Math.cos(structure.spin));
+            if(pd > structure.slotH - br){ blocked(); break; }
+            if(bullet.minPd===undefined || pd<bullet.minPd) bullet.minPd=pd;   // PERFECT 판정용 최소 거리
+          }
+          if(bullet.x <= structure.x - structure.r) bullet.passed=true;
+        } else {
+          if(inDisc){ blocked(); break; }
+          else if(bullet.x <= structure.x - structure.r){ bullet.passed=true; bullet.gap=Math.abs(structure.y-aimY); }
+        }
       }
       // 2) 구조물 통과 후 타겟 명중(여러 타겟 중 겹치는 것)
       if(bullet && bullet.passed){
         let hitT=null;
         for(const t of targets){ if(Math.hypot(bullet.x-t.x, aimY-t.y) < t.r+br){ hitT=t; break; } }
-        if(hitT){ hit(bullet.gap < structure.r+BULLET_R+grazeW(), hitT); break; }
+        if(hitT){
+          // 솔리드는 바깥을 스칠수록, 슬롯은 채널 한가운데일수록 PERFECT — '정밀하면 보상'은 그대로
+          const perfect = structure.kind==='slot'
+            ? (bullet.minPd!==undefined && bullet.minPd < (structure.slotH-br)*0.4)
+            : structure.kind==='gate'
+            ? (bullet.minClear!==undefined && bullet.minClear < grazeW())
+            : (bullet.gap < structure.r+BULLET_R+grazeW());
+          hit(perfect, hitT); break;
+        }
         const minX = targets.length? Math.min.apply(null, targets.map(t=>t.x-t.r)) : 0;
         if(bullet.x < minX - 6){ miss(); break; }
       }
@@ -643,23 +843,35 @@ function render(){
   if(state==='play'||state==='over'){
     const leadX = targets.length? Math.min.apply(null, targets.map(t=>t.x)) : 40;
     // 조준선 — 그레이즈 존에 걸치면 금색으로 변해 "지금 쏘면 PERFECT"를 알려준다
-    const aimCol = grazeGlow>0.1 ? 'rgba(255,211,77,'+(0.35+grazeGlow*0.5).toFixed(2)+')' : 'rgba(255,150,80,.35)';
-    ctx.strokeStyle=aimCol; ctx.lineWidth=grazeGlow>0.1?3:2; ctx.setLineDash([2,10]);
+    // 슬롯이면 초록, 솔리드면 금색 — 조준선 자체가 "지금 쏘면 된다"를 말한다
+    const slotMode = structure.kind==='slot', glow = slotMode?slotGlow:grazeGlow;
+    const aimCol = glow>0.1
+      ? (slotMode ? 'rgba(109,255,160,'+(0.4+glow*0.5).toFixed(2)+')' : 'rgba(255,211,77,'+(0.35+glow*0.5).toFixed(2)+')')
+      : (slotMode ? 'rgba(90,190,130,.3)' : 'rgba(255,150,80,.35)');
+    ctx.strokeStyle=aimCol; ctx.lineWidth=glow>0.1?3:2; ctx.setLineDash([2,10]);
     ctx.beginPath(); ctx.moveTo(gunX-16,aimY); ctx.lineTo(leadX,aimY); ctx.stroke(); ctx.setLineDash([]);
-    // 구조물 레일 (이동 범위)
-    ctx.strokeStyle='rgba(255,110,70,.10)'; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.moveTo(structure.x,aimY-structure.range); ctx.lineTo(structure.x,aimY+structure.range); ctx.stroke();
+    // 구조물 레일 (이동 범위) — 게이트는 기둥에 가려 의미가 없고, 슬롯은 수직 고정이라 생략
+    if(structure.kind==='solid'){
+      ctx.strokeStyle='rgba(255,110,70,.10)'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(structure.x,aimY-structure.range); ctx.lineTo(structure.x,aimY+structure.range); ctx.stroke();
+    }
     // 타겟들(목표) — 일반=청록 과녁 / 보스=금색
     for(const t of targets){
       if(t.moving){ ctx.strokeStyle='rgba(120,160,255,.12)'; ctx.lineWidth=2;
         ctx.beginPath(); ctx.moveTo(t.x,aimY-t.range); ctx.lineTo(t.x,aimY+t.range); ctx.stroke(); }
       const tcol = t.boss?'#ffd34d':'#57d9ff', pr=1+Math.sin(t.pulse)*0.045;
       ctx.save(); ctx.shadowColor=tcol; ctx.shadowBlur=t.boss?18:12;
-      ctx.fillStyle=tcol; ctx.beginPath(); ctx.arc(t.x,t.y,t.r*pr,0,7); ctx.fill();
-      ctx.shadowBlur=0; ctx.fillStyle='#0a0c16'; ctx.beginPath(); ctx.arc(t.x,t.y,t.r*0.58,0,7); ctx.fill();
-      ctx.fillStyle=tcol; ctx.beginPath(); ctx.arc(t.x,t.y,t.r*0.30,0,7); ctx.fill();
-      ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(t.x,t.y,t.r*0.12,0,7); ctx.fill();
-      if(t.boss){ ctx.fillStyle='#ff5a6e'; for(let i=0;i<t.hp;i++){ ctx.beginPath(); ctx.arc(t.x-(t.hp-1)*5+i*10, t.y-t.r-11, 3.2,0,7); ctx.fill(); } }
+      const timg=spr(t.boss?'boss':'target');
+      if(timg){ const tr=t.r*pr; ctx.drawImage(timg,t.x-tr,t.y-tr,tr*2,tr*2); ctx.shadowBlur=0; }
+      else {
+        // ③ 최종 폴백 — 기존 4겹 과녁 도형
+        ctx.fillStyle=tcol; ctx.beginPath(); ctx.arc(t.x,t.y,t.r*pr,0,7); ctx.fill();
+        ctx.shadowBlur=0; ctx.fillStyle='#0a0c16'; ctx.beginPath(); ctx.arc(t.x,t.y,t.r*0.58,0,7); ctx.fill();
+        ctx.fillStyle=tcol; ctx.beginPath(); ctx.arc(t.x,t.y,t.r*0.30,0,7); ctx.fill();
+        ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(t.x,t.y,t.r*0.12,0,7); ctx.fill();
+      }
+      // HP 핍은 t.hp로 매 프레임 변하므로 스프라이트에 넣지 않고 항상 코드로 그린다
+      if(t.boss){ ctx.shadowBlur=0; ctx.fillStyle='#ff5a6e'; for(let i=0;i<t.hp;i++){ ctx.beginPath(); ctx.arc(t.x-(t.hp-1)*5+i*10, t.y-t.r-11, 3.2,0,7); ctx.fill(); } }
       ctx.restore();
     }
     drawStructure();
@@ -692,32 +904,89 @@ function render(){
   ctx.restore();
 }
 // 구조물 — 회전하는 코어 + PERFECT 그레이즈 띠(게임의 핵심 메커니즘을 눈에 보이게)
-function drawStructure(){
-  const sx=structure.x, sy=structure.y, r=structure.r, gw=grazeW();
-  // 그레이즈 띠: 구조물 바깥 [r+BULLET_R, r+BULLET_R+gw] 링. 여길 스쳐 통과하면 PERFECT
+// 게이트 — 기둥이 화면을 위아래로 다 막고 통로 하나만 뚫려 있다. 위/아래로 피할 길이 없다.
+function drawGate(){
+  const gx=structure.x, gy=structure.y, hw=structure.halfW, h=structure.gateH, gw=grazeW();
+  const top=gy-h, bot=gy+h;
   ctx.save();
-  const inner=r+BULLET_R, outer=inner+gw;
-  const gg=ctx.createRadialGradient(sx,sy,inner,sx,sy,outer);
-  const a=0.10+grazeGlow*0.40;
-  gg.addColorStop(0,'rgba(255,211,77,'+a.toFixed(3)+')');
-  gg.addColorStop(1,'rgba(255,211,77,0)');
-  ctx.fillStyle=gg; ctx.beginPath(); ctx.arc(sx,sy,outer,0,7); ctx.fill();
-  ctx.strokeStyle='rgba(255,211,77,'+(0.18+grazeGlow*0.55).toFixed(3)+')'; ctx.lineWidth=grazeGlow>0.1?2:1; ctx.setLineDash([3,5]);
-  ctx.beginPath(); ctx.arc(sx,sy,outer,0,7); ctx.stroke(); ctx.setLineDash([]);
+  // 기둥(벽)
+  const g=ctx.createLinearGradient(gx-hw,0,gx+hw,0);
+  g.addColorStop(0,'rgba(88,30,16,.96)'); g.addColorStop(.42,'#ff8048');
+  g.addColorStop(.58,'#ff8048');          g.addColorStop(1,'rgba(88,30,16,.96)');
+  ctx.shadowColor='#ff5a3c'; ctx.shadowBlur=10; ctx.fillStyle=g;
+  if(top>0)  ctx.fillRect(gx-hw, 0,   hw*2, top);
+  if(bot<H)  ctx.fillRect(gx-hw, bot, hw*2, H-bot);
+  ctx.shadowBlur=0;
+  // 벽 끝단 밝은 캡 — 통로 경계를 또렷하게
+  ctx.fillStyle='rgba(255,224,196,.9)';
+  if(top>0) ctx.fillRect(gx-hw, top-3, hw*2, 3);
+  if(bot<H) ctx.fillRect(gx-hw, bot,   hw*2, 3);
+  // 그레이즈 띠 — 통로 안쪽 가장자리. 벽을 스쳐 지나가면 PERFECT(솔리드와 같은 규칙)
+  const band=Math.min(gw,h), a=0.12+grazeGlow*0.45;
+  ctx.fillStyle='rgba(255,211,77,'+a.toFixed(3)+')';
+  ctx.fillRect(gx-hw, top,       hw*2, band);
+  ctx.fillRect(gx-hw, bot-band,  hw*2, band);
+  // 통로 경계 초록선 — 이 게임에서 초록은 '통과'
+  ctx.strokeStyle=grazeGlow>0.1?'#6cff9f':'#2ea85f'; ctx.lineWidth=2;
+  ctx.shadowColor='#2ec26a'; ctx.shadowBlur=grazeGlow>0.1?14:5;
+  ctx.beginPath(); ctx.moveTo(gx-hw,top); ctx.lineTo(gx+hw,top);
+  ctx.moveTo(gx-hw,bot); ctx.lineTo(gx+hw,bot); ctx.stroke();
   ctx.restore();
+}
+function drawStructure(){
+  if(structure.kind==='gate'){ drawGate(); return; }
+  const sx=structure.x, sy=structure.y, r=structure.r, gw=grazeW();
+  const isSlot = structure.kind==='slot';
+  // 그레이즈 띠: 구조물 바깥 [r+BULLET_R, r+BULLET_R+gw] 링. 여길 스쳐 통과하면 PERFECT
+  // 슬롯에서는 그리지 않는다 — '바깥을 스쳐라'가 '가운데로 가라'와 정반대 지시라서.
+  if(!isSlot){
+    ctx.save();
+    const inner=r+BULLET_R, outer=inner+gw;
+    const gg=ctx.createRadialGradient(sx,sy,inner,sx,sy,outer);
+    const a=0.10+grazeGlow*0.40;
+    gg.addColorStop(0,'rgba(255,211,77,'+a.toFixed(3)+')');
+    gg.addColorStop(1,'rgba(255,211,77,0)');
+    ctx.fillStyle=gg; ctx.beginPath(); ctx.arc(sx,sy,outer,0,7); ctx.fill();
+    ctx.strokeStyle='rgba(255,211,77,'+(0.18+grazeGlow*0.55).toFixed(3)+')'; ctx.lineWidth=grazeGlow>0.1?2:1; ctx.setLineDash([3,5]);
+    ctx.beginPath(); ctx.arc(sx,sy,outer,0,7); ctx.stroke(); ctx.setLineDash([]);
+    ctx.restore();
+  }
   // 코어
-  const blocking=Math.abs(sy-aimY) < r+BULLET_R;
+  const blocking=!isSlot && Math.abs(sy-aimY) < r+BULLET_R;
   ctx.save(); ctx.translate(sx,sy); ctx.rotate(structure.spin);
   ctx.shadowColor='#ff5a3c'; ctx.shadowBlur=blocking?20:9;
-  ctx.fillStyle=blocking?'#ff5a3c':'#ff8048';
-  ctx.beginPath(); ctx.arc(0,0,r,0,7); ctx.fill();
-  ctx.shadowBlur=0;
-  // 톱니(회전감)
-  ctx.fillStyle='rgba(20,10,6,.55)';
-  for(let i=0;i<6;i++){ ctx.save(); ctx.rotate(i*Math.PI/3); ctx.fillRect(-2.6,-r-1,5.2,r*0.42); ctx.restore(); }
-  ctx.fillStyle='rgba(20,10,6,.42)';
-  for(let i=-1;i<=1;i++){ ctx.fillRect(-r*0.82,i*7-2,r*1.64,4); }
-  ctx.fillStyle='rgba(255,230,200,.9)'; ctx.beginPath(); ctx.arc(0,0,r*0.17,0,7); ctx.fill();
+  const img=spr('core_'+themeKey());
+  if(img){
+    ctx.drawImage(img,-r,-r,r*2,r*2);
+    if(blocking){   // 차단 상태를 스프라이트 위에 덧칠 — 테마별 2장씩 뽑지 않아도 신호가 유지된다
+      ctx.shadowBlur=0; ctx.globalCompositeOperation='lighter';
+      ctx.fillStyle='rgba(255,90,60,.35)'; ctx.beginPath(); ctx.arc(0,0,r,0,7); ctx.fill();
+      ctx.globalCompositeOperation='source-over';
+    }
+  } else {
+    // ③ 최종 폴백 — 기존 도형 렌더. 스프라이트가 없어도 게임은 100% 플레이 가능해야 한다.
+    ctx.fillStyle=blocking?'#ff5a3c':'#ff8048';
+    ctx.beginPath(); ctx.arc(0,0,r,0,7); ctx.fill();
+    ctx.shadowBlur=0;
+    // 톱니(회전감)
+    ctx.fillStyle='rgba(20,10,6,.55)';
+    for(let i=0;i<6;i++){ ctx.save(); ctx.rotate(i*Math.PI/3); ctx.fillRect(-2.6,-r-1,5.2,r*0.42); ctx.restore(); }
+    ctx.fillStyle='rgba(20,10,6,.42)';
+    for(let i=-1;i<=1;i++){ ctx.fillRect(-r*0.82,i*7-2,r*1.64,4); }
+    ctx.fillStyle='rgba(255,230,200,.9)'; ctx.beginPath(); ctx.arc(0,0,r*0.17,0,7); ctx.fill();
+  }
+  // 초록 채널 — 이 게임에서 초록은 아직 '통과'로 비어 있던 색이다(주황=차단, 금색=보상, 청록=목표)
+  if(isSlot){
+    const h=structure.slotH, al=slotAligned(), w=r+1;
+    ctx.shadowBlur=0;
+    ctx.fillStyle='rgba(3,10,8,.55)';                  // 코어가 비쳐야 '뚫린 통로'로 읽힌다
+    ctx.fillRect(-w,-h,w*2,h*2);
+    ctx.strokeStyle=al?'#6cff9f':'#2a9c5c';            // 정렬되면 밝아진다 = "지금 쏴라"
+    ctx.lineWidth=al?3:2;
+    ctx.shadowColor='#2ec26a'; ctx.shadowBlur=al?18:5;
+    ctx.strokeRect(-w,-h,w*2,h*2);
+    ctx.shadowBlur=0;
+  }
   ctx.restore();
 }
 function drawHUD(){
