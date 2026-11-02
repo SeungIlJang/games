@@ -217,7 +217,7 @@
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <div class="deck-eyebrow">G A L L O G  /  F L I G H T  D E C K</div>
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v8.3</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v8.4</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko"  class="btn-sm">한국어</button>
       <button data-lang="en"  class="btn-sm">English</button>
@@ -848,7 +848,7 @@ let lifestealAcc=0, lifestealT=0; // 흡혈 초당 회복 상한용
 let combo=0, comboTimer=0, maxCombo=0;
 let best=0; try{ best=parseInt(localStorage.getItem('ss_best')||'0')||0; }catch{}
 // ---- 개발자 튜닝 (로고 클릭+비번 799879) ----
-const TUNE_DEFAULTS={ hpWall:0.4, startPow:0.35, awakenStart:15, awakenStep:15, levelHp:8, reviveXp:0.95, enemyHp:1.0, enemySpeed:1.0, camFollow:4, bossPow:1.0, bossGem:1.0, goldMul:1.0, bossMul:8, bossMulStep:0.1, weaponCap:6, rerollMax:2, eliteChance:0.025, eliteMax:1, eliteHp:4, eliteDmg:1.4, chestGold:120,
+const TUNE_DEFAULTS={ hpWall:0.4, startPow:0.35, awakenStart:15, awakenStep:15, levelHp:8, reviveXp:0.95, enemyHp:1.0, enemySpeed:1.0, camFollow:4, bossPow:1.0, bossGem:1.0, goldMul:1.0, bossMul:8, bossMulStep:0.1, weaponCap:10, rerollMax:2, eliteChance:0.025, eliteMax:1, eliteHp:4, eliteDmg:1.4, chestGold:120,
   champHp:2.0, champDmg:1.2, tankBlock:0.35, shardDmg:1.6, weaverDmg:0.45,
   fuseLast:18, fuseMid:7 };
 let TUNE=Object.assign({},TUNE_DEFAULTS);
@@ -867,7 +867,7 @@ const DEV_KNOBS=[
   {k:'bossPow',    name:'보스 강함 배수',    step:0.1,  hint:'보스 체력·데미지× (기본1.0, 예 1.5=1.5배 강함)'},
   {k:'bossMul',    name:'보스=정예 몇기분',  step:0.5,  hint:'스테이지1 기준 보스 HP (기본8 = 정예 8기분)'},
   {k:'bossMulStep',name:'보스 배수 증가/st', step:0.02, hint:'스테이지당 위 수치 증가 (기본0.1 → 100st에 17기분)'},
-  {k:'weaponCap',  name:'무기 슬롯 상한',    step:1,    hint:'보유 가능 무기 수 (기본6). 꽉 차면 새 무기 제안 안 함'},
+  {k:'weaponCap',  name:'무기 슬롯 상한',    step:1,    hint:'보유 가능 무기 수 (기본10). 낮추면 개별 무기가 빨리 만렙이 된다'},
   {k:'rerollMax',  name:'레벨업 리롤 횟수',  step:1,    hint:'판당 다시 뽑기 횟수 (기본2)'},
   {k:'fuseLast',   name:'융합 마지막재료 노출',step:2,   hint:'재료 2/3일 때 남은 1개 카드 가중치 (기본18, 일반강화=3)'},
   {k:'fuseMid',    name:'융합 두번째재료 노출',step:1,   hint:'재료 1/3일 때 가중치 (기본7)'},
@@ -1479,7 +1479,7 @@ function buildChoices(){
     // 무기 슬롯 상한 — 꽉 차면 '새 무기'를 제안하지 않는다.
     // 상한이 없으면 레벨업이 '선택'이 아니라 '수집'이 되어 모든 런이 같은 빌드로 수렴한다.
     else if(!isFused(key)){
-      const cap=TUNE.weaponCap!=null?TUNE.weaponCap:6, held=Object.keys(player.weapons).length;
+      const cap=TUNE.weaponCap!=null?TUNE.weaponCap:10, held=Object.keys(player.weapons).length;
       // 마지막 재료는 상한을 넘겨서라도 제안한다(집으면 융합이 슬롯을 2칸 돌려준다).
       // 다만 레시피 여러 개가 동시에 2/3이면 끝없이 늘 수 있으니 +2까지만 허용한다.
       const fin=(held<cap+2) && fuseFinisher(key);
@@ -1572,7 +1572,7 @@ function openLevelUp(){
     rb.classList.remove('hidden');rb.classList.add('feature-reroll');
     rb.textContent='↻ '+featureLabel('다시 뽑기','REROLL','引き直す')+'  '+rerollLeft+' / '+rerollMax();
     rb.disabled=rerollLeft<=0;rb.style.opacity='';rb.style.cursor='';
-    const note=document.getElementById('slotNotice'),cap=TUNE.weaponCap??6,full=Object.keys(player.weapons).length>=cap;
+    const note=document.getElementById('slotNotice'),cap=TUNE.weaponCap??10,full=Object.keys(player.weapons).length>=cap;
     note.classList.toggle('hidden',!full);note.textContent='🔒 '+featureLabel('새 무기 잠김 · 보유 무기를 강화하세요','NEW WEAPONS LOCKED · UPGRADE YOUR BUILD','新規武器ロック · 所持武器を強化');
   }
   function draw(){
@@ -1593,7 +1593,7 @@ function openLevelUp(){
   }
   rb.onclick=()=>{ if(rerollLeft<=0) return; rerollLeft--; tone(520,0.06,'triangle',0.09); draw(); paintReroll(); };
   // 디자인 어댑터에 상태를 넘긴다 — 넘기면 syncFeatureLevelUp()이 정식 버튼/잠금 안내를 그린다
-  featureArt.slotsFull = Object.keys(player.weapons).length >= (TUNE.weaponCap!=null?TUNE.weaponCap:6);
+  featureArt.slotsFull = Object.keys(player.weapons).length >= (TUNE.weaponCap!=null?TUNE.weaponCap:10);
   featureArt.reroll = { remaining:rerollLeft, max:rerollMax(), onUse(){
     if(rerollLeft<=0) return; rerollLeft--; featureArt.reroll.remaining=rerollLeft;
     tone(520,0.06,'triangle',0.09); draw(); } };
@@ -2608,24 +2608,30 @@ const featureArt={reroll:null,slotsFull:false,chests:[],rank:null};
 function featureLabel(ko,en,ja){const lang=document.documentElement.lang||'ko';return lang.startsWith('en')?en:lang.startsWith('ja')?ja:ko;}
 function syncFeatureLevelUp(){
   const button=document.getElementById('rerollBtn'),note=document.getElementById('slotNotice'),r=featureArt.reroll;
-  note.classList.toggle('hidden',!featureArt.slotsFull);note.textContent=featureLabel('6 / 6 슬롯 · 보유 무기를 강화하세요','6 / 6 SLOTS · UPGRADE YOUR BUILD','6 / 6 スロット · 所持武器を強化');
+  note.classList.toggle('hidden',!featureArt.slotsFull);{const cp=TUNE.weaponCap!=null?TUNE.weaponCap:10;note.textContent=featureLabel(cp+' / '+cp+' 슬롯 · 보유 무기를 강화하세요',cp+' / '+cp+' SLOTS · UPGRADE YOUR BUILD',cp+' / '+cp+' スロット · 所持武器を強化');}
   button.classList.toggle('hidden',!r);
   if(!r)return;
   button.disabled=r.remaining<=0||typeof r.onUse!=='function';
   button.textContent=(r.remaining>0?'↻ ':'')+featureLabel('다시 뽑기','REROLL','引き直す')+'  '+r.remaining+' / '+r.max;
   button.onclick=()=>{const current=featureArt.reroll;if(!current||current.remaining<=0||typeof current.onUse!=='function')return;button.disabled=true;current.onUse();syncFeatureLevelUp();};
 }
+// 칸 수는 TUNE.weaponCap을 따라간다(예전엔 6칸 고정이라 상한을 바꾸면 UI가 거짓말을 했다).
+// 7칸 이상이면 두 줄로 접어 아이콘 크기를 지킨다 — 한 줄로 늘리면 10칸에서 30px까지 작아진다.
 function drawWeaponSlots(bottom){
-  const entries=Object.entries(player.weapons),size=Math.min(42,(W-32-5*5)/6),gap=5,total=size*6+gap*5,x=(W-total)/2,y=H-bottom-size-39;
-  ctx.save();ctx.font=fTech(9,true);ctx.fillStyle='#94aabd';ctx.textAlign='left';ctx.fillText('ARSENAL  '+Math.min(6,entries.length)+' / 6',x,y-7);
-  if(entries.length>6){ctx.textAlign='right';ctx.fillStyle='#ffd47b';ctx.fillText('+'+(entries.length-6),x+total,y-7);}
-  for(let i=0;i<6;i++){
-    const item=entries[i],xx=x+i*(size+gap),evo=item&&player.evolved[item[0]];
+  const cap=TUNE.weaponCap!=null?TUNE.weaponCap:10, entries=Object.entries(player.weapons), gap=5;
+  const per=cap<=6?cap:Math.ceil(cap/2), rows=Math.ceil(cap/per);
+  const size=Math.min(42,(W-32-gap*(per-1))/per), total=size*per+gap*(per-1), x=(W-total)/2;
+  const y=H-bottom-(rows*size+(rows-1)*gap)-39;
+  ctx.save();ctx.font=fTech(9,true);ctx.fillStyle='#94aabd';ctx.textAlign='left';
+  ctx.fillText('ARSENAL  '+Math.min(cap,entries.length)+' / '+cap,x,y-7);
+  if(entries.length>cap){ctx.textAlign='right';ctx.fillStyle='#ffd47b';ctx.fillText('+'+(entries.length-cap),x+total,y-7);}
+  for(let i=0;i<cap;i++){
+    const item=entries[i],xx=x+(i%per)*(size+gap),yy=y+Math.floor(i/per)*(size+gap),evo=item&&player.evolved[item[0]];
     ctx.fillStyle=item?'rgba(15,32,49,.96)':'rgba(7,14,25,.8)';ctx.strokeStyle=evo?'#ffd47b':item?'#527d94':'#304150';ctx.lineWidth=evo?1.5:1;
-    ctx.beginPath();ctx.moveTo(xx+5,y);ctx.lineTo(xx+size,y);ctx.lineTo(xx+size,y+size-5);ctx.lineTo(xx+size-5,y+size);ctx.lineTo(xx,y+size);ctx.lineTo(xx,y+5);ctx.closePath();ctx.fill();ctx.stroke();
-    if(item){canvasIcon(item[0],xx+6,y+5,size-18,evo?'#ffdc87':'#b6ebf5');ctx.font=fTech(10,true);ctx.fillStyle=evo?'#ffdc87':'#e9f7ff';ctx.textAlign='right';ctx.fillText(item[1],xx+size-5,y+size-5);
-      if(evo){ctx.font=fTech(9,true);ctx.textAlign='left';ctx.fillText('★',xx+4,y+size-5);}
-    }else{ctx.strokeStyle='#344b60';ctx.beginPath();ctx.moveTo(xx+size/2-3,y+size/2);ctx.lineTo(xx+size/2+3,y+size/2);ctx.moveTo(xx+size/2,y+size/2-3);ctx.lineTo(xx+size/2,y+size/2+3);ctx.stroke();}
+    ctx.beginPath();ctx.moveTo(xx+5,yy);ctx.lineTo(xx+size,yy);ctx.lineTo(xx+size,yy+size-5);ctx.lineTo(xx+size-5,yy+size);ctx.lineTo(xx,yy+size);ctx.lineTo(xx,yy+5);ctx.closePath();ctx.fill();ctx.stroke();
+    if(item){canvasIcon(item[0],xx+6,yy+5,size-18,evo?'#ffdc87':'#b6ebf5');ctx.font=fTech(10,true);ctx.fillStyle=evo?'#ffdc87':'#e9f7ff';ctx.textAlign='right';ctx.fillText(item[1],xx+size-5,yy+size-5);
+      if(evo){ctx.font=fTech(9,true);ctx.textAlign='left';ctx.fillText('★',xx+4,yy+size-5);}
+    }else{ctx.strokeStyle='#344b60';ctx.beginPath();ctx.moveTo(xx+size/2-3,yy+size/2);ctx.lineTo(xx+size/2+3,yy+size/2);ctx.moveTo(xx+size/2,yy+size/2-3);ctx.lineTo(xx+size/2,yy+size/2+3);ctx.stroke();}
   }ctx.restore();
 }
 function drawEnemyFeatureOverlay(e){
