@@ -217,7 +217,7 @@
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <div class="deck-eyebrow">G A L L O G  /  F L I G H T  D E C K</div>
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v8.0</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v8.1</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko"  class="btn-sm">한국어</button>
       <button data-lang="en"  class="btn-sm">English</button>
@@ -814,7 +814,7 @@ let lifestealAcc=0, lifestealT=0; // 흡혈 초당 회복 상한용
 let combo=0, comboTimer=0, maxCombo=0;
 let best=0; try{ best=parseInt(localStorage.getItem('ss_best')||'0')||0; }catch{}
 // ---- 개발자 튜닝 (로고 클릭+비번 799879) ----
-const TUNE_DEFAULTS={ hpWall:0.4, startPow:0.35, awakenStart:15, awakenStep:15, levelHp:8, reviveXp:0.95, enemyHp:1.0, enemySpeed:1.0, camFollow:4, bossPow:1.0, bossGem:1.0, goldMul:1.0, bossMul:8, bossMulStep:0.1, weaponCap:6, rerollMax:2, eliteChance:0.06, eliteMax:2, eliteHp:4, eliteDmg:1.4, chestGold:120,
+const TUNE_DEFAULTS={ hpWall:0.4, startPow:0.35, awakenStart:15, awakenStep:15, levelHp:8, reviveXp:0.95, enemyHp:1.0, enemySpeed:1.0, camFollow:4, bossPow:1.0, bossGem:1.0, goldMul:1.0, bossMul:8, bossMulStep:0.1, weaponCap:6, rerollMax:2, eliteChance:0.025, eliteMax:1, eliteHp:4, eliteDmg:1.4, chestGold:120,
   champHp:2.0, champDmg:1.2, tankBlock:0.35, shardDmg:1.6, weaverDmg:0.45,
   fuseLast:18, fuseMid:7 };
 let TUNE=Object.assign({},TUNE_DEFAULTS);
@@ -837,8 +837,8 @@ const DEV_KNOBS=[
   {k:'rerollMax',  name:'레벨업 리롤 횟수',  step:1,    hint:'판당 다시 뽑기 횟수 (기본2)'},
   {k:'fuseLast',   name:'융합 마지막재료 노출',step:2,   hint:'재료 2/3일 때 남은 1개 카드 가중치 (기본18, 일반강화=3)'},
   {k:'fuseMid',    name:'융합 두번째재료 노출',step:1,   hint:'재료 1/3일 때 가중치 (기본7)'},
-  {k:'eliteChance',name:'엘리트 출현 확률',  step:0.01, hint:'스폰당 확률 (기본0.06=6%)'},
-  {k:'eliteMax',   name:'엘리트 동시 상한',  step:1,    hint:'화면 내 동시 엘리트 수 (기본2)'},
+  {k:'eliteChance',name:'엘리트 출현 확률',  step:0.005,hint:'스폰당 확률 (기본0.025=2.5%). 올리면 상자가 레벨을 과공급한다'},
+  {k:'eliteMax',   name:'엘리트 동시 상한',  step:1,    hint:'화면 내 동시 엘리트 수 (기본1)'},
   {k:'eliteHp',    name:'엘리트 체력 배수',  step:0.5,  hint:'같은 종 대비 HP× (기본4)'},
   {k:'chestGold',  name:'상자 골드',        step:20,   hint:'보상 상자 기본 골드 (기본120, 스테이지 배수 적용)'},
   {k:'champHp',    name:'챔피언 체력 배수',  step:0.5,  hint:'엘리트 대비 HP× (기본2.0). 스테이지당 1마리'},
@@ -972,7 +972,9 @@ function spawnEnemy(){
   const en=makeEnemy(p.x,p.y,type,diff);
   // 엘리트 승격 — 처치 시 보상 상자를 떨군다. 동시 수를 제한해 '특별함'을 지킨다.
   const eliteNow=enemies.reduce((n,x)=>n+(!x.dead&&x.elite?1:0),0);
-  if(eliteNow<(TUNE.eliteMax!=null?TUNE.eliteMax:2) && Math.random()<(TUNE.eliteChance!=null?TUNE.eliteChance:0.06)){
+  // 빈도를 낮춰 '특별한 적'으로 되돌린 값. 올리면 상자가 레벨 경제를 삼킨다
+  // (6%/2마리일 때 레벨의 86~91%를 상자가 공급해 젬이 무의미해졌다).
+  if(eliteNow<(TUNE.eliteMax!=null?TUNE.eliteMax:1) && Math.random()<(TUNE.eliteChance!=null?TUNE.eliteChance:0.025)){
     en.elite=true;
     en.hp=en.maxhp=en.hp*(TUNE.eliteHp!=null?TUNE.eliteHp:4);
     en.dmg*=(TUNE.eliteDmg!=null?TUNE.eliteDmg:1.4);
