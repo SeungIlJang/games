@@ -217,7 +217,7 @@
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <div class="deck-eyebrow">G A L L O G  /  F L I G H T  D E C K</div>
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v8.4</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v8.5</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko"  class="btn-sm">한국어</button>
       <button data-lang="en"  class="btn-sm">English</button>
@@ -315,6 +315,14 @@
         <button class="btn devGold btn-neutral" data-g="100000000" style="padding:10px 14px;">+1억</button>
         <button class="btn btn-neutral" id="devGoldReset" style="padding:10px 14px;">골드 0</button>
       </div>
+    </div>
+    <div style="margin-top:16px;border-top:1px solid #2b3350;padding-top:14px;width:min(92vw,380px);text-align:center;">
+      <div style="font-weight:700;margin-bottom:8px;">♻️ 초기화 <span style="opacity:.55;font-size:12px;">(골드는 건드리지 않음)</span></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+        <button class="btn btn-neutral" id="devResetMeta"  style="padding:10px 14px;">영구강화 초기화</button>
+        <button class="btn btn-neutral" id="devResetClass" style="padding:10px 14px;">전직 초기화</button>
+      </div>
+      <div id="devResetMsg" style="font-size:12px;color:#8fe6b0;margin-top:8px;min-height:16px;"></div>
     </div>
   </div>
 </div>
@@ -850,7 +858,7 @@ let best=0; try{ best=parseInt(localStorage.getItem('ss_best')||'0')||0; }catch{
 // ---- 개발자 튜닝 (로고 클릭+비번 799879) ----
 const TUNE_DEFAULTS={ hpWall:0.4, startPow:0.35, awakenStart:15, awakenStep:15, levelHp:8, reviveXp:0.95, enemyHp:1.0, enemySpeed:1.0, camFollow:4, bossPow:1.0, bossGem:1.0, goldMul:1.0, bossMul:8, bossMulStep:0.1, weaponCap:10, rerollMax:2, eliteChance:0.025, eliteMax:1, eliteHp:4, eliteDmg:1.4, chestGold:120,
   champHp:2.0, champDmg:1.2, tankBlock:0.35, shardDmg:1.6, weaverDmg:0.45,
-  fuseLast:18, fuseMid:7 };
+  fuseLast:18, fuseMid:7, speedMax:0 };
 let TUNE=Object.assign({},TUNE_DEFAULTS);
 try{ TUNE=Object.assign(TUNE, JSON.parse(localStorage.getItem('ss_tune')||'{}')); }catch(e){}
 function saveTune(){ try{ localStorage.setItem('ss_tune', JSON.stringify(TUNE)); }catch(e){} }
@@ -871,6 +879,7 @@ const DEV_KNOBS=[
   {k:'rerollMax',  name:'레벨업 리롤 횟수',  step:1,    hint:'판당 다시 뽑기 횟수 (기본2)'},
   {k:'fuseLast',   name:'융합 마지막재료 노출',step:2,   hint:'재료 2/3일 때 남은 1개 카드 가중치 (기본18, 일반강화=3)'},
   {k:'fuseMid',    name:'융합 두번째재료 노출',step:1,   hint:'재료 1/3일 때 가중치 (기본7)'},
+  {k:'speedMax',   name:'속도 슬라이더 상한',step:0.5, hint:'0=기록연동 자동. 5를 넣으면 5배까지 열린다(테스트용)'},
   {k:'eliteChance',name:'엘리트 출현 확률',  step:0.005,hint:'스폰당 확률 (기본0.025=2.5%). 올리면 상자가 레벨을 과공급한다'},
   {k:'eliteMax',   name:'엘리트 동시 상한',  step:1,    hint:'화면 내 동시 엘리트 수 (기본1)'},
   {k:'eliteHp',    name:'엘리트 체력 배수',  step:0.5,  hint:'같은 종 대비 HP× (기본4)'},
@@ -904,9 +913,21 @@ document.getElementById('devApply').onclick=applyDev;
 document.getElementById('devReset').onclick=()=>{ TUNE=Object.assign({},TUNE_DEFAULTS); saveTune(); openDev(); };
 document.querySelectorAll('.devGold').forEach(b=>{ b.onclick=()=>devGrantGold(parseInt(b.dataset.g,10)); });
 document.getElementById('devGoldReset').onclick=()=>devGrantGold(-1e18);  // 0으로 리셋(음수 하한 clamp)
+// 초기화 2종 — 골드와 최고기록은 남기고 해당 항목만 되돌린다(밸런스 테스트용)
+function devMsg(s){ const el=document.getElementById('devResetMsg'); if(el){ el.textContent=s; setTimeout(()=>{ if(el.textContent===s) el.textContent=''; },2600); } }
+document.getElementById('devResetMeta').onclick=()=>{
+  const n=Object.keys(meta.lvls||{}).length; meta.lvls={}; saveMeta();
+  try{ renderShop(); }catch(e){}
+  devMsg('영구강화 초기화됨 ('+n+'종) · 새 판부터 반영');
+};
+document.getElementById('devResetClass').onclick=()=>{
+  meta.cls={hero:true}; meta.sel='hero'; saveMeta();
+  try{ renderClasses(); renderShop(); }catch(e){}
+  devMsg('전직 초기화됨 → 용사 · 새 판부터 반영');
+};
 document.getElementById('devClose').onclick=()=>document.getElementById('devPanel').classList.add('hidden');
 let time, kills, spawnTimer, shake, lastTs, bossAlive, banner='', bannerT=0, startOffset=0, stage, stageTime, bossSpawned, catchUpStage=0, catchUpSpeed=1.2;
-let userSpeed=(()=>{ try{ const v=parseFloat(localStorage.getItem('ss_speed')); return (isFinite(v)&&v>=0.5&&v<=3)?v:1.0; }catch(e){ return 1.0; } })();   // 사용자 게임속도(일시정지 슬라이더, 0.5~현재배수)
+let userSpeed=(()=>{ try{ const v=parseFloat(localStorage.getItem('ss_speed')); return (isFinite(v)&&v>=0.5&&v<=5)?v:1.0; }catch(e){ return 1.0; } })();   // 사용자 게임속도(일시정지 슬라이더, 0.5~현재배수)
 // 슬라이더를 직접 만진 적이 있는가 — 만졌다면 캐치업 자동가속보다 사용자 설정이 우선한다
 let speedSet=(()=>{ try{ return localStorage.getItem('ss_speed')!=null; }catch(e){ return false; } })();
 const STAGE_BOSS_DELAY=20; // 스테이지 시작 후 보스 등장까지(초)
@@ -2621,7 +2642,7 @@ function drawWeaponSlots(bottom){
   const cap=TUNE.weaponCap!=null?TUNE.weaponCap:10, entries=Object.entries(player.weapons), gap=5;
   const per=cap<=6?cap:Math.ceil(cap/2), rows=Math.ceil(cap/per);
   const size=Math.min(42,(W-32-gap*(per-1))/per), total=size*per+gap*(per-1), x=(W-total)/2;
-  const y=H-bottom-(rows*size+(rows-1)*gap)-39;
+  const y=H-bottom-(rows*size+(rows-1)*gap)-12;   // 바닥 여백 39 → 12. 2줄이 되면서 블록이 위로 밀려 전장을 먹었다
   ctx.save();ctx.font=fTech(9,true);ctx.fillStyle='#94aabd';ctx.textAlign='left';
   ctx.fillText('ARSENAL  '+Math.min(cap,entries.length)+' / '+cap,x,y-7);
   if(entries.length>cap){ctx.textAlign='right';ctx.fillStyle='#ffd47b';ctx.fillText('+'+(entries.length-cap),x+total,y-7);}
@@ -2857,11 +2878,18 @@ function render(){
   ctx.fillStyle='rgba(255,255,255,.92)'; ctx.fillText(Math.ceil(player.hp)+' / '+Math.ceil(player.maxhp), LBW+BARW-6, 25+T);
   // 텍스트 줄은 버튼(하단 ≈ T+56) 아래로 내림
   const TY=78+T;
-  ctx.font=fTech(17,true);
   if('letterSpacing' in ctx) ctx.letterSpacing='.6px';
+  // 후반엔 'STAGE 68 · 1659s »2x' 와 '처치 19124' 가 서로 밀고 들어와 겹쳤다.
+  // 세 덩어리 폭을 재서 안 겹칠 때까지 글자를 줄인다(최소 11px).
+  const sMidSuffix=' · '+Math.floor(time)+'s'+(stage<catchUpStage?('  »'+catchUpSpeed+'x'):'');
+  const sL='Lv '+player.level, sM='STAGE '+stage+sMidSuffix, sR=t('hudKills')+' '+kills;
+  let fs=17;
+  for(; fs>11; fs--){ ctx.font=fTech(fs,true);
+    const lw=ctx.measureText(sL).width, mw=ctx.measureText(sM).width, rw=ctx.measureText(sR).width;
+    if(16+lw+10<=W/2-mw/2 && W/2+mw/2+10<=W-16-rw) break; }
+  ctx.font=fTech(fs,true);
   hudStat('Lv', String(player.level), 16, TY, 'left');
-  hudStat('STAGE', String(stage), W/2, TY, 'center',
-          ' · '+Math.floor(time)+'s'+(stage<catchUpStage?('  »'+catchUpSpeed+'x'):''));
+  hudStat('STAGE', String(stage), W/2, TY, 'center', sMidSuffix);
   hudStat(t('hudKills'), String(kills), W-16, TY, 'right');
   ctx.textAlign='left'; if('letterSpacing' in ctx) ctx.letterSpacing='0px';
   // HUD 바닥선 — 상단 정보 영역과 전장을 갈라 준다(프레임 느낌).
@@ -3118,19 +3146,21 @@ document.getElementById('resetBtn').onclick=()=>{ if(confirm(t('resetConfirm')))
 // 일시정지
 function paintSpeedSlider(){const sl=document.getElementById('speedSlider');if(!sl)return;const min=Number(sl.min),max=Number(sl.max),value=Number(sl.value);sl.style.setProperty('--speed-fill',Math.max(0,Math.min(100,(value-min)/(max-min||1)*100))+'%');sl.style.setProperty('--speed-color',value>1?'#efc96b':'#78deef');sl.setAttribute('aria-valuetext',value.toFixed(1)+'x');}
 function syncSpeedSlider(){ const sl=document.getElementById('speedSlider'); if(!sl) return;
-  const mx=Math.max(1, Math.round(catchUpSpeed*10)/10);   // 상한 = 현재 배수(catchUpSpeed, 최소 1.0)
+  // speedMax>0 이면 기록과 무관하게 그 값까지 열린다(개발자 테스트용)
+  const mx=(TUNE.speedMax>0)?TUNE.speedMax:Math.max(1, Math.round(catchUpSpeed*10)/10);   // 상한 = 현재 배수(catchUpSpeed, 최소 1.0)
   sl.max=mx; document.getElementById('speedMaxLbl').textContent=mx.toFixed(1)+'x';
   if(userSpeed>mx){ userSpeed=mx; }   // 상한 초과 방지
   sl.value=userSpeed; document.getElementById('speedVal').textContent=userSpeed.toFixed(1);
   // 상한이 왜 1.1x인지 보이지 않으면 "슬라이더가 고장났다"로 읽힌다 — 해금 규칙을 적어 준다
   const note=document.getElementById('speedCapNote');
   if(note){ const bs=meta.bestStage||0;
-    note.textContent = mx>=2 ? featureLabel('최고 배속 해금 완료','Max speed unlocked','最高倍速 解放済み')
+    note.textContent = (TUNE.speedMax>0) ? ('개발자 모드 · 상한 '+mx.toFixed(1)+'x 강제 해제')
+      : mx>=2 ? featureLabel('최고 배속 해금 완료','Max speed unlocked','最高倍速 解放済み')
       : featureLabel(`상한 ${mx.toFixed(1)}x · 최고 기록 10스테이지마다 +0.1x (현재 최고 ${bs}st, 다음 해금 ${(Math.floor(Math.max(1,bs)/10)+1)*10}st)`,
                      `Cap ${mx.toFixed(1)}x · +0.1x per 10 best stages (best ${bs}, next at ${(Math.floor(Math.max(1,bs)/10)+1)*10})`,
                      `上限 ${mx.toFixed(1)}x · 最高記録10ステージごとに +0.1x (最高 ${bs}, 次は ${(Math.floor(Math.max(1,bs)/10)+1)*10})`); }
   paintSpeedSlider(); }
-(function(){ const sl=document.getElementById('speedSlider'); if(sl) sl.oninput=()=>{ userSpeed=Math.max(0.5,Math.min(3,parseFloat(sl.value)||1)); speedSet=true; document.getElementById('speedVal').textContent=userSpeed.toFixed(1); try{localStorage.setItem('ss_speed',String(userSpeed));}catch(e){}paintSpeedSlider(); };paintSpeedSlider(); })();
+(function(){ const sl=document.getElementById('speedSlider'); if(sl) sl.oninput=()=>{ userSpeed=Math.max(0.5,Math.min(5,parseFloat(sl.value)||1)); speedSet=true; document.getElementById('speedVal').textContent=userSpeed.toFixed(1); try{localStorage.setItem('ss_speed',String(userSpeed));}catch(e){}paintSpeedSlider(); };paintSpeedSlider(); })();
 document.getElementById('pauseBtn').onclick=()=>{ if(state!=='play') return; state='paused'; syncSpeedSlider(); document.getElementById('paused').classList.remove('hidden'); };
 document.getElementById('playShopBtn').onclick=()=>{ if(state!=='play') return; state='paused'; shopReturnTo='play'; document.getElementById('potionBtn').style.display='block'; document.getElementById('ingameShop').classList.remove('hidden'); renderShop(); };
 document.getElementById('resumeBtn').onclick=()=>{ if(state!=='paused') return; document.getElementById('paused').classList.add('hidden'); state='play'; lastTs=performance.now(); };
