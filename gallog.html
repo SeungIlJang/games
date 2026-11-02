@@ -217,7 +217,7 @@
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <div class="deck-eyebrow">G A L L O G  /  F L I G H T  D E C K</div>
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v8.2</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v8.3</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko"  class="btn-sm">한국어</button>
       <button data-lang="en"  class="btn-sm">English</button>
@@ -1341,8 +1341,8 @@ const FUSIONS=[
     sigCd:3.0, sig:(p,lv)=>{ const n=6+Math.floor(lv/2);
       for(let i=0;i<n;i++){ const a=i/n*Math.PI*2+rand(0,0.5);
         bullets.push({x:p.x,y:p.y,vx:Math.cos(a)*240,vy:Math.sin(a)*240,dmg:p.dmg*(1.5+0.2*lv),
-          life:2.4,pierce:1,size:5,color:'#ffd25c',homing:true,fresh:true,blast:62+6*lv}); }
-      playWeaponSound('homing',true); } },
+          life:2.4,pierce:1,size:7,color:'#fff0a8',homing:true,fresh:true,blast:62+6*lv}); }
+      playWeaponSound('homing',true); } },   // 재료 유도탄(#ffd25c·size5)보다 밝고 굵게 — 일제사격임이 읽히게
   { key:'bladearray', name:'천검진', icon:'⚔', color:'#cdfffb',
     parts:['orbit','slash','bolt'], partNames:'궤도·참격·볼트',
     desc:'칼날이 한 바퀴 돌 때마다 전방위 대참격 · 궤도는 융합 중에도 계속 돈다',
@@ -1350,7 +1350,10 @@ const FUSIONS=[
       for(const e of enemies){ if(e.dead) continue; if(dist2(e,p)<(R+e.r)*(R+e.r)) hurtEnemy(e,dmg,'#ffffff'); }
       for(let i=0;i<22;i++){ const a=i/22*Math.PI*2;
         particles.push({x:p.x+Math.cos(a)*R,y:p.y+Math.sin(a)*R,vx:Math.cos(a)*60,vy:Math.sin(a)*60,life:0.24,color:'#cdfffb'}); }
-      p.slashFx.push({r:R,t:0,max:0.3,evo:true,ang0:rand(0,6.28)});
+      // ⚠️ 재료 slash(진화)가 R=182로 0.65초마다 똑같은 링을 그린다. 같은 크기·색이면
+      //    시그니처가 발동해도 구분이 안 된다(실제로 "천검진이 안 보인다"는 보고가 있었다).
+      //    fuse 플래그로 칼날 수·색·확산 링을 달리해 '지금 특별한 게 터졌다'를 읽히게 한다.
+      p.slashFx.push({r:R,t:0,max:0.42,evo:true,fuse:true,ang0:rand(0,6.28)});
       playWeaponSound('slash',true); } },
 ];
 const FUSE_KEYS=new Set(FUSIONS.map(F=>F.key));
@@ -2567,7 +2570,15 @@ function drawSword(bl){const fade=Math.max(0,bl.life/bl.max),sprite=swordSprite(
 function drawSlash(s){
   const k=Math.min(1,s.t/s.max),fade=Math.min(1,(1-k)*2.2),r=s.r;
   ctx.save();ctx.translate(player.x,player.y);ctx.rotate(s.ang0+k*1.15);
-  const count=s.evo?4:3,span=s.evo?1.55:1.65,edge=s.evo?'#a3ffe1':'#9beaff';
+  // fuse = 천검진 시그니처. 재료 참격과 반경이 같으므로 칼날 수·색·확산 링으로 갈라 준다.
+  const count=s.fuse?6:(s.evo?4:3),span=s.fuse?1.18:(s.evo?1.55:1.65),
+        edge=s.fuse?'#cdfffb':(s.evo?'#a3ffe1':'#9beaff');
+  if(s.fuse){   // 바깥으로 퍼지는 테두리 — 재료 참격엔 없는 신호
+    ctx.globalAlpha=fade*.7; ctx.strokeStyle='#eaffff'; ctx.lineWidth=2*(1-k)+.8;
+    ctx.beginPath(); ctx.arc(0,0,r*(.55+.62*k),0,6.283); ctx.stroke();
+    ctx.globalAlpha=fade*.30; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.arc(0,0,r*(.40+.50*k),0,6.283); ctx.stroke();
+  }
   function crescent(radius,width,start,alpha,color){
     ctx.globalAlpha=fade*alpha;ctx.fillStyle=color;ctx.beginPath();
     for(let j=0;j<=24;j++){const u=j/24,a=start+u*span;const rr=radius;const x=Math.cos(a)*rr,y=Math.sin(a)*rr;if(j===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}
@@ -2576,10 +2587,11 @@ function drawSlash(s){
   }
   for(let i=0;i<count;i++){
     const start=i*6.283/count;
-    crescent(r*.98,r*(s.evo?.21:.15),start,.20,edge);
-    crescent(r*.96,r*(s.evo?.12:.09),start+.08,.92,edge);
-    crescent(r*.96,r*.027,start+.08,1,'#f1ffff');
-    crescent(r*.82,r*.025,start-.20,.42,edge);
+    // 폭·알파를 낮춰 '두꺼운 띠'에서 '가는 칼자국'으로. 형태는 그대로 두고 굵기만 깎는다.
+    crescent(r*.98,r*(s.evo?.115:.085),start,.13,edge);
+    crescent(r*.96,r*(s.evo?.055:.042),start+.08,.55,edge);
+    crescent(r*.96,r*.020,start+.08,.85,'#f1ffff');
+    crescent(r*.82,r*.018,start-.20,.28,edge);
     ctx.strokeStyle=edge;ctx.lineWidth=s.evo?2:1.4;ctx.globalAlpha=fade*.8;
     for(let q=0;q<3;q++){const a=start+span-.13+q*.12,rr=r*(.90+q*.035);
       ctx.beginPath();ctx.moveTo(Math.cos(a)*rr,Math.sin(a)*rr);ctx.lineTo(Math.cos(a+.12+q*.025)*rr,Math.sin(a+.12+q*.025)*rr);ctx.stroke();}
