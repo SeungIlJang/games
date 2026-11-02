@@ -217,7 +217,7 @@
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <div class="deck-eyebrow">G A L L O G  /  F L I G H T  D E C K</div>
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v7.8</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v7.9</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko"  class="btn-sm">한국어</button>
       <button data-lang="en"  class="btn-sm">English</button>
@@ -815,7 +815,8 @@ let combo=0, comboTimer=0, maxCombo=0;
 let best=0; try{ best=parseInt(localStorage.getItem('ss_best')||'0')||0; }catch{}
 // ---- 개발자 튜닝 (로고 클릭+비번 799879) ----
 const TUNE_DEFAULTS={ hpWall:0.4, startPow:0.35, awakenStart:15, awakenStep:15, levelHp:8, reviveXp:0.95, enemyHp:1.0, enemySpeed:1.0, camFollow:4, bossPow:1.0, bossGem:1.0, goldMul:1.0, bossMul:8, bossMulStep:0.1, weaponCap:6, rerollMax:2, eliteChance:0.06, eliteMax:2, eliteHp:4, eliteDmg:1.4, chestGold:120,
-  champHp:2.0, champDmg:1.2, tankBlock:0.35, shardDmg:1.6, weaverDmg:0.45 };
+  champHp:2.0, champDmg:1.2, tankBlock:0.35, shardDmg:1.6, weaverDmg:0.45,
+  fuseLast:18, fuseMid:7 };
 let TUNE=Object.assign({},TUNE_DEFAULTS);
 try{ TUNE=Object.assign(TUNE, JSON.parse(localStorage.getItem('ss_tune')||'{}')); }catch(e){}
 function saveTune(){ try{ localStorage.setItem('ss_tune', JSON.stringify(TUNE)); }catch(e){} }
@@ -834,6 +835,8 @@ const DEV_KNOBS=[
   {k:'bossMulStep',name:'보스 배수 증가/st', step:0.02, hint:'스테이지당 위 수치 증가 (기본0.1 → 100st에 17기분)'},
   {k:'weaponCap',  name:'무기 슬롯 상한',    step:1,    hint:'보유 가능 무기 수 (기본6). 꽉 차면 새 무기 제안 안 함'},
   {k:'rerollMax',  name:'레벨업 리롤 횟수',  step:1,    hint:'판당 다시 뽑기 횟수 (기본2)'},
+  {k:'fuseLast',   name:'융합 마지막재료 노출',step:2,   hint:'재료 2/3일 때 남은 1개 카드 가중치 (기본18, 일반강화=3)'},
+  {k:'fuseMid',    name:'융합 두번째재료 노출',step:1,   hint:'재료 1/3일 때 가중치 (기본7)'},
   {k:'eliteChance',name:'엘리트 출현 확률',  step:0.01, hint:'스폰당 확률 (기본0.06=6%)'},
   {k:'eliteMax',   name:'엘리트 동시 상한',  step:1,    hint:'화면 내 동시 엘리트 수 (기본2)'},
   {k:'eliteHp',    name:'엘리트 체력 배수',  step:0.5,  hint:'같은 종 대비 HP× (기본4)'},
@@ -1319,6 +1322,32 @@ const FUSE_KEYS=new Set(FUSIONS.map(F=>F.key));
 // 이게 없으면 재료 3종을 전부 Lv6까지 올리는 일은 우연으로만 일어난다.
 const RECIPES=[{key:'spirits',name:'삼수호령',parts:['lightning','flame','santoryu']},
   ...FUSIONS.map(F=>({key:F.key,name:F.name,parts:F.parts}))];
+// 레시피가 거의 다 모였을 때, 남은 재료의 카드를 집중 노출한다.
+// 안내문("재료 2/3 · 남은 재료: 볼트 Lv6")만 띄워 놓고 정작 그 볼트 카드가 안 뜨면
+// 융합은 노리는 것이 아니라 운에 맡기는 것이 된다. 실측상 3판 중 2판이 융합 0회였다.
+function fuseWeight(key){
+  if((player.weapons[key]||0)>=6) return 0;   // 이미 Lv6인 재료는 보정 불필요
+  let best=0;
+  for(const R of RECIPES){
+    if(player.weapons[R.key] || !R.parts.includes(key)) continue;
+    const have=R.parts.filter(k=>(player.weapons[k]||0)>=6).length;
+    if(have===2) best=Math.max(best, TUNE.fuseLast!=null?TUNE.fuseLast:18);   // 마지막 1개
+    else if(have===1) best=Math.max(best, TUNE.fuseMid!=null?TUNE.fuseMid:7); // 두 번째
+  }
+  return best;
+}
+// 이 무기를 집으면 레시피의 마지막 한 칸이 채워지는가.
+// 슬롯이 꽉 차면 '새 무기'가 막히는데, 하필 그게 융합 재료면 런이 영구히 융합 불가가 된다.
+// 실측: 6칸을 전부 Lv6까지 올린 런들이 레시피 2/3에서 전부 멈췄다.
+// 융합은 결과적으로 슬롯을 2칸 '돌려주므로' 이 경우만 상한을 넘겨 제안한다.
+function fuseFinisher(key){
+  if((player.weapons[key]||0)>0) return false;
+  for(const R of RECIPES){
+    if(player.weapons[R.key] || !R.parts.includes(key)) continue;
+    if(R.parts.every(k=>k===key || (player.weapons[k]||0)>=6)) return R.name;
+  }
+  return false;
+}
 function fuseHint(key){
   for(const R of RECIPES){
     if(player.weapons[R.key] || !R.parts.includes(key)) continue;
@@ -1340,7 +1369,9 @@ function partLv(key){
 // 재료는 Lv6·진화 상태로 융합 안에 들어 있으므로, 다시 집으면 Lv1인데 진화 이펙트가 나오는
 // 기괴한 상태가 되고 같은 무기가 두 번 발사된다.
 function isFused(key){
-  for(const F of FUSIONS) if(player.weapons[F.key] && F.parts.includes(key)) return true;
+  // RECIPES = 삼수호령 포함 4종. 삼수호령만 예외로 재료 재획득이 가능해서
+  // 같은 무기가 융합 안과 밖에서 두 번 발사되는 상태(작동 무기 13~14개)가 나왔다.
+  for(const R of RECIPES) if(player.weapons[R.key] && R.parts.includes(key)) return true;
   return false;
 }
 // 융합 레벨이 재료 전체에 거는 공격력 배수
@@ -1403,13 +1434,23 @@ function buildChoices(){
     if(key==='spirits' && !player.weapons.spirits) continue;   // 미보유 삼수호령만 일반 풀 제외(융합 전용) · 보유 시 강화/진화는 허용
     if(FUSE_KEYS.has(key) && !player.weapons[key]) continue;   // 융합 무기도 같은 규칙 — 재료를 모아야만 등장한다
     if(owned){
-      if(owned<w.max) wpool.push({weapon:key,t:`${w.icon} ${w.name} 강화 (Lv${owned}→${owned+1})`, d:w.desc+fuseHint(key), weight:3, a:()=>player.weapons[key]++});
+      if(owned<w.max) wpool.push({weapon:key,t:`${w.icon} ${w.name} 강화 (Lv${owned}→${owned+1})`, d:w.desc+fuseHint(key), weight:Math.max(3,fuseWeight(key)), a:()=>player.weapons[key]++});
       else if(!player.evolved[key]) wpool.push({weapon:key,evolution:true,t:`🌟 진화 · ${w.name} → ${EVOLVE[key]}`, d:'무기가 상위 형태로 각성!'+fuseHint(key), weight:6, a:()=>{ player.evolved[key]=true; rewardPulse={life:.8,color:'#ffb1e8',evolution:true};sfx.evolve(); }});
     }
     // 무기 슬롯 상한 — 꽉 차면 '새 무기'를 제안하지 않는다.
     // 상한이 없으면 레벨업이 '선택'이 아니라 '수집'이 되어 모든 런이 같은 빌드로 수렴한다.
-    else if(!isFused(key) && Object.keys(player.weapons).length < (TUNE.weaponCap!=null?TUNE.weaponCap:6))
-      wpool.push({weapon:key,t:`${w.icon} 새 무기 · ${w.name}`, d:w.desc, weight:key==='blackhole'?6:4, a:()=>{ player.weapons[key]=1; if(key!=='orbit') player.timers[key]=0; }});
+    else if(!isFused(key)){
+      const cap=TUNE.weaponCap!=null?TUNE.weaponCap:6, held=Object.keys(player.weapons).length;
+      // 마지막 재료는 상한을 넘겨서라도 제안한다(집으면 융합이 슬롯을 2칸 돌려준다).
+      // 다만 레시피 여러 개가 동시에 2/3이면 끝없이 늘 수 있으니 +2까지만 허용한다.
+      const fin=(held<cap+2) && fuseFinisher(key);
+      if(fin || held < cap)
+        wpool.push({weapon:key, evolution:!!fin,
+          t: fin ? `🌟 ${w.icon} ${w.name} — ${fin} 마지막 재료!` : `${w.icon} 새 무기 · ${w.name}`,
+          d: fin ? `Lv6까지 올리면 ${fin} 융합 개방 · 세 무기가 한 칸으로 합쳐진다` : w.desc+fuseHint(key),
+          weight: fin ? (TUNE.fuseLast!=null?TUNE.fuseLast:18) : Math.max(key==='blackhole'?6:4, fuseWeight(key)),
+          a:()=>{ player.weapons[key]=1; if(key!=='orbit') player.timers[key]=0; }});
+    }
   }
   // 🌟 삼수호령 융합 각성: 번개·화염방사·삼도류를 모두 Lv6 마스터하면 등장(우선노출) → 세 무기 소모 후 수호령 합체
   if(!player.weapons.spirits && player.weapons.lightning>=6 && player.weapons.flame>=6 && player.weapons.santoryu>=6){
@@ -2590,7 +2631,10 @@ function drawCombatBanner(){
   // Character wrapping also handles Korean and Japanese without spaces.
   const lines=[];let line='';
   for(const ch of title){if(ctx.measureText(line+ch).width>inner&&line){lines.push(line);line=ch;}else line+=ch;}if(line)lines.push(line);
-  const height=56+lines.length*(fontSize+6),x=(W-width)/2,y=Math.max(146,H*.25);
+  // 배너는 보스 HUD(이름 98+safeTop · HP바 102~112 · 마일스톤 'II' 125) 바로 아래에 붙인다.
+  // 화면 비율(H*.25)로 잡으면 전장 한복판까지 내려와 플레이어와 탄막을 가렸다.
+  // 세로가 아주 짧은 화면에서만 비율이 상한으로 걸린다.
+  const height=56+lines.length*(fontSize+6),x=(W-width)/2,y=Math.min(132+safeTop,H*.3);
   ctx.translate(0,Math.max(0,.25-bannerT)*-8);
   ctx.fillStyle='rgba(5,12,25,.94)';ctx.strokeStyle=color;ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(x+12,y);ctx.lineTo(x+width,y);ctx.lineTo(x+width,y+height-12);ctx.lineTo(x+width-12,y+height);ctx.lineTo(x,y+height);ctx.lineTo(x,y+12);ctx.closePath();ctx.fill();ctx.globalAlpha*=.65;ctx.stroke();ctx.globalAlpha=Math.min(1,bannerT/.25);
@@ -2627,8 +2671,11 @@ function render(){
   for(const f of killRings){ctx.globalAlpha=Math.max(0,f.life/.24)*.45;ctx.strokeStyle=f.color;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(f.x,f.y,f.r*(1-f.life/.3),0,6.283);ctx.stroke();}ctx.globalAlpha=1;
   // Shock fronts and angular frost share simulation, never their silhouette.
   for(const nv of player.novas)drawWave(nv);
-  for(const f of player.flames){ctx.save();ctx.globalAlpha=Math.min(1,f.life/.35)*(0.16+0.64*Math.pow(f.life/f.max,2));ctx.translate(f.x,f.y);const frame=(Math.floor(time*10+f.x*.01)%3+3)%3;ctx.drawImage(flameSprite(frame),-f.r,-f.r,f.r*2,f.r*2);
-    if(f.evo){ctx.globalAlpha=Math.max(0,f.life/f.max)*.25;ctx.strokeStyle='#c9fff1';ctx.lineWidth=1;ctx.beginPath();for(let i=0;i<5;i++){const a=i*1.256;ctx.moveTo(Math.cos(a)*f.r*.18,Math.sin(a)*f.r*.18);ctx.lineTo(Math.cos(a+.12)*f.r*.55,Math.sin(a+.12)*f.r*.55);}ctx.stroke();}ctx.restore();}
+  // 화염 스프라이트는 불투명 3겹이라 장판이 겹치면 화면이 통째로 막힌다.
+  // 한 장은 선명하게 두고, 여러 장이 깔릴 때만 전체를 흐린다 — 데미지(f.dmg·life)는 건드리지 않는다.
+  const fStack=Math.min(1, 2.6/Math.max(1,player.flames.length));
+  for(const f of player.flames){ctx.save();ctx.globalAlpha=Math.min(1,f.life/.35)*(0.12+0.48*Math.pow(f.life/f.max,2))*fStack;ctx.translate(f.x,f.y);const frame=(Math.floor(time*10+f.x*.01)%3+3)%3;ctx.drawImage(flameSprite(frame),-f.r,-f.r,f.r*2,f.r*2);
+    if(f.evo){ctx.globalAlpha=Math.max(0,f.life/f.max)*.25*fStack;ctx.strokeStyle='#c9fff1';ctx.lineWidth=1;ctx.beginPath();for(let i=0;i<5;i++){const a=i*1.256;ctx.moveTo(Math.cos(a)*f.r*.18,Math.sin(a)*f.r*.18);ctx.lineTo(Math.cos(a+.12)*f.r*.55,Math.sin(a+.12)*f.r*.55);}ctx.stroke();}ctx.restore();}
   for(const z of player.zaps)drawZap(z);
   // 블랙홀: 무수한 얇은 빛줄기가 중심으로 빨려드는 회오리(중력렌즈 느낌) + 어두운 중심 void
   for(const h of player.holes){ const a=Math.max(0,h.life/h.max), void_=h.r*0.30;
