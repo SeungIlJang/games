@@ -217,7 +217,7 @@
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <div class="deck-eyebrow">G A L L O G  /  F L I G H T  D E C K</div>
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v7.9</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v8.0</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko"  class="btn-sm">한국어</button>
       <button data-lang="en"  class="btn-sm">English</button>
@@ -1696,6 +1696,15 @@ function update(dt){
     spd*=slowK;
     const mv=e.boss?1:enemyBehavior(e,ang,dt,slowK);   // 특수 행동 — 0이면 정지(예고·실행 중)
     spd*=mv;
+    // ── 보스 최소 접근 거리 ──────────────────────────────────────
+    // 보스 반경 46~58 vs 플레이어 14. 그대로 두면 보스가 플레이어 위에 주차해(실측 최종거리 0)
+    // 자기 함선이 묻혀 조준도 회피도 못 하고, 밀어낼 방법도 없어 '플레이'가 아니라 벌칙이 된다.
+    // 덮지만 않을 만큼(= 두 반경 + 여유)만 띄운다. 바로 옆이라 멀어지는 게 아니다.
+    // 돌진 중에는 그대로 뚫고 들어온다 — 돌진이 위협으로 읽히는 유일한 구분이다.
+    if(e.boss && e.dashT<=0){
+      const stand=e.r+player.r+10, err=Math.hypot(player.x-e.x,player.y-e.y)-stand;
+      spd=Math.max(-spd, Math.min(spd, err*2.5));   // 목표 거리로 수렴(비례 제어 — 진동 없음)
+    }
     let vx=Math.cos(ang)*spd, vy=Math.sin(ang)*spd;
     if(e.type==='weaver'&&mv){ const px=-Math.sin(ang),py=Math.cos(ang), w=Math.sin(e.t*4)*e.speed*0.9*slowK; vx+=px*w; vy+=py*w; }
     e.x+=vx*dt; e.y+=vy*dt;
@@ -2210,11 +2219,34 @@ function hudBar(x,y,w,h,v,col,bg,cap){
   if(cap){ ctx.fillStyle=col; ctx.fillRect(x-5,y+1,2.5,h-2); }   // 좌측 각진 캡
 }
 // Clean top meters: no slanted cuts, bright seam, or detached cap.
-function topMeter(x,y,w,h,value,color){
-  const fraction=Math.max(0,Math.min(1,value));
-  ctx.fillStyle='#172033';ctx.fillRect(x,y,w,h);
-  if(fraction>0){ctx.fillStyle=color;ctx.fillRect(x+1,y+1,(w-2)*fraction,h-2);}
-  ctx.strokeStyle='#43516b';ctx.lineWidth=1;ctx.strokeRect(x+.5,y+.5,w-1,h-1);
+// 플레이어 체력/경험치 바. 예전엔 민짜 사각형이라 보스 바(hudBar)의 사선 컷·하이라이트와
+// 톤이 어긋났다. 같은 언어로 맞춘다 — 홈에 파인 트로프 + 2단 띠 + 끝단 사선 + 좌측 캡.
+function topMeter(x,y,w,h,value,color,opts){
+  const o=opts||{}, f=Math.max(0,Math.min(1,value)), c=Math.min(h*0.8,5);
+  chamfPath(x,y,w,h,c); ctx.fillStyle='#070e1b'; ctx.fill();                 // 바깥 홈
+  chamfPath(x+1,y+1,w-2,h-2,Math.max(1,c*.8)); ctx.fillStyle='#172033'; ctx.fill();
+  if(f>0){ ctx.save(); chamfPath(x+1,y+1,w-2,h-2,Math.max(1,c*.8)); ctx.clip();
+    ctx.fillStyle=color; ctx.fillRect(x+1,y+1,(w-2)*f,h-2);
+    ctx.fillStyle=mixHex(color,'#ffffff',.32); ctx.fillRect(x+1,y+1,(w-2)*f,Math.max(1,(h-2)*0.40));  // 위쪽 밝은 띠
+    const ex=x+1+(w-2)*f;                                                     // 끝단 사선 하이라이트
+    ctx.fillStyle='rgba(255,255,255,.55)'; ctx.beginPath();
+    ctx.moveTo(ex-2,y+1); ctx.lineTo(ex,y+1); ctx.lineTo(ex-h*0.5,y+h-1); ctx.lineTo(ex-h*0.5-2,y+h-1); ctx.closePath(); ctx.fill();
+    ctx.restore(); }
+  if(o.ticks){ ctx.save(); ctx.strokeStyle='rgba(5,11,22,.5)'; ctx.lineWidth=1;   // 구획 눈금 — 남은 양을 세어 읽게
+    for(let i=1;i<o.ticks;i++){ const tx=Math.round(x+w*i/o.ticks)+.5;
+      ctx.beginPath(); ctx.moveTo(tx,y+1.5); ctx.lineTo(tx,y+h-1.5); ctx.stroke(); } ctx.restore(); }
+  chamfPath(x,y,w,h,c); ctx.strokeStyle='rgba(170,200,255,.30)'; ctx.lineWidth=1; ctx.stroke();
+  ctx.fillStyle=color; ctx.fillRect(x-5,y+1,2.5,h-2);                         // 좌측 각진 캡
+}
+// 라벨은 흐리게, 숫자만 밝게 — 한 줄에서 실제로 읽어야 할 것만 뜨게 한다
+function hudStat(label,value,x,y,align,suffix){
+  const lw=ctx.measureText(label+' ').width, vw=ctx.measureText(value).width;
+  const sw=suffix?ctx.measureText(suffix).width:0, tot=lw+vw+sw;
+  const sx = align==='center' ? x-tot/2 : align==='right' ? x-tot : x;
+  ctx.textAlign='left';
+  ctx.fillStyle='#7d93b2'; ctx.fillText(label+' ', sx, y);
+  ctx.fillStyle='#ffffff'; ctx.fillText(value, sx+lw, y);
+  if(suffix){ ctx.fillStyle='#7d93b2'; ctx.fillText(suffix, sx+lw+vw, y); }
 }
 function coinIcon(x,y,r){                              // 🪙 대체
   ctx.beginPath(); ctx.arc(x,y,r,0,6.2832); ctx.fillStyle='#ffd25c'; ctx.fill();
@@ -2348,7 +2380,7 @@ for(const key in WICON) WEAPONS[key].icon=weaponIcon(key);
 const flameFrames=[];
 function flameSprite(frame=0){if(flameFrames[frame])return flameFrames[frame];const c=mkCv(128,128),g=c.getContext('2d');g.translate(64,64);
   // Opaque, layered fire tongues keep the burning area readable.
-  for(let band=0;band<3;band++){g.save();g.scale([1,.72,.40][band],[1,.72,.40][band]);const w=Math.sin(frame*2)*5;g.fillStyle=['#e94b19','#ffad26','#fff4b0'][band];g.beginPath();g.moveTo(-40,18);g.quadraticCurveTo(-55,-6,-34,-20);g.quadraticCurveTo(-25,-16,-26+w,-42);g.quadraticCurveTo(-8,-30,-9-w,-54);g.quadraticCurveTo(12,-40,15,-20);g.quadraticCurveTo(23,-32,33+w,-36);g.quadraticCurveTo(36,-10,49,6);g.quadraticCurveTo(35,42,0,49);g.quadraticCurveTo(-32,38,-40,18);g.closePath();g.fill();g.restore();}
+  for(let band=0;band<3;band++){g.save();g.scale([1,.72,.40][band],[1,.72,.40][band]);const w=Math.sin(frame*2)*5;g.fillStyle=['#c43f12','#d8891b','#ffc866'][band];/* 코어가 거의 흰색(#fff4b0)이라 혼자 튀었다 → 한 단 낮춤 */g.beginPath();g.moveTo(-40,18);g.quadraticCurveTo(-55,-6,-34,-20);g.quadraticCurveTo(-25,-16,-26+w,-42);g.quadraticCurveTo(-8,-30,-9-w,-54);g.quadraticCurveTo(12,-40,15,-20);g.quadraticCurveTo(23,-32,33+w,-36);g.quadraticCurveTo(36,-10,49,6);g.quadraticCurveTo(35,42,0,49);g.quadraticCurveTo(-32,38,-40,18);g.closePath();g.fill();g.restore();}
   flameFrames[frame]=c;return c;
 }
 const pickupCache=new Map();
@@ -2673,8 +2705,8 @@ function render(){
   for(const nv of player.novas)drawWave(nv);
   // 화염 스프라이트는 불투명 3겹이라 장판이 겹치면 화면이 통째로 막힌다.
   // 한 장은 선명하게 두고, 여러 장이 깔릴 때만 전체를 흐린다 — 데미지(f.dmg·life)는 건드리지 않는다.
-  const fStack=Math.min(1, 2.6/Math.max(1,player.flames.length));
-  for(const f of player.flames){ctx.save();ctx.globalAlpha=Math.min(1,f.life/.35)*(0.12+0.48*Math.pow(f.life/f.max,2))*fStack;ctx.translate(f.x,f.y);const frame=(Math.floor(time*10+f.x*.01)%3+3)%3;ctx.drawImage(flameSprite(frame),-f.r,-f.r,f.r*2,f.r*2);
+  const fStack=Math.min(1, 2.0/Math.max(1,player.flames.length));
+  for(const f of player.flames){ctx.save();ctx.globalAlpha=Math.min(1,f.life/.35)*(0.09+0.35*Math.pow(f.life/f.max,2))*fStack;ctx.translate(f.x,f.y);const frame=(Math.floor(time*10+f.x*.01)%3+3)%3;ctx.drawImage(flameSprite(frame),-f.r,-f.r,f.r*2,f.r*2);
     if(f.evo){ctx.globalAlpha=Math.max(0,f.life/f.max)*.25*fStack;ctx.strokeStyle='#c9fff1';ctx.lineWidth=1;ctx.beginPath();for(let i=0;i<5;i++){const a=i*1.256;ctx.moveTo(Math.cos(a)*f.r*.18,Math.sin(a)*f.r*.18);ctx.lineTo(Math.cos(a+.12)*f.r*.55,Math.sin(a+.12)*f.r*.55);}ctx.stroke();}ctx.restore();}
   for(const z of player.zaps)drawZap(z);
   // 블랙홀: 무수한 얇은 빛줄기가 중심으로 빨려드는 회오리(중력렌즈 느낌) + 어두운 중심 void
@@ -2717,7 +2749,14 @@ function render(){
   for(const e of enemies){
     const col=e.flash>0?'#ffffff':e.color;
     // 엘리트/챔피언 표식은 drawEnemyFeatureOverlay()가 그린다 (정식 디자인 — 임시 오라 제거)
+    // 보스가 플레이어를 덮으면 반투명으로 비켜 준다 — 돌진처럼 겹칠 수밖에 없는 순간의 안전장치.
+    // (평상시엔 최소 접근 거리 때문에 겹치지 않으므로 거의 발동하지 않는다)
+    let fade=1;
+    if(e.boss){ const d=Math.hypot(e.x-player.x,e.y-player.y);
+      if(d<e.r) fade=0.42+0.58*(d/e.r); }
+    if(fade<1){ ctx.save(); ctx.globalAlpha=fade; }
     drawEnemyShape(e,col);
+    if(fade<1) ctx.restore();
     drawEnemyFeatureOverlay(e);
     if(!e.boss && e.hp<e.maxhp){ const w=e.r*2; ctx.fillStyle='rgba(0,0,0,.5)'; ctx.fillRect(e.x-e.r,e.y-e.r-8,w,4); ctx.fillStyle='#8fff9e'; ctx.fillRect(e.x-e.r,e.y-e.r-8,w*(e.hp/e.maxhp),4); }
   }
@@ -2750,16 +2789,30 @@ function render(){
   // 좌측 버튼 2개(🪙 12~56, ⏸ 64~108) 회피 → 좌 인셋 넉넉히, 우측은 음소거(1개)만 회피
   const LBW=120, RBW=68, BARW=Math.max(40, W-LBW-RBW);
   // 체력 / 경험치 — 모서리 사선 컷 + 좌측 캡
-  topMeter(LBW,16+T,BARW,12,player.hp/player.maxhp,'#ff5c7a');
+  const hpF=player.hp/player.maxhp;
+  // 위급하면 테두리가 맥동한다 — 숫자를 안 봐도 손끝으로 읽힌다
+  if(hpF<0.3){ const p=.5+.5*Math.sin(time*7); ctx.save(); ctx.globalAlpha=.2+.45*p;
+    ctx.strokeStyle='#ff5c7a'; ctx.lineWidth=2; chamfPath(LBW-1.5,14.5+T,BARW+3,15,5); ctx.stroke(); ctx.restore(); }
+  topMeter(LBW,16+T,BARW,12,hpF,'#ff5c7a',{ticks:4});
   topMeter(LBW,36+T,BARW,5,player.xp/player.xpNeed,'#25ddff');  // XP바=젬 시안색 통일
+  // 체력 수치 — 바 안 오른쪽. 지금까지 '얼마 남았는지'를 숫자로 볼 방법이 없었다
+  ctx.font=fTech(9,true); ctx.textAlign='right';
+  ctx.fillStyle='rgba(4,10,20,.55)'; ctx.fillText(Math.ceil(player.hp)+' / '+Math.ceil(player.maxhp), LBW+BARW-5.5, 25.5+T);
+  ctx.fillStyle='rgba(255,255,255,.92)'; ctx.fillText(Math.ceil(player.hp)+' / '+Math.ceil(player.maxhp), LBW+BARW-6, 25+T);
   // 텍스트 줄은 버튼(하단 ≈ T+56) 아래로 내림
   const TY=78+T;
-  ctx.fillStyle='#fff'; ctx.font=fTech(17,true); ctx.textAlign='left';
+  ctx.font=fTech(17,true);
   if('letterSpacing' in ctx) ctx.letterSpacing='.6px';
-  ctx.fillText('Lv '+player.level, 16, TY);
-  ctx.textAlign='center'; ctx.fillText('STAGE '+stage+' · '+Math.floor(time)+'s'+(stage<catchUpStage?('  »'+catchUpSpeed+'x'):''), W/2, TY);
-  ctx.textAlign='right'; ctx.fillText(t('hudKills')+' '+kills, W-16, TY);
+  hudStat('Lv', String(player.level), 16, TY, 'left');
+  hudStat('STAGE', String(stage), W/2, TY, 'center',
+          ' · '+Math.floor(time)+'s'+(stage<catchUpStage?('  »'+catchUpSpeed+'x'):''));
+  hudStat(t('hudKills'), String(kills), W-16, TY, 'right');
   ctx.textAlign='left'; if('letterSpacing' in ctx) ctx.letterSpacing='0px';
+  // HUD 바닥선 — 상단 정보 영역과 전장을 갈라 준다(프레임 느낌).
+  // 보스가 있으면 보스 바가 그 경계 역할을 하므로 생략한다(겹치면 지저분해진다).
+  if(!bossAlive){ ctx.strokeStyle='rgba(120,160,210,.16)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(14,TY+10.5); ctx.lineTo(W-14,TY+10.5); ctx.stroke();
+    ctx.fillStyle='rgba(120,160,210,.30)'; ctx.fillRect(14,TY+9.5,22,2); ctx.fillRect(W-36,TY+9.5,22,2); }
   // 시작 시 일시정지 안내 (처음 몇 초)
   if(startHintT>0){ const a=Math.min(1,startHintT/1.2); ctx.save(); ctx.globalAlpha=a;
     ctx.fillStyle='#ffd25c'; ctx.font=fTech(14,true); ctx.textAlign='center';
@@ -2775,12 +2828,18 @@ function render(){
   // boss HP 바
   if(bossAlive){ const b=enemies.find(e=>e.boss&&!e.dead); if(b){
     const col=b.mile?'#ffd25c':'#ff5ce1';
-    hudBar(30,102+T,W-60,10, b.hp/b.maxhp, col,'rgba(0,0,0,.5)', false);
-    if(b.mile){ctx.fillStyle='#f5e7be';ctx.fillRect(W/2-1,100+T,2,14);ctx.font=fTech(8,true);ctx.textAlign='center';ctx.fillText('II',W/2,125+T);}
-    ctx.fillStyle='#fff'; ctx.font=fTech(12,true); ctx.textAlign='center';
+    const BX=30, BW=W-60, BY=103+T, BH=9;
+    // 체력·경험치 바와 같은 컴포넌트(topMeter)를 쓴다. 예전엔 보스만 단색 슬랩이라 혼자 튀었다.
+    topMeter(BX,BY,BW,BH, b.hp/b.maxhp, col, {ticks:b.mile?10:5});
+    // 50% 표식 — 2페이즈 보스는 어디서 바뀌는지 미리 보인다
+    if(b.kind2||b.mile){ ctx.fillStyle=b.mile?'#f5e7be':'rgba(255,255,255,.55)'; ctx.fillRect(BX+BW/2-1,BY-2,2,BH+4); }
+    // 이름은 왼쪽, 남은 비율은 오른쪽 — 가운데 떠 있던 글자를 양끝으로 묶어 준다
     const lb=trDesc(b.bossName||'BOSS')+(bossQueue.length>0?' · +'+bossQueue.length:'');
-    ctx.fillText(lb, W/2+8, 98+T);
-    bossMark(W/2-ctx.measureText(lb).width/2, 94.5+T, 4.5, col, b.mile);   // 👑/⬢ 대체
+    ctx.font=fTech(12,true); ctx.textAlign='left'; ctx.fillStyle='#fff';
+    ctx.fillText(lb, BX+11, 97+T);
+    bossMark(BX, 93.5+T, 4.5, col, b.mile);                                  // 👑/⬢ 대체
+    ctx.font=fTech(11,true); ctx.textAlign='right'; ctx.fillStyle=col;
+    ctx.fillText(Math.ceil(b.hp/b.maxhp*100)+'%', BX+BW, 97+T);
     ctx.textAlign='left'; } }
   // Responsive combat announcement panel.
   if(bannerT>0&&!featureArt.rank)drawCombatBanner();
