@@ -103,7 +103,7 @@
   <button id="dexClose">닫기</button>
 </div>
 <div id="adov" class="hidden"><div class="sp"></div><div id="adovTxt">광고 보는 중…</div></div>
-<div id="ver">모두의 딱지치기 v1.8 · ①끌어서 위치 ②쓸어내려 힘 · 아트 전체 · 타격감</div>
+<div id="ver">모두의 딱지치기 v1.9 · ①끌어서 위치 ②쓸어내려 힘 · 중후반 난이도 완화 · 아트 전체</div>
 <div id="start">
   <h1 style="font-size:38px">모두의 딱지치기</h1>
   <p><b>①</b> 손가락을 <b>끌어서</b> 딱지를 들어올려요. 높이가 낼 수 있는 <b>힘의 한계</b>, 좌우가 <b>조준</b>이에요.<br/><b>②</b> <b>아래로 쓸어내려</b> 내리쳐요 — 쓸어내린 <b>속도가 곧 힘</b>이에요.<br/>넘기는 건 충격이 아니라 <b>밀려난 바람</b> — 높이 들고 <b>평평하게</b> 쳐야 들어가요 🌬️<br/><span style="color:#9a815f">스테이지 4에서 <b>평평도</b>, 9에서 <b>조준</b>이 열려요</span><br/><span id="bstage" style="color:#ffcf5c;font-weight:800"></span></p>
@@ -206,7 +206,7 @@ const T_FULL=0.80;        // 이 시간까지 누르면 힘 최대. 더 누르�
 const T_COMFORT=0.45;     // 이 시간 넘기면 손이 떨리기 시작
 const TREM_RATE=0.55;     // 초당 떨림 증가
 const TREM_FREQ=7.5;      // 떨림 주파수(rad/s)
-const TILT_MAX=0.42;      // 이 각도(rad)만큼 기울면 평평도 0
+const TILT_MAX=0.55;      // 이 각도(rad)만큼 기울면 평평도 0 (0.42→0.55 완화)
 let chargeT=0, aloftT=0, overHold=0, aimX=0, holding=false;
 let liftR=0, placeY=0, swing=0;      // 들어올린 높이비율 · 손가락 Y · 스와이프 세기
 const SWIPE_VMAX=2400;               // 이 속도(px/s)면 최대 힘
@@ -220,7 +220,7 @@ function axAngle(){ return stage>=4; }
 function axAim(){ return stage>=9; }
 
 function applyDifficulty(){ const s=stage;
-  Gcur=Math.min(18, 9 + (s-1)*0.42);                 // 딱지 무게 = 뒤집기 임계. 22스테이지까지 계속 오름
+  Gcur=Math.min(18, 9 + (s-1)*0.32);                 // 딱지 무게 = 뒤집기 임계. 29스테이지까지 계속 오름
   OMEGA_MAX=6.4 + up.power*0.22;                      // 💪힘: 낼 수 있는 최대 타격 → 필요 힘이 낮아짐
   tremBase=Math.max(0.02, 0.05 + Math.max(0,s-4)*0.006 - up.barslow*0.012);  // 🐢집중력: 떨림 억제
   sigmaD=Math.max(16, 52 - Math.max(0,s-9)*1.8 + up.aim*8);                   // 🎯정확도: 조준 허용 폭
@@ -366,7 +366,9 @@ function strike(swipeV){
     const d = Math.abs(aimX - W/2);
     Dg = Math.exp(-((d-Dstar)*(d-Dstar))/(2*sigmaD*sigmaD));
   } else Dg = 1;
-  Pw = Math.pow(F,1.15) * Math.pow(A,1.6) * Dg;
+  // A 의 지수는 1.6 이었다. 세 축이 곱이라 오차가 복리로 커져, S12 부터
+  // 5° 만 기울어도 최대 힘으로 못 넘기는 구간이 생겼다. 1.3 으로 낮춘다.
+  Pw = Math.pow(F,1.15) * Math.pow(A,1.3) * Dg;
   dropFrom = 40 + liftR*LIFT_MAX;      // 들어올린 '그 높이'에서 떨어진다
   state='slam'; slamT=0; dropY=-dropFrom; sfx.whoosh(F);
 }
@@ -953,7 +955,7 @@ function aiStrike(){ initAudio(); sfx.whoosh();
     const err=(Math.random()*2-1)*jitter*sigmaD*1.6;
     Dg = Math.exp(-(err*err)/(2*sigmaD*sigmaD));
   } else Dg = 1;
-  Pw = Math.pow(F,1.15)*Math.pow(A,1.6)*Dg;
+  Pw = Math.pow(F,1.15)*Math.pow(A,1.3)*Dg;
   tilt = axAngle() ? (1-A)*TILT_MAX*(Math.random()<0.5?-1:1) : 0;
   dropFrom = 40 + F*LIFT_MAX;
   state='slam'; slamT=0; dropY=-dropFrom;
