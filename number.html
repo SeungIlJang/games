@@ -134,6 +134,21 @@
   #muteBtn{position:fixed;top:calc(46px + env(safe-area-inset-top,0px));right:12px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:17px;border-radius:50%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);z-index:14;cursor:pointer}
   #muteBtn:active{background:rgba(255,255,255,.22)}
   #muteBtn.off{opacity:.45}
+  /* 런 중 모디파이어 선택 */
+  #draft{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:rgba(8,10,22,.965);gap:9px;padding:22px;z-index:11}
+  #draft h1{font-size:26px;margin:0}
+  #draftList{width:100%;max-width:340px;display:flex;flex-direction:column;gap:10px;margin-top:6px}
+  .modcard{display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:15px;text-align:left;
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);cursor:pointer}
+  .modcard:active{background:rgba(124,246,255,.16);border-color:#7cf6ff}
+  .modcard .mi{font-size:30px;flex:0 0 auto;width:38px;text-align:center}
+  .modcard .mn{font-size:17.5px;font-weight:900}
+  .modcard .md{font-size:12.5px;color:#9fb0cc;font-weight:700;margin-top:2px}
+  .modcard .mlv{font-size:11px;color:#5a6684;font-weight:800}
+  #modBar{position:fixed;top:calc(62px + env(safe-area-inset-top,0px));left:0;right:0;text-align:center;
+    font-size:14px;z-index:3;pointer-events:none;min-height:18px;letter-spacing:2px}
+  body.menu #modBar{visibility:hidden}
   #rankHead{display:flex;align-items:center;gap:12px}
   #rankEmblemBox{flex:0 0 auto;width:60px;height:60px;display:flex;align-items:center;justify-content:center;font-size:38px;line-height:1}
   #rankCard{cursor:pointer}
@@ -166,6 +181,7 @@
 <div id="hud"><div>점수 <span id="score">0</span> <span id="hearts" style="color:#ffd34d;font-weight:900"></span></div><div id="combo"></div><div>최고 <span id="best">0</span></div></div>
 <div id="chase"></div>
 <div id="muteBtn" role="button" aria-label="소리 켜기 끄기">🔊</div>
+<div id="modBar"></div>
 <div id="wrap">
   <div id="target">🎯 이 숫자에서 멈춰!</div>
   <div id="targetWrap"><div id="targetN">–</div></div>
@@ -201,7 +217,7 @@
     <button class="btn" id="helpBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:10px 16px;font-size:15px">📖 방법</button>
   </div>
   <div id="dailyBox"></div>
-  <div id="changelog">🆕 <b id="clVer">v2.5</b> · <span id="clNote"><b>플레이 화면이 바뀌었어요</b> · 라운드마다 배경 전환 · 목표는 <b>조준링</b> 안에 · 숫자는 <b>네온 무대</b> 위에</span></div>
+  <div id="changelog">🆕 <b id="clVer">v2.6</b> · <span id="clNote"><b>5연속마다 강화 선택</b> — 가속·체인·정밀 중 골라 나만의 빌드로 · 라운드가 더 빨라졌어요</span></div>
 </div>
 
 <div id="help" class="hidden">
@@ -245,6 +261,13 @@
   <button class="btn" id="lbClose" style="margin-top:6px">닫기</button>
 </div>
 
+<div id="draft" class="hidden">
+  <div class="sub" id="draftWhy" style="font-size:13px;color:#7cf6ff">5연속 달성!</div>
+  <h1>강화 선택</h1>
+  <div class="sub" style="font-size:13px;opacity:.75">하나를 고르면 이번 판 내내 적용돼요</div>
+  <div id="draftList"></div>
+</div>
+
 <div id="ranks" class="hidden">
   <div id="ranksX" role="button" aria-label="닫기">✕</div>
   <h1 style="font-size:30px">👑 랭크</h1>
@@ -261,7 +284,7 @@
   <div id="shopList"></div>
   <button class="btn" id="shopClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v2.5 · 플레이 화면 아트(배경·조준링·숫자 무대)</div>
+<div id="ver">v2.6 · 강화 선택(3택 1) · 페이싱 개선</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -664,23 +687,49 @@ function renderBoostRow(){
   box.querySelectorAll('.bchip').forEach(c=>c.onclick=()=>{ const id=c.dataset.b; eqb[id]=!eqb[id]; saveBoost(); renderBoostRow(); if(!sfx('ui_tap')) tone(eqb[id]?760:420,0.06,'square',0.06); });
 }
 
+// ── 런 중 강화(모디파이어) ────────────────────────────────────────
+// 판마다 다른 빌드가 나오도록 5연속마다 3택 1. 위험/보상이 갈리는 카드를 섞는다.
+const MODS=[
+  {id:'speed',  i:'⚡', n:'가속',     d:'속도 +14% · 점수 ×1.3',        max:5, a:()=>{ modSpeed*=0.86; modScore*=1.3; }},
+  {id:'slow',   i:'🐢', n:'감속',     d:'속도 -15% · 점수 ×0.88',       max:3, a:()=>{ modSpeed*=1.15; modScore*=0.88; }},
+  {id:'chain',  i:'🔗', n:'체인 특화', d:'체인 등장↑ · 완성 보너스 ×1.5', max:3, a:()=>{ modChain+=0.12; modChainBonus*=1.35; }},
+  {id:'perfect',i:'✨', n:'정밀',     d:'PERFECT 판정 +70ms · 배수 상한 +1', max:3, a:()=>{ modPerfect+=70; modMultCap+=1; }},
+  {id:'life',   i:'💛', n:'생명',     d:'생명 +1 (상한도 +1)',          max:3, a:()=>{ heartMax++; hearts=Math.min(heartMax,hearts+1); renderHearts(); }},
+  {id:'golden', i:'🌟', n:'황금',     d:'골든 라운드 2배 자주 · 골든 ×1.5', max:2, a:()=>{ modGolden++; modGoldenScore*=1.35; }},
+  {id:'read',   i:'🧮', n:'해독',     d:'수열을 6개까지 표시 · 점수 ×0.92', max:1, a:()=>{ modSeq=6; modScore*=0.92; }},
+  {id:'lucky',  i:'🎲', n:'행운',     d:'롤링 2배 자주 · 롤링 점수 ×1.6', max:2, a:()=>{ modRoll+=0.10; modRollScore*=1.6; }},
+];
+const MOD_BY={}; MODS.forEach(m=>MOD_BY[m.id]=m);
+let modSpeed=1, modScore=1, modChain=0, modChainBonus=1, modPerfect=0, modMultCap=5,
+    modGolden=0, modGoldenScore=1, modSeq=4, modRoll=0, modRollScore=1, heartMax=3,
+    modOwned={}, nextDraftAt=5;
+function resetMods(){
+  modSpeed=1; modScore=1; modChain=0; modChainBonus=1; modPerfect=0; modMultCap=5;
+  modGolden=0; modGoldenScore=1; modSeq=4; modRoll=0; modRollScore=1; heartMax=3;
+  modOwned={}; nextDraftAt=5; renderModBar();
+}
+function renderModBar(){
+  const el=$('modBar'); if(!el) return;
+  const keys=Object.keys(modOwned);
+  el.innerHTML = keys.length ? keys.map(k=>'<span style="margin:0 2px">'+MOD_BY[k].i+(modOwned[k]>1?('<span style="font-size:10px">'+modOwned[k]+'</span>'):'')+'</span>').join('') : '';
+}
 let state='start', cur=0, target=0, score=0, hits=0, rule=null, ti=0, seq=[], timer=null;
 let chainAll=[], chain=[], chainIdx=0, startVal=0;   // 🔗 체인 목표
 const HEART_MAX=3;
 let mult=1, targetShownAt=0, inGap=false;   // 콤보 배수 · 목표 표시 시각 · 라운드 전환 텀
-const GAP_MS=1000;   // 스테이지 전환 텀(성공 후 다음 라운드까지)
+const GAP_MS=450;    // 라운드 전환 텀 — 1000ms는 죽은 시간이 너무 길어 450으로 단축
 const now=()=>{ try{ return performance.now(); }catch(e){ return 0; } };
 function showMult(){ const m=$('mult'); if(mult>1){ m.textContent='×'+mult; m.classList.add('show'); m.classList.remove('bump'); void m.offsetWidth; m.classList.add('bump'); } else { m.classList.remove('show'); } }
-function judge(){ if(!targetShownAt) return 'GOOD'; return (now()-targetShownAt) < 190 ? 'PERFECT' : 'GOOD'; }
+function judge(){ if(!targetShownAt) return 'GOOD'; return (now()-targetShownAt) < (190+modPerfect) ? 'PERFECT' : 'GOOD'; }
 let hearts=0;   // ⚡롤링 성공 시 적립되는 생명(죽을 때 1개 소모하고 이어감)
-function renderHearts(){ const e=$('hearts'); if(e) e.textContent = hearts>0 ? ('💛'.repeat(Math.min(hearts,HEART_MAX))) : ''; }
+function renderHearts(){ const e=$('hearts'); if(e) e.textContent = hearts>0 ? ('💛'.repeat(Math.min(hearts,heartMax))) : ''; }
 let curIsRoll=false, rollLo=0, rollHi=0, rollTO=null, slowEndShown=false, slowPrev=false;
 let inChoice=false, choiceAns=-1, cChoices=[], cTO=null, cCd=null; const CHOICE_MS=5000;   // 선택형 라운드
 let reviveCount=0, deathCount=0; const MAX_REVIVE=5;   // 부활 판당 5회, 전면광고 주기 카운터
 
 function baseRule(){
   const r=Math.random();
-  const rollCh = hits>=4 ? (hits<14?0.20:0.11) : 0;            // ⚡ 롤링 — 후반엔 빈도↓(생명 남발 방지)
+  const rollCh = hits>=4 ? (hits<14?0.20:0.11)+modRoll : 0;    // ⚡ 롤링 — 후반엔 빈도↓(생명 남발 방지)
   if(r<rollCh) return {type:'roll'};
   if(hits>=3 && r<rollCh+0.19) return {type:'choice'};         // 🔢 선택형(수열 다음 숫자)
   if(hits>=14 && r<rollCh+0.31) return {type:'stepup', s:pick([2,3,4])}; // 📈 계단 — 스텝이 매번 +1
@@ -692,18 +741,20 @@ function baseRule(){
 }
 function makeRule(){
   if(hits<2) return {type:'add',s:1};                         // 온보딩 2판
-  if(hits>=6 && hits%10===0){ const g={type:'add', s:pick([3,4,5])}; g.golden=true; return g; }  // 🌟 10·20·30… 골든(점수 ×2)
+  const gEvery=modGolden?5:10;                                  // 🌟 황금 강화를 먹으면 5연속마다
+  if(hits>=6 && hits%gEvery===0){ const g={type:'add', s:pick([3,4,5])}; g.golden=true; return g; }
   return baseRule();
 }
 function stepAt(i){ return rule.type==='add'? rule.s : rule.type==='alt'? (i%2===0? rule.a : rule.b) : rule.type==='stepup'? (rule.s+i) : 0; }
 function advance(c,i){ return rule.type==='mul'? c*(rule.m||2) : c + stepAt(i); }   // mul은 곱, 나머지는 덧셈
 // 속도는 hits 25에서 바닥 → 그 뒤 난이도는 '체인 목표·룰 복잡도'가 담당(천장 제거)
-function speed(){ let s=Math.max(210, 660 - hits*18); if(slowLeft>0) s=Math.round(s*1.35); return s; }
+function speed(){ let s=Math.max(210, 660 - hits*18)*modSpeed; if(slowLeft>0) s*=1.35; return Math.max(150, Math.round(s)); }
 // 🔗 체인 목표 — 한 라운드에 목표를 2~3개 연달아 맞히기 (후반 깊이)
 function chainCount(){
   if(rule.type!=='add' && rule.type!=='alt' && rule.type!=='stepup') return 1;   // 롤링·선택형·곱하기는 단일 목표
-  if(hits>=22){ const r=Math.random(); return r<0.16?3:(r<0.52?2:1); }
-  if(hits>=12) return Math.random()<0.28?2:1;
+  const b=modChain;                                   // 모디파이어로 체인 확률 보정(상한을 둬서 단일 목표가 사라지지 않게)
+  if(hits>=16){ const r=Math.random(), c3=Math.min(0.42,0.22+b), c2=Math.min(0.84,0.60+b); return r<c3?3:(r<c2?2:1); }
+  if(hits>=6)  return Math.random()<Math.min(0.62,0.35+b)?2:1;
   return 1;
 }
 function renderChainTag(){
@@ -735,11 +786,12 @@ function newRound(keepCur){
   } else {
     const nC=chainCount();
     if(rule.type==='mul') cur=rnd(2,5);                            // 곱하기는 작게 시작(폭주 방지)
-    else if(rule.type==='add' && rule.s<0) cur = rnd(10,20) + nC*5*(-rule.s);   // 감소 수열은 목표가 음수로 안 가게 높게 시작
+    else if(rule.type==='add' && rule.s<0) cur = rnd(10,20) + nC*4*(-rule.s);   // 감소 수열은 목표가 음수로 안 가게 높게 시작
     else if(!keepCur || !isFinite(cur)) cur = hits<2 ? 1 : rnd(4,16);   // cur 손상(NaN) 시 복구
     startVal=cur;
     const tg=[]; let t=cur, si=0;
-    for(let c=0;c<nC;c++){ const k=rule.type==='mul'?rnd(2,3):rnd(3,5); for(let j=0;j<k;j++){ t=advance(t,si); si++; } tg.push(t); }
+    // 첫 목표는 규칙을 읽을 수 있게 3칸 이상, 이어지는 체인 고리는 2칸부터(대기 시간 단축)
+    for(let c=0;c<nC;c++){ const k=rule.type==='mul'?rnd(2,3):(c===0?rnd(3,4):rnd(2,4)); for(let j=0;j<k;j++){ t=advance(t,si); si++; } tg.push(t); }
     chainAll=tg.slice(); chainIdx=0; chain=tg.slice(1); target=tg[0]; seq=[cur];
     if(rule.golden){ banner('🌟 골든 라운드! 점수 ×2','#ffd34d'); vib([15,30,15]); if(!sfx('golden_enter')) tone(880,0.1,'triangle',0.06); }
     else if(nC>1){ banner('🔗 체인 '+nC+'연속 목표!','#ffd34d'); vib([15,25,15]); tone(740,0.09,'triangle',0.06); }
@@ -780,7 +832,7 @@ function tick(){
     if(!sfx('rolling_tick')) tone(520+ (cur%9)*30, 0.02, 'square', 0.025);
     timer=setTimeout(tick, ROLL_MS); return;   // 모든 숫자 동일 속도(목표에서 멈춤 없음)
   }
-  cur=advance(cur,ti); ti++; seq.push(cur); if(seq.length>4) seq.shift();
+  cur=advance(cur,ti); ti++; seq.push(cur); if(seq.length>modSeq) seq.shift();
   const dir=Math.sign(target-startVal) || 1;   // 라운드 시작값 기준(수열이 길어져도 방향 판정 안 깨짐)
   if((dir>=0 && cur>target) || (dir<0 && cur<target)){ die('놓쳤다! '+target+' 지나감'); return; }
   render(true);
@@ -803,7 +855,7 @@ function start(){
   slowLeft=runBoost.slow?6:0; chainAll=[]; chain=[]; chainIdx=0; renderChainTag();
   const _rb=$('reviveBtn'); if(_rb)_rb.disabled=false; hideBanner(); document.body.classList.remove('menu'); $('start').classList.add('hidden'); $('over').classList.add('hidden'); state='play';
   try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
-  mprog('play',1); slowPrev=false; initPlayArt();
+  mprog('play',1); slowPrev=false; initPlayArt(); resetMods(); $('draft').classList.add('hidden');
   if(!sfx('game_start')) chord(523);
   const on=BOOSTS.filter(B=>runBoost[B.id]); if(on.length) floatText('⚡ '+on.map(B=>B.i+B.n).join(' · '),'#5cffb0');
   renderHearts(); renderChase(); newRound(false); if(rule.type!=='choice') nextTick(560); }
@@ -812,17 +864,17 @@ function hitOK(){
   const grade=judge();   // 목표 표시 후 반응 속도로 PERFECT/GOOD
   $('cur').classList.remove('miss','ontarget'); $('cur').classList.add('hit'); setTimeout(()=>$('cur').classList.remove('hit'),220);  // 성공=초록 확실히
   hits++;
-  if(grade==='PERFECT'){ mult=Math.min(5, mult+1); mprog('perfect',1); } else mult=1;   // 퍼펙트 연속 → 배수↑, 굿이면 리셋
+  if(grade==='PERFECT'){ mult=Math.min(modMultCap, mult+1); mprog('perfect',1); } else mult=1;   // 퍼펙트 연속 → 배수↑, 굿이면 리셋
   if(slowLeft>0) slowLeft--;
   const chainEnd = chainAll.length>1 && chain.length===0;   // 이번 성공으로 체인이 완성되는가
   const jg = chainEnd ? 0.4 : 1;                            // 완성음과 겹치면 판정음을 낮춘다(납품 안내)
   const link = chainAll.length>1 ? (1 + 0.5*chainIdx) : 1;        // 🔗 체인 뒷 링크일수록 배점↑
-  const base=((wasRoll?25:10) + (hits-1)*2) * (wasGolden?2:1);    // 🌟 골든 라운드 점수 ×2
-  const gain=Math.round(base*mult*link*(runBoost.score2?2:1));
+  const base=((wasRoll?25*modRollScore:10) + (hits-1)*2) * (wasGolden?2*modGoldenScore:1);   // 🌟 골든 라운드 점수 ×2
+  const gain=Math.round(base*mult*link*modScore*(runBoost.score2?2:1));
   score += gain; showMult(); addCoins(gain);
   mset('score',score); mset('streak',hits);
   const [x,y]=centerXY();
-  if(wasRoll){ const was=hearts; hearts=Math.min(HEART_MAX,hearts+1); renderHearts(); mprog('roll',1);
+  if(wasRoll){ const was=hearts; hearts=Math.min(heartMax,hearts+1); renderHearts(); mprog('roll',1);
     burst(x,y,'#ffd34d',52,9); hitFlash('#ffd34d'); floatText(hearts>was?'⚡ 롤링 성공! 💛 생명 +1':'⚡ 롤링 성공! (생명 최대)','#ffd34d'); if(!sfx('rolling_success')){ chord(523); setTimeout(()=>chord(784),120); } vib([20,40,20,40,60]); shake=6; }
   else if(grade==='PERFECT'){ burst(x,y,'#ffe14d',46,9); hitFlash('#ffe14d'); floatText('PERFECT!'+(mult>1?('  ×'+mult):''),'#ffe14d'); if(!sfx('hit_perfect',jg)){ chord(660); setTimeout(()=>tone(990,0.08,'triangle',0.06),90); } vib([12,26,12]); shake=8; }
   else if(hits%5===0){ burst(x,y,'#ffd34d',48,8); hitFlash('#ffd34d'); floatText('🔥 '+hits+' 연속!','#ffd34d'); if(!sfx('combo_5',jg)) chord(440); vib([15,30,15]); shake=8; }
@@ -834,15 +886,41 @@ function hitOK(){
     return;
   }
   if(chainAll.length>1){   // 체인 완성 보너스
-    const cb=Math.round(base*chainAll.length*0.6*(runBoost.score2?2:1));
+    const cb=Math.round(base*chainAll.length*0.6*modChainBonus*modScore*(runBoost.score2?2:1));
     score+=cb; addCoins(cb); mset('score',score); mprog('chain',1);
     burst(x,y,'#ffd34d',56,10); floatText('🔗 체인 완성! +'+cb,'#ffd34d'); if(!sfx('chain_complete')) chord(880); vib([20,40,20,40,80]); shake=10;
   }
   if(wasGolden) mprog('golden',1);
-  inGap=true; clearTimeout(timer); clearTimeout(rollTO);   // 전환 텀(약 1초) — 그 사이 입력 무시
-  setTimeout(()=>{ if(state!=='play') return; newRound(true); if(rule.type!=='choice') nextTick(Math.max(220, speed())); }, GAP_MS);
+  inGap=true; clearTimeout(timer); clearTimeout(rollTO);   // 전환 텀 — 그 사이 입력 무시
+  setTimeout(()=>{ if(state!=='play') return;
+    if(hits>=nextDraftAt){ nextDraftAt=hits+5; openDraft(); return; }   // 5연속마다 강화 선택
+    newRound(true); if(rule.type!=='choice') nextTick(Math.max(220, speed())); }, GAP_MS);
 }
 // ⚡ 롤링 실패(탭 미스/시간초과) — 페널티 없음, 다음 라운드로
+// 5연속마다 강화 선택 — 전환 텀을 '내 판을 만드는' 순간으로 바꾼다
+function openDraft(){
+  state='draft'; clearTimeout(timer); clearTimeout(rollTO); clearTimeout(cTO); clearTimeout(cCd);
+  const pool=MODS.filter(m=>(modOwned[m.id]||0)<m.max);
+  const pick3=[]; const bag=pool.slice();
+  while(pick3.length<3 && bag.length) pick3.push(bag.splice(Math.floor(Math.random()*bag.length),1)[0]);
+  $('draftWhy').textContent=hits+'연속 달성!';
+  const box=$('draftList');
+  box.innerHTML=pick3.map(m=>{ const lv=modOwned[m.id]||0;
+    return '<div class="modcard" data-m="'+m.id+'"><span class="mi">'+m.i+'</span><span style="flex:1">'
+      +'<span class="mn">'+m.n+'</span>'+(lv?' <span class="mlv">Lv'+lv+'→'+(lv+1)+'</span>':'')
+      +'<div class="md">'+m.d+'</div></span></div>'; }).join('');
+  box.querySelectorAll('.modcard').forEach(c=>c.onclick=()=>takeMod(c.dataset.m));
+  if(!sfx('golden_enter')) chord(660);
+  $('draft').classList.remove('hidden');
+}
+function takeMod(id){
+  if(state!=='draft') return;
+  const m=MOD_BY[id]; if(!m) return;
+  modOwned[id]=(modOwned[id]||0)+1; m.a(); renderModBar();
+  $('draft').classList.add('hidden'); state='play';
+  floatText(m.i+' '+m.n,'#7cf6ff'); if(!sfx('coin_reward')) tone(880,0.1,'triangle',0.07); vib([15,30,15]);
+  newRound(true); if(rule.type!=='choice') nextTick(Math.max(220, speed()));
+}
 function rollMiss(timeout){
   inGap=true; clearTimeout(timer); clearTimeout(rollTO);
   floatText(timeout?'⏰ 롤링 놓침 (손해 없음)':'아깝다! (롤링)','#c9a3ff'); if(!sfx('rolling_miss')) tone(220,0.12,'sawtooth',0.07); vib(25);
@@ -892,7 +970,7 @@ function onChoice(i,btn){ if(!inChoice || state!=='play') return; inChoice=false
 }
 function chooseWin(){
   hits++; mprog('choice',1);
-  const base=15 + (hits-1)*2, gain=Math.round(base*mult*(runBoost.score2?2:1));   // 콤보 배수·부스터 일관 적용
+  const base=15 + (hits-1)*2, gain=Math.round(base*mult*modScore*(runBoost.score2?2:1));   // 콤보 배수·부스터 일관 적용
   score += gain; addCoins(gain); mset('score',score); mset('streak',hits); renderChase();
   const x=innerWidth/2, y=innerHeight*0.4;
   if(hits%5===0){ burst(x,y,'#ffd34d',44,8); hitFlash('#ffd34d'); floatText('🔥 '+hits+' 연속!','#ffd34d'); if(!sfx('combo_5')) chord(440); vib([15,30,15]); shake=7; }
@@ -902,7 +980,8 @@ function chooseWin(){
   setTimeout(()=>{ if(state!=='play') return; $('wrap').classList.remove('choice'); newRound(true); if(rule.type!=='choice') nextTick(Math.max(220, speed())); }, GAP_MS);
 }
 function die(msg, fromChoice){
-  if(state!=='play') return;   // 이미 끝난 판에 지연 타이머가 또 들어와 점수·코인이 중복 정산되는 것 방지
+  if(state!=='play') return;
+  $('draft').classList.add('hidden');   // 이미 끝난 판에 지연 타이머가 또 들어와 점수·코인이 중복 정산되는 것 방지
   clearTimeout(timer); clearTimeout(rollTO); clearTimeout(cTO); clearTimeout(cCd);
   mult=1; showMult();   // 콤보 배수 리셋
   const choiceMode = fromChoice || inChoice; inChoice=false;
@@ -966,6 +1045,7 @@ function revive(){
 }
 function retryGame(){ start(); }   // 전면광고 제거(승일님 요청) — 보상형·배너만 유지
 function goHome(){ state='start'; clearTimeout(timer); clearTimeout(rollTO); clearTimeout(cTO); clearTimeout(cCd); document.body.classList.add('menu');
+  $('draft').classList.add('hidden'); modOwned={}; renderModBar();
   $('over').classList.add('hidden'); $('wrap').classList.remove('choice','slow'); $('chainTag').innerHTML=''; $('chase').textContent='';
   $('best2').textContent=best; renderRankCard(); renderDaily(); renderBoostRow(); renderCoins(); showBanner();
   $('start').classList.remove('hidden'); $('start').scrollTop=0; }
