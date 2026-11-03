@@ -3082,7 +3082,7 @@ document.getElementById('retryBtn').onclick=startGame;
 document.getElementById('homeBtn').onclick=()=>{ document.getElementById('over').classList.add('hidden'); document.getElementById('ingameShop').classList.add('hidden'); document.getElementById('pauseBtn').style.display='none'; document.getElementById('playShopBtn').style.display='none'; renderClasses(); renderShop(); document.getElementById('start').classList.remove('hidden'); state='start'; };
 // 광고 보상 (부활 / 골드 2배) — AdMob 리워드 광고. 폰(APK)=실광고, 웹=시뮬레이션.
 // ⚠️ 실광고 ON (2026-10-03, 프로덕션 승인). 본인 실광고 클릭 금지(애드몹 계정 정지 위험).
-const AD_USE_TEST=false;
+const AD_USE_TEST = typeof navigator!=='undefined' && /MSAdsTest/.test(navigator.userAgent); // 테스트 트랙 빌드(capacitor.config appendUserAgent 에 MSAdsTest)면 구글 테스트 광고 → 눌러도 계정 무영향
 const AD_REWARD_REAL='ca-app-pub-9017259597860535/2171653136';
 const AD_REWARD_TEST='ca-app-pub-3940256099942544/5224354917';
 const AD_BANNER_TEST='ca-app-pub-3940256099942544/6300978111'; // 구글 공식 테스트 배너

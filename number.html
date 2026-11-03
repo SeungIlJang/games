@@ -326,7 +326,7 @@ function renderMute(){ const b=$('muteBtn'); if(b){ b.textContent=sfxOn?'\u{1F50
 function vib(ms){ try{ navigator.vibrate&&navigator.vibrate(ms); }catch(e){} }
 
 // ── 광고(AdMob) — 실광고 ON (2026-10-06 프로덕션). ⚠️ 본인 실광고 직접 클릭 금지(계정정지) ──
-const AD_USE_TEST=false;
+const AD_USE_TEST = typeof navigator!=='undefined' && /MSAdsTest/.test(navigator.userAgent); // 테스트 트랙 빌드(capacitor.config appendUserAgent 에 MSAdsTest)면 구글 테스트 광고 → 눌러도 계정 무영향
 const AD_REWARD_TEST='ca-app-pub-3940256099942544/5224354917';   // 구글 공식 테스트 리워드
 const AD_INTER_TEST ='ca-app-pub-3940256099942544/1033173712';   // 구글 공식 테스트 전면
 const AD_BANNER_TEST='ca-app-pub-3940256099942544/6300978111';   // 구글 공식 테스트 배너
