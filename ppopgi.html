@@ -102,7 +102,7 @@
 <div id="gripWrap" class="hidden"><div id="gripLbl">🔥 탭 연타! 꽉 잡아!</div><div id="gripBar"><div id="gripFill"></div></div></div>
 <div id="goldBar" class="hidden"><div id="goldLbl">⚡ 황금 찬스!</div><div id="goldTrack"><div id="goldFill"></div></div></div>
 <div id="hint"></div>
-<div id="ver">v3.0 · 배출구 신설 · 획득 쇼케이스 연출</div>
+<div id="ver">v3.1 · 투입구 위치 정렬 · 투입구/배출구 아트 개선</div>
 
 <div id="start">
   <h1>모두의 뽑기</h1>
@@ -121,7 +121,7 @@
     <button class="btn" id="rankBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:13px 26px">🏅 랭킹</button>
     <button class="btn" id="shareBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:13px 26px">🔗 공유</button>
   </div>
-  <div id="changelog">🆕 <b>v3.0</b> · 🎁인형이 <b>배출구로 떨어져 나와요!</b> · 뽑은 인형을 크게 보여주는 획득 연출<br><b>v2.9</b> · 🔊효과음 18종 · <b>v2.8</b> · 🧸인형 그림 · <b>v2.7</b> · ⚡황금 찬스 알림</div>
+  <div id="changelog">🆕 <b>v3.1</b> · 투입구가 인형 떨어지는 자리에 딱 맞아요 · 투입구·받는 곳 새 디자인 + 슈트 연결<br><b>v3.0</b> · 🎁인형이 <b>배출구로 떨어져 나와요!</b> · 획득 쇼케이스 · <b>v2.9</b> · 🔊효과음 18종</div>
 </div>
 
 <div id="rank">
@@ -337,7 +337,9 @@ function field(){ return {x:24, y:H*0.28, w:W-48, h:H*0.46}; }
 // v3.0: 기계 구조 — 투입구(좌상단)로 넣으면 슈트를 타고 내려와 배출구(좌하단)로 나온다.
 // 예전엔 배출구가 아예 없어서 인형이 유리장 바닥을 뚫고 화면 밖으로 미끄러졌다.
 function caseBottom(){ const f=field(); return f.y+f.h+24; }                   // 유리장 아래쪽 테두리
-function exitHole(){ const f=field(); return {x:f.x-6, y:f.y-44, w:54, h:30, cx:f.x+21, cy:f.y-29}; }
+// 투입구는 '운반 중 인형이 매달린 높이'에 정확히 맞춘다.
+// 운반 시 집게는 y=field().y-30, 인형은 그보다 34 아래 → field().y+4 가 인형 중심.
+function exitHole(){ const f=field(), w=64, h=52, x=f.x+4, y=f.y+4-h/2; return {x,y,w,h,cx:x+w/2,cy:y+h/2}; }
 function tray(){ const f=field(), w=142, h=42, x=f.x-8, y=caseBottom()+12; return {x,y,w,h,cx:x+w/2,cy:y+h/2}; }
 function showcase(){ return {x:W/2, y:H*0.56}; }                               // 획득 인형을 크게 보여주는 자리
 let prizeDoll=null, prizeT=0;   // 배출구로 나온 인형(획득 연출 동안 유지)
@@ -488,7 +490,7 @@ function stepSpectate(dt){
     if(claw.y<=field().y-30){ claw.y=field().y-30; claw.phase='carry'; anim=0; shakeN=0; }
   } else if(claw.phase==='carry'){
     // 출구로 이동 (탭 없음 — 성공/실패는 조준 정밀도로 이미 결정됨)
-    claw.x += (34-claw.x)*Math.min(1,dt*2.0);
+    claw.x += (exitHole().cx-claw.x)*Math.min(1,dt*2.0);   // 투입구 정중앙으로 (예전엔 34 로 박혀 있어 11px 어긋났다)
     if(outcome.nearMiss){
       claw.grip -= dt*0.5;                                             // 계속 풀림
       const shakeAt=[0.35,0.8];
@@ -514,6 +516,7 @@ function stepSpectate(dt){
   } else if(claw.phase==='deposit'){
     // ① 투입구로 빨려 들어간다 (작아지며 사라짐)
     const HO=exitHole();
+    claw.x += (HO.cx-claw.x)*Math.min(1,dt*9);   // 운반 구간의 지수 수렴만으론 10px 가량 남는다 — 여기서 마저 맞춘다
     if(claw.holding){
       claw.holding.x += (HO.cx-claw.holding.x)*Math.min(1,dt*9);
       claw.holding.y += (HO.cy-claw.holding.y)*Math.min(1,dt*9);
@@ -682,22 +685,51 @@ function draw(){
   // 유리장
   ctx.fillStyle='rgba(120,80,200,.10)'; roundRect(f.x-8,f.y-46,f.w+16,f.h+70,18); ctx.fill();
   ctx.strokeStyle='rgba(200,150,255,.5)'; ctx.lineWidth=3; roundRect(f.x-8,f.y-46,f.w+16,f.h+70,18); ctx.stroke();
-  // 투입구(좌상단) — 집게가 인형을 여기에 떨어뜨린다
-  const HOLE=exitHole();
-  ctx.fillStyle='rgba(0,0,0,.45)'; roundRect(HOLE.x,HOLE.y,HOLE.w,HOLE.h,8); ctx.fill();
-  ctx.strokeStyle='rgba(255,207,102,.45)'; ctx.lineWidth=1.5; roundRect(HOLE.x,HOLE.y,HOLE.w,HOLE.h,8); ctx.stroke();
-  ctx.fillStyle='#ffcf66'; ctx.font='bold 11px system-ui'; ctx.textAlign='center'; ctx.fillText('투입구',HOLE.cx,HOLE.cy+4);
-  // 배출구(좌하단) — 인형이 실제로 나오는 곳
-  const TR=tray();
-  const waiting=(claw.phase==='chute');                    // 슈트를 타고 내려오는 동안 기대감으로 빛난다
-  const gl=waiting?(0.45+0.4*Math.sin(performance.now()/90)):0.12;
-  ctx.fillStyle='rgba(0,0,0,.5)'; roundRect(TR.x,TR.y,TR.w,TR.h,11); ctx.fill();
-  ctx.save(); ctx.globalAlpha=gl; ctx.shadowColor='#ffd34d'; ctx.shadowBlur=waiting?22:0;
-  ctx.strokeStyle=waiting?'#ffd34d':'rgba(200,150,255,.55)'; ctx.lineWidth=waiting?3:2;
-  roundRect(TR.x,TR.y,TR.w,TR.h,11); ctx.stroke(); ctx.restore();
-  ctx.fillStyle='rgba(0,0,0,.55)'; roundRect(TR.x+9,TR.y+5,TR.w-18,TR.h-19,6); ctx.fill();   // 안쪽 그림자(구멍)
-  ctx.fillStyle=waiting?'#ffd34d':'#b79be0'; ctx.font='bold 10px system-ui'; ctx.textAlign='center';
-  ctx.fillText('받는 곳',TR.cx,TR.y+TR.h-5);
+  const HOLE=exitHole(), TR=tray();
+  const dropping=(claw.phase==='deposit'), waiting=(claw.phase==='chute');
+  ctx.textAlign='center';
+  // ── 슈트: 투입구와 받는 곳을 잇는 관 (유리장 왼쪽 바깥) ──
+  const pipeX=5, pipeW=11;
+  const pg=ctx.createLinearGradient(pipeX,0,pipeX+pipeW,0);
+  pg.addColorStop(0,'rgba(120,88,185,.16)'); pg.addColorStop(.5,'rgba(190,160,245,.30)'); pg.addColorStop(1,'rgba(120,88,185,.16)');
+  ctx.fillStyle=pg; roundRect(pipeX,HOLE.cy,pipeW,TR.y+8-HOLE.cy,6); ctx.fill();
+  if(waiting){                                             // 내려가는 중임을 보여주는 쉐브론
+    for(let k=0;k<3;k++){ const t2=((performance.now()/420+k*0.33)%1);
+      const yy=HOLE.cy+12+t2*(TR.y-HOLE.cy-16);
+      ctx.globalAlpha=0.75*Math.sin(t2*Math.PI); ctx.strokeStyle='#ffd34d'; ctx.lineWidth=2.5; ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(pipeX+2.5,yy); ctx.lineTo(pipeX+pipeW/2,yy+4.5); ctx.lineTo(pipeX+pipeW-2.5,yy); ctx.stroke(); }
+    ctx.globalAlpha=1;
+  }
+  // ── 투입구 — 집게가 인형을 떨어뜨리는 구멍 ──
+  const rimG=ctx.createLinearGradient(0,HOLE.y-6,0,HOLE.y+10);          // 금속 테두리
+  rimG.addColorStop(0,'#e2d4ff'); rimG.addColorStop(.55,'#9b86cc'); rimG.addColorStop(1,'#5b4489');
+  ctx.fillStyle=rimG; roundRect(HOLE.x-5,HOLE.y-5,HOLE.w+10,HOLE.h+10,14); ctx.fill();
+  const inG=ctx.createLinearGradient(0,HOLE.y,0,HOLE.y+HOLE.h);          // 안쪽 깊이감
+  inG.addColorStop(0,'#07040f'); inG.addColorStop(.6,'#140a24'); inG.addColorStop(1,'#241440');
+  ctx.fillStyle=inG; roundRect(HOLE.x,HOLE.y,HOLE.w,HOLE.h,10); ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.30)'; ctx.lineWidth=1.5;           // 입구 윗면 하이라이트
+  ctx.beginPath(); ctx.moveTo(HOLE.x+8,HOLE.y+2); ctx.lineTo(HOLE.x+HOLE.w-8,HOLE.y+2); ctx.stroke();
+  if(dropping){ ctx.save(); ctx.globalAlpha=0.70+0.30*Math.sin(performance.now()/80);   // 최저점에서도 안 꺼지게
+    ctx.shadowColor='#ffd34d'; ctx.shadowBlur=18; ctx.strokeStyle='#ffd34d'; ctx.lineWidth=2.5;
+    roundRect(HOLE.x,HOLE.y,HOLE.w,HOLE.h,10); ctx.stroke(); ctx.restore(); }
+  // 라벨은 구멍 아래에 — 위에 두면 투입 순간 집게 헤드에 가려진다
+  ctx.fillStyle=dropping?'#ffd34d':'#c3a9ea'; ctx.font='bold 10px system-ui';
+  ctx.fillText('투입구',HOLE.cx,HOLE.y+HOLE.h+12);
+  // ── 받는 곳 — 인형이 나오는 배출구 ──
+  const frG=ctx.createLinearGradient(0,TR.y-6,0,TR.y+TR.h+8);           // 바깥 프레임
+  frG.addColorStop(0,'#d7c6fb'); frG.addColorStop(.5,'#8a72c2'); frG.addColorStop(1,'#3d2d63');
+  ctx.fillStyle=frG; roundRect(TR.x-6,TR.y-6,TR.w+12,TR.h+14,16); ctx.fill();
+  const tinG=ctx.createLinearGradient(0,TR.y,0,TR.y+TR.h-6);            // 안쪽 구멍
+  tinG.addColorStop(0,'#05030b'); tinG.addColorStop(1,'#1b1030');
+  ctx.fillStyle=tinG; roundRect(TR.x,TR.y,TR.w,TR.h-4,11); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.13)'; roundRect(TR.x+5,TR.y+TR.h-4,TR.w-10,7,4); ctx.fill();   // 받침 턱
+  ctx.strokeStyle='rgba(255,255,255,.22)'; ctx.lineWidth=1.5;           // 입구 윗면 하이라이트
+  ctx.beginPath(); ctx.moveTo(TR.x+10,TR.y+2); ctx.lineTo(TR.x+TR.w-10,TR.y+2); ctx.stroke();
+  if(waiting){ ctx.save(); ctx.globalAlpha=0.70+0.30*Math.sin(performance.now()/90);   // 최저점에서도 안 꺼지게
+    ctx.shadowColor='#ffd34d'; ctx.shadowBlur=26; ctx.strokeStyle='#ffd34d'; ctx.lineWidth=3;
+    roundRect(TR.x-2,TR.y-2,TR.w+4,TR.h+2,13); ctx.stroke(); ctx.restore(); }
+  ctx.fillStyle=waiting?'#ffd34d':'#c3a9ea'; ctx.font='bold 10px system-ui';
+  ctx.fillText('받는 곳',TR.cx,TR.y+TR.h+11);
   // 인형들
   ctx.textAlign='center'; ctx.textBaseline='middle';
   const dsz=dollSize(); const ringR=Math.round(dsz*0.78);
