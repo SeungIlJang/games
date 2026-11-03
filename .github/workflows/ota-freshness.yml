@@ -1,0 +1,25 @@
+# 이 레포의 일부 앱은 다른 저장소의 빌드 산출물이다(linedefense/, toilet.html, monsteridle/).
+# 소스를 고치고 여기로 옮기는 걸 빠뜨리면 앱은 옛 사본을 계속 받는데 아무 신호가 없다.
+# 그 조용한 실패를 메일 오는 실패로 바꾼다.
+name: OTA freshness
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # 매일 00:10 UTC (한국 09:10). 소스 레포에만 푸시하고 잊어도 하루 안에 걸린다.
+    - cron: '10 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tools/check-ota-freshness.mjs
+        env:
+          # 미인증 GitHub API 는 시간당 60회라 금방 막힌다.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
