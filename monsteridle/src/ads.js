@@ -10,6 +10,11 @@ import * as sfx from './audio.js';
 const res = await fetch(new URL('./ads.json', import.meta.url));
 const CFG = await res.json();
 
+// 테스트 트랙(비공개 테스트) AAB 는 UA 에 MSAdsTest 가 붙어 있다(tools/set-ads-mode.mjs).
+// 그 빌드는 구글 테스트 광고만 쓰므로 테스터가 눌러도 계정에 영향이 없다.
+// 2026-11-02 에 무효 트래픽으로 계정이 29일 정지된 뒤 넣었다. ads.json 의 useTest 보다 우선한다.
+if (typeof navigator !== 'undefined' && navigator.userAgent.includes('MSAdsTest')) CFG.useTest = true;
+
 const $ = id => document.getElementById(id);
 let admob = null;          // Capacitor AdMob 플러그인 (폰에서만)
 let ready = false;
@@ -30,7 +35,14 @@ function unitId(kind) {
   return v;
 }
 
+// ⚠️ 광고 전면 중단 (2026-11-03 ~ 2026-12-02 AdMob 계정 정지)
+// 무효 트래픽으로 정지됐고 기간 중 추가 위반이면 영구 정지라 광고 요청 자체를 끊는다.
+// 12/2 이후 되살리려면 true 로 바꾸고 `npm run deploy` 로 games/monsteridle/ 까지 갱신할 것.
+// 소스만 고치면 앱은 OTA 로 옛 사본을 계속 받는다.
+const ADS_ENABLED = false;
+
 export async function initAds() {
+  if (!ADS_ENABLED) return false;
   const P = plugin();
   if (!P) return false;                   // 웹 — 시뮬로 간다
   try {
@@ -110,6 +122,9 @@ export async function playRewarded() {
 }
 
 async function playRewardedInner() {
+  // 광고 중단 기간엔 보상을 그대로 준다. 아래 '실광고를 띄울 수 없어 보상을 건너뜁니다'
+  // 분기로 흘러가면 폰에서 리워드 버튼이 통째로 먹통이 된다.
+  if (!ADS_ENABLED) return simulate();
   if (ready && admob) return playNative();
   // 폰이 아니거나 AdMob 이 죽었으면 시뮬레이션 — 개발 중 흐름이 막히지 않게
   if (!CFG.useTest && isNative()) {
@@ -122,6 +137,7 @@ async function playRewardedInner() {
 // ── 배너 (기본 꺼짐) ─────────────────────────────────────────
 let bannerUp = false;
 export async function showBanner() {
+  if (!ADS_ENABLED) return;
   const id = unitId('banner');
   if (!admob || !id || bannerUp) return;
   try {
