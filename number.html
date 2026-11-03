@@ -162,6 +162,8 @@
   .dtry{display:inline-block;width:11px;height:11px;border-radius:50%;margin:0 3px;background:rgba(255,255,255,.18)}
   .dtry.used{background:#7cf6ff}
   #dailyLog{width:min(92vw,340px);margin-top:4px}
+  #dailyLbList{width:min(92vw,340px);margin:4px 0 2px;max-height:34vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  #dailyTabs{display:flex;gap:7px;margin:8px 0 2px}
   .dlog{display:flex;justify-content:space-between;padding:7px 12px;margin:4px 0;border-radius:10px;
     background:rgba(255,255,255,.05);font-size:14px;font-weight:700}
   #dailyBadge{position:absolute;top:-7px;right:-7px;background:#ff5a6e;color:#fff;font-size:10px;font-weight:900;
@@ -237,7 +239,7 @@
     <button class="btn" id="dailyBtn" style="position:relative;background:#1b3a4a;box-shadow:0 6px 0 #0d2029;padding:12px 26px;font-size:16px;border:1px solid rgba(124,246,255,.45)">📅 일일 챌린지<span id="dailyBadge" class="hidden">NEW</span></button>
   </div>
   <div id="dailyBox"></div>
-  <div id="changelog">🆕 <b id="clVer">v2.7</b> · <span id="clNote"><b>📅 일일 챌린지</b> 추가 — 오늘은 모두가 <b>똑같은 순서</b>의 라운드로 겨뤄요 · 하루 3번 도전</span></div>
+  <div id="changelog">🆕 <b id="clVer">v2.8</b> · <span id="clNote"><b>📅 일일 챌린지</b>에 <b>🌍 오늘의 랭킹</b> 추가 — 같은 수열로 전세계와 겨뤄요</span></div>
 </div>
 
 <div id="help" class="hidden">
@@ -292,8 +294,12 @@
   </div>
   <button class="btn" id="dailyStart">도전!</button>
   <button class="btn" id="dailyShare" style="margin-top:6px;background:#20263c;box-shadow:0 6px 0 #10131f;padding:11px 22px;font-size:15px">🏆 결과 공유</button>
-  <div class="sub" style="font-size:12px;opacity:.6;margin-top:10px">최근 기록</div>
-  <div id="dailyLog"></div>
+  <div id="dailyTabs">
+    <button class="stab on" id="dtabRank">🌍 오늘의 랭킹</button>
+    <button class="stab" id="dtabLog">📝 내 기록</button>
+  </div>
+  <div id="dailyLbList"></div>
+  <div id="dailyLog" class="hidden"></div>
   <button class="btn" id="dailyClose" style="margin-top:4px;background:#20263c;box-shadow:0 6px 0 #10131f">닫기</button>
 </div>
 
@@ -320,7 +326,7 @@
   <div id="shopList"></div>
   <button class="btn" id="shopClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v2.7 · 일일 챌린지 — 모두 같은 수열</div>
+<div id="ver">v2.8 · 일일 챌린지 글로벌 랭킹</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -976,6 +982,13 @@ function openDaily(){
     '<div class="dlog"><span>'+(i+1)+'번째 도전'+(r.s===bestS?' <span style="color:#ffd34d">★</span>':'')+'</span><b style="color:#7cf6ff">'+r.s.toLocaleString()+'점 · '+r.h+'연속</b></div>').join('')
     || '<div class="sub" style="font-size:12px;opacity:.5;text-align:center">아직 없어요</div>';
   $('daily').classList.remove('hidden');
+  dailyTab('rank');
+}
+function dailyTab(which){
+  const r=which==='rank';
+  $('dtabRank').classList.toggle('on',r); $('dtabLog').classList.toggle('on',!r);
+  $('dailyLbList').classList.toggle('hidden',!r); $('dailyLog').classList.toggle('hidden',r);
+  if(r) renderDailyLb();
 }
 function closeDaily(){ $('daily').classList.add('hidden'); }
 function startDaily(){
@@ -989,8 +1002,47 @@ function finishDaily(){
   if(!dailyMode) return; dailyMode=false; rngF=Math.random;
   const d=loadDaily2();
   d.log=(d.log||[]).concat([{s:score,h:hits}]).slice(-DAILY_TRIES);
-  if(score>d.best){ d.best=score; d.hits=hits; }
+  const improved = score>d.best;
+  if(improved){ d.best=score; d.hits=hits; }
   saveDaily2(d); renderDailyBadge();
+  if(improved && d.best>0) dailySubmit(d.d, d.best, d.hits);   // 그날 최고 기록만 올린다
+}
+// 날짜를 경로에 둔다 → 복합 색인 불필요, 문서 ID가 uid라 1인 1기록
+function dailyUid(){ try{ let u=localStorage.getItem('num_uid');
+  if(!u){ u='u'+Date.now().toString(36)+Math.random().toString(36).slice(2,8); localStorage.setItem('num_uid',u); }
+  return u; }catch(e){ return 'u0'; } }
+let dailyLbState='idle';    // idle | ok | closed (규칙 미개방)
+async function dailySubmit(day, sc, hh){
+  if(!fbReady) return false;
+  try{
+    await fbApi.setDoc(fbApi.doc(fbDb,'number_daily',day,'scores',dailyUid()),
+      { name:String(myName).slice(0,16), score:Math.floor(sc), hits:hh|0, ts:fbApi.serverTimestamp() });
+    dailyLbState='ok'; return true;
+  }catch(e){ dailyLbState='closed'; return false; }
+}
+async function dailyTop(day){
+  if(!fbReady) return null;
+  try{
+    const q=fbApi.query(fbApi.collection(fbDb,'number_daily',day,'scores'), fbApi.orderBy('score','desc'), fbApi.limit(50));
+    const snap=await fbApi.getDocs(q);
+    dailyLbState='ok';
+    return snap.docs.map(d=>({ id:d.id, name:String(d.data().name||'익명'), score:d.data().score|0, hits:d.data().hits|0 }));
+  }catch(e){ dailyLbState='closed'; return null; }
+}
+async function renderDailyLb(){
+  const box=$('dailyLbList'); if(!box) return;
+  const d=loadDaily2();
+  if(!fbReady){ box.innerHTML='<div class="sub" style="font-size:12.5px;opacity:.6;padding:14px">오프라인이에요 · 내 기록만 저장돼요</div>'; return; }
+  box.innerHTML='<div class="sub" style="font-size:12.5px;opacity:.6;padding:14px">🌍 오늘의 순위 불러오는 중…</div>';
+  const rows=await dailyTop(d.d);
+  if(!rows){ box.innerHTML='<div class="sub" style="font-size:12.5px;opacity:.6;padding:12px">아직 글로벌 일일 랭킹이 열리지 않았어요.<br/>내 기록은 안전하게 저장되고 있어요 📝</div>'; return; }
+  if(!rows.length){ box.innerHTML='<div class="sub" style="font-size:12.5px;opacity:.6;padding:14px">오늘 첫 기록의 주인공이 되어보세요! 🎯</div>'; return; }
+  const me=dailyUid();
+  box.innerHTML=rows.slice(0,30).map((r,i)=>{ const mine=r.id===me;
+    const medal=['🥇','🥈','🥉'][i]||('<span style="opacity:.5;display:inline-block;width:1.4em">'+(i+1)+'</span>');
+    return '<div class="lbrow" style="padding:7px 12px;margin:4px 0;font-size:15px;background:'+(mine?'rgba(124,246,255,.18)':'rgba(255,255,255,.045)')
+      +';border:1px solid '+(mine?'rgba(124,246,255,.55)':'transparent')+'"><span>'+medal+' '+esc(r.name)
+      +'</span><b style="color:#7cf6ff">'+r.score.toLocaleString()+'<span style="font-size:11px;color:#8892b0;font-weight:700"> · '+r.hits+'연속</span></b></div>'; }).join('');
 }
 function shareDaily(){
   const d=loadDaily2();
@@ -1180,6 +1232,8 @@ $('dailyClose').onclick=()=>closeDaily();
 $('dailyX').onclick=()=>closeDaily();
 $('dailyStart').onclick=()=>startDaily();
 $('dailyShare').onclick=()=>shareDaily();
+$('dtabRank').onclick=()=>{ sfx('ui_tap'); dailyTab('rank'); };
+$('dtabLog').onclick=()=>{ sfx('ui_tap'); dailyTab('log'); };
 $('ranksClose').onclick=()=>closeRanks();
 $('ranksX').onclick=()=>closeRanks();
 $('shopClose').onclick=()=>closeShop();
