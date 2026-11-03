@@ -149,6 +149,23 @@
   #modBar{position:fixed;top:calc(62px + env(safe-area-inset-top,0px));left:0;right:0;text-align:center;
     font-size:14px;z-index:3;pointer-events:none;min-height:18px;letter-spacing:2px}
   body.menu #modBar{visibility:hidden}
+  /* 일일 챌린지 */
+  #daily{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+    background:rgba(8,10,22,.95);gap:8px;padding:24px;padding-top:calc(26px + env(safe-area-inset-top,0px));z-index:12;overflow-y:auto}
+  #dailyX{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:16px;width:42px;height:42px;display:flex;
+    align-items:center;justify-content:center;font-size:24px;font-weight:900;color:#cfe;background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.18);border-radius:50%;cursor:pointer;z-index:13}
+  #dailyCard{width:min(92vw,340px);background:rgba(124,246,255,.08);border:1px solid rgba(124,246,255,.3);
+    border-radius:16px;padding:14px 16px;margin:4px 0}
+  #dailyCard .dk{font-size:13px;color:#7cf6ff;font-weight:800}
+  #dailyCard .dv{font-size:30px;font-weight:900;margin:3px 0}
+  .dtry{display:inline-block;width:11px;height:11px;border-radius:50%;margin:0 3px;background:rgba(255,255,255,.18)}
+  .dtry.used{background:#7cf6ff}
+  #dailyLog{width:min(92vw,340px);margin-top:4px}
+  .dlog{display:flex;justify-content:space-between;padding:7px 12px;margin:4px 0;border-radius:10px;
+    background:rgba(255,255,255,.05);font-size:14px;font-weight:700}
+  #dailyBadge{position:absolute;top:-7px;right:-7px;background:#ff5a6e;color:#fff;font-size:10px;font-weight:900;
+    border-radius:9px;padding:1px 5px}
   #rankHead{display:flex;align-items:center;gap:12px}
   #rankEmblemBox{flex:0 0 auto;width:60px;height:60px;display:flex;align-items:center;justify-content:center;font-size:38px;line-height:1}
   #rankCard{cursor:pointer}
@@ -216,8 +233,11 @@
     <button class="btn" id="shopBtn" style="background:#2a2109;box-shadow:0 6px 0 #141005;padding:10px 16px;font-size:15px">🛒 상점</button>
     <button class="btn" id="helpBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:10px 16px;font-size:15px">📖 방법</button>
   </div>
+  <div style="display:flex;margin-top:9px">
+    <button class="btn" id="dailyBtn" style="position:relative;background:#1b3a4a;box-shadow:0 6px 0 #0d2029;padding:12px 26px;font-size:16px;border:1px solid rgba(124,246,255,.45)">📅 일일 챌린지<span id="dailyBadge" class="hidden">NEW</span></button>
+  </div>
   <div id="dailyBox"></div>
-  <div id="changelog">🆕 <b id="clVer">v2.6</b> · <span id="clNote"><b>5연속마다 강화 선택</b> — 가속·체인·정밀 중 골라 나만의 빌드로 · 라운드가 더 빨라졌어요</span></div>
+  <div id="changelog">🆕 <b id="clVer">v2.7</b> · <span id="clNote"><b>📅 일일 챌린지</b> 추가 — 오늘은 모두가 <b>똑같은 순서</b>의 라운드로 겨뤄요 · 하루 3번 도전</span></div>
 </div>
 
 <div id="help" class="hidden">
@@ -261,6 +281,22 @@
   <button class="btn" id="lbClose" style="margin-top:6px">닫기</button>
 </div>
 
+<div id="daily" class="hidden">
+  <div id="dailyX" role="button" aria-label="닫기">✕</div>
+  <h1 style="font-size:30px">📅 일일 챌린지</h1>
+  <div class="sub" style="font-size:13.5px">오늘은 <b style="color:#7cf6ff">모두가 똑같은 순서</b>의 라운드를 받아요<br/>부스터 없이, 실력만으로</div>
+  <div id="dailyCard">
+    <div class="dk" id="dailyDate">–</div>
+    <div class="dv" id="dailyBest">–</div>
+    <div class="dk" id="dailyTries" style="color:#8892b0;font-weight:700">남은 도전 –</div>
+  </div>
+  <button class="btn" id="dailyStart">도전!</button>
+  <button class="btn" id="dailyShare" style="margin-top:6px;background:#20263c;box-shadow:0 6px 0 #10131f;padding:11px 22px;font-size:15px">🏆 결과 공유</button>
+  <div class="sub" style="font-size:12px;opacity:.6;margin-top:10px">최근 기록</div>
+  <div id="dailyLog"></div>
+  <button class="btn" id="dailyClose" style="margin-top:4px;background:#20263c;box-shadow:0 6px 0 #10131f">닫기</button>
+</div>
+
 <div id="draft" class="hidden">
   <div class="sub" id="draftWhy" style="font-size:13px;color:#7cf6ff">5연속 달성!</div>
   <h1>강화 선택</h1>
@@ -284,12 +320,22 @@
   <div id="shopList"></div>
   <button class="btn" id="shopClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v2.6 · 강화 선택(3택 1) · 페이싱 개선</div>
+<div id="ver">v2.7 · 일일 챌린지 — 모두 같은 수열</div>
 
 <script>
 const $=id=>document.getElementById(id);
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+// ── 시드 난수 (일일 챌린지) ───────────────────────────────────────
+// 게임 로직용 스트림. 연출용 pick/rnd 와 분리해야 같은 시드에서 같은 라운드가 나온다.
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0;
+  let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+let rngF=Math.random;                       // 평소엔 그냥 랜덤
+const rngS=()=>rngF();
+const pickS=a=>a[Math.floor(rngF()*a.length)];
+const rndS=(a,b)=>Math.floor(rngF()*(b-a+1))+a;
+function dayKey(d){ d=d||new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function daySeed(key){ let h=2166136261; for(let i=0;i<key.length;i++){ h^=key.charCodeAt(i); h=Math.imul(h,16777619); } return h>>>0; }
 const ROLL_MS=150;   // 롤링 스텝 간격 — 모든 숫자 동일 속도(균일)
 
 let AC; function tone(f,d,type,g){ if(!sfxOn) return; try{ if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)(); const o=AC.createOscillator(),v=AC.createGain(); o.type=type||'square'; o.frequency.value=f; v.gain.value=g||0.06; o.connect(v); v.connect(AC.destination); const t=AC.currentTime; o.start(t); v.gain.setValueAtTime(v.gain.value,t); v.gain.exponentialRampToValueAtTime(0.0001,t+(d||0.1)); o.stop(t+(d||0.1)); }catch(e){} }
@@ -728,21 +774,21 @@ let inChoice=false, choiceAns=-1, cChoices=[], cTO=null, cCd=null; const CHOICE_
 let reviveCount=0, deathCount=0; const MAX_REVIVE=5;   // 부활 판당 5회, 전면광고 주기 카운터
 
 function baseRule(){
-  const r=Math.random();
+  const r=rngS();
   const rollCh = hits>=4 ? (hits<14?0.20:0.11)+modRoll : 0;    // ⚡ 롤링 — 후반엔 빈도↓(생명 남발 방지)
   if(r<rollCh) return {type:'roll'};
   if(hits>=3 && r<rollCh+0.19) return {type:'choice'};         // 🔢 선택형(수열 다음 숫자)
-  if(hits>=14 && r<rollCh+0.31) return {type:'stepup', s:pick([2,3,4])}; // 📈 계단 — 스텝이 매번 +1
+  if(hits>=14 && r<rollCh+0.31) return {type:'stepup', s:pickS([2,3,4])}; // 📈 계단 — 스텝이 매번 +1
   if(hits>=8  && r<rollCh+0.41) return {type:'mul', m:2};      // ✖️ 곱하기 ×2
-  if(hits<6)  return {type:'add', s:pick([2,3,4,5])};
-  if(hits<11) return Math.random()<0.62? {type:'add', s:pick([2,3,4,5,6,7])} : {type:'alt', a:pick([2,3,4]), b:pick([1,2,3])};
-  const q=Math.random();
-  return q<0.38? {type:'add', s:pick([-4,-3,3,4,5,6,7,8])} : q<0.78? {type:'alt', a:pick([2,3,4,5]), b:pick([1,2,3,4])} : {type:'add', s:pick([6,7,8,9])};
+  if(hits<6)  return {type:'add', s:pickS([2,3,4,5])};
+  if(hits<11) return rngS()<0.62? {type:'add', s:pickS([2,3,4,5,6,7])} : {type:'alt', a:pickS([2,3,4]), b:pickS([1,2,3])};
+  const q=rngS();
+  return q<0.38? {type:'add', s:pickS([-4,-3,3,4,5,6,7,8])} : q<0.78? {type:'alt', a:pickS([2,3,4,5]), b:pickS([1,2,3,4])} : {type:'add', s:pickS([6,7,8,9])};
 }
 function makeRule(){
   if(hits<2) return {type:'add',s:1};                         // 온보딩 2판
   const gEvery=modGolden?5:10;                                  // 🌟 황금 강화를 먹으면 5연속마다
-  if(hits>=6 && hits%gEvery===0){ const g={type:'add', s:pick([3,4,5])}; g.golden=true; return g; }
+  if(hits>=6 && hits%gEvery===0){ const g={type:'add', s:pickS([3,4,5])}; g.golden=true; return g; }
   return baseRule();
 }
 function stepAt(i){ return rule.type==='add'? rule.s : rule.type==='alt'? (i%2===0? rule.a : rule.b) : rule.type==='stepup'? (rule.s+i) : 0; }
@@ -753,8 +799,8 @@ function speed(){ let s=Math.max(210, 660 - hits*18)*modSpeed; if(slowLeft>0) s*
 function chainCount(){
   if(rule.type!=='add' && rule.type!=='alt' && rule.type!=='stepup') return 1;   // 롤링·선택형·곱하기는 단일 목표
   const b=modChain;                                   // 모디파이어로 체인 확률 보정(상한을 둬서 단일 목표가 사라지지 않게)
-  if(hits>=16){ const r=Math.random(), c3=Math.min(0.42,0.22+b), c2=Math.min(0.84,0.60+b); return r<c3?3:(r<c2?2:1); }
-  if(hits>=6)  return Math.random()<Math.min(0.62,0.35+b)?2:1;
+  if(hits>=16){ const r=rngS(), c3=Math.min(0.42,0.22+b), c2=Math.min(0.84,0.60+b); return r<c3?3:(r<c2?2:1); }
+  if(hits>=6)  return rngS()<Math.min(0.62,0.35+b)?2:1;
   return 1;
 }
 function renderChainTag(){
@@ -772,6 +818,7 @@ function renderChase(){
 
 function newRound(keepCur){
   inGap=false;   // 새 라운드 시작 → 입력 허용
+  reseedRound(1);                 // 일일 챌린지: 이 라운드의 전개를 hits로 고정
   clearTimeout(rollTO); clearTimeout(cTO); clearTimeout(cCd); rule=makeRule(); ti=0; curIsRoll = rule.type==='roll';
   $('cur').classList.remove('miss'); $('cur').classList.remove('hit');
   $('cur').classList.toggle('roll', curIsRoll); $('wrap').classList.remove('slow');
@@ -780,18 +827,18 @@ function newRound(keepCur){
   if(rule.type==='choice'){ setupChoice(); return; }
   $('wrap').classList.remove('choice'); inChoice=false;
   if(curIsRoll){
-    target = rnd(8,40); rollLo=target-6; rollHi=target+5; cur=rollLo; seq=[]; startVal=cur;   // 12칸(target-6~+5) 순환
+    target = rndS(8,40); rollLo=target-6; rollHi=target+5; cur=rollLo; seq=[]; startVal=cur;   // 12칸(target-6~+5) 순환
     banner('⚡ 롤링! 감으로 STOP','#c9a3ff'); vib(30);
     rollTO=setTimeout(()=>{ if(state==='play' && curIsRoll && !inGap) rollMiss(true); }, ROLL_MS*12*3+500);   // 3바퀴 안에 결정
   } else {
     const nC=chainCount();
-    if(rule.type==='mul') cur=rnd(2,5);                            // 곱하기는 작게 시작(폭주 방지)
-    else if(rule.type==='add' && rule.s<0) cur = rnd(10,20) + nC*4*(-rule.s);   // 감소 수열은 목표가 음수로 안 가게 높게 시작
-    else if(!keepCur || !isFinite(cur)) cur = hits<2 ? 1 : rnd(4,16);   // cur 손상(NaN) 시 복구
+    if(rule.type==='mul') cur=rndS(2,5);                           // 곱하기는 작게 시작(폭주 방지)
+    else if(rule.type==='add' && rule.s<0) cur = rndS(10,20) + nC*4*(-rule.s);  // 감소 수열은 목표가 음수로 안 가게 높게 시작
+    else if(!keepCur || !isFinite(cur)) cur = hits<2 ? 1 : rndS(4,16);  // cur 손상(NaN) 시 복구
     startVal=cur;
     const tg=[]; let t=cur, si=0;
     // 첫 목표는 규칙을 읽을 수 있게 3칸 이상, 이어지는 체인 고리는 2칸부터(대기 시간 단축)
-    for(let c=0;c<nC;c++){ const k=rule.type==='mul'?rnd(2,3):(c===0?rnd(3,4):rnd(2,4)); for(let j=0;j<k;j++){ t=advance(t,si); si++; } tg.push(t); }
+    for(let c=0;c<nC;c++){ const k=rule.type==='mul'?rndS(2,3):(c===0?rndS(3,4):rndS(2,4)); for(let j=0;j<k;j++){ t=advance(t,si); si++; } tg.push(t); }
     chainAll=tg.slice(); chainIdx=0; chain=tg.slice(1); target=tg[0]; seq=[cur];
     if(rule.golden){ banner('🌟 골든 라운드! 점수 ×2','#ffd34d'); vib([15,30,15]); if(!sfx('golden_enter')) tone(880,0.1,'triangle',0.06); }
     else if(nC>1){ banner('🔗 체인 '+nC+'연속 목표!','#ffd34d'); vib([15,25,15]); tone(740,0.09,'triangle',0.06); }
@@ -849,7 +896,7 @@ function nextTick(first){ clearTimeout(timer); timer=setTimeout(tick, curIsRoll?
 function start(){
   // ⚡ 장착한 부스터 소모 (보유분에서 1개씩)
   runBoost={};
-  for(const B of BOOSTS){ if(eqb[B.id] && (bst[B.id]||0)>0){ bst[B.id]--; runBoost[B.id]=true; if(!bst[B.id]) eqb[B.id]=false; } }
+  if(!dailyMode) for(const B of BOOSTS){ if(eqb[B.id] && (bst[B.id]||0)>0){ bst[B.id]--; runBoost[B.id]=true; if(!bst[B.id]) eqb[B.id]=false; } }
   saveBoost(); renderBoostRow();
   score=0; hits=0; hearts=1+(runBoost.life?2:0); mult=1; runCoins=0; runEarned=0; totalCommitted=0; inGap=false; showMult(); slowEndShown=false; reviveCount=0; adPlaying=false;
   slowLeft=runBoost.slow?6:0; chainAll=[]; chain=[]; chainIdx=0; renderChainTag();
@@ -897,12 +944,69 @@ function hitOK(){
     newRound(true); if(rule.type!=='choice') nextTick(Math.max(220, speed())); }, GAP_MS);
 }
 // ⚡ 롤링 실패(탭 미스/시간초과) — 페널티 없음, 다음 라운드로
+// ── 일일 챌린지 ───────────────────────────────────────────────────
+// 같은 날이면 시드가 같아 라운드 순서·강화 카드까지 동일하다. 하루 3회, 그중 최고 기록이 그날의 성적.
+const DAILY_TRIES=3;
+let dailyMode=false, dailyRunMods=[], dailySeedBase=0;
+// 라운드 번호로 시드를 고정한다. 이렇게 해야 중간에 실수해서 생명을 쓰더라도
+// 'N번째 라운드'는 그날 모두에게 똑같이 나온다(난수 소비량이 달라져도 어긋나지 않음).
+function reseedRound(salt){ if(dailyMode) rngF=mulberry32((dailySeedBase ^ Math.imul(hits+salt, 2654435761))>>>0); }
+function loadDaily2(){
+  let d=null; try{ d=JSON.parse(localStorage.getItem('num_daily2')||'null'); }catch(e){}
+  if(!d || d.d!==dayKey()) d={d:dayKey(), tries:0, best:0, hits:0, log:[]};
+  return d;
+}
+function saveDaily2(d){ try{ localStorage.setItem('num_daily2', JSON.stringify(d)); }catch(e){} }
+function renderDailyBadge(){
+  const b=$('dailyBadge'); if(!b) return;
+  const d=loadDaily2(); const left=DAILY_TRIES-d.tries;
+  b.textContent=left>0?left:'✓'; b.classList.toggle('hidden', false);
+  b.style.background = left>0 ? '#ff5a6e' : '#2ec77a';
+}
+function openDaily(){
+  const d=loadDaily2(); const left=Math.max(0,DAILY_TRIES-d.tries);
+  $('dailyDate').textContent=d.d+' 오늘의 수열';
+  $('dailyBest').innerHTML = d.best ? ('<b style="color:#ffd34d">'+d.best.toLocaleString()+'</b>점 <span style="font-size:14px;color:#8892b0">· '+d.hits+'연속</span>') : '<span style="color:#5a6684">아직 기록 없음</span>';
+  let dots=''; for(let i=0;i<DAILY_TRIES;i++) dots+='<span class="dtry'+(i<d.tries?' used':'')+'"></span>';
+  $('dailyTries').innerHTML='남은 도전 <b style="color:'+(left?'#7cf6ff':'#ff5a6e')+'">'+left+'</b>/'+DAILY_TRIES+' '+dots;
+  const sb=$('dailyStart'); sb.disabled=!left; sb.style.opacity=left?1:.45; sb.textContent=left?'도전!':'내일 다시 만나요';
+  $('dailyShare').style.display = d.best?'block':'none';
+  const bestS=d.best;
+  $('dailyLog').innerHTML = (d.log||[]).map((r,i)=>
+    '<div class="dlog"><span>'+(i+1)+'번째 도전'+(r.s===bestS?' <span style="color:#ffd34d">★</span>':'')+'</span><b style="color:#7cf6ff">'+r.s.toLocaleString()+'점 · '+r.h+'연속</b></div>').join('')
+    || '<div class="sub" style="font-size:12px;opacity:.5;text-align:center">아직 없어요</div>';
+  $('daily').classList.remove('hidden');
+}
+function closeDaily(){ $('daily').classList.add('hidden'); }
+function startDaily(){
+  const d=loadDaily2(); if(d.tries>=DAILY_TRIES) return;
+  d.tries++; saveDaily2(d);
+  dailyMode=true; dailyRunMods=[];
+  dailySeedBase=daySeed(d.d); rngF=mulberry32(dailySeedBase);   // 오늘의 시드 고정
+  closeDaily(); start();
+}
+function finishDaily(){
+  if(!dailyMode) return; dailyMode=false; rngF=Math.random;
+  const d=loadDaily2();
+  d.log=(d.log||[]).concat([{s:score,h:hits}]).slice(-DAILY_TRIES);
+  if(score>d.best){ d.best=score; d.hits=hits; }
+  saveDaily2(d); renderDailyBadge();
+}
+function shareDaily(){
+  const d=loadDaily2();
+  const icons=dailyRunMods.map(id=>(MOD_BY[id]?MOD_BY[id].i:'')).join('');
+  const txt='멈춰라 숫자 📅'+d.d+'\n⭐ '+d.best.toLocaleString()+'점 · '+d.hits+'연속 '+(icons?('\n'+icons):'')
+    +'\n같은 수열로 도전해봐!\nhttps://seungiljang.github.io/games/number.html';
+  try{ if(navigator.share){ navigator.share({title:'멈춰라 숫자 일일 챌린지', text:txt}); return; } }catch(e){}
+  try{ navigator.clipboard.writeText(txt); floatText('📋 복사됨!','#7cf6ff'); }catch(e){}
+}
 // 5연속마다 강화 선택 — 전환 텀을 '내 판을 만드는' 순간으로 바꾼다
 function openDraft(){
+  reseedRound(9001);              // 일일 챌린지: 제시되는 강화 카드도 모두 동일하게
   state='draft'; clearTimeout(timer); clearTimeout(rollTO); clearTimeout(cTO); clearTimeout(cCd);
   const pool=MODS.filter(m=>(modOwned[m.id]||0)<m.max);
   const pick3=[]; const bag=pool.slice();
-  while(pick3.length<3 && bag.length) pick3.push(bag.splice(Math.floor(Math.random()*bag.length),1)[0]);
+  while(pick3.length<3 && bag.length) pick3.push(bag.splice(Math.floor(rngF()*bag.length),1)[0]);
   $('draftWhy').textContent=hits+'연속 달성!';
   const box=$('draftList');
   box.innerHTML=pick3.map(m=>{ const lv=modOwned[m.id]||0;
@@ -916,7 +1020,7 @@ function openDraft(){
 function takeMod(id){
   if(state!=='draft') return;
   const m=MOD_BY[id]; if(!m) return;
-  modOwned[id]=(modOwned[id]||0)+1; m.a(); renderModBar();
+  modOwned[id]=(modOwned[id]||0)+1; m.a(); renderModBar(); dailyRunMods.push(id);
   $('draft').classList.add('hidden'); state='play';
   floatText(m.i+' '+m.n,'#7cf6ff'); if(!sfx('coin_reward')) tone(880,0.1,'triangle',0.07); vib([15,30,15]);
   newRound(true); if(rule.type!=='choice') nextTick(Math.max(220, speed()));
@@ -943,16 +1047,16 @@ function setupChoice(){
   clearTimeout(timer); clearTimeout(rollTO); clearTimeout(cTO); clearTimeout(cCd); inChoice=true; curIsRoll=false;
   $('wrap').classList.add('choice'); $('cur').classList.remove('roll','miss','hit');
   // 난이도: hits에 따라 항 수·간격·보기 수↑, 후반엔 '계단 수열'도 등장
-  const ladder = hits>=20 && Math.random()<0.35;
-  const step = hits<8? pick([1,2,3]) : hits<16? pick([2,3,4,5]) : pick([3,4,5,6,7]);
-  const k = hits<16?3:4, start0=rnd(1,9); const terms=[]; let t=start0, st=step;
+  const ladder = hits>=20 && rngS()<0.35;
+  const step = hits<8? pickS([1,2,3]) : hits<16? pickS([2,3,4,5]) : pickS([3,4,5,6,7]);
+  const k = hits<16?3:4, start0=rndS(1,9); const terms=[]; let t=start0, st=step;
   for(let i=0;i<k;i++){ terms.push(t); t+=st; if(ladder) st++; } const correct=t;
   $('cseq').textContent = terms.join('  →  ')+'  →  ?';
   const nc = hits<8?2:(hits<18?3:4);
   const set=new Set([correct]), arr=[correct]; let g=0;
-  while(arr.length<nc && g++<60){ const d=correct+pick([-2,-1,1,2,step,-step]); if(d!==correct && d>0 && !set.has(d)){ set.add(d); arr.push(d); } }
-  while(arr.length<nc){ const d=correct+rnd(1,6); if(!set.has(d)){ set.add(d); arr.push(d); } }
-  for(let i=arr.length-1;i>0;i--){ const j=rnd(0,i); const tmp=arr[i];arr[i]=arr[j];arr[j]=tmp; }
+  while(arr.length<nc && g++<60){ const d=correct+pickS([-2,-1,1,2,step,-step]); if(d!==correct && d>0 && !set.has(d)){ set.add(d); arr.push(d); } }
+  while(arr.length<nc){ const d=correct+rndS(1,6); if(!set.has(d)){ set.add(d); arr.push(d); } }
+  for(let i=arr.length-1;i>0;i--){ const j=rndS(0,i); const tmp=arr[i];arr[i]=arr[j];arr[j]=tmp; }
   cChoices=arr; choiceAns=arr.indexOf(correct);
   const box=$('cchoices'); box.innerHTML='';
   arr.forEach((v,i)=>{ const b=document.createElement('button'); b.className='cbtn'; b.textContent=v; b.onclick=(e)=>{ e.stopPropagation(); onChoice(i,b); }; box.appendChild(b); });
@@ -1017,10 +1121,12 @@ function die(msg, fromChoice){
   renderRankCard(); renderOverRank(); renderDaily(); renderBoostRow();
   $('overRec').innerHTML = rec?'<span class="rec">최고 갱신!</span>' : (best>0?('(최고까지 '+(best-score)+'점!)'):'');
   const rank = score>0 ? insertScore(score) : 0;
-  if(fbReady && score>0 && rec){ fbSubmit(myName,score); $('overRank').textContent='🌐 전세계 랭킹 갱신! (랭킹 보기)'; }
+  if(fbReady && score>0 && rec && !wasDaily){ fbSubmit(myName,score); $('overRank').textContent='🌐 전세계 랭킹 갱신! (랭킹 보기)'; }
   else if(fbReady && score>0){ $('overRank').innerHTML='🌐 내 최고 <b>'+best+'</b>점이 랭킹에 등록돼 있어요'; }
   else $('overRank').textContent = rank>0 ? ('🏆 랭킹 '+rank+'위'+(rank===1?' — 1등!':(rank<=3?' 진입!':''))) : '';
   deathCount++;
+  const wasDaily=dailyMode; finishDaily();
+  if(wasDaily) $('overTitle').textContent = rec?'🏆 신기록!':'📅 오늘의 도전 종료';
   renderChase();
   // 5판마다 전면광고 → 광고가 닫힌 뒤에 배너(동시 노출 방지)
   if(deathCount%5===0) playInterstitial(()=>showBanner()); else showBanner();
@@ -1046,6 +1152,7 @@ function revive(){
 function retryGame(){ start(); }   // 전면광고 제거(승일님 요청) — 보상형·배너만 유지
 function goHome(){ state='start'; clearTimeout(timer); clearTimeout(rollTO); clearTimeout(cTO); clearTimeout(cCd); document.body.classList.add('menu');
   $('draft').classList.add('hidden'); modOwned={}; renderModBar();
+  dailyMode=false; rngF=Math.random; renderDailyBadge();
   $('over').classList.add('hidden'); $('wrap').classList.remove('choice','slow'); $('chainTag').innerHTML=''; $('chase').textContent='';
   $('best2').textContent=best; renderRankCard(); renderDaily(); renderBoostRow(); renderCoins(); showBanner();
   $('start').classList.remove('hidden'); $('start').scrollTop=0; }
@@ -1068,12 +1175,17 @@ $('lbClose').onclick=()=>hideLB();
 $('lbX').onclick=()=>hideLB();
 $('shopBtn').onclick=()=>openShop();
 $('rankCard').onclick=()=>{ sfx('ui_tap'); openRanks(); };
+$('dailyBtn').onclick=()=>openDaily();
+$('dailyClose').onclick=()=>closeDaily();
+$('dailyX').onclick=()=>closeDaily();
+$('dailyStart').onclick=()=>startDaily();
+$('dailyShare').onclick=()=>shareDaily();
 $('ranksClose').onclick=()=>closeRanks();
 $('ranksX').onclick=()=>closeRanks();
 $('shopClose').onclick=()=>closeShop();
 $('shopX').onclick=()=>closeShop();
 $('best2').textContent=best;
-renderRankCard(); renderDaily(); renderBoostRow(); document.body.classList.add('menu');
+renderRankCard(); renderDaily(); renderBoostRow(); renderDailyBadge(); document.body.classList.add('menu');
 try{ if(!localStorage.getItem('num_seen_help')) $('help').classList.remove('hidden'); }catch(e){}
 </script>
 </body></html>
