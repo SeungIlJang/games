@@ -1383,18 +1383,22 @@ newRace(); showTitle(); requestAnimationFrame(loop);
 // ================= AdMob (Capacitor 네이티브=실제 광고 / 웹=없음) =================
 // AdMob 앱 ca-app-pub-9017259597860535~8543702321 (AndroidManifest 의 APPLICATION_ID 와 같아야 한다)
 const AD_USE_TEST = typeof navigator!=='undefined' && /MSAdsTest/.test(navigator.userAgent); // 테스트 트랙 빌드(capacitor.config appendUserAgent 에 MSAdsTest)면 구글 테스트 광고 → 눌러도 계정 무영향
+const ADS_ENABLED=false; // ⚠️ 광고 전면 중단 (2026-11-03 ~ 2026-12-02 AdMob 계정 정지)
+// 이 값 하나만 false면 배너·전면·리워드가 전부 나가지 않는다. SDK 초기화도 건너뛴다.
+// 리워드 버튼은 그대로 동작한다 — 광고 없이 보상이 지급된다.
+// 12/2 이후 되살리려면 true 로 바꿔 다시 배포하면 된다(다른 설정은 손대지 않았다).
 // 실광고를 직접 누르면 계정이 정지된다(2026-11-02 실제로 29일 정지됨). 테스트는 반드시 테스트 트랙 빌드로 한다.
 // _REAL 이 비어 있으면 광고 호출 자체를 건너뛴다(빈 adId 로 요청하지 않음).
 const AD_BANNER_TEST='ca-app-pub-3940256099942544/6300978111', AD_BANNER_REAL='ca-app-pub-9017259597860535/9699378034';
 const AD_INTER_TEST ='ca-app-pub-3940256099942544/1033173712', AD_INTER_REAL ='ca-app-pub-9017259597860535/2887603856';
 const AD_REWARD_TEST='ca-app-pub-3940256099942544/5224354917', AD_REWARD_REAL='ca-app-pub-9017259597860535/6635277171';
-const AD_BANNER = AD_USE_TEST ? AD_BANNER_TEST : AD_BANNER_REAL;
-const AD_INTER  = AD_USE_TEST ? AD_INTER_TEST  : AD_INTER_REAL;
-const AD_REWARD = AD_USE_TEST ? AD_REWARD_TEST : AD_REWARD_REAL;
+const AD_BANNER  = !ADS_ENABLED ? '' : (AD_USE_TEST ? AD_BANNER_TEST : AD_BANNER_REAL);
+const AD_INTER   = !ADS_ENABLED ? '' : (AD_USE_TEST ? AD_INTER_TEST  : AD_INTER_REAL);
+const AD_REWARD  = !ADS_ENABLED ? '' : (AD_USE_TEST ? AD_REWARD_TEST : AD_REWARD_REAL);
 let admobReady=false, bannerShown=false, interCount=0;
 function admob(){ const C=window.Capacitor; return (C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.AdMob)?C.Plugins.AdMob:null; }
 function adSafeBottom(){ try{ const p=document.createElement('div'); p.style.cssText='position:fixed;left:0;bottom:0;width:0;height:env(safe-area-inset-bottom,0px);visibility:hidden;pointer-events:none'; document.body.appendChild(p); const h=Math.round(p.getBoundingClientRect().height); p.remove(); return h; }catch(e){ return 0; } }
-(async function(){ const A=admob(); if(!A) return; try{ await A.initialize({initializeForTesting:AD_USE_TEST}); admobReady=true; adBanner(); }catch(e){} })();
+(async function(){ if(!ADS_ENABLED) return; const A=admob(); if(!A) return; try{ await A.initialize({initializeForTesting:AD_USE_TEST}); admobReady=true; adBanner(); }catch(e){} })();
 function adSetBannerH(h){ const nh=Math.max(0,Math.round(h||0)); if(nh!==AD_BANNER_H){ AD_BANNER_H=nh; document.documentElement.style.setProperty('--adH',nh+'px'); resize(); } }
 async function adBanner(){ const A=admob(); if(!AD_BANNER||!A||bannerShown) return; bannerShown=true;
   // 배너 실제 높이를 받아 게임영역을 줄임(버튼 가림 방지). 이벤트 못 받으면 추정치 사용.
