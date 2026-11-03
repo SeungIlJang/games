@@ -217,7 +217,7 @@
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <div class="deck-eyebrow">G A L L O G  /  F L I G H T  D E C K</div>
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v8.5</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v8.6</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko"  class="btn-sm">한국어</button>
       <button data-lang="en"  class="btn-sm">English</button>
@@ -687,22 +687,22 @@ const CLASS_TREE=[
  {key:'bloodwarrior',base:'warrior',parent:'berserker',tier:3,icon:'🩸',name:'혈전사',en:'Blood Warrior',cost:3000, desc:'공격+20%, 흡혈+2, 체력+10%', apply:p=>{ p.dmg*=1.2; p.lifesteal+=2; p.maxhp*=1.1; }},
  {key:'bloodlord',base:'warrior',parent:'bloodwarrior',tier:4,icon:'🧛',name:'피의군주',en:'Blood Lord',cost:9000, desc:'공격+30%, 흡혈+3, 체력+15%', apply:p=>{ p.dmg*=1.3; p.lifesteal+=3; p.maxhp*=1.15; }},
  // ── 마법사 / Mage ──
- {key:'mage',base:'mage',parent:null,tier:1,icon:'🟣',name:'마법사',en:'Mage',cost:400, desc:'충격파+1,블랙홀+1 · 공격+25%, 체력-15%', apply:p=>{ p.dmg*=1.25; p.maxhp*=0.85; gainW(p,'nova',2); gainW(p,'blackhole',1); }},
- {key:'elementalist',base:'mage',parent:'mage',tier:2,icon:'🌈',name:'원소술사',en:'Elementalist',cost:1000, desc:'공격+40%, 충격파+2, 연사+20%, 블랙홀+2', apply:p=>{ p.dmg*=1.4; gainW(p,'nova',2); p.fireRate*=1.2; gainW(p,'blackhole',1); }},
+ {key:'mage',base:'mage',parent:null,tier:1,icon:'🟣',name:'마법사',en:'Mage',cost:400, desc:'충격파+2,블랙홀+1 · 공격+25%, 체력-15%', apply:p=>{ p.dmg*=1.25; p.maxhp*=0.85; gainW(p,'nova',2); gainW(p,'blackhole',1); }},
+ {key:'elementalist',base:'mage',parent:'mage',tier:2,icon:'🌈',name:'원소술사',en:'Elementalist',cost:1000, desc:'공격+40%, 충격파+2, 연사+20%, 블랙홀+1', apply:p=>{ p.dmg*=1.4; gainW(p,'nova',2); p.fireRate*=1.2; gainW(p,'blackhole',1); }},
  {key:'firemage',base:'mage',parent:'elementalist',tier:3,icon:'🔥',name:'화염마법사',en:'Fire Mage',cost:3000, desc:'공격+50%, 산탄+3, 충격파+3, 블랙홀+3', apply:p=>{ p.dmg*=1.5; gainW(p,'spread',3); gainW(p,'nova',3); gainW(p,'blackhole',3); }},
  {key:'infernolord',base:'mage',parent:'firemage',tier:4,icon:'🌋',name:'화염군주',en:'Inferno Lord',cost:9000, desc:'공격+60%, 산탄+4, 충격파+4, 블랙홀+4', apply:p=>{ p.dmg*=1.6; gainW(p,'spread',4); gainW(p,'nova',4); gainW(p,'blackhole',4); }},
  {key:'icemage',base:'mage',parent:'elementalist',tier:3,icon:'❄️',name:'얼음마법사',en:'Ice Mage',cost:3000, desc:'공격+50%, 참격+3, 충격파+3, 블랙홀+3', apply:p=>{ p.dmg*=1.5; gainW(p,'slash',3); gainW(p,'nova',3); gainW(p,'blackhole',3); }},
- {key:'frostlord',base:'mage',parent:'icemage',tier:4,icon:'🧊',name:'빙결군주',en:'Frost Lord',cost:9000, desc:'공격+30%, 유도+2, 피해감소10%, 블랙홀+4', apply:p=>{ p.dmg*=1.3; gainW(p,'homing',2); p.dmgReduce*=0.9; gainW(p,'blackhole',1); }},
- {key:'earthmage',base:'mage',parent:'mage',tier:2,icon:'🪨',name:'대지술사',en:'Earth Mage',cost:1000, desc:'체력+40%, 궤도+4, 공격+20%, 블랙홀+2', apply:p=>{ p.maxhp*=1.4; gainW(p,'orbit',4); p.dmg*=1.2; gainW(p,'blackhole',1); }},
- {key:'earthwizard',base:'mage',parent:'earthmage',tier:3,icon:'⛰️',name:'흙마법사',en:'Earth Wizard',cost:3000, desc:'체력+20%, 궤도+1, 공격+15%, 블랙홀+3', apply:p=>{ p.maxhp*=1.2; gainW(p,'orbit',1); p.dmg*=1.15; gainW(p,'blackhole',1); }},
- {key:'terrasage',base:'mage',parent:'earthwizard',tier:4,icon:'🌍',name:'대지현자',en:'Terra Sage',cost:9000, desc:'체력+25%, 궤도+1, 공격+25%, 블랙홀+4', apply:p=>{ p.maxhp*=1.25; gainW(p,'orbit',1); p.dmg*=1.25; gainW(p,'blackhole',1); }},
- {key:'golemancer',base:'mage',parent:'earthmage',tier:3,icon:'🗿',name:'골렘술사',en:'Golemancer',cost:3000, desc:'체력+30%, 궤도+1, 피해감소10%, 블랙홀+3', apply:p=>{ p.maxhp*=1.3; gainW(p,'orbit',1); p.dmgReduce*=0.9; gainW(p,'blackhole',1); }},
- {key:'titancaller',base:'mage',parent:'golemancer',tier:4,icon:'🏔️',name:'타이탄소환사',en:'Titan Caller',cost:9000, desc:'체력+35%, 궤도+2, 공격+20%, 블랙홀+4', apply:p=>{ p.maxhp*=1.35; gainW(p,'orbit',2); p.dmg*=1.2; gainW(p,'blackhole',1); }},
- {key:'darkmage',base:'mage',parent:'mage',tier:2,icon:'🟪',name:'암흑술사',en:'Dark Mage',cost:1000, desc:'공격+50%, 흡혈+3, 충격파+2, 블랙홀+2', apply:p=>{ p.dmg*=1.5; p.lifesteal+=3; gainW(p,'nova',2); gainW(p,'blackhole',1); }},
- {key:'darkwizard',base:'mage',parent:'darkmage',tier:3,icon:'🌑',name:'암흑마법사',en:'Dark Wizard',cost:3000, desc:'공격+30%, 흡혈+1, 충격파+1, 블랙홀+3', apply:p=>{ p.dmg*=1.3; p.lifesteal+=1; gainW(p,'nova',1); gainW(p,'blackhole',1); }},
- {key:'abyssmage',base:'mage',parent:'darkwizard',tier:4,icon:'🕳️',name:'심연술사',en:'Abyss Mage',cost:9000, desc:'공격+45%, 흡혈+2, 블랙홀+4', apply:p=>{ p.dmg*=1.45; p.lifesteal+=2; gainW(p,'blackhole',1); }},
- {key:'warlock',base:'mage',parent:'darkmage',tier:3,icon:'😈',name:'흑마법사',en:'Warlock',cost:3000, desc:'공격+25%, 유도미사일+1, 흡혈+1, 블랙홀+3', apply:p=>{ p.dmg*=1.25; gainW(p,'homing',1); p.lifesteal+=1; gainW(p,'blackhole',1); }},
- {key:'demonlord',base:'mage',parent:'warlock',tier:4,icon:'👿',name:'마왕',en:'Demon Lord',cost:9000, desc:'공격+50%, 유도+1, 체력+10%, 블랙홀+4', apply:p=>{ p.dmg*=1.5; gainW(p,'homing',1); p.maxhp*=1.1; gainW(p,'blackhole',1); }},
+ {key:'frostlord',base:'mage',parent:'icemage',tier:4,icon:'🧊',name:'빙결군주',en:'Frost Lord',cost:9000, desc:'공격+30%, 유도+2, 피해감소10%, 블랙홀+1', apply:p=>{ p.dmg*=1.3; gainW(p,'homing',2); p.dmgReduce*=0.9; gainW(p,'blackhole',1); }},
+ {key:'earthmage',base:'mage',parent:'mage',tier:2,icon:'🪨',name:'대지술사',en:'Earth Mage',cost:1000, desc:'체력+40%, 궤도+4, 공격+20%, 블랙홀+1', apply:p=>{ p.maxhp*=1.4; gainW(p,'orbit',4); p.dmg*=1.2; gainW(p,'blackhole',1); }},
+ {key:'earthwizard',base:'mage',parent:'earthmage',tier:3,icon:'⛰️',name:'흙마법사',en:'Earth Wizard',cost:3000, desc:'체력+20%, 궤도+1, 공격+15%, 블랙홀+1', apply:p=>{ p.maxhp*=1.2; gainW(p,'orbit',1); p.dmg*=1.15; gainW(p,'blackhole',1); }},
+ {key:'terrasage',base:'mage',parent:'earthwizard',tier:4,icon:'🌍',name:'대지현자',en:'Terra Sage',cost:9000, desc:'체력+25%, 궤도+1, 공격+25%, 블랙홀+1', apply:p=>{ p.maxhp*=1.25; gainW(p,'orbit',1); p.dmg*=1.25; gainW(p,'blackhole',1); }},
+ {key:'golemancer',base:'mage',parent:'earthmage',tier:3,icon:'🗿',name:'골렘술사',en:'Golemancer',cost:3000, desc:'체력+30%, 궤도+1, 피해감소10%, 블랙홀+1', apply:p=>{ p.maxhp*=1.3; gainW(p,'orbit',1); p.dmgReduce*=0.9; gainW(p,'blackhole',1); }},
+ {key:'titancaller',base:'mage',parent:'golemancer',tier:4,icon:'🏔️',name:'타이탄소환사',en:'Titan Caller',cost:9000, desc:'체력+35%, 궤도+2, 공격+20%, 블랙홀+1', apply:p=>{ p.maxhp*=1.35; gainW(p,'orbit',2); p.dmg*=1.2; gainW(p,'blackhole',1); }},
+ {key:'darkmage',base:'mage',parent:'mage',tier:2,icon:'🟪',name:'암흑술사',en:'Dark Mage',cost:1000, desc:'공격+50%, 흡혈+3, 충격파+2, 블랙홀+1', apply:p=>{ p.dmg*=1.5; p.lifesteal+=3; gainW(p,'nova',2); gainW(p,'blackhole',1); }},
+ {key:'darkwizard',base:'mage',parent:'darkmage',tier:3,icon:'🌑',name:'암흑마법사',en:'Dark Wizard',cost:3000, desc:'공격+30%, 흡혈+1, 충격파+1, 블랙홀+1', apply:p=>{ p.dmg*=1.3; p.lifesteal+=1; gainW(p,'nova',1); gainW(p,'blackhole',1); }},
+ {key:'abyssmage',base:'mage',parent:'darkwizard',tier:4,icon:'🕳️',name:'심연술사',en:'Abyss Mage',cost:9000, desc:'공격+45%, 흡혈+2, 블랙홀+1', apply:p=>{ p.dmg*=1.45; p.lifesteal+=2; gainW(p,'blackhole',1); }},
+ {key:'warlock',base:'mage',parent:'darkmage',tier:3,icon:'😈',name:'흑마법사',en:'Warlock',cost:3000, desc:'공격+25%, 유도미사일+1, 흡혈+1, 블랙홀+1', apply:p=>{ p.dmg*=1.25; gainW(p,'homing',1); p.lifesteal+=1; gainW(p,'blackhole',1); }},
+ {key:'demonlord',base:'mage',parent:'warlock',tier:4,icon:'👿',name:'마왕',en:'Demon Lord',cost:9000, desc:'공격+50%, 유도+1, 체력+10%, 블랙홀+1', apply:p=>{ p.dmg*=1.5; gainW(p,'homing',1); p.maxhp*=1.1; gainW(p,'blackhole',1); }},
  {key:'archdemon',base:'mage',parent:'demonlord',tier:5,icon:'😈',name:'대마왕',en:'Archdemon',cost:100000000, desc:'👑 최종 전직 · 모든 기술 +6', apply:p=>{ gainW(p,'bolt',6); gainW(p,'slash',6); gainW(p,'santoryu',6); gainW(p,'nova',6); gainW(p,'spread',6); gainW(p,'homing',6); gainW(p,'orbit',6); gainW(p,'blackhole',6); }},
  // ── 궁수 / Archer ──
  {key:'archer',base:'archer',parent:null,tier:1,icon:'🏹',name:'궁수',en:'Archer',cost:400, desc:'화살촉 · 연사+15%, 사거리+15%', apply:p=>{ p.fireRate*=1.15; p.range*=1.15; gainW(p,'arrow',2); }},
@@ -751,6 +751,29 @@ const CLASS_CHILDREN={}; CLASS_TREE.forEach(n=>{ if(n.parent){ (CLASS_CHILDREN[n
 const CLASS_ROOTS=CLASS_TREE.filter(n=>!n.parent);
 // 기본직별 정체성 무기 (전직 단계마다 +1로 성장)
 const IDENTITY_WEAPON={hero:'bolt', warrior:'slash', swordsman:'santoryu', mage:'nova', archer:'arrow', rogue:'spread'};
+// ── 계열 균형 보조 무기 ──────────────────────────────────────────
+// gainW는 무기당 6레벨에서 캡이다. 마법사만 blackhole·nova·spread/orbit 로 나눠 담아
+// t4 무기 레벨 합 14.2를 찍는데, 다른 계열은 정체성 무기 하나에 몰아줘 캡에 걸리고
+// 6.0~8.5에 머물렀다(궁수는 화살촉에 +11을 주지만 6에서 멈춘다). 실측 DPS도 그만큼 갈렸다.
+// 전직 40곳을 각각 손대는 대신, 계열마다 보조 무기를 티어에 비례해(+티어-1) 얹어 메운다.
+// 도적은 체인 전체의 gainW 호출이 0회라 가장 뒤처져 있어 보조를 하나 더 받는다.
+const CLASS_SUPPORT={
+  warrior:  ['nova','homing'],             // 묵직한 충격파 + 투척(사거리 확보 — frost는 반경 130이라 안 닿았다)
+  swordsman:['slash','lightning'],         // 검기 + 발도 섬광
+  archer:   ['spread','homing'],           // 산탄 + 추적 화살
+  rogue:    ['santoryu','lightning','homing'],  // 연속 베기 + 암습
+};
+// 카드 설명에 보조 무기를 적어 준다 — 테이블에서 바로 뽑으므로 수치가 어긋날 수 없다
+function supportText(n){
+  const sup=CLASS_SUPPORT[n.base], k=Math.max(0,n.tier-1);
+  if(!sup||!k) return '';
+  return ' <span style="color:#9fe3ff;">· 계열 보조 '+sup.map(w=>((WEAPONS[w]&&WEAPONS[w].name)||w)+'+'+k).join(', ')+'</span>';
+}
+function applySupport(p,tier){
+  const sup=CLASS_SUPPORT[p.baseCls]; if(!sup) return;
+  const n=Math.max(0,tier-1);            // t1=0 t2=1 t3=2 t4=3
+  if(n) for(const k of sup) gainW(p,k,n);
+}
 // 전직 비용 — 단계(티어)마다 급상승(용사만 무료 시작). 밸런스는 여기서만 조정
 const TIER_COST={1:1500, 2:990000, 3:1000000, 4:10000000, 5:100000000}; // L2 99만(능력치 2배 밸런스), L3·L4 비공개, L5=대마왕(최종)
 CLASS_TREE.forEach(n=>{ n.cost = (n.key==='hero') ? 0 : TIER_COST[n.tier]; });
@@ -760,6 +783,7 @@ function applyClass(p){
   p.weapons={}; p.timers={};
   const chain=classChain(sel); p.baseCls=chain.length?chain[0].base:'hero'; p.cls=sel;
   for(const n of chain) n.apply(p);
+  applySupport(p, chain.length);   // 계열 균형 보조(마법사는 대상 아님 — 이미 기준점이다)
   // 정체성 무기: 각 전직 apply의 +N 누적(gainW)을 존중하되, 최소 전직단계(L2~L5) 보장
   const idw=IDENTITY_WEAPON[p.baseCls];
   if(idw){ p.weapons[idw]=Math.min(6, Math.max(p.weapons[idw]||0, chain.length+1)); if(idw!=='orbit'&&p.timers[idw]==null) p.timers[idw]=0; }
@@ -832,7 +856,7 @@ function renderClasses(){
     const badge = sel?'✓ 선택됨' : (owned?'▶ 선택' : ('🪙'+price+(meta.gold<n.cost?' 부족':'')));
     const idw=IDENTITY_WEAPON[n.base], wn=(WEAPONS[idw]&&WEAPONS[idw].name)||idw||'';
     const nextTag = (!owned&&n.tier>1) ? ` <span style="font-size:11px;color:#ffd25c;font-weight:700;">▲ ${trDesc('다음 전직')}</span>` : '';
-    el.innerHTML=`<div class="t">${weaponIcon(IDENTITY_WEAPON[n.base]||'shield')} <span class="class-grade">T${n.tier}</span> ${dispName(n)}${nextTag} <span style="font-size:12px;color:#7cf6ff;font-weight:700;">${trDesc(wn)}L${idLevelFor(n)}</span> <span style="opacity:.45;font-size:11px;">${LANG==='ko'?n.en:''}</span> <span style="font-size:12px;color:${sel?'#5ce1ff':(owned?'#9dffbf':(buyable?'#ffd25c':'#8892b0'))};">${trDesc(badge)}</span></div><div class="d">${trDesc(n.desc)}</div>`;
+    el.innerHTML=`<div class="t">${weaponIcon(IDENTITY_WEAPON[n.base]||'shield')} <span class="class-grade">T${n.tier}</span> ${dispName(n)}${nextTag} <span style="font-size:12px;color:#7cf6ff;font-weight:700;">${trDesc(wn)}L${idLevelFor(n)}</span> <span style="opacity:.45;font-size:11px;">${LANG==='ko'?n.en:''}</span> <span style="font-size:12px;color:${sel?'#5ce1ff':(owned?'#9dffbf':(buyable?'#ffd25c':'#8892b0'))};">${trDesc(badge)}</span></div><div class="d">${trDesc(n.desc)}${supportText(n)}</div>`;
     el.onclick=()=>{ initAudio();
       if(owned){ meta.sel=n.key; tone(700,0.08,'square',0.12); }
       else if(!parentOwned){ return; }
