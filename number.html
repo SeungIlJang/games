@@ -41,7 +41,33 @@
   #over,#start,#lb{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,10,22,.92);gap:10px;padding:24px;text-align:center;z-index:10}
   #lb{z-index:12;justify-content:flex-start;padding-top:calc(28px + env(safe-area-inset-top,0px))}
   #over{justify-content:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-top:calc(16px + env(safe-area-inset-top,0px));padding-bottom:26px;gap:7px}
-  #start{overflow-y:auto;-webkit-overflow-scrolling:touch}
+  #start{overflow-y:auto;-webkit-overflow-scrolling:touch;background:transparent;gap:0;padding-left:20px;padding-right:20px}
+  /* 테마 배경이 비치도록 두고, 플레이 배경 아트를 아주 옅게 겹쳐 톤을 맞춘다 */
+  #start::before{content:'';position:fixed;inset:0;background:url(img/number/play/play_bg_normal.png) center/cover;
+    opacity:.2;pointer-events:none}
+  #start::after{content:'';position:fixed;inset:0;background:linear-gradient(180deg,rgba(8,11,23,.72),rgba(5,7,15,.9));
+    pointer-events:none}
+  #start>*{position:relative;z-index:1;flex:0 0 auto}
+  /* 이 파일엔 전역 border-box 규칙이 없다. 폭을 지정한 블록만 패딩 포함으로 맞춘다 */
+  #rankCard,#dailyBox,#changelog,#statRow,#navRow,#boostRow,#startBtn,#dailyBtn,
+  #dailyCard,#dailyTabs,#dailyStart,#dailyLbList,#dailyLog,#ranksList,#shopList{box-sizing:border-box}
+  #startIcon{border-radius:18px;box-shadow:0 0 28px rgba(124,246,255,.16);margin-bottom:4px}
+  #startTitle{font-size:31px;margin:0 0 12px}
+  #startTag{font-size:13px;color:#9fb0cc;font-weight:700;margin-bottom:11px}
+  #statRow{display:flex;gap:9px;width:min(92vw,352px);margin-top:10px}
+  .hstat{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+    border-radius:13px;padding:9px 13px;text-align:left}
+  .hstat .sl{font-size:10.5px;color:#8fa8c4;font-weight:800;letter-spacing:.4px}
+  .hstat .sv{font-size:19px;font-weight:900;margin-top:1px;color:#ffd34d}
+  #startBtn{width:min(92vw,352px);margin-top:13px;padding:17px;font-size:21px}
+  #dailyBtn{width:min(92vw,352px);margin-top:9px;padding:13px;font-size:16px;
+    background:rgba(23,52,68,.85);box-shadow:none;border:1px solid rgba(124,246,255,.42);position:relative}
+  #dailyBtn:active{background:rgba(33,74,96,.9);transform:none}
+  #navRow{display:flex;gap:8px;width:min(92vw,352px);margin-top:9px}
+  #navRow .btn{flex:1;padding:11px 0;font-size:14.5px;box-shadow:none;
+    background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.12)}
+  #navRow .btn:active{background:rgba(255,255,255,.14);transform:none}
+  #navRow #shopBtn{background:rgba(56,44,12,.75);border-color:rgba(255,211,77,.32)}
   body.menu #hud,body.menu #wrap,body.menu #chase,body.menu #mult,body.menu #banner{visibility:hidden}   /* 메뉴에선 플레이 화면이 비쳐 보이지 않게 */
   #lbX{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:16px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:#cfe;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:50%;cursor:pointer;z-index:13}
   #lbX:active{background:rgba(255,255,255,.2)}
@@ -55,7 +81,7 @@
   .miss{color:#ff6a7a;font-size:22px;font-weight:800}
   .rec{color:#ffd34d;font-weight:800}
   .btn{background:#3a7bff;color:#fff;border:none;border-radius:16px;padding:16px 34px;font-size:20px;font-weight:800;box-shadow:0 6px 0 #1f52c0;margin-top:8px;cursor:pointer}
-  #changelog{margin-top:18px;font-size:13px;color:#9fb;background:rgba(90,246,180,.1);border:1px solid rgba(90,246,180,.3);border-radius:10px;padding:8px 14px;max-width:300px}
+  #changelog{width:min(92vw,352px);margin-top:16px;font-size:12px;color:#9fb;background:rgba(90,246,180,.1);border:1px solid rgba(90,246,180,.3);border-radius:10px;padding:8px 14px;max-width:none}
   #changelog b{color:#7cf6ff}
   /* 선택형 라운드 */
   #cseq,#ctbar,#cchoices{display:none}
@@ -94,13 +120,13 @@
   #chainTag .now{color:#ffe14d;text-shadow:0 0 14px rgba(255,225,77,.8)}
   #chainTag .todo{color:#5a6684}
   /* 랭크 카드 */
-  #rankCard{width:min(92vw,330px);background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:11px 14px;margin:2px 0 4px}
+  #rankCard{width:min(92vw,352px);background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:11px 14px;margin:2px 0 4px}
   #rankTop{display:flex;justify-content:space-between;align-items:center;font-size:17px;font-weight:900}
   #rankBar{height:7px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden;margin-top:7px}
   #rankFill{height:100%;width:0%;background:linear-gradient(90deg,#7cf6ff,#5cffb0);border-radius:4px;transition:width .5s ease-out}
   #rankSub{font-size:12px;color:#8892b0;font-weight:700;margin-top:5px;text-align:left}
   /* 일일 미션 */
-  #dailyBox{width:min(92vw,330px);background:rgba(255,211,77,.07);border:1px solid rgba(255,211,77,.28);border-radius:14px;padding:10px 13px;margin-top:2px}
+  #dailyBox{width:min(92vw,352px);background:rgba(255,211,77,.07);border:1px solid rgba(255,211,77,.28);border-radius:14px;padding:10px 13px;margin-top:2px}
   #dailyBox .dt{font-size:14px;font-weight:900;color:#ffd34d;margin-bottom:6px;display:flex;justify-content:space-between}
   .mrow{text-align:left;font-size:13px;font-weight:700;color:#cfe;margin:6px 0}
   .mrow.ok{color:#5cffb0}
@@ -108,7 +134,8 @@
   .mfill{height:100%;background:#ffd34d;border-radius:3px}
   .mrow.ok .mfill{background:#5cffb0}
   /* 부스터 */
-  #boostRow{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin-top:4px}
+  #boostRow{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;align-items:center;
+    width:min(92vw,352px);margin-top:11px}
   .bchip{background:#20263c;border:1px solid rgba(255,255,255,.14);border-radius:11px;padding:7px 12px;font-size:13px;font-weight:800;color:#8892b0;cursor:pointer}
   .bchip.on{background:#2a3a1e;border-color:#5cffb0;color:#5cffb0}
   .boostrow{display:flex;align-items:center;gap:10px;padding:11px 13px;margin:6px 0;border-radius:12px;background:rgba(255,255,255,.05);font-size:16px;font-weight:700;text-align:left}
@@ -234,8 +261,9 @@
 </div>
 
 <div id="start" style="justify-content:flex-start;overflow-y:auto;padding-top:calc(18px + env(safe-area-inset-top,0px));padding-bottom:28px">
-  <img src="img/number/ui/icon_512.png" alt="" width="72" height="72" style="flex-shrink:0;border-radius:18px;box-shadow:0 0 28px #7cf6ff20"/>
-  <h1 style="font-size:34px">멈춰라 숫자</h1>
+  <img id="startIcon" src="img/number/ui/icon_512.png" alt="" width="72" height="72"/>
+  <h1 id="startTitle">멈춰라 숫자</h1>
+  <div id="startTag">수열을 읽고 <b style="color:#7cf6ff">목표 숫자</b>에서 <b>탭</b>!</div>
   <div id="rankCard" role="button">
     <div id="rankHead">
       <span id="rankEmblemBox"></span>
@@ -247,19 +275,20 @@
     </div>
     <div id="rankMore">👑 랭크 7단계 전체 보기 ›</div>
   </div>
-  <div class="sub" style="font-size:14px">수열을 읽고 <b style="color:#7cf6ff">목표 숫자</b>에서 <b>탭</b>! · <b style="color:#ffd34d">최고 <span id="best2">0</span></b> · 💰 <b id="coins" style="color:#ffd34d">0</b></div>
+  <div id="statRow">
+    <div class="hstat"><div class="sl">🏆 최고 기록</div><div class="sv"><span id="best2">0</span></div></div>
+    <div class="hstat"><div class="sl">💰 보유 코인</div><div class="sv"><span id="coins">0</span></div></div>
+  </div>
   <button class="btn" id="startBtn">시작</button>
+  <button class="btn" id="dailyBtn">📅 일일 챌린지<span id="dailyBadge" class="hidden">NEW</span></button>
+  <div id="navRow">
+    <button class="btn" id="lbBtn">🏆 랭킹</button>
+    <button class="btn" id="shopBtn">🛒 상점</button>
+    <button class="btn" id="helpBtn">📖 방법</button>
+  </div>
   <div id="boostRow"></div>
-  <div style="display:flex;gap:8px;margin-top:10px">
-    <button class="btn" id="lbBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:10px 16px;font-size:15px">🏆 랭킹</button>
-    <button class="btn" id="shopBtn" style="background:#2a2109;box-shadow:0 6px 0 #141005;padding:10px 16px;font-size:15px">🛒 상점</button>
-    <button class="btn" id="helpBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:10px 16px;font-size:15px">📖 방법</button>
-  </div>
-  <div style="display:flex;margin-top:9px">
-    <button class="btn" id="dailyBtn" style="position:relative;background:#1b3a4a;box-shadow:0 6px 0 #0d2029;padding:12px 26px;font-size:16px;border:1px solid rgba(124,246,255,.45)">📅 일일 챌린지<span id="dailyBadge" class="hidden">NEW</span></button>
-  </div>
   <div id="dailyBox"></div>
-  <div id="changelog">🆕 <b id="clVer">v2.9</b> · <span id="clNote"><b>📅 일일 챌린지</b> 화면을 새로 다듬었어요 · 오늘의 최고 기록을 한눈에</span></div>
+  <div id="changelog">🆕 <b id="clVer">v3.0</b> · <span id="clNote"><b>홈 화면을 단정하게</b> 정리했어요 · 최고 기록과 코인을 한눈에</span></div>
 </div>
 
 <div id="help" class="hidden">
@@ -349,7 +378,7 @@
   <div id="shopList"></div>
   <button class="btn" id="shopClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v2.9 · 일일 챌린지 화면 리디자인</div>
+<div id="ver">v3.0 · 홈 화면 리디자인</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -755,8 +784,8 @@ function renderBoostRow(){
   const box=$('boostRow'); if(!box) return;
   const have=BOOSTS.filter(B=>(bst[B.id]||0)>0);
   if(!have.length){
-    box.innerHTML='<div class="bprev">'+BOOSTS.map(B=>art('boost_'+B.id,B.i,30)).join('')
-      +'</div><div class="sub" style="font-size:12px;opacity:.6;width:100%">⚡ 부스터 4종 · 상점에서 코인으로 구매</div>';
+    box.innerHTML='<div class="bprev" style="gap:7px">'+BOOSTS.map(B=>art('boost_'+B.id,B.i,26)).join('')
+      +'</div><div class="sub" style="font-size:11.5px;opacity:.55;width:100%;margin-top:3px">⚡ 부스터 4종 · 상점에서 코인으로 구매</div>';
     return; }
   box.innerHTML=have.map(B=>'<div class="bchip'+(eqb[B.id]?' on':'')+'" data-b="'+B.id+'">'+art('boost_'+B.id,B.i,20)+' '+B.n+' ×'+bst[B.id]+(eqb[B.id]?' ✓':'')+'</div>').join('');
   box.querySelectorAll('.bchip').forEach(c=>c.onclick=()=>{ const id=c.dataset.b; eqb[id]=!eqb[id]; saveBoost(); renderBoostRow(); if(!sfx('ui_tap')) tone(eqb[id]?760:420,0.06,'square',0.06); });
