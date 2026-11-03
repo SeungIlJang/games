@@ -87,7 +87,7 @@
   .stab{background:#1a2033;color:#8892b0;border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:8px 18px;font-size:15px;font-weight:800;cursor:pointer}
   .stab.on{background:#3a7bff;color:#fff;border-color:#7cf6ff}
   /* 기록 추격 */
-  #chase{position:fixed;top:calc(38px + env(safe-area-inset-top,0px));left:0;right:0;text-align:center;font-size:13px;font-weight:800;color:#ffd34d;z-index:3;min-height:16px;pointer-events:none}
+  #chase{position:fixed;top:calc(38px + env(safe-area-inset-top,0px));left:0;right:0;text-align:center;padding:0 56px;font-size:13px;font-weight:800;color:#ffd34d;z-index:3;min-height:16px;pointer-events:none}
   /* 체인 타겟 */
   #chainTag{font-size:17px;font-weight:900;color:#ffd34d;letter-spacing:1px;min-height:20px}
   #chainTag .done{color:#5cffb0}
@@ -131,7 +131,7 @@
     background-size:contain;background-repeat:no-repeat;background-position:center;margin:6px 0 0}
   #curWrap #cur{margin:0}
   #wrap.choice #targetWrap,#wrap.choice #curWrap{display:none}
-  #muteBtn{position:fixed;top:calc(46px + env(safe-area-inset-top,0px));right:12px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:17px;border-radius:50%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);z-index:14;cursor:pointer}
+  #muteBtn{position:fixed;top:calc(46px + env(safe-area-inset-top,0px));left:12px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:17px;border-radius:50%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);z-index:14;cursor:pointer}
   #muteBtn:active{background:rgba(255,255,255,.22)}
   #muteBtn.off{opacity:.45}
   /* 런 중 모디파이어 선택 */
@@ -146,24 +146,44 @@
   .modcard .mn{font-size:17.5px;font-weight:900}
   .modcard .md{font-size:12.5px;color:#9fb0cc;font-weight:700;margin-top:2px}
   .modcard .mlv{font-size:11px;color:#5a6684;font-weight:800}
-  #modBar{position:fixed;top:calc(62px + env(safe-area-inset-top,0px));left:0;right:0;text-align:center;
+  #modBar{position:fixed;top:calc(62px + env(safe-area-inset-top,0px));left:0;right:0;text-align:center;padding:0 56px;
     font-size:14px;z-index:3;pointer-events:none;min-height:18px;letter-spacing:2px}
   body.menu #modBar{visibility:hidden}
   /* 일일 챌린지 */
   #daily{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
-    background:rgba(8,10,22,.95);gap:8px;padding:24px;padding-top:calc(26px + env(safe-area-inset-top,0px));z-index:12;overflow-y:auto}
-  #dailyX{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:16px;width:42px;height:42px;display:flex;
-    align-items:center;justify-content:center;font-size:24px;font-weight:900;color:#cfe;background:rgba(255,255,255,.08);
+    background:linear-gradient(180deg,#0c1427 0%,#080b17 55%,#05070f 100%);
+    padding:0 20px calc(22px + env(safe-area-inset-bottom,0px));
+    padding-top:calc(16px + env(safe-area-inset-top,0px));z-index:12;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  #daily::before{content:'';position:absolute;inset:0;background:url(img/number/play/play_bg_normal.png) center/cover;
+    opacity:.3;pointer-events:none}
+  #daily>*{position:relative;z-index:1;flex:0 0 auto}
+  #dailyX{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:16px;width:40px;height:40px;display:flex;
+    align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#cfe;background:rgba(255,255,255,.08);
     border:1px solid rgba(255,255,255,.18);border-radius:50%;cursor:pointer;z-index:13}
-  #dailyCard{width:min(92vw,340px);background:rgba(124,246,255,.08);border:1px solid rgba(124,246,255,.3);
-    border-radius:16px;padding:14px 16px;margin:4px 0}
-  #dailyCard .dk{font-size:13px;color:#7cf6ff;font-weight:800}
-  #dailyCard .dv{font-size:30px;font-weight:900;margin:3px 0}
-  .dtry{display:inline-block;width:11px;height:11px;border-radius:50%;margin:0 3px;background:rgba(255,255,255,.18)}
-  .dtry.used{background:#7cf6ff}
-  #dailyLog{width:min(92vw,340px);margin-top:4px}
-  #dailyLbList{width:min(92vw,340px);margin:4px 0 2px;max-height:34vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
-  #dailyTabs{display:flex;gap:7px;margin:8px 0 2px}
+  #dailyX:active{background:rgba(255,255,255,.2)}
+  #dailyHead{display:flex;flex-direction:column;align-items:center;gap:7px;margin-bottom:14px}
+  #dailyHead h1{font-size:26px;margin:0}
+  #dailyDateChip{font-size:11.5px;font-weight:900;color:#06121a;background:#7cf6ff;border-radius:999px;padding:3px 12px;letter-spacing:.3px}
+  #dailyCard{width:min(92vw,352px);background:linear-gradient(160deg,rgba(124,246,255,.15),rgba(124,246,255,.035));
+    border:1px solid rgba(124,246,255,.34);border-radius:20px;padding:17px 18px 14px;text-align:center;
+    box-shadow:0 12px 34px rgba(0,0,0,.4)}
+  .dk{font-size:11.5px;color:#8fa8c4;font-weight:800;letter-spacing:.5px}
+  #dailyBest{font-size:40px;font-weight:900;line-height:1.05;margin:7px 0 1px;text-shadow:0 0 24px rgba(255,211,77,.3)}
+  #dailySub{font-size:13px;color:#9fb0cc;font-weight:700;min-height:18px}
+  #dailyTriesRow{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:13px;
+    padding-top:12px;border-top:1px solid rgba(255,255,255,.1)}
+  .dtry{display:inline-block;width:13px;height:13px;border-radius:50%;background:transparent;border:2px solid rgba(255,255,255,.24)}
+  .dtry.used{background:#7cf6ff;border-color:#7cf6ff;box-shadow:0 0 9px rgba(124,246,255,.65)}
+  #dailyStart{width:min(92vw,352px);margin-top:15px;padding:16px;font-size:19px}
+  #dailyTabs{display:flex;width:min(92vw,352px);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+    border-radius:14px;padding:4px;margin-top:17px;gap:4px}
+  #dailyTabs .stab{flex:1;border:none;background:transparent;border-radius:10px;padding:9px 0;font-size:13.5px}
+  #dailyTabs .stab.on{background:#3a7bff;color:#fff;border-color:transparent}
+  #dailyLbList,#dailyLog{width:min(92vw,352px);margin-top:9px;min-height:128px;max-height:32vh;
+    overflow-y:auto;-webkit-overflow-scrolling:touch}
+  #dailyShare{margin-top:15px;background:transparent;box-shadow:none;border:1px solid rgba(255,255,255,.22);
+    color:#cfe;padding:10px 22px;font-size:14px}
+  #dailyShare:active{background:rgba(255,255,255,.1);transform:none}
   .dlog{display:flex;justify-content:space-between;padding:7px 12px;margin:4px 0;border-radius:10px;
     background:rgba(255,255,255,.05);font-size:14px;font-weight:700}
   #dailyBadge{position:absolute;top:-7px;right:-7px;background:#ff5a6e;color:#fff;font-size:10px;font-weight:900;
@@ -239,7 +259,7 @@
     <button class="btn" id="dailyBtn" style="position:relative;background:#1b3a4a;box-shadow:0 6px 0 #0d2029;padding:12px 26px;font-size:16px;border:1px solid rgba(124,246,255,.45)">📅 일일 챌린지<span id="dailyBadge" class="hidden">NEW</span></button>
   </div>
   <div id="dailyBox"></div>
-  <div id="changelog">🆕 <b id="clVer">v2.8</b> · <span id="clNote"><b>📅 일일 챌린지</b>에 <b>🌍 오늘의 랭킹</b> 추가 — 같은 수열로 전세계와 겨뤄요</span></div>
+  <div id="changelog">🆕 <b id="clVer">v2.9</b> · <span id="clNote"><b>📅 일일 챌린지</b> 화면을 새로 다듬었어요 · 오늘의 최고 기록을 한눈에</span></div>
 </div>
 
 <div id="help" class="hidden">
@@ -285,22 +305,25 @@
 
 <div id="daily" class="hidden">
   <div id="dailyX" role="button" aria-label="닫기">✕</div>
-  <h1 style="font-size:30px">📅 일일 챌린지</h1>
-  <div class="sub" style="font-size:13.5px">오늘은 <b style="color:#7cf6ff">모두가 똑같은 순서</b>의 라운드를 받아요<br/>부스터 없이, 실력만으로</div>
+  <div id="dailyHead">
+    <h1>📅 일일 챌린지</h1>
+    <span id="dailyDateChip">–</span>
+    <div class="sub" style="font-size:12.5px;line-height:1.55;margin-top:2px">오늘은 <b style="color:#7cf6ff">모두 똑같은 순서</b>의 라운드 · 부스터 없이</div>
+  </div>
   <div id="dailyCard">
-    <div class="dk" id="dailyDate">–</div>
-    <div class="dv" id="dailyBest">–</div>
-    <div class="dk" id="dailyTries" style="color:#8892b0;font-weight:700">남은 도전 –</div>
+    <div class="dk">오늘의 최고 기록</div>
+    <div id="dailyBest">–</div>
+    <div id="dailySub"></div>
+    <div id="dailyTriesRow"></div>
   </div>
   <button class="btn" id="dailyStart">도전!</button>
-  <button class="btn" id="dailyShare" style="margin-top:6px;background:#20263c;box-shadow:0 6px 0 #10131f;padding:11px 22px;font-size:15px">🏆 결과 공유</button>
   <div id="dailyTabs">
     <button class="stab on" id="dtabRank">🌍 오늘의 랭킹</button>
     <button class="stab" id="dtabLog">📝 내 기록</button>
   </div>
   <div id="dailyLbList"></div>
   <div id="dailyLog" class="hidden"></div>
-  <button class="btn" id="dailyClose" style="margin-top:4px;background:#20263c;box-shadow:0 6px 0 #10131f">닫기</button>
+  <button class="btn" id="dailyShare">🏆 결과 공유</button>
 </div>
 
 <div id="draft" class="hidden">
@@ -326,7 +349,7 @@
   <div id="shopList"></div>
   <button class="btn" id="shopClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v2.8 · 일일 챌린지 글로벌 랭킹</div>
+<div id="ver">v2.9 · 일일 챌린지 화면 리디자인</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -971,16 +994,20 @@ function renderDailyBadge(){
 }
 function openDaily(){
   const d=loadDaily2(); const left=Math.max(0,DAILY_TRIES-d.tries);
-  $('dailyDate').textContent=d.d+' 오늘의 수열';
-  $('dailyBest').innerHTML = d.best ? ('<b style="color:#ffd34d">'+d.best.toLocaleString()+'</b>점 <span style="font-size:14px;color:#8892b0">· '+d.hits+'연속</span>') : '<span style="color:#5a6684">아직 기록 없음</span>';
+  $('dailyDateChip').textContent=d.d;
+  $('dailyBest').innerHTML = d.best
+    ? ('<span style="color:#ffd34d">'+d.best.toLocaleString()+'</span><span style="font-size:19px;color:#8892b0;font-weight:800">점</span>')
+    : '<span style="font-size:25px;color:#5a6684">아직 기록 없음</span>';
+  $('dailySub').textContent = d.best ? (d.hits+'연속 달성') : '세 번의 기회가 있어요';
   let dots=''; for(let i=0;i<DAILY_TRIES;i++) dots+='<span class="dtry'+(i<d.tries?' used':'')+'"></span>';
-  $('dailyTries').innerHTML='남은 도전 <b style="color:'+(left?'#7cf6ff':'#ff5a6e')+'">'+left+'</b>/'+DAILY_TRIES+' '+dots;
+  $('dailyTriesRow').innerHTML='<span class="dk">남은 도전</span>'+dots
+    +'<span class="dk" style="color:'+(left?'#7cf6ff':'#ff5a6e')+'">'+left+'/'+DAILY_TRIES+'</span>';
   const sb=$('dailyStart'); sb.disabled=!left; sb.style.opacity=left?1:.45; sb.textContent=left?'도전!':'내일 다시 만나요';
   $('dailyShare').style.display = d.best?'block':'none';
   const bestS=d.best;
   $('dailyLog').innerHTML = (d.log||[]).map((r,i)=>
     '<div class="dlog"><span>'+(i+1)+'번째 도전'+(r.s===bestS?' <span style="color:#ffd34d">★</span>':'')+'</span><b style="color:#7cf6ff">'+r.s.toLocaleString()+'점 · '+r.h+'연속</b></div>').join('')
-    || '<div class="sub" style="font-size:12px;opacity:.5;text-align:center">아직 없어요</div>';
+    || '<div class="sub" style="font-size:12.5px;opacity:.5;text-align:center;padding:46px 12px">아직 도전 기록이 없어요</div>';
   $('daily').classList.remove('hidden');
   dailyTab('rank');
 }
@@ -1032,11 +1059,11 @@ async function dailyTop(day){
 async function renderDailyLb(){
   const box=$('dailyLbList'); if(!box) return;
   const d=loadDaily2();
-  if(!fbReady){ box.innerHTML='<div class="sub" style="font-size:12.5px;opacity:.6;padding:14px">오프라인이에요 · 내 기록만 저장돼요</div>'; return; }
-  box.innerHTML='<div class="sub" style="font-size:12.5px;opacity:.6;padding:14px">🌍 오늘의 순위 불러오는 중…</div>';
+  if(!fbReady){ box.innerHTML='<div class="sub" style="font-size:12.5px;opacity:.55;padding:44px 12px;text-align:center;line-height:1.7">오프라인이에요 📡<br/><span style="opacity:.8">내 기록은 저장되고 있어요</span></div>'; return; }
+  box.innerHTML='<div class="sub" style="font-size:12.5px;opacity:.55;padding:48px 12px;text-align:center">🌍 오늘의 순위 불러오는 중…</div>';
   const rows=await dailyTop(d.d);
-  if(!rows){ box.innerHTML='<div class="sub" style="font-size:12.5px;opacity:.6;padding:12px">아직 글로벌 일일 랭킹이 열리지 않았어요.<br/>내 기록은 안전하게 저장되고 있어요 📝</div>'; return; }
-  if(!rows.length){ box.innerHTML='<div class="sub" style="font-size:12.5px;opacity:.6;padding:14px">오늘 첫 기록의 주인공이 되어보세요! 🎯</div>'; return; }
+  if(!rows){ box.innerHTML='<div class="sub" style="font-size:12.5px;opacity:.55;padding:40px 12px;text-align:center;line-height:1.7">아직 글로벌 일일 랭킹이<br/>열리지 않았어요 📝<br/><span style="opacity:.8">내 기록은 안전하게 저장되고 있어요</span></div>'; return; }
+  if(!rows.length){ box.innerHTML='<div class="sub" style="font-size:12.5px;opacity:.6;padding:44px 12px;text-align:center;line-height:1.7">오늘 첫 기록의<br/>주인공이 되어보세요! 🎯</div>'; return; }
   const me=dailyUid();
   box.innerHTML=rows.slice(0,30).map((r,i)=>{ const mine=r.id===me;
     const medal=['🥇','🥈','🥉'][i]||('<span style="opacity:.5;display:inline-block;width:1.4em">'+(i+1)+'</span>');
@@ -1228,7 +1255,6 @@ $('lbX').onclick=()=>hideLB();
 $('shopBtn').onclick=()=>openShop();
 $('rankCard').onclick=()=>{ sfx('ui_tap'); openRanks(); };
 $('dailyBtn').onclick=()=>openDaily();
-$('dailyClose').onclick=()=>closeDaily();
 $('dailyX').onclick=()=>closeDaily();
 $('dailyStart').onclick=()=>startDaily();
 $('dailyShare').onclick=()=>shareDaily();
