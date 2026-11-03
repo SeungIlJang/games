@@ -103,7 +103,7 @@
   <button id="dexClose">닫기</button>
 </div>
 <div id="adov" class="hidden"><div class="sp"></div><div id="adovTxt">광고 보는 중…</div></div>
-<div id="ver">모두의 딱지치기 v1.2 · 🔊음소거 · 실광고(배너·전면·리워드) · AD_ID/minSdk24</div>
+<div id="ver">모두의 딱지치기 v1.3 · 딱지 아트 12종 적용 · 하단 UI 3단 · 실광고(배너·전면·리워드)</div>
 <div id="start">
   <h1 style="font-size:38px">모두의 딱지치기</h1>
   <p><b>초록 구간</b>(매번 위치가 바뀜!)에 파워바가 올 때 <b>탭</b>해서 내리쳐요.<br/>너무 약해도·너무 세도 실패 — <b>딱 맞춰야</b> 90° 넘겨 뒤집어요! 중앙 노랑=완벽타 🎯<br/>스테이지 올라갈수록 <b>초록은 좁아지고 파워바는 빨라져요</b> 🟫<br/><span id="bstage" style="color:#ffcf5c;font-weight:800"></span></p>
@@ -234,6 +234,15 @@ const DDAKJI=[
 const RINFO={ c:{label:'',       stars:'',    mult:1, color:'#cdbfa6'},
              r:{label:'✨ 레어',  stars:'★★',  mult:2, color:'#7cf6ff'},
              e:{label:'👑 전설',  stars:'★★★', mult:3, color:'#ffcf5c'} };
+// ---- 딱지 스프라이트 (assets/ddakji/<id>.png, 512x512 투명 PNG) ----
+// 상대경로를 쓰는 이유: 앱은 이 HTML 을 document.write 로 올리므로, 같은 파일을
+// share-ddakji/www/assets/ddakji/ 에도 번들해 두면 웹·앱 양쪽에서 같은 경로가 풀린다.
+// 로드 실패 시 drawDdakji 가 기존 도형 드로잉으로 자동 폴백한다 — 에셋 0개로도 돌아간다.
+const SPR={};
+DDAKJI.forEach(d=>{ const im=new Image();
+  im.onload=()=>{ if(im.naturalWidth) SPR[d.id]=im; };
+  im.src='assets/ddakji/'+d.id+'.png';
+});
 let foe=DDAKJI[0];                   // 이번 라운드 상대 딱지
 let owned={};                        // 도감: id→획득수
 try{ owned=JSON.parse(localStorage.getItem('ddakji_dex')||'{}')||{}; }catch(e){}
@@ -247,6 +256,7 @@ let lastGain=0, rewardUsed=false, lastSuccess=false, easyNext=false, foeGlow=0;
 // ---- 대결모드(PvE 듀얼) ----
 let duel={on:false, bet:0, pWins:0, oWins:0, attacker:'P', pDak:null, oDak:null, oppName:'', oppSkill:0.5, round:1};
 let attackerCols=['#d8b27a','#9a7638'];   // slam 시 내려치는 딱지 색(공격자)
+let attackerId=null;                      // 공격자 스프라이트 id (솔로 기본 딱지는 아직 에셋 없음 → null)
 let aiAimT=0, duelAfter=null, setupBet=30;
 
 // ---- 엽전 & 딱지 강화(영구 성장) ----
@@ -362,7 +372,12 @@ function doReward(){ if(rewardUsed||state!=='result') return; rewardUsed=true; $
 function renderDex(){ const g=$('dexGrid'); g.innerHTML=''; let got=0;
   DDAKJI.forEach(d=>{ const n=owned[d.id]||0; if(n>0) got++; const ri=RINFO[d.rarity];
     const el=document.createElement('div'); el.className='dcard'+(n>0?'':' lk');
-    const sw=n>0? `<svg width="56" height="40" viewBox="0 0 56 40"><defs><linearGradient id="g_${d.id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${d.cols[0]}"/><stop offset="1" stop-color="${d.cols[1]}"/></linearGradient></defs><rect x="5" y="4" width="46" height="32" rx="5" fill="url(#g_${d.id})"/><line x1="5" y1="20" x2="51" y2="20" stroke="#ffffff66" stroke-width="2"/><line x1="28" y1="4" x2="28" y2="36" stroke="#ffffff66" stroke-width="2"/></svg>` : '<div style="font-size:30px;color:#4a3a28;height:40px;line-height:40px">❔</div>';
+    // 스프라이트가 로드됐으면 실제 딱지 그림, 아니면 기존 SVG 스와치로 폴백
+    const sw = n>0
+      ? (SPR[d.id]
+          ? `<img src="assets/ddakji/${d.id}.png" width="44" height="44" alt="" style="display:block;margin:0 auto">`
+          : `<svg width="56" height="40" viewBox="0 0 56 40"><defs><linearGradient id="g_${d.id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${d.cols[0]}"/><stop offset="1" stop-color="${d.cols[1]}"/></linearGradient></defs><rect x="5" y="4" width="46" height="32" rx="5" fill="url(#g_${d.id})"/><line x1="5" y1="20" x2="51" y2="20" stroke="#ffffff66" stroke-width="2"/><line x1="28" y1="4" x2="28" y2="36" stroke="#ffffff66" stroke-width="2"/></svg>`)
+      : '<div style="font-size:30px;color:#4a3a28;height:44px;line-height:44px">❔</div>';
     el.innerHTML=sw+'<div class="nm" style="color:'+(n>0?ri.color:'#6a5842')+'">'+(n>0?d.name:'???')+'</div><div class="cnt">'+(n>0?('x'+n+(ri.stars?' '+ri.stars:'')):(ri.label||'일반'))+'</div>';
     g.appendChild(el);
   });
@@ -423,7 +438,24 @@ function update(dt){
 // ---- Render ----
 function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
 
-function drawDdakji(cx,cy,size,th,cols,flippedFaceUp){
+// 뒷면: 무늬 없는 종이 뒷장. 앞면과 같은 바람개비 이음선을 좌우 반전해 희미하게만.
+function drawBackFace(cx,y,w,h,cols){
+  roundRect(cx-w/2,y-h/2,w,Math.max(3,h),Math.min(10,h/2));
+  ctx.fillStyle=cols[1]; ctx.fill();
+  if(h>8){ ctx.save();
+    roundRect(cx-w/2,y-h/2,w,h,Math.min(10,h/2)); ctx.clip();
+    const sx=w/482, sy=h/482;
+    ctx.strokeStyle='rgba(0,0,0,.20)'; ctx.lineWidth=2;
+    [[316,15],[497,316],[196,497],[15,196]].forEach(([px,py])=>{
+      ctx.beginPath(); ctx.moveTo(cx,y);
+      ctx.lineTo(cx-(px-256)*sx, y+(py-256)*sy);   // 뒤집힌 면이므로 좌우 반전
+      ctx.stroke();
+    });
+    ctx.restore();
+  }
+}
+
+function drawDdakji(cx,cy,size,th,cols,sprId){
   // th: 0=평평(윗면), PI=완전히 뒤집힘(아랫면). 세로 스케일=|cos|, 들림 높이=sin
   const sc=Math.abs(Math.cos(th));
   const lift=Math.sin(th)*size*0.5;
@@ -431,13 +463,23 @@ function drawDdakji(cx,cy,size,th,cols,flippedFaceUp){
   const c = faceUp?cols:[cols[1],cols[0]];
   const h=size*sc;
   const y=cy-lift;
+  const w=size*1.08;
   ctx.save();
   // 그림자 (들릴수록 작고 흐려짐)
   ctx.globalAlpha=0.3*(1-Math.sin(th)*0.6); ctx.fillStyle='#000';
   ctx.beginPath(); ctx.ellipse(cx,cy+size*0.52,size*0.56*(1-sc*0.2),size*0.14,0,0,Math.PI*2); ctx.fill();
   ctx.globalAlpha=1;
-  // 접힌 종이 딱지 몸통(정사각 느낌, 세로눌림)
-  const w=size*1.08;
+
+  const img = sprId ? SPR[sprId] : null;
+  if(img){
+    // 스프라이트 경로. 90° 에서 h≈0 이라 앞/뒤 전환이 눈에 띄지 않는다.
+    if(faceUp) ctx.drawImage(img, cx-w/2, y-Math.max(3,h)/2, w, Math.max(3,h));
+    else       drawBackFace(cx,y,w,h,cols);
+    ctx.restore();
+    return;
+  }
+
+  // ---- 폴백: 에셋이 없을 때의 기존 도형 드로잉 ----
   const grad=ctx.createLinearGradient(cx-w/2,y-h/2,cx+w/2,y+h/2); grad.addColorStop(0,c[0]); grad.addColorStop(1,c[1]);
   ctx.fillStyle=grad; roundRect(cx-w/2,y-h/2,w,Math.max(3,h),Math.min(10,h/2)); ctx.fill();
   // 대각선 접힘 무늬
@@ -479,11 +521,11 @@ function render(){
     ctx.beginPath(); ctx.arc(CX,CY-Math.sin(theta)*SZ*0.5,SZ*(1.05+pulse*0.12),0,Math.PI*2); ctx.fill(); ctx.restore(); }
 
   // 상대 딱지
-  drawDdakji(CX,CY,SZ,theta,foe.cols);
+  drawDdakji(CX,CY,SZ,theta,foe.cols,foe.id);
 
   // 내리치는 공격자 딱지 (slam)
   if(state==='slam'){
-    drawDdakji(CX,CY+dropY,SZ*0.92,0,attackerCols);
+    drawDdakji(CX,CY+dropY,SZ*0.92,0,attackerCols,attackerId);
   }
 
   // 먼지/파편
@@ -603,7 +645,8 @@ function startDuel(){ if(setupBet>coins) return; duel.on=true; duel.bet=setupBet
   setTop(); beginDuelTurn(); lastTs=performance.now();
 }
 function beginDuelTurn(){ duelAfter=null;
-  if(duel.attacker==='P'){ foe=duel.oDak; attackerCols=duel.pDak.cols; } else { foe=duel.pDak; attackerCols=duel.oDak.cols; }
+  if(duel.attacker==='P'){ foe=duel.oDak; attackerCols=duel.pDak.cols; attackerId=duel.pDak.id; }
+  else { foe=duel.pDak; attackerCols=duel.oDak.cols; attackerId=duel.oDak.id; }
   theta=0; omega=0; maxTheta=0; power=0; pdir=1; teetering=false; dropY=0; applyDifficulty();
   foeGlow=foe.rarity==='c'?0:1; $('foeLabel').innerHTML=''; clearMsg(); updateDuelHud();
   if(duel.attacker==='P'){ state='ready'; $('hint').classList.remove('hidden'); }
