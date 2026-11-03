@@ -85,7 +85,7 @@
 <div class="ui" id="foeLabel"></div>
 <div class="ui" id="msg"></div>
 <div class="ui" id="sub"></div>
-<div class="ui hidden" id="hint">화면을 탭해서 내리쳐요!</div>
+<div class="ui hidden" id="hint">① 끌어서 들어올리고 → ② 아래로 쓸어내려요!</div>
 <div id="coinHud" class="hidden"></div>
 <button id="dexBtn" class="hidden">📖 도감</button>
 <button id="shopBtnP" class="hidden">🔨 강화</button>
@@ -103,10 +103,10 @@
   <button id="dexClose">닫기</button>
 </div>
 <div id="adov" class="hidden"><div class="sp"></div><div id="adovTxt">광고 보는 중…</div></div>
-<div id="ver">모두의 딱지치기 v1.3 · 딱지 아트 12종 적용 · 하단 UI 3단 · 실광고(배너·전면·리워드)</div>
+<div id="ver">모두의 딱지치기 v1.8 · ①끌어서 위치 ②쓸어내려 힘 · 아트 전체 · 타격감</div>
 <div id="start">
   <h1 style="font-size:38px">모두의 딱지치기</h1>
-  <p><b>초록 구간</b>(매번 위치가 바뀜!)에 파워바가 올 때 <b>탭</b>해서 내리쳐요.<br/>너무 약해도·너무 세도 실패 — <b>딱 맞춰야</b> 90° 넘겨 뒤집어요! 중앙 노랑=완벽타 🎯<br/>스테이지 올라갈수록 <b>초록은 좁아지고 파워바는 빨라져요</b> 🟫<br/><span id="bstage" style="color:#ffcf5c;font-weight:800"></span></p>
+  <p><b>①</b> 손가락을 <b>끌어서</b> 딱지를 들어올려요. 높이가 낼 수 있는 <b>힘의 한계</b>, 좌우가 <b>조준</b>이에요.<br/><b>②</b> <b>아래로 쓸어내려</b> 내리쳐요 — 쓸어내린 <b>속도가 곧 힘</b>이에요.<br/>넘기는 건 충격이 아니라 <b>밀려난 바람</b> — 높이 들고 <b>평평하게</b> 쳐야 들어가요 🌬️<br/><span style="color:#9a815f">스테이지 4에서 <b>평평도</b>, 9에서 <b>조준</b>이 열려요</span><br/><span id="bstage" style="color:#ffcf5c;font-weight:800"></span></p>
   <button class="btn" id="startBtn">시작</button>
   <button class="btn" id="duelBtn" style="background:#e85c5c;box-shadow:0 6px 0 #a33;font-size:19px;padding:13px 40px">⚔️ 딱지 대결</button>
   <div style="display:flex;gap:10px">
@@ -193,27 +193,54 @@ function renderMute(){ const b=$('muteBtn'); if(b) b.textContent=muted?'🔇':'�
 function initAudio(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC&&AC.state==='suspended') AC.resume(); }
 function tone(f,d,type,g,slide){ if(muted||!AC) return; const o=AC.createOscillator(),v=AC.createGain(); o.type=type||'sine'; o.frequency.value=f; if(slide) o.frequency.exponentialRampToValueAtTime(Math.max(1,slide),AC.currentTime+d); v.gain.value=g||0.15; v.gain.exponentialRampToValueAtTime(0.0001,AC.currentTime+d); o.connect(v); v.connect(AC.destination); o.start(); o.stop(AC.currentTime+d); }
 function noise(d,g){ if(muted||!AC) return; const n=Math.floor(AC.sampleRate*d), buf=AC.createBuffer(1,n,AC.sampleRate), dt=buf.getChannelData(0); for(let i=0;i<n;i++) dt[i]=(Math.random()*2-1)*(1-i/n); const s=AC.createBufferSource(); s.buffer=buf; const v=AC.createGain(); v.gain.value=g||0.3; s.connect(v); v.connect(AC.destination); s.start(); }
-const sfx={ slam(){ noise(0.18,0.5); tone(90,0.18,'square',0.25,40); }, whoosh(){ tone(300,0.25,'sine',0.08,700); }, teeter(){ tone(520,0.07,'sine',0.08); }, win(){ [523,659,784,1046].forEach((f,i)=>setTimeout(()=>tone(f,0.16,'triangle',0.18),i*80)); }, fail(){ tone(180,0.3,'sawtooth',0.18,70); noise(0.2,0.25); }, vib(ms){ if(muted)return; try{navigator.vibrate&&navigator.vibrate(ms);}catch(e){} } };
+const sfx={ slam(h){ const k=h==null?1:h; noise(0.14+0.08*k,0.38+0.3*k); tone(104-24*k,0.16+0.08*k,'square',0.18+0.16*k,38); }, lift(f){ tone(420+(f||0.5)*260,0.07,'triangle',0.09); }, whoosh(f){ const p=0.6+(f||0.5)*0.9; tone(240*p,0.18+0.12*p,'sine',0.07+0.05*p,760*p); }, teeter(){ tone(520,0.07,'sine',0.08); }, win(){ [523,659,784,1046].forEach((f,i)=>setTimeout(()=>tone(f,0.16,'triangle',0.18),i*80)); }, fail(){ tone(180,0.3,'sawtooth',0.18,70); noise(0.2,0.25); }, vib(ms){ if(muted)return; try{navigator.vibrate&&navigator.vibrate(ms);}catch(e){} } };
 
 // ---- State ----
 let state='start'; // start | ready | slam | flip | result
 let score=0, combo=0, won=0, best=0, stage=1, bestStage=1;
 try{ best=parseInt(localStorage.getItem('ddakji_best')||'0')||0; bestStage=parseInt(localStorage.getItem('ddakji_bstage')||'1')||1; }catch(e){}
-let power=0, pdir=1;                 // 파워 바 (0..1 핑퐁)
-let GREEN=[0.70,0.92];              // 성공 구간(초록). 스테이지별로 좁아지고 위로. 아래 0.5~0.69는 '아깝다' 니어미스
-let barSpeed=1.35;                  // 파워바 속도(스테이지↑ = 빨라짐)
+// ---- 입력 3축: 힘(들어올린 높이) · 평평도(떼는 순간 기울기) · 조준(때리는 위치) ----
+// 실제 딱지는 충격이 아니라 '밀려난 공기'가 상대 딱지 밑으로 파고들어 넘긴다.
+// 그래서 평평하게(A) · 충분히 세게(F) · 옆의 알맞은 거리(D)를 쳐야 한다.
+const T_FULL=0.80;        // 이 시간까지 누르면 힘 최대. 더 누르면 힘은 그대로이고 흔들림만 커짐
+const T_COMFORT=0.45;     // 이 시간 넘기면 손이 떨리기 시작
+const TREM_RATE=0.55;     // 초당 떨림 증가
+const TREM_FREQ=7.5;      // 떨림 주파수(rad/s)
+const TILT_MAX=0.42;      // 이 각도(rad)만큼 기울면 평평도 0
+let chargeT=0, aloftT=0, overHold=0, aimX=0, holding=false;
+let liftR=0, placeY=0, swing=0;      // 들어올린 높이비율 · 손가락 Y · 스와이프 세기
+const SWIPE_VMAX=2400;               // 이 속도(px/s)면 최대 힘
+const FORCE_FLOOR=0.40;              // 바닥에서 쳐도 낼 수 있는 힘의 상한
+let F=0, A=1, Dg=1, Pw=0, reqP=0.66;      // 마지막 타격의 각 축 값 (피드백용)
+let tilt=0, tremAmp=0, tremPhase=0;   // 떨림 위상은 매 라운드 랜덤 — 고정이면 같은 시각에 평평해져 머슬메모리로 뚫린다
+let OMEGA_MAX=6.4, tremBase=0.05, Dstar=60, sigmaD=52;
+
+// 스테이지 4부터 평평도, 9부터 조준이 열린다. 한꺼번에 주면 캐주얼 유저가 떨어진다.
+function axAngle(){ return stage>=4; }
+function axAim(){ return stage>=9; }
+
 function applyDifficulty(){ const s=stage;
-  barSpeed=Math.min(3.9, 1.6 + (s-1)*0.17) * (1 - up.barslow*0.08);  // 스테이지↑ 빠르게(난이도 상향) · 집중력 강화로 감속
-  Gcur=Math.min(14.5, 9 + (s-1)*0.5);                  // 딱지 점점 무겁게(상향) → 뒤집기 임계 힘 상승
-  // 성공 밴드(초록): 스테이지↑ 좁아짐, 힘·정확도 강화로 넓어짐 + 매 라운드 랜덤 위치(오른쪽 끝 고정 제거)
-  const w=Math.max(0.09, 0.20 - (s-1)*0.012 + up.power*0.015 + up.aim*0.018);
-  const lo=w/2+0.08, hi=1-w/2-0.05, c=lo+Math.random()*Math.max(0,(hi-lo));
-  GREEN=[c-w/2, c+w/2];
+  Gcur=Math.min(18, 9 + (s-1)*0.42);                 // 딱지 무게 = 뒤집기 임계. 22스테이지까지 계속 오름
+  OMEGA_MAX=6.4 + up.power*0.22;                      // 💪힘: 낼 수 있는 최대 타격 → 필요 힘이 낮아짐
+  tremBase=Math.max(0.02, 0.05 + Math.max(0,s-4)*0.006 - up.barslow*0.012);  // 🐢집중력: 떨림 억제
+  sigmaD=Math.max(16, 52 - Math.max(0,s-9)*1.8 + up.aim*8);                   // 🎯정확도: 조준 허용 폭
+  Dstar=Math.min(W*0.26,120)*0.62;    // 최적 간격 — 바로 위(0)가 아니라 '딱지 옆'
 }
+const LIFT_MAX=230;                   // 최대로 들어올렸을 때 높이(px)
+const DROP_T=0.15;                    // 내리꽂히는 시간. 짧고 가속할수록 '쿵' 한다
+let dropFrom=LIFT_MAX, freeze=0, waves=[], squash=0, foeJolt=0, burst=null;
+// 바닥(치는 자리) 세로 위치 — 하단 게이지 바로 위까지 내린다
+function groundCY(){
+  const gaugeY=Math.max(H*0.56, H-BAR_BOTTOM), SZ=Math.min(W*0.26,120);
+  return Math.min(H*0.58, gaugeY - SZ*1.55);
+}
+// 뒤집는 데 필요한 타격량. P >= reqP 면 성공.
+function requiredP(){ return Math.sqrt(2*Gcur)/OMEGA_MAX; }
 let theta=0, omega=0, maxTheta=0;   // 뒤집기 물리(라디안, 0=평평, PI=뒤집힘)
 let Gcur=9.0;                       // 중력 토크(=딱지 무게). 스테이지↑ = 무거워짐 = 더 센 힘 필요
 let slamT=0, resultT=0, shake=0, flash=0, gt=0;
-let lastPower=0, perfectHit=false, teetering=false, teetDeg=0;
+const PHYS_DT=1/600; let physAcc=0;   // 고정 물리 스텝 (주사율 무관 결정성)
+let perfectHit=false, teetering=false, teetDeg=0, unlockMsg='';
 let parts=[];                       // 먼지/파편
 let dropY=0;                        // 내리치는 딱지 낙하
 // ---- 딱지 도감(레어도) ----
@@ -243,6 +270,15 @@ DDAKJI.forEach(d=>{ const im=new Image();
   im.onload=()=>{ if(im.naturalWidth) SPR[d.id]=im; };
   im.src='assets/ddakji/'+d.id+'.png';
 });
+// 딱지 외 에셋: 내 딱지(kraft) · 공용 뒷면(back) · 배경 · 타격 FX
+const EXTRA={};
+['kraft','back','bg-yard','fx-dust','fx-burst'].forEach(k=>{ const im=new Image();
+  im.onload=()=>{ if(im.naturalWidth){ EXTRA[k]=im; if(k==='kraft') SPR.kraft=im; } };
+  im.src='assets/ddakji/'+k+'.png';
+});
+// 배경 이미지에서 '닳은 자리'(밝은 원) 중심의 세로 비율. 실측값.
+// 플레이 영역을 아래로 내렸으므로 이 점이 딱지 자리에 오도록 맞춰 그린다.
+const BG_FOCUS=0.404;
 let foe=DDAKJI[0];                   // 이번 라운드 상대 딱지
 let owned={};                        // 도감: id→획득수
 try{ owned=JSON.parse(localStorage.getItem('ddakji_dex')||'{}')||{}; }catch(e){}
@@ -256,21 +292,19 @@ let lastGain=0, rewardUsed=false, lastSuccess=false, easyNext=false, foeGlow=0;
 // ---- 대결모드(PvE 듀얼) ----
 let duel={on:false, bet:0, pWins:0, oWins:0, attacker:'P', pDak:null, oDak:null, oppName:'', oppSkill:0.5, round:1};
 let attackerCols=['#d8b27a','#9a7638'];   // slam 시 내려치는 딱지 색(공격자)
-let attackerId=null;                      // 공격자 스프라이트 id (솔로 기본 딱지는 아직 에셋 없음 → null)
-let aiAimT=0, duelAfter=null, setupBet=30;
+let attackerId='kraft';                   // 공격자 스프라이트 id. 솔로 기본은 '내 딱지'(kraft)
+let aiAimT=0, aiHold=0.9, duelAfter=null, setupBet=30;
 
 // ---- 엽전 & 딱지 강화(영구 성장) ----
 let coins=0, up={power:0,aim:0,barslow:0,coin:0};
 try{ coins=parseInt(localStorage.getItem('ddakji_coins')||'0')||0; up=Object.assign(up,JSON.parse(localStorage.getItem('ddakji_up')||'{}')); }catch(e){}
 function saveCoins(){ try{ localStorage.setItem('ddakji_coins',coins); localStorage.setItem('ddakji_up',JSON.stringify(up)); }catch(e){} }
 const UPG=[
-  {id:'power',  name:'💪 내려치는 힘', desc:'뒤집기에 필요한 힘 ↓ (초록 넓어짐)', max:5, cost:l=>40+l*45},
-  {id:'aim',    name:'🎯 정확도',     desc:'초록 성공 구간이 더 넓어져요', max:5, cost:l=>40+l*45},
-  {id:'barslow',name:'🐢 집중력',     desc:'파워바가 느려져 맞추기 쉬워요', max:4, cost:l=>60+l*70},
+  {id:'power',  name:'💪 내려치는 힘', desc:'더 센 타격 → 뒤집는 데 필요한 힘이 줄어요', max:5, cost:l=>40+l*45},
+  {id:'aim',    name:'🎯 정확도',     desc:'조준이 조금 빗나가도 공기가 잘 들어가요', max:5, cost:l=>40+l*45},
+  {id:'barslow',name:'🐢 집중력',     desc:'손 떨림이 줄어 평평하게 떼기 쉬워요', max:4, cost:l=>60+l*70},
   {id:'coin',   name:'🪙 엽전 복',    desc:'엽전 획득량이 늘어나요', max:5, cost:l=>50+l*55},
 ];
-function powBonus(){ return up.power*0.28; }         // ω0 보너스
-function aimBonus(){ return up.aim*0.016; }          // 초록 하한 ↓(넓어짐)
 function coinMult(){ return 1 + up.coin*0.3; }
 
 function $(id){ return document.getElementById(id); }
@@ -279,34 +313,112 @@ function showMsg(t,c){ const m=$('msg'); m.textContent=t; m.style.color=c||'#fff
 function showSub(t){ const s=$('sub'); s.textContent=t||''; s.style.opacity=t?1:0; }
 function clearMsg(){ $('msg').style.opacity=0; $('sub').style.opacity=0; }
 
-function newRound(keepFoe){ if(!keepFoe) foe=pickFoe(); theta=0; omega=0; maxTheta=0; power=0; pdir=1; rewardUsed=false; applyDifficulty();
-  if(easyNext){ const c=(GREEN[0]+GREEN[1])/2; let w=Math.min(0.5,(GREEN[1]-GREEN[0])+0.16); GREEN=[Math.max(0.05,c-w/2),Math.min(0.97,c+w/2)]; easyNext=false; }   // 리워드 '쉽게 다시' 1회: 밴드 넓힘
+function newRound(keepFoe){ unlockMsg=''; if(!keepFoe) foe=pickFoe(); theta=0; omega=0; maxTheta=0; physAcc=0;
+  chargeT=0; aloftT=0; overHold=0; liftR=0; swing=0; trail=[]; tilt=0; tremAmp=0; tremPhase=Math.random()*Math.PI*2; holding=false; aimX=W/2; rewardUsed=false;
+  waves=[]; squash=0; foeJolt=0; freeze=0; burst=null; applyDifficulty();
+  aimX = axAim() ? W/2 + Dstar : W/2;
+  if(easyNext){ Gcur*=0.80; tremBase*=0.6; sigmaD*=1.5; easyNext=false; }   // 리워드 '쉽게 다시' 1회
   const ri=RINFO[foe.rarity]; foeGlow=foe.rarity==='c'?0:1;
   $('foeLabel').innerHTML=(ri.label?('<span style="color:'+ri.color+'">'+ri.label+' '+ri.stars+'</span> '):'')+foe.name;
   $('rewardBtn').classList.add('hidden'); $('dexBtn').classList.remove('hidden'); $('shopBtnP').classList.remove('hidden');
   state='ready'; clearMsg(); $('hint').classList.remove('hidden');
 }
 
-function slam(){
+// ── 들어올리기: 누르는 동안 딱지가 올라가고, 오래 들수록 손이 떨린다 ──
+// ① 올리는 위치 조절 — 손가락을 끌어 '어디에, 얼마나 높이' 들어올릴지 정한다.
+//    세로 = 높이(낼 수 있는 힘의 상한), 가로 = 조준.
+function beginPlace(x,y){
   if(state!=='ready') return;
-  state='slam'; slamT=0; dropY=-220; $('hint').classList.add('hidden');
-  initAudio(); sfx.whoosh();
+  state='place'; chargeT=0; tilt=0; tremAmp=0;
+  aimX = (x==null? W/2 : x);
+  liftR = 0;                       // 바닥에서 시작해 끌어올린다
+  placeY = (y==null? groundCY() : y);
+  $('hint').classList.add('hidden'); initAudio();
+}
+function updatePlace(x,y){
+  if(state!=='place') return;
+  if(axAim() && x!=null) aimX=x;
+  if(y!=null){
+    placeY=y;
+    const base=groundCY()-30;
+    liftR = Math.max(0, Math.min(1, (base-y)/LIFT_MAX));
+  }
+}
+// ── 1박자 끝: 손을 떼면 딱지가 그 자리에 멈춘다. 위치(높이·조준)가 확정된다 ──
+function endLift(){
+  if(state!=='place') return;
+  state='aloft'; aloftT=0;
+  sfx.lift(liftR);
+}
+// ── ② 내리치는 힘 조절 — 아래로 쓸어내린 '속도'가 그대로 타격 힘이 된다 ──
+//    높이는 힘의 상한만 정한다. 낮게 들면 아무리 빨리 휘둘러도 힘이 안 나온다.
+function strike(swipeV){
+  if(state!=='aloft') return;
+  const sw = Math.max(0, Math.min(1, (swipeV||0)/SWIPE_VMAX));
+  swing = sw;
+  F = Math.min(sw, FORCE_FLOOR + (1-FORCE_FLOOR)*liftR);
+  if(axAngle()){
+    A = Math.max(0, 1 - Math.abs(tilt)/TILT_MAX);          // 때리는 순간 기울기
+  } else {
+    A = Math.max(0.3, 1 - aloftT*0.30);                    // 각도 축 잠김: 꾸물댄 만큼만 벌점
+  }
+  if(axAim()){
+    const d = Math.abs(aimX - W/2);
+    Dg = Math.exp(-((d-Dstar)*(d-Dstar))/(2*sigmaD*sigmaD));
+  } else Dg = 1;
+  Pw = Math.pow(F,1.15) * Math.pow(A,1.6) * Dg;
+  dropFrom = 40 + liftR*LIFT_MAX;      // 들어올린 '그 높이'에서 떨어진다
+  state='slam'; slamT=0; dropY=-dropFrom; sfx.whoosh(F);
 }
 function doImpact(){
-  shake=10; flash=0.5; sfx.slam(); sfx.vib(30);
-  for(let i=0;i<16;i++){ const a=Math.random()*Math.PI*2, sp=1+Math.random()*3; parts.push({x:0,y:0,vx:Math.cos(a)*sp,vy:-Math.random()*4-1,life:0.5,r:2+Math.random()*3}); }
-  // 파워 → 초기 각속도(ω0). 임계값 sqrt(2G)=~4.24 를 넘겨야 90° 통과
-  // 랜덤 밴드 판정: 밴드 안에 멈춰야 뒤집힘(너무 약해도·너무 세도 실패). 밴드 중앙=완벽타
-  lastPower=power;
-  const gc=(GREEN[0]+GREEN[1])/2, ghalf=(GREEN[1]-GREEN[0])/2;
-  const inGreen = power>=GREEN[0] && power<=GREEN[1];
-  perfectHit = Math.abs(power-gc) <= ghalf*0.28;
-  const thr=Math.sqrt(2*Gcur);   // 90°(티핑포인트) 넘기는 임계 각속도
-  if(inGreen){ omega = thr + 0.45 + (perfectHit?0.8:0.25); }   // 밴드 적중 → 확실히 뒤집힘(완벽=여유)
-  else { const d = power<GREEN[0] ? (GREEN[0]-power) : (power-GREEN[1]); omega = thr*Math.max(0.40, 1 - d*2.0); }  // 밴드 밖 → 못 넘김(가까울수록 90° 근처서 아깝게 되돌아옴)
-  theta=0.001; maxTheta=0; teetering=false; state='flip';
+  // ── 타격감 ── 힘에 비례해서 전부 커진다
+  const hit=Math.min(1.15, 0.35+Pw);
+  shake=7+hit*9; flash=0.28+hit*0.3;
+  freeze=0.055+hit*0.035;        // 히트스톱: 임팩트 순간 시간을 멈춘다. 손맛의 핵심.
+  squash=1;                       // 내리친 딱지가 납작하게 눌렸다 돌아옴
+  foeJolt=1;                      // 맞은 딱지가 움찔
+  const sx=(axAim()?aimX:W/2)-W/2;
+  // 공기 충격파 — 이 게임은 '밀려난 공기'가 넘긴다는 설정이다. 그걸 보여준다.
+  waves.push({x:sx, r:Math.min(W*0.26,120)*0.25, life:1, pw:hit});
+  burst={x:sx, life:1, pw:hit};
+  sfx.slam(hit); sfx.vib(hit>0.8?[18,22,30]:Math.round(18+hit*22));
+  const n=Math.round(14+hit*16);
+  for(let i=0;i<n;i++){ const a=Math.random()*Math.PI*2, sp=(1+Math.random()*3)*(0.7+hit*0.8);
+    parts.push({x:sx,y:0,vx:Math.cos(a)*sp,vy:-Math.random()*4-1,life:0.5,r:2+Math.random()*3}); }
+  reqP = requiredP();
+  perfectHit = Pw >= reqP + (1-reqP)*0.72;      // 여유 있게 넘긴 타격 = 완벽타
+  const thr = Math.sqrt(2*Gcur);
+  // ω0 를 '연출 의도'대로 설계한다. 역진자는 sin(θmax)=r² 이라 r 을 그냥 쓰면
+  // 니어미스 구간이 0.5% 폭으로 사라진다. 그래서 부족분→도달각을 직접 매핑한다.
+  if(Pw >= reqP){
+    const surplus = Math.min(1, (Pw-reqP)/Math.max(0.001,1-reqP));
+    const r = 1.04 + Math.pow(surplus,1.25)*0.26;   // 1.04=간신히(티핑 1.6초) … 1.30=시원하게
+    omega = thr * r;
+  } else {
+    const shortfall = Math.min(1, (reqP-Pw)/reqP);
+    const targetDeg = 86 - Math.pow(shortfall,1.1)*58;   // 0%→86° … 100%→28°
+    omega = Math.sqrt(2*Gcur*Math.sin(targetDeg*Math.PI/180));
+  }
+  theta=0.001; maxTheta=0; teetering=false; state='flip'; physAcc=0;
 }
 
+// 세 축 중 가장 모자랐던 것을 집어 알려준다
+function failHint(){
+  const fNeed=Math.pow(reqP,1/1.15);
+  const cand=[];
+  if(swing<0.55)               cand.push([ (0.55-swing)*2.2, '약하게 쓸어내렸어요 — 더 빠르게 내리쳐요' ]);
+  if(liftR<0.55)               cand.push([ (0.55-liftR)*1.9,  '너무 낮게 들었어요 — 더 높이 끌어올려요' ]);
+  if(!axAngle() && aloftT>0.6) cand.push([ aloftT*1.1,        '들어올린 뒤 꾸물댔어요 — 바로 내리쳐요' ]);
+  if(F<fNeed)             cand.push([ (fNeed-F)*1.6,        '힘이 부족했어요' ]);
+  if(axAngle()&&A<0.9)    cand.push([ (1-A)*1.6,            '딱지가 기울었어요 — 평평할 때 떼요' ]);
+  if(axAim()&&Dg<0.9){
+    const d=Math.abs(aimX-W/2);
+    cand.push([ (1-Dg)*1.5, d<Dstar ? '너무 가까이 쳤어요 — 딱지 옆을 노려요' : '너무 멀리 쳤어요 — 좀 더 붙여요' ]);
+  }
+  if(!cand.length) return '아주 조금 모자랐어요';
+  cand.sort((a,b)=>b[0]-a[0]);
+  return cand[0][1];
+}
 function setReward(txt){ const b=$('rewardBtn'); b.textContent=txt; b.classList.remove('hidden'); }
 function endFlip(success){
   if(duel.on){ duelResolve(success); return; }   // 대결모드는 별도 정산
@@ -319,17 +431,21 @@ function endFlip(success){
     let earn=Math.round((3+stage)*ri.mult*coinMult()); if(pf) earn=Math.round(earn*1.5); coins+=earn; saveCoins();
     if(score>best){ best=score; try{localStorage.setItem('ddakji_best',best);}catch(e){} try{submitScore();}catch(e){} }
     stage++; if(stage>bestStage){ bestStage=stage; try{localStorage.setItem('ddakji_bstage',bestStage);}catch(e){} }
+    if(stage===4) unlockMsg='🆕 평평도 해금! 떼는 순간 딱지가 기울면 바람이 샙니다';
+    else if(stage===9) unlockMsg='🆕 조준 해금! 딱지 바로 위가 아니라 옆을 쳐야 바람이 들어갑니다';
     showMsg(foe.rarity==='e'?'전설 획득! 👑':foe.rarity==='r'?'레어 획득! ✨':(pf?'완벽하게 뒤집었다! 🎯':'뒤집기 성공! 🟫'), pf?'#ffe14d':(ri.mult>1?ri.color:'#aef5b0'));
-    showSub((pf?'✨완벽타 x1.5 ':'')+(first?'🆕 새 딱지! ':'')+foe.name+' +'+gain+'점 · 🪙+'+earn+(ri.mult>1?' (x'+ri.mult+')':'')+' · STAGE '+stage);
+    showSub(unlockMsg || ((pf?'✨완벽타 x1.5 ':'')+(first?'🆕 새 딱지! ':'')+foe.name+' +'+gain+'점 · 🪙+'+earn+(ri.mult>1?' (x'+ri.mult+')':'')+' · STAGE '+stage));
     sfx.win(); sfx.vib([20,40,30]); shake=9; sfx.slam();   // 착지 쿵
     for(let i=0;i<10;i++){ const a=-Math.PI/2+(Math.random()-.5)*2.2, sp=1+Math.random()*3; parts.push({x:(Math.random()-.5)*60,y:30,vx:Math.cos(a)*sp,vy:-Math.random()*3-1,life:0.5,r:2+Math.random()*3}); }
     const cc=pf?['#ffe14d','#fff','#ffcf5c','#ffb04a']:(foe.rarity==='c'?['#ffcf5c','#ff7a5c','#5cff9e','#5cc8ff']:[ri.color,'#ffffff',ri.color,'#ffe9b0']);
     const n=pf?64:(foe.rarity==='c'?30:50); for(let i=0;i<n;i++){ const a=Math.random()*Math.PI*2, sp=2+Math.random()*(pf?6:5); parts.push({x:0,y:-10,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,life:0.9,r:3+Math.random()*4,c:cc[i%4]}); }
     setReward('🎬 광고 보고 점수 2배');
   } else {
-    combo=0; const lack=Math.max(1,90-deg); const nearly=deg>=82;
+    combo=0; const lack=Math.max(1,90-deg); const nearly=deg>=78;
     showMsg(nearly?'으악! 거의 넘어갔는데! 😣':'아깝다! 😫', nearly?'#ff7a7a':'#ff9a9a');
-    showSub((nearly? `90°까지 딱 ${lack}°!! 한 번만 더!` : deg>=70?`${deg}°까지… 조금만 더 세게!`:`${deg}°… 힘이 부족했어요`)+' · '+foe.name);
+    // 실패 원인을 축별로 특정한다. 예전엔 너무 세게 쳐도 "힘이 부족"이라고 떠서
+    // 플레이어가 무엇을 고쳐야 할지 영영 알 수 없었다.
+    showSub((nearly? `90°까지 딱 ${lack}°!! ` : `${deg}°… `) + failHint() + ' · ' + foe.name);
     sfx.fail(); sfx.vib(nearly?[40,30,60]:60); if(nearly){ shake=7; flash=0.25; }
     setReward('🎬 광고 보고 쉽게 다시');
   }
@@ -401,16 +517,36 @@ function update(dt){
   gt+=dt;
   if(shake>0) shake=Math.max(0,shake-dt*40);
   if(flash>0) flash=Math.max(0,flash-dt*2);
+  if(squash>0) squash=Math.max(0,squash-dt*6.5);
+  if(foeJolt>0) foeJolt=Math.max(0,foeJolt-dt*7);
+  for(const w of waves){ w.r += dt*540*(0.55+w.pw); w.life -= dt*2.1; }
+  if(waves.length) waves=waves.filter(w=>w.life>0);
+  if(burst){ burst.life-=dt*3.4; if(burst.life<=0) burst=null; }
   for(const p of parts){ p.x+=p.vx; p.y+=p.vy; p.vy+=0.25; p.life-=dt; } parts=parts.filter(p=>p.life>0);
 
-  if(state==='ready'){
-    power+=pdir*dt*barSpeed; if(power>=1){power=1;pdir=-1;} else if(power<=0){power=0;pdir=1;}
-  } else if(state==='aiaim'){   // 상대(AI) 조준: 바 움직이다가 일정 시간 후 자동 타격
-    power+=pdir*dt*barSpeed; if(power>=1){power=1;pdir=-1;} else if(power<=0){power=0;pdir=1;}
-    aiAimT+=dt; if(aiAimT>=0.9) aiStrike();
+  if(state==='place'){
+    chargeT+=dt;
+    // 높이 들수록·오래 들수록 손이 떨린다
+    tremAmp = tremBase*(0.5+liftR) + Math.max(0, chargeT-T_COMFORT)*TREM_RATE*0.6;
+    tilt = axAngle() ? tremAmp*Math.sin(chargeT*TREM_FREQ+tremPhase) : 0;
+    if(chargeT>3.0) endLift();            // 너무 오래 끌면 저절로 멈춘다
+  } else if(state==='aloft'){
+    // 공중에 든 채로 때릴 순간을 고른다. 꾸물댈수록 팔이 떨려 평평하게 치기 어려워진다.
+    aloftT+=dt;
+    tremAmp = tremBase*(0.5+liftR) + Math.max(0, aloftT*1.4)*TREM_RATE;
+    tilt = axAngle() ? tremAmp*Math.sin((chargeT+aloftT)*TREM_FREQ+tremPhase) : 0;
+    if(aloftT>2.2) strike(SWIPE_VMAX*0.22);   // 팔이 아파서 흘려 떨어뜨린다
+  } else if(state==='aiaim'){             // 상대(AI) 조준 → 일정 시간 후 자동 타격
+    chargeT+=dt;
+    tremAmp = tremBase + Math.max(0, chargeT-T_COMFORT)*TREM_RATE;
+    tilt = axAngle() ? tremAmp*Math.sin(chargeT*TREM_FREQ+tremPhase) : 0;
+    aiAimT+=dt; if(aiAimT>=aiHold) aiStrike();
   } else if(state==='slam'){
-    slamT+=dt; dropY=-220*(1-Math.min(1,slamT/0.22))**1.4 + Math.min(1,slamT/0.22)*0;
-    dropY=-220*(1-Math.min(1,slamT/0.22)); if(slamT>=0.22){ dropY=0; doImpact(); }
+    slamT+=dt;
+    // 등속 낙하는 붕 뜬다. t^2 로 가속시켜 '쿵' 하고 꽂히게 한다.
+    const tt=Math.min(1,slamT/DROP_T);
+    dropY = -dropFrom*(1-tt*tt);
+    if(slamT>=DROP_T){ dropY=0; doImpact(); }
   } else if(state==='flip'){
     // 티핑포인트(90°) 근처에서 느리게 넘어가면 슬로모션 → "넘어갈 듯 말 듯" 긴장 극대화
     const degNow=theta*180/Math.PI;
@@ -420,11 +556,18 @@ function update(dt){
     else if(!nearTip) teetering=false;
     teetDeg=Math.round(degNow);
     // 역진자: 평형 0·π(안정), π/2(불안정 정점). α=-G·cos(θ)
-    const edt=dt*slow; const steps=4; const h=edt/steps;
-    for(let i=0;i<steps;i++){
+    // ★ 고정 물리 타임스텝 ★ 예전엔 서브스텝 안에서 omega*=0.999 를 돌려
+    //   60Hz 21%/s, 120Hz 38%/s 로 에너지가 빠졌다. 기기 주사율에 따라 게임이
+    //   달라졌고, 티핑포인트 근처에서 다 깎여 니어미스가 아예 불가능했다.
+    //   1/600s 고정 스텝 + 감쇠 제거 → 60/120/144Hz 결과가 완전히 동일.
+    physAcc += dt*slow;
+    let guard=0;
+    while(physAcc>=PHYS_DT && guard++<400){
       const a=-Gcur*Math.cos(theta);
-      omega+=a*h; omega*=0.999; theta+=omega*h;
+      omega+=a*PHYS_DT; theta+=omega*PHYS_DT;
       if(theta>maxTheta) maxTheta=theta;
+      physAcc-=PHYS_DT;
+      if(theta>=Math.PI || (theta<=0&&omega<=0)) break;
     }
     if(nearTip && Math.random()<0.4) sfx.teeter();
     if(theta>=Math.PI){ theta=Math.PI; teetering=false; endFlip(true); }
@@ -473,8 +616,10 @@ function drawDdakji(cx,cy,size,th,cols,sprId){
   const img = sprId ? SPR[sprId] : null;
   if(img){
     // 스프라이트 경로. 90° 에서 h≈0 이라 앞/뒤 전환이 눈에 띄지 않는다.
-    if(faceUp) ctx.drawImage(img, cx-w/2, y-Math.max(3,h)/2, w, Math.max(3,h));
-    else       drawBackFace(cx,y,w,h,cols);
+    const bk=EXTRA['back'];
+    if(faceUp)    ctx.drawImage(img, cx-w/2, y-Math.max(3,h)/2, w, Math.max(3,h));
+    else if(bk)   ctx.drawImage(bk,  cx-w/2, y-Math.max(3,h)/2, w, Math.max(3,h));
+    else          drawBackFace(cx,y,w,h,cols);
     ctx.restore();
     return;
   }
@@ -501,36 +646,137 @@ function drawDdakji(cx,cy,size,th,cols,sprId){
 
 function render(){
   ctx.clearRect(0,0,W,H);
-  // 바닥(흙/마당)
-  const bg=ctx.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#4a3420'); bg.addColorStop(0.5,'#5c4028'); bg.addColorStop(1,'#3a281a');
-  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
-  // 바닥 질감 점
-  ctx.fillStyle='rgba(0,0,0,.08)'; for(let i=0;i<40;i++){ const x=(i*97%W), y=(i*53%H); ctx.fillRect(x,y,3,3); }
+  const CX=W/2, SZ=Math.min(W*0.26,120), CY=groundCY();
+
+  // 바닥(흙/마당). 배경 에셋이 있으면 '닳은 자리'를 딱지 위치에 맞춰 덮어 그린다.
+  const bgi=EXTRA['bg-yard'];
+  if(bgi){
+    const iw=bgi.naturalWidth, ih=bgi.naturalHeight;
+    // 가로를 덮고 + 밝은 원이 CY 에 오면서 위아래 빈틈이 없는 최소 배율
+    const sc=Math.max(W/iw, CY/(BG_FOCUS*ih), (H-CY)/((1-BG_FOCUS)*ih));
+    const dw=iw*sc, dh=ih*sc;
+    ctx.drawImage(bgi, (W-dw)/2, CY-BG_FOCUS*dh, dw, dh);
+    // 하단 UI 가독성 보호 — 배경이 어떻게 잘리든 힌트·버튼 글씨가 묻히지 않게 깔아준다
+    const gy=Math.max(H*0.56, H-BAR_BOTTOM)-26;
+    const sh=ctx.createLinearGradient(0,gy,0,H);
+    sh.addColorStop(0,'rgba(26,17,10,0)'); sh.addColorStop(1,'rgba(26,17,10,0.74)');
+    ctx.fillStyle=sh; ctx.fillRect(0,gy,W,H-gy);
+  } else {
+    const bg=ctx.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#4a3420'); bg.addColorStop(0.5,'#5c4028'); bg.addColorStop(1,'#3a281a');
+    ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='rgba(0,0,0,.08)'; for(let i=0;i<40;i++){ const x=(i*97%W), y=(i*53%H); ctx.fillRect(x,y,3,3); }
+  }
 
   ctx.save();
   if(shake>0) ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);
-  const CX=W/2, CY=H*0.46, SZ=Math.min(W*0.26,120);
 
   // 바닥 원(치는 자리)
   ctx.strokeStyle='rgba(255,255,255,.12)'; ctx.lineWidth=2; ctx.setLineDash([8,8]);
-  ctx.beginPath(); ctx.arc(CX,CY+SZ*0.5,SZ*1.3,0,Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
+  ctx.beginPath(); ctx.arc(CX,CY+SZ*0.42,SZ*1.05,0,Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
 
   // 레어/전설 딱지 오라
   if(foe.rarity!=='c'){ const ri=RINFO[foe.rarity]; const pulse=0.5+0.4*Math.sin(gt*5);
     ctx.save(); ctx.globalAlpha=pulse*0.55; ctx.fillStyle=ri.color;
     ctx.beginPath(); ctx.arc(CX,CY-Math.sin(theta)*SZ*0.5,SZ*(1.05+pulse*0.12),0,Math.PI*2); ctx.fill(); ctx.restore(); }
 
-  // 상대 딱지
-  drawDdakji(CX,CY,SZ,theta,foe.cols,foe.id);
+  // 공기 충격파 — 밀려난 공기가 상대 딱지 밑으로 파고드는 그림
+  for(const w of waves){
+    ctx.save(); ctx.globalAlpha=w.life*0.5*(0.5+w.pw*0.5);
+    ctx.strokeStyle='#ffe9c0'; ctx.lineWidth=3+w.pw*3;
+    ctx.beginPath(); ctx.ellipse(CX+w.x, CY+SZ*0.46, w.r, w.r*0.30, 0,0,Math.PI*2); ctx.stroke();
+    ctx.globalAlpha=w.life*0.22*(0.5+w.pw*0.5); ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.ellipse(CX+w.x, CY+SZ*0.46, w.r*0.62, w.r*0.19, 0,0,Math.PI*2); ctx.stroke();
+    ctx.restore();
+  }
+
+  // 상대 딱지 (맞는 순간 움찔)
+  drawDdakji(CX, CY+foeJolt*5, SZ, theta, foe.cols, foe.id);
+
+  // 내리친 내 딱지 — 임팩트 직후 납작하게 눌렸다 돌아온다 (스쿼시 & 스트레치)
+  if(squash>0 && state!=='slam'){
+    const lx=axAim()?aimX:CX;
+    ctx.save(); ctx.translate(lx,CY+SZ*0.18); ctx.scale(1+squash*0.16, 1-squash*0.44); ctx.translate(-lx,-(CY+SZ*0.18));
+    ctx.globalAlpha=0.55+0.45*(1-squash);
+    drawDdakji(lx,CY+SZ*0.18,SZ*0.92,0,attackerCols,attackerId);
+    ctx.restore();
+  }
+
+  // 조준 마커 (조준 축이 열린 뒤에만)
+  if((state==='ready'||state==='place'||state==='aloft'||state==='aiaim') && axAim()){
+    const d=Math.abs(aimX-CX), eff=Math.exp(-((d-Dstar)*(d-Dstar))/(2*sigmaD*sigmaD));
+    ctx.save(); ctx.globalAlpha=0.35+eff*0.5;
+    ctx.strokeStyle = eff>0.8?'#8affb0' : eff>0.45?'#ffd75c' : '#ff8a8a';
+    ctx.lineWidth=3; ctx.setLineDash([6,5]);
+    ctx.beginPath(); ctx.ellipse(aimX, CY+SZ*0.52, SZ*0.5, SZ*0.14, 0,0,Math.PI*2); ctx.stroke();
+    ctx.setLineDash([]); ctx.restore();
+    // 최적 거리 가이드 (양옆)
+    ctx.save(); ctx.globalAlpha=0.18; ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.setLineDash([3,6]);
+    [CX-Dstar, CX+Dstar].forEach(gx=>{ ctx.beginPath(); ctx.moveTo(gx,CY+SZ*0.30); ctx.lineTo(gx,CY+SZ*0.74); ctx.stroke(); });
+    ctx.setLineDash([]); ctx.restore();
+  }
+
+  // 들어올린 내 딱지 — 파워바 대신 '딱지 자체'가 게이지다
+  if(state==='place'||state==='aloft'||state==='aiaim'){
+    const f = (state==='aiaim') ? Math.min(1,chargeT/T_FULL) : liftR;
+    const lx=axAim()?aimX:CX;
+    const ly=CY - 40 - f*LIFT_MAX;
+    // 최대 높이 안내선
+    ctx.save(); ctx.globalAlpha=0.30; ctx.strokeStyle='#ffe14d'; ctx.lineWidth=2; ctx.setLineDash([7,6]);
+    const ty=CY-40-LIFT_MAX;
+    ctx.beginPath(); ctx.moveTo(lx-SZ*0.9,ty); ctx.lineTo(lx+SZ*0.9,ty); ctx.stroke();
+    ctx.setLineDash([]); ctx.restore();
+    // 과충전 경고
+    if(false){ ctx.save(); ctx.globalAlpha=0.30+0.25*Math.sin(gt*18);
+      ctx.fillStyle='#ff6a6a'; ctx.fillRect(0,0,W,H); ctx.restore(); }
+    // 공중에 든 상태 — 내리칠 궤적과 "때려!" 신호
+    if(state==='aloft'){
+      const pulse=0.5+0.5*Math.sin(gt*9);
+      ctx.save();
+      ctx.globalAlpha=0.20+pulse*0.22; ctx.strokeStyle='#ffe14d'; ctx.lineWidth=3; ctx.setLineDash([9,8]);
+      ctx.beginPath(); ctx.moveTo(lx, ly+SZ*0.6); ctx.lineTo(lx, CY-SZ*0.5); ctx.stroke();
+      ctx.setLineDash([]);
+      // 아래쪽 화살표
+      const ay=CY-SZ*0.52;
+      ctx.fillStyle='#ffe14d';
+      // 아래로 쓸어내리라는 뜻의 이중 화살표
+      [0,22].forEach((o,i)=>{ ctx.globalAlpha=(0.45+pulse*0.45)*(i?0.55:1);
+        ctx.beginPath(); ctx.moveTo(lx,ay+12-o); ctx.lineTo(lx-11,ay-6-o); ctx.lineTo(lx+11,ay-6-o); ctx.closePath(); ctx.fill(); });
+      ctx.restore();
+    }
+    // 딱지를 기울여 그린다
+    ctx.save(); ctx.translate(lx,ly); ctx.rotate(tilt); ctx.translate(-lx,-ly);
+    drawDdakji(lx,ly,SZ*0.92,0,attackerCols,attackerId);
+    ctx.restore();
+  }
 
   // 내리치는 공격자 딱지 (slam)
   if(state==='slam'){
-    drawDdakji(CX,CY+dropY,SZ*0.92,0,attackerCols,attackerId);
+    const lx=axAim()?aimX:CX;
+    ctx.save(); ctx.translate(lx,CY+dropY); ctx.rotate(tilt*(1-Math.min(1,slamT/0.22))); ctx.translate(-lx,-(CY+dropY));
+    drawDdakji(lx,CY+dropY,SZ*0.92,0,attackerCols,attackerId);
+    ctx.restore();
   }
 
   // 먼지/파편
-  for(const p of parts){ ctx.globalAlpha=Math.max(0,p.life*1.5); ctx.fillStyle=p.c||'#d8c3a0'; ctx.beginPath(); ctx.arc(CX+p.x,CY+p.y,p.r,0,Math.PI*2); ctx.fill(); }
+  const dustI=EXTRA['fx-dust'];
+  for(const p of parts){
+    ctx.globalAlpha=Math.max(0,p.life*1.5);
+    if(dustI && !p.c){                      // 흙먼지는 스프라이트, 색 파편은 기존 원 유지
+      const d=p.r*7;
+      ctx.drawImage(dustI, CX+p.x-d/2, CY+p.y-d/2, d, d);
+    } else {
+      ctx.fillStyle=p.c||'#d8c3a0'; ctx.beginPath(); ctx.arc(CX+p.x,CY+p.y,p.r,0,Math.PI*2); ctx.fill();
+    }
+  }
   ctx.globalAlpha=1;
+  // 타격 별 — 임팩트 순간 한 번 터지고 커지며 사라진다
+  if(burst && EXTRA['fx-burst']){
+    const b=EXTRA['fx-burst'], k=1-burst.life;
+    const d=SZ*(0.9+k*1.5)*(0.6+burst.pw*0.6);
+    ctx.save(); ctx.globalAlpha=Math.max(0,burst.life)*0.85;
+    ctx.drawImage(b, CX+burst.x-d/2, CY+SZ*0.12-d/2, d, d);
+    ctx.restore();
+  }
   ctx.restore();
 
   // "거의…!" 티핑포인트 긴장 연출
@@ -544,26 +790,35 @@ function render(){
   // 충격 플래시
   if(flash>0){ ctx.fillStyle='rgba(255,240,200,'+(flash*0.5)+')'; ctx.fillRect(0,0,W,H); }
 
-  // 파워 바 (ready / 상대 조준 aiaim)
-  if(state==='ready' || state==='aiaim'){
-    const bw=Math.min(W*0.82,350), bx=(W-bw)/2, by=Math.max(H*0.56,H-BAR_BOTTOM), bh=28;
+  // 힘 게이지 (charge / aiaim) — 보조 표시. 주 게이지는 '올라가는 딱지' 자체다.
+  if(state==='place' || state==='aloft' || state==='aiaim'){
+    const bw=Math.min(W*0.72,300), bx=(W-bw)/2, by=Math.max(H*0.56,H-BAR_BOTTOM), bh=16;
+    const f=(state==='aiaim')?Math.min(1,chargeT/T_FULL):liftR, over=false;
     ctx.save();
-    ctx.fillStyle='rgba(0,0,0,.45)'; roundRect(bx-4,by-4,bw+8,bh+8,12); ctx.fill();
-    roundRect(bx,by,bw,bh,9); ctx.clip();
-    const bgr=ctx.createLinearGradient(bx,0,bx+bw,0); bgr.addColorStop(0,'#3a2a18'); bgr.addColorStop(1,'#5a4024');
-    ctx.fillStyle=bgr; ctx.fillRect(bx,by,bw,bh);
-    const gl=bx+bw*GREEN[0], gw=bw*(GREEN[1]-GREEN[0]);
-    ctx.fillStyle='rgba(70,200,110,.55)'; ctx.fillRect(gl,by,gw,bh);                 // 초록=성공(랜덤 위치)
-    const gc=(GREEN[0]+GREEN[1])/2, pfw=(GREEN[1]-GREEN[0])*0.28/2;                   // 노랑=완벽(밴드 중앙)
-    const pfl=bx+bw*(gc-pfw), pfr=bx+bw*(gc+pfw);
-    ctx.fillStyle='rgba(255,220,80,.68)'; ctx.fillRect(pfl,by,pfr-pfl,bh);
+    ctx.fillStyle='rgba(0,0,0,.45)'; roundRect(bx-4,by-4,bw+8,bh+8,10); ctx.fill();
+    roundRect(bx,by,bw,bh,7); ctx.clip();
+    ctx.fillStyle='#3a2a18'; ctx.fillRect(bx,by,bw,bh);
+    ctx.fillStyle = over? '#ff7a5c' : '#ffcf5c';
+    ctx.fillRect(bx,by,bw*f,bh);
     ctx.restore();
-    ctx.fillStyle='rgba(140,255,170,.95)'; ctx.fillRect(gl,by,3,bh);
-    const mx=bx+bw*power;
-    ctx.save(); ctx.shadowColor='#ffcf5c'; ctx.shadowBlur=10; ctx.fillStyle='#fff'; roundRect(mx-5,by-7,10,bh+14,4); ctx.fill(); ctx.restore();
-    ctx.fillStyle='#e9d6bf'; ctx.font='700 11px system-ui';
-    ctx.textAlign='left'; ctx.fillText('약',bx+2,by-8); ctx.textAlign='right'; ctx.fillText('강 💥',bx+bw-2,by-8);
-    ctx.textAlign='center'; ctx.fillStyle='#ffe14d'; ctx.font='800 12px system-ui'; ctx.fillText('초록=성공 · 노랑=완벽!',bx+bw/2,by+bh+17);
+    // 필요 힘 눈금 — 여기를 넘겨야 뒤집힌다
+    const need=Math.pow(requiredP(), 1/1.15);
+    const needH=Math.max(0,Math.min(1,(need-FORCE_FLOOR)/(1-FORCE_FLOOR)));
+    ctx.fillStyle='rgba(140,255,170,.95)'; ctx.fillRect(bx+bw*needH-1.5,by-5,3,bh+10);
+    ctx.fillStyle='#e9d6bf'; ctx.font='700 11px system-ui'; ctx.textAlign='center';
+    ctx.fillText(state==='aloft' ? '② 아래로 쓸어내려 내리쳐요!' : '① 끌어서 위치 잡기 — 높이가 힘의 한계', bx+bw/2, by-7);
+
+    // 평평도 표시 (각도 축이 열린 뒤)
+    if(axAngle()){
+      const a=Math.max(0,1-Math.abs(tilt)/TILT_MAX);
+      const gy=by+bh+16, gw2=bw*0.64, gx=(W-gw2)/2;
+      ctx.fillStyle='rgba(0,0,0,.4)'; roundRect(gx-3,gy-3,gw2+6,10,5); ctx.fill();
+      ctx.fillStyle = a>0.85?'#8affb0' : a>0.55?'#ffd75c' : '#ff8a8a';
+      ctx.fillRect(gx+gw2/2-1.5, gy, 3, 4);                       // 중앙(완전 평평)
+      ctx.fillRect(gx+gw2*(0.5+tilt/(TILT_MAX*2))-4, gy, 8, 4);    // 현재 기울기
+      ctx.fillStyle='#e9d6bf'; ctx.font='700 10px system-ui';
+      ctx.fillText('평평하게 ─ 가운데서 떼기', W/2, gy+15);
+    }
   }
 }
 
@@ -572,20 +827,55 @@ function loop(ts){
   requestAnimationFrame(loop);
   if(state==='start'){ lastTs=ts; return; }
   let dt=(ts-lastTs)/1000; lastTs=ts; if(dt>0.05) dt=0.05; if(dt<0) dt=0;
+  if(freeze>0){ freeze=Math.max(0,freeze-dt); render(); return; }   // 히트스톱
   update(dt); render();
 }
 requestAnimationFrame(loop);
 
 // ---- Input ----
-function tap(){
+// 누르기 = 들어올리기, 떼기 = 내리치기. 탭 한 번이 아니라 '한 번의 연속 터치'다.
+// 터치한 x 위치가 조준(조준 축이 열린 뒤).
+// 스와이프 속도 측정용 최근 좌표 버퍼
+let trail=[];
+function pushTrail(y){ const t=performance.now(); trail.push([t,y]); while(trail.length>8) trail.shift();
+  while(trail.length>2 && t-trail[0][0]>140) trail.shift(); }
+function swipeSpeed(){                 // 아래로 내려간 속도(px/s). 위로 간 건 0.
+  if(trail.length<2) return 0;
+  const a=trail[0], b=trail[trail.length-1];
+  const dy=b[1]-a[1], dtm=(b[0]-a[0])/1000;
+  if(dtm<=0.004 || dy<=0) return 0;
+  return dy/dtm;
+}
+
+function onDown(x,y){
   initAudio();
-  if(state==='ready'){ slam(); }
+  if(state==='ready'){ holding=true; beginPlace(x,y); }
+  else if(state==='aloft'){ holding=true; trail=[]; pushTrail(y); }   // ★ 2박자 시작 — 쓸어내릴 준비
   else if(state==='result' && !duel.on){   // 솔로만 탭으로 다음 라운드(듀얼은 자동 진행)
     if(resultT<0.35) return;
     newRound();
   }
 }
-cv.addEventListener('pointerdown',e=>{ e.preventDefault(); tap(); });
+function onMove(x,y){
+  if(state==='place' && holding) updatePlace(x,y);
+  else if(state==='aloft' && holding){
+    pushTrail(y);
+    // 충분히 빠르게 쓸어내리는 순간 바로 때린다 (손을 뗄 때까지 기다리지 않는다)
+    const v=swipeSpeed(); if(v>SWIPE_VMAX*0.45) strike(v);
+  }
+}
+function onUp(){
+  if(!holding) return; holding=false;
+  if(state==='place') endLift();
+  else if(state==='aloft'){
+    const v=swipeSpeed();
+    strike(v>0 ? v : SWIPE_VMAX*0.30);   // 제자리 탭은 약한 타격으로 처리
+  }
+}
+cv.addEventListener('pointerdown',e=>{ e.preventDefault(); onDown(e.clientX,e.clientY); });
+cv.addEventListener('pointermove',e=>{ e.preventDefault(); onMove(e.clientX,e.clientY); });
+addEventListener('pointerup',e=>{ onUp(); });
+addEventListener('pointercancel',e=>{ onUp(); });
 $('rewardBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); doReward(); });
 $('dexBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); initAudio(); openDex(); });
 $('dexBtn2').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); openDex(); });
@@ -647,16 +937,26 @@ function startDuel(){ if(setupBet>coins) return; duel.on=true; duel.bet=setupBet
 function beginDuelTurn(){ duelAfter=null;
   if(duel.attacker==='P'){ foe=duel.oDak; attackerCols=duel.pDak.cols; attackerId=duel.pDak.id; }
   else { foe=duel.pDak; attackerCols=duel.oDak.cols; attackerId=duel.oDak.id; }
-  theta=0; omega=0; maxTheta=0; power=0; pdir=1; teetering=false; dropY=0; applyDifficulty();
+  theta=0; omega=0; maxTheta=0; physAcc=0; chargeT=0; aloftT=0; overHold=0; liftR=0; swing=0; trail=[]; tilt=0; tremAmp=0; tremPhase=Math.random()*Math.PI*2; holding=false; aimX=W/2; teetering=false; dropY=0; waves=[]; squash=0; foeJolt=0; freeze=0; burst=null; applyDifficulty();
   foeGlow=foe.rarity==='c'?0:1; $('foeLabel').innerHTML=''; clearMsg(); updateDuelHud();
   if(duel.attacker==='P'){ state='ready'; $('hint').classList.remove('hidden'); }
-  else { state='aiaim'; aiAimT=0; $('hint').classList.add('hidden'); }
+  else { state='aiaim'; aiAimT=0; chargeT=0; tilt=0; aiHold=0.55+Math.random()*0.55; aimX=W/2+(Math.random()*2-1)*Dstar; $('hint').classList.add('hidden'); }
 }
+// AI 도 사람과 같은 3축을 쓴다. 축별 숙련도를 따로 줘서 상대마다 성격이 생긴다.
 function aiStrike(){ initAudio(); sfx.whoosh();
-  const gc=(GREEN[0]+GREEN[1])/2, half=(GREEN[1]-GREEN[0])/2;
-  if(Math.random()<duel.oppSkill){ power=Math.max(0.02,Math.min(0.98, gc+(Math.random()*2-1)*half*0.6)); }  // 명중: 밴드 안
-  else { const side=Math.random()<0.5?-1:1; const d=half+0.02+Math.random()*0.12; power=Math.max(0.02,Math.min(0.98, gc+side*d)); }  // 빗나감: 밴드 밖
-  state='slam'; slamT=0; dropY=-220;
+  const sk=duel.oppSkill, jitter=(1-sk)*0.9;
+  reqP=requiredP();
+  const fNeed=Math.pow(reqP,1/1.15);
+  F = Math.max(0.15, Math.min(1, fNeed + (1-fNeed)*0.75 + (Math.random()*2-1)*jitter*0.35));
+  A = axAngle() ? Math.max(0.15, 1 - Math.abs((Math.random()*2-1))*jitter*0.55) : 1;
+  if(axAim()){
+    const err=(Math.random()*2-1)*jitter*sigmaD*1.6;
+    Dg = Math.exp(-(err*err)/(2*sigmaD*sigmaD));
+  } else Dg = 1;
+  Pw = Math.pow(F,1.15)*Math.pow(A,1.6)*Dg;
+  tilt = axAngle() ? (1-A)*TILT_MAX*(Math.random()<0.5?-1:1) : 0;
+  dropFrom = 40 + F*LIFT_MAX;
+  state='slam'; slamT=0; dropY=-dropFrom;
 }
 function duelResolve(success){
   if(success){ roundWin(duel.attacker); return; }
