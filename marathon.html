@@ -128,8 +128,12 @@
 
 <div class="ov" id="title">
   <h1 style="font-size:34px">🏃 모두의 마라톤</h1>
-  <p>오늘은 어떻게 달려볼까요?</p>
-  <div style="font-size:11px;opacity:.6;margin-top:-4px">v3.7 · 세컨드 윈드·러너스 하이·골인의 순간</div>
+  <p id="titleSub">오늘은 어떻게 달려볼까요?</p>
+  <div style="font-size:11px;opacity:.6;margin-top:-4px">v3.8 · 첫 3분 재설계(튜토리얼·HUD 다이어트)</div>
+  <div id="hero" style="display:none;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:360px">
+    <div class="mode" id="heroStart" style="background:linear-gradient(135deg,#ffffff,#ffe6ee);border-color:#ffb3cb;width:100%"><b class="mi">🏁</b><b>첫 레이스 시작</b><small>서울 코스에서 10명과 함께 달려요<br>조작은 달리면서 하나씩 알려드릴게요</small></div>
+    <button class="pill" id="heroMore" style="flex:none;background:#eef3f8;color:var(--txt);box-shadow:none;padding:9px 18px;font-size:13px">먼저 둘러볼게요</button>
+  </div>
   <div class="modes">
     <div class="mode" id="modeRhythm"><b class="mi">🎵</b><b>리듬 런</b><small>음악 비트에 맞춰 왼발·오른발!<br>홀드로 언덕을 넘고, 동시 탭으로 점프하는 리듬 게임</small></div>
     <div class="mode" id="modeRace"><b class="mi">🏁</b><b>레이스</b><small>10명과 겨루는 전략 마라톤<br>드래프팅·급수·젤로 월드 메이저 정복</small></div>
@@ -316,6 +320,8 @@ function readSAI(){ const a=_pr.map(e=>getComputedStyle(e)); SAI.t=Math.max(pars
 readSAI(); addEventListener('resize',readSAI); setTimeout(readSAI,500); setTimeout(readSAI,2000);
 const rand=(a,b)=>a+Math.random()*(b-a);
 const pick=a=>a[Math.floor(Math.random()*a.length)];
+const racesN=()=>parseInt(localStorage.getItem('mv2_races')||'0')||0;   // 완주한 레이스 수 — 화면 공개 단계 기준
+let tut=null, tutReq=false, titleFull=false;   // 🎓 튜토리얼 레이스 상태
 const store={ get:(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:v;}catch(e){return d;}}, set:(k,v)=>{try{localStorage.setItem(k,String(v));}catch(e){}} };
 const rr=(x,y,w,h,r)=>{ ctx.beginPath(); if(ctx.roundRect)ctx.roundRect(x,y,w,h,r); else ctx.rect(x,y,w,h); };
 
@@ -545,7 +551,9 @@ function update(dt){
   const sk=Math.floor(km/5)*5;
   if(sk>st.lastSplit&&sk>0){ st.lastSplit=sk; const tt=raceT*TIME_K, prev=st.splits[st.splits.length-1], rk=rank();
     const segPace=(tt-(prev?prev.t:0))/(sk-(prev?prev.km:0)), dRk=prev?prev.rk-rk:0; st.splits.push({km:sk,t:tt,rk});
-    splitCard={km:sk,t:tt,pace:segPace,rk,dRk,age:0}; chime();
+    const ex=[]; { const gp=ghostPos(raceT); if(gp!=null&&gp<TRACK){ const ds=Math.round((P.pos-gp)/Math.max(P.speed,60)*TIME_K); ex.push("👻 PB "+(ds>=0?ds+"초 앞":(-ds)+"초 뒤")); }
+      if(goalV>0){ const d=tt-goalV*(P.pos/TRACK); ex.push("🎯 "+GOALS.find(g=>g.v===goalV).n+" "+(d<=0?fmtMS(d)+" 여유":fmtMS(d)+" 늦음")); } }
+    splitCard={km:sk,t:tt,pace:segPace,rk,dRk,age:0,extra:ex.join("  ·  ")}; chime();
     const hh=Math.floor(tt/3600), mm=Math.floor(tt%3600/60), ss=Math.floor(tt%60);
     say2(sk+"킬로미터. "+(hh?hh+"시간 ":"")+mm+"분 "+ss+"초. 현재 "+rk+"위."); }
 
@@ -609,7 +617,7 @@ function update(dt){
     if(g<BODY&&P.speed>ahead.speed*0.97){ P.pos=ahead.pos-BODY; P.speed=ahead.speed*0.92;
       P.blocked=true;
       if(raceT-P.lastBump>1.4){ P.lastBump=raceT; st.bumps++; st.streak=0; shake=5; sfx.bump(); buzz(30);
-        pop(hint.bump?"💥 막혔다!":"💥 막혔다! ▲▼ 레인 바꿔 추월",'#ff5d6c'); hint.bump=1; } } }
+        if(!(tut&&!tut.done&&tut.step<2)){ pop(hint.bump?"💥 막혔다!":"💥 막혔다! ▲▼ 레인 바꿔 추월",'#ff5d6c'); hint.bump=1; } } } }
   const prevPh=P.phase; P.phase+=dt*(P.speed/100)*20;
   if(Math.floor(prevPh/7)!==Math.floor(P.phase/7)) stepSnd();
   if((P.hr>165||wallFx>0.5)&&raceT-lastHeart>60/P.hr*1.0){ lastHeart=raceT; heartSnd(); }
@@ -631,7 +639,7 @@ function update(dt){
 
   // --- 라이벌 ---
   for(const r of R){
-    const rp=clamp(r.pos/TRACK,0,1); let rt=r.f(rp,raceT)*course.diff;
+    const rp=clamp(r.pos/TRACK,0,1); let rt=r.f(rp,raceT)*course.diff*(tut?0.94:1);
     if(r.fin) rt=60;
     const d=r.pos-P.pos;
     if(!r.fin){ if(d>650)rt*=0.94; else if(d<-650)rt*=1.05; }     // 고무줄: 너무 벌어지지 않게
@@ -684,6 +692,16 @@ function update(dt){
   if(P.pos>=TRACK){ finFx={t0:performance.now()}; crowdLevel(0); busFreq(20000); breathSnd(); heartSnd();
     setTimeout(()=>{ crowdLevel(0.16); if(actx&&sndOn) sfx.fever(); buzz([80,60,120]); },1300); setTimeout(()=>crowdLevel(0),4600);
     if(!tapeBy||(tapeBy!==P&&tapeBy.finT===raceT&&tapeBy.pos<=P.pos&&!finOrder.some(r=>r.finT<raceT))){ tapeBy=P; pop("🎀 테이프 컷!! 우승!!",'#ff3b6b',true); shake=12; burst(W*0.3,laneFoot(P.laneF)-60,'#ff3b6b',30,7); } finish(); }
+  // 🎓 튜토리얼: 실제로 해내야 다음 단계로
+  if(tut&&!tut.done){ tut.t+=dt; const S=tut.step; let ok=false;
+    if(S===0){ if(holding()) tut.hold+=dt; ok=tut.hold>=1.2; }
+    else if(S===1){ tut.rel=holding()?0:tut.rel+dt; ok=tut.rel>=1.0; }
+    else if(S===2){ ok=P.lane!==tut.lane0; }
+    else if(S===3){ if(P.draft) tut.draftT+=dt; ok=tut.draftT>=0.8||tut.t>14; }
+    else if(S===4){ const ns=stations.find(x=>x.pos>P.pos-120); ok=st.water>tut.w0||st.miss>tut.m0||!ns||P.pos>ns.pos+120; }
+    else if(S===5){ ok=st.gels>0||(P.stam<45&&tut.t>3)||tut.t>12; }
+    if(ok){ tut.step++; tut.t=0; tut.flashT=raceT; tut.w0=st.water; tut.m0=st.miss; sfx.pass(); buzz(30);
+      if(tut.step>=6){ tut.done=true; pop("🎉 조작 끝! 이제 진짜 레이스 — 벽을 넘고 골인하자",'#ff6f9c',true); } } }
   if(raceT>0.5&&!hint.hold){ hint.hold=1; pop("👆 꾹 누르면 가속!",'#2b3a4a'); }
   if(raceT>6&&!hint.lane){ hint.lane=1; pop("↕️ 스와이프로 레인 변경",'#2b3a4a'); }
   if(P.stam<35&&P.gels>0&&!hint.gel&&!P.tired){ hint.gel=1; pop("⚡ 체력 부족! 오른쪽 아래 파워젤",'#ff9f1c'); }
@@ -874,12 +892,13 @@ function hud(p,wall,kick){
   ctx.textAlign="right"; ctx.font="900 20px sans-serif"; ctx.strokeText((p*KM).toFixed(1)+" km",W-14,top+22); ctx.fillText((p*KM).toFixed(1)+" km",W-14,top+22);
   ctx.font="bold 14px sans-serif"; ctx.fillStyle="#2b3a4a"; ctx.fillText(fmtClock(raceT*TIME_K),W-14,top+40);
   // 미니맵 + 고도 그래프
+  const vet=racesN()>=3&&!tut;   // 숙련자에게만 보조 정보(고도·날씨·심박·페이스) 상시 표시
   const mx=16, mw=W-32, my=top+66;
-  ctx.fillStyle="#ffffffcc"; rr(mx-6,my-24,mw+12,34,10); ctx.fill();
-  const emin=Math.min(...elev), emax=Math.max(...elev), er=Math.max(1,emax-emin);
+  ctx.fillStyle="#ffffffcc"; rr(mx-6,my-(vet?24:12),mw+12,vet?34:22,10); ctx.fill();
+  if(vet){ const emin=Math.min(...elev), emax=Math.max(...elev), er=Math.max(1,emax-emin);
   ctx.beginPath(); ctx.moveTo(mx,my-2);
   elev.forEach((e,i)=>ctx.lineTo(mx+mw*i/(elev.length-1),my-4-(e-emin)/er*14)); ctx.lineTo(mx+mw,my-2); ctx.closePath();
-  ctx.fillStyle="#c9e3c066"; ctx.fill(); ctx.strokeStyle="#7aa86a"; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.fillStyle="#c9e3c066"; ctx.fill(); ctx.strokeStyle="#7aa86a"; ctx.lineWidth=1.5; ctx.stroke(); }
   ctx.fillStyle="#e3eaf2"; ctx.fillRect(mx,my-2,mw,4);
   ctx.fillStyle="#c0303a55"; ctx.fillRect(mx+mw*WALL_P,my-3,mw*(KICK_P-WALL_P),6);
   ctx.fillStyle="#ff6a0066"; ctx.fillRect(mx+mw*KICK_P,my-3,mw*(1-KICK_P),6);
@@ -892,8 +911,9 @@ function hud(p,wall,kick){
   const nx=R.filter(r=>r.pos>P.pos).sort((a,b)=>a.pos-b.pos)[0];
   ctx.font="bold 13px sans-serif"; ctx.fillStyle="#2b3a4a"; ctx.textAlign="center";
   const terr=gr>0?"⛰️ 업힐":gr<0?"⬇️ 다운힐":"🛣️ 평지";
-  if(state==='race') ctx.fillText(terr+(nx?"  ·  다음 목표 "+nx.n+" "+Math.round(toKm(nx.pos-P.pos)*1000)+"m":"  ·  선두!"),W/2,top+98);
-  if(state==='race'){ const gp=ghostPos(raceT); let line=WEATHER[weather].ic+" "+WEATHER[weather].n+(windAt(P.pos)?" · 맞바람!":"")+(daily?" · 🗓️ 오늘의 레이스":"");
+  if(state==='race'){ const nxm=nx?Math.round(toKm(nx.pos-P.pos)*1000):0; const parts=[]; if(gr!==0||vet)parts.push(terr); if(!nx)parts.push("선두!"); else if(vet||nxm<=400)parts.push("다음 목표 "+nx.n+" "+nxm+"m");
+    if(parts.length) ctx.fillText(parts.join("  ·  "),W/2,top+98); }
+  if(state==='race'&&(vet||windAt(P.pos))){ const gp=ghostPos(raceT); let line=WEATHER[weather].ic+" "+WEATHER[weather].n+(windAt(P.pos)?" · 맞바람!":"")+(daily?" · 🗓️ 오늘의 레이스":"");
     if(gp!=null&&gp<TRACK){ const ds=Math.round((P.pos-gp)/Math.max(P.speed,60)*TIME_K); line+="  ·  👻 PB "+(ds>=0?"보다 "+ds+"초 앞":"보다 "+(-ds)+"초 뒤"); }
     if(goalV>0){ const exp=goalV*Math.max(0.0001,P.pos/TRACK), d=raceT*TIME_K-exp; line+="  ·  🎯 "+GOALS.find(g=>g.v===goalV).n+" "+(d<=0?fmtMS(d)+" 여유":fmtMS(d)+" 늦음"); }
     ctx.font="bold 12px sans-serif"; ctx.fillStyle="#3a4a5a"; ctx.fillText(line,W/2,top+116); }
@@ -911,8 +931,8 @@ function hud(p,wall,kick){
   ctx.fillText("체력 "+Math.round(P.stam)+"%",bx,by-7); ctx.textAlign="right"; ctx.fillText(stTxt,bx+bw,by-7);
   const beat=Math.abs(Math.sin(raceT*Math.PI*P.hr/60));
   ctx.textAlign="left"; ctx.font="bold 13px sans-serif"; ctx.fillStyle=P.hr>175?"#ff6b7a":P.hr>160?"#ffb35c":"#cfe3f5";
-  ctx.fillText((beat>0.6?"❤️":"♥️")+" "+Math.round(P.hr)+" bpm",bx,by+36);
-  if(state==='race'){ const fp=P.high>0?100:Math.min(99,Math.round(P.flow/(FLOW_NEED*(TRACK>10000?1.4:1))*100)); ctx.save(); ctx.textAlign="center"; ctx.fillStyle=P.high>0?"#e2c8ff":fp>50?"#c9a6ff":"#8fa3b8"; ctx.fillText("✨ 몰입 "+fp+"%",bx+bw/2,by+36); ctx.restore(); }
+  if(vet||P.hr>168||wall) ctx.fillText((beat>0.6?"❤️":"♥️")+" "+Math.round(P.hr)+" bpm",bx,by+36);
+  if(state==='race'){ const fp=P.high>0?100:Math.min(99,Math.round(P.flow/(FLOW_NEED*(TRACK>10000?1.4:1))*100)); if(vet||fp>=40||P.high>0){ ctx.save(); ctx.textAlign="center"; ctx.fillStyle=P.high>0?"#e2c8ff":fp>50?"#c9a6ff":"#8fa3b8"; ctx.fillText("✨ 몰입 "+fp+"%",bx+bw/2,by+36); ctx.restore(); } }
   // 🧱 포기 유혹
   if(state==='race'&&wall&&!P.sw&&P.tired){ ctx.save(); ctx.globalAlpha=0.55+0.25*Math.sin(raceT*3); ctx.fillStyle="#fff"; ctx.font="italic 900 20px sans-serif"; ctx.textAlign="center"; ctx.fillText("…멈추고 싶다. 그래도 한 발만 더",W/2,roadTop()+laneH()*1.5); ctx.restore(); }
   // 🏁 골인 순간: 섬광 → 정적 속 기록 공개
@@ -924,9 +944,9 @@ function hud(p,wall,kick){
     ctx.restore(); }
   ctx.textAlign="right"; ctx.fillStyle="#cfe3f5";
   const pace=P.speed>1?TIME_K/toKm(P.speed)/60:0;  // 표시 페이스(분/km): 표시시간 ÷ 표시거리
-  ctx.fillText("페이스 "+(pace>0&&pace<20?fmtPace(Math.round(pace*60)):"--")+"/km",bx+bw,by+36);
+  if(vet) ctx.fillText("페이스 "+(pace>0&&pace<20?fmtPace(Math.round(pace*60)):"--")+"/km",bx+bw,by+36);
   ctx.textAlign="center"; ctx.font="12px sans-serif"; ctx.fillStyle="#ffffff80";
-  ctx.fillText("꾹 = 가속 · ↕ = 레인 · ⚡ = 젤",bx+bw/2,by+60);
+  if(!tut&&racesN()<6) ctx.fillText("꾹 = 가속 · ↕ = 레인 · ⚡ = 젤",bx+bw/2,by+60);
 
   pops.forEach((q,i)=>{ const a=q.t<0.15?q.t/0.15:q.t>1.1?1-(q.t-1.1)/0.4:1; ctx.globalAlpha=clamp(a,0,1);
     ctx.font=(q.big?"900 28px":"900 19px")+" sans-serif"; ctx.textAlign="center"; ctx.lineWidth=5; ctx.strokeStyle="#fff";
@@ -937,12 +957,19 @@ function hud(p,wall,kick){
     ctx.fillStyle="#fff"; ctx.textAlign="center"; ctx.font="900 26px sans-serif"; ctx.fillText(banner.title,W/2,y);
     ctx.font="bold 14px sans-serif"; ctx.fillText(banner.sub,W/2,y+20); ctx.globalAlpha=1; }
   // 📍 5km 스플릿 카드 (러닝 앱 알림처럼 위에서 내려옴)
-  if(splitCard){ const c=splitCard, a=c.age<0.3?c.age/0.3:c.age>2.8?1-(c.age-2.8)/0.4:1, y=top+122+(1-Math.min(1,c.age/0.3))*-20;
-    ctx.save(); ctx.globalAlpha=clamp(a,0,1); ctx.fillStyle="#1f2a37ee"; rr(16,y,W-32,64,16); ctx.fill();
+  // 🎓 튜토리얼 카드
+  if(tut&&state==='race'&&(!tut.done||raceT-tut.flashT<0.8)){ const TXT=["👆 화면 아무 곳이나 꾹 눌러 가속해요","✋ 손을 떼면 체력이 회복돼요 — 1초만 쉬어요","↕️ 위/아래로 쓸어 레인을 바꿔요 (▲▼ 버튼도 OK)","🌀 앞사람 바로 뒤에 붙어요 — 바람을 피해 회복 2배","💧 급수대는 바깥 레인에서 천천히 — 그래야 컵을 잡아요","⚡ 체력이 떨어지면 오른쪽 아래 파워젤!"];
+    const y=top+122, flash=raceT-tut.flashT<0.8; ctx.save(); ctx.fillStyle=flash?"#2a9d55ee":"#1f2a37ee"; rr(16,y,W-32,64,16); ctx.fill();
+    ctx.fillStyle="#ffd23f"; ctx.font="900 12px sans-serif"; ctx.textAlign="left"; ctx.fillText(flash?"✅ 좋아요!":"튜토리얼 "+(tut.step+1)+"/6",30,y+20);
+    ctx.fillStyle="#fff"; ctx.font="900 14px sans-serif"; ctx.fillText(flash?(tut.done?"조작 끝! 이제 진짜 레이스":"다음 단계로"):TXT[tut.step],30,y+42);
+    const pr=tut.step===0?tut.hold/1.2:tut.step===1?tut.rel/1.0:tut.step===3?tut.draftT/0.8:-1; if(pr>=0&&!flash){ ctx.fillStyle="#ffffff33"; rr(30,y+50,W-92,6,3); ctx.fill(); ctx.fillStyle="#7dffa8"; rr(30,y+50,(W-92)*Math.min(1,pr),6,3); ctx.fill(); } ctx.restore(); }
+  if(splitCard&&!(tut&&!tut.done)){ const c=splitCard, a=c.age<0.3?c.age/0.3:c.age>2.8?1-(c.age-2.8)/0.4:1, y=top+122+(1-Math.min(1,c.age/0.3))*-20;
+    ctx.save(); ctx.globalAlpha=clamp(a,0,1); ctx.fillStyle="#1f2a37ee"; rr(16,y,W-32,c.extra?84:64,16); ctx.fill();
     ctx.fillStyle="#ffd23f"; ctx.font="900 26px sans-serif"; ctx.textAlign="left"; ctx.fillText(c.km+" km",30,y+30);
     ctx.fillStyle="#fff"; ctx.textAlign="right"; ctx.font="900 24px sans-serif"; ctx.fillText(fmtClock(c.t),W-30,y+30);
     ctx.font="bold 13px sans-serif"; ctx.fillStyle="#cfe3f5"; ctx.textAlign="left"; ctx.fillText("구간 "+fmtPace(c.pace)+"/km",30,y+52);
-    ctx.textAlign="right"; ctx.fillStyle=c.dRk>0?"#7dffa8":c.dRk<0?"#ff8a96":"#cfe3f5"; ctx.fillText(c.rk+"위"+(c.dRk>0?" ▲"+c.dRk:c.dRk<0?" ▼"+(-c.dRk):""),W-30,y+52); ctx.restore(); }
+    ctx.textAlign="right"; ctx.fillStyle=c.dRk>0?"#7dffa8":c.dRk<0?"#ff8a96":"#cfe3f5"; ctx.fillText(c.rk+"위"+(c.dRk>0?" ▲"+c.dRk:c.dRk<0?" ▼"+(-c.dRk):""),W-30,y+52);
+    if(c.extra){ ctx.textAlign="left"; ctx.fillStyle="#ffe9a8"; ctx.font="bold 13px sans-serif"; ctx.fillText(c.extra,30,y+72); } ctx.restore(); }
   // 🏁 남은 거리 카운트다운 (40km 이후)
   if(state==='race'&&kick){ const left=Math.max(0,Math.round(toKm(TRACK-P.pos)*1000)), last=left<=200;
     ctx.save(); ctx.textAlign="center"; ctx.lineWidth=6; ctx.strokeStyle="#fff"; ctx.font="900 "+(last?34:24)+"px sans-serif"; ctx.fillStyle=last?"#ff3b6b":"#c2410c";
@@ -998,7 +1025,10 @@ function startRace(isDaily){ audio(); daily=!!isDaily;
   const L=daily?LENS.quick:(LENS[raceLen]||LENS.quick); TRACK=L.track; TIME_K=L.k;
   if(daily){ const d=dailySetup(); course=d.c; weather=d.w; rng=seeded(daySeed()); }
   else { course=COURSES[selIdx]; weather=course.w; rng=Math.random; }
+  if(tutReq){ course=COURSES[0]; weather='clear'; }
   newRace(); rng=Math.random; state='count'; countT=3; sfx.count();
+  tut=tutReq?{step:0,t:0,hold:0,rel:0,lane0:P.lane,draftT:0,w0:0,m0:0,flashT:-9,done:false}:null; tutReq=false;
+  if(tut){ hint.hold=hint.lane=hint.gel=hint.draft=1; }   // 튜토리얼 카드가 대신 안내
   if(weather!=='clear') setTimeout(()=>{ if(state==='count'||state==='race') pop(WEATHER[weather].ic+" 오늘 날씨: "+WEATHER[weather].n+(weather==='heat'?" — 급수 필수!":weather==='rain'?" — 물웅덩이 조심":" — 드래프팅이 생명"),'#2b3a4a'); },400);
   mode='race'; ["title","rmenu","rresult","menu","result","train","cert","pause"].forEach(id=>$(id).style.display="none"); $("laneBtns").style.display="flex"; $("gelBtn").style.display="flex"; $("pauseBtn").style.display="flex"; }
 // 📖 나의 레이스: 기록을 한 편의 이야기로
@@ -1035,6 +1065,7 @@ function finish(){
     if(course.major&&finsOf(id)===1) msg.push("🌟 메이저 완주 메달 획득! ("+majorDone()+"/6)");
     if(prevMajors<6&&majorDone()>=6){ earned+=300; msg.unshift("🏅🏅 식스스타 피니셔 달성!! +300🪙"); }
   }
+  if(tut) msg.push("🎓 첫 레이스 완주! 이제 리듬 런·업적·꾸미기가 열렸어요");
   const goalHit=goalV>0&&time<=goalV, gName=goalV>0?GOALS.find(g=>g.v===goalV).n:'';
   if(goalV>0){ if(goalHit){ msg.unshift("🎯 목표 "+gName+" 달성!! (+15🪙)"); earned+=15; } else msg.unshift("🎯 목표 "+gName+"까지 "+fmtMS(time-goalV)+" 모자랐어요"+(time-goalV<120?" — 아깝다!":"")); }
   $("rStory").innerHTML='<b class="t">📖 나의 레이스</b>'+raceStory(time,goalHit,gName);
@@ -1116,6 +1147,8 @@ function showMenu(){ mode='race'; state='menu'; slowmo=false; crowdLevel(0); bus
   course=COURSES[selIdx]; weather='clear'; renderCourses(); renderMedals(); renderDaily(); renderRaceOpts();
   const total=COURSES.reduce((a,c)=>a+starsOf(c.id),0);
   $("howBox").style.display=total>0?"none":"grid";
+  { const n=racesN(); $("dailyBtn").parentElement.style.display=n>=2?'flex':'none'; $("lenRow").style.display=n>=3?'flex':'none'; $("goalRow").style.display=n>=3?'flex':'none'; $("medals").style.display=n>=1?'block':'none';
+    if(n<3){ $("menuMeta").insertAdjacentHTML('afterbegin','<div style="font-size:12px;color:#8aa0b4;font-weight:400">'+(n<1?'완주하면 훈련·오늘의 레이스·메이저 코스가 열려요':n<2?'한 번 더 완주하면 훈련과 오늘의 레이스가 열려요':'세 번째 완주부터 목표 기록·풀코스를 고를 수 있어요')+'</div>'); } }
   $("menuMeta").innerHTML="🪙 "+coins+" · ⭐ "+total+"/"+(COURSES.length*3)+'<div style="font-size:11px;color:#8aa0b4;font-weight:400">v3.2 · 레이스</div>'; }
 $("startBtn").addEventListener("click",()=>startRace(false));
 $("dailyBtn").addEventListener("click",()=>startRace(true));
@@ -1382,6 +1415,9 @@ function rFinish(){ if(!rs||rs.finished)return; rs.finished=true; const song=rs.
 function hideAll(){ ["title","menu","rmenu","rresult","result","train","cert","pause","achv","shop","settings"].forEach(id=>$(id).style.display="none");
   $("laneBtns").style.display="none"; $("gelBtn").style.display="none"; $("pauseBtn").style.display="none"; }
 function showTitle(){ if(rs&&rs.clock==='audio'&&actx&&actx.state==='suspended') actx.resume(); mode='title'; state='menu'; slowmo=false; bgmOn=false; rs=null; crowdLevel(0); busFreq(20000); hideAll(); $("title").style.display="flex";
+  const fresh=racesN()===0&&(parseInt(store.get('mv2_rplays','0'))||0)===0&&!titleFull;
+  $("hero").style.display=fresh?'flex':'none'; document.querySelector('.modes').style.display=fresh?'none':'flex'; document.querySelector('.row3').style.display=fresh?'none':'flex';
+  $("titleSub").textContent=fresh?"42.195km, 첫 완주를 함께해요":"오늘은 어떻게 달려볼까요?";
   const raceStar=COURSES.reduce((a,c)=>a+starsOf(c.id),0), rStar=SONGS.reduce((a,s)=>a+rStars(s.id),0);
   $("titleMeta").innerHTML="🪙 "+coins+" &nbsp;·&nbsp; 🎵 ⭐"+rStar+"/"+(SONGS.length*3)+" &nbsp;·&nbsp; 🏁 ⭐"+raceStar+"/"+(COURSES.length*3)+'<div style="font-size:11px;color:#8aa0b4;font-weight:400;margin-top:4px">v3.2 · 리듬 런 + 레이스</div>'; }
 function showRMenu(){ mode='rmenu'; state='menu'; rs=null; hideAll(); $("rmenu").style.display="flex"; if(!rUnlocked(rSel))rSel=0; renderSongs(); }
@@ -1394,6 +1430,8 @@ function renderSongs(){
   $("rmeta").innerHTML="🪙 "+coins+" · 리듬에서 번 코인은 레이스 훈련에도 쓸 수 있어요";
 }
 $("modeRhythm").addEventListener("click",()=>{ audio(); showRMenu(); });
+$("heroStart").addEventListener("click",()=>{ audio(); selIdx=0; raceLen='quick'; goalV=0; tutReq=true; startRace(false); });
+$("heroMore").addEventListener("click",()=>{ titleFull=true; showTitle(); });
 $("modeRace").addEventListener("click",()=>{ audio(); showMenu(); });
 $("backTitle1").addEventListener("click",showTitle);
 $("backTitle2").addEventListener("click",showTitle);
