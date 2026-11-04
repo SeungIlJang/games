@@ -112,6 +112,15 @@
   .fbox{background:#f3ecff;border:2px solid #c9a6ff;border-radius:14px;padding:8px 14px;font-weight:800;color:#5b2bb5;max-width:340px;}
   #chalIn,#sendTxt{width:100%;max-width:340px;border:2px solid #e3eaf2;border-radius:12px;padding:10px;font-size:13px;font-family:monospace;user-select:text;-webkit-user-select:text;resize:none;}
   #sendOv,#chal{z-index:12;}
+  .season{width:100%;max-width:360px;background:#fff;border:3px solid #ffd23f;border-radius:18px;padding:12px 14px;text-align:left;box-shadow:0 6px 18px #ffb30033;}
+  .season .hd{font-size:12px;font-weight:900;color:#c98a00;}
+  .season .tg{font-size:18px;font-weight:900;margin:2px 0 8px;}
+  .season .wk{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;padding:5px 0;border-top:1px dashed #e3eaf2;}
+  .season .wk span{flex:1;}
+  .season .wk button{border:none;border-radius:10px;padding:7px 10px;font-weight:900;font-size:12px;background:#9a5cff;color:#fff;cursor:pointer;}
+  .season .wk.ok{color:#2a9d55;}
+  .season .cond{font-size:12px;font-weight:800;color:#5f7186;margin:6px 0;}
+  .season .go{width:100%;border:none;border-radius:14px;padding:11px;font-size:16px;font-weight:900;color:#fff;background:linear-gradient(135deg,#ff8fb4,#ff6f9c);cursor:pointer;}
 </style>
 </head>
 <body>
@@ -138,13 +147,13 @@
 <div class="ov" id="title">
   <h1 style="font-size:34px">🏃 모두의 마라톤</h1>
   <p id="titleSub">오늘은 어떻게 달려볼까요?</p>
-  <div style="font-size:11px;opacity:.6;margin-top:-4px">v3.9 · PB 결과·도전장(튜토리얼·HUD 다이어트)</div>
+  <div style="font-size:11px;opacity:.6;margin-top:-4px">v4.0 · 시즌·훈련(튜토리얼·HUD 다이어트)</div>
   <div id="hero" style="display:none;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:360px">
     <div class="mode" id="heroStart" style="background:linear-gradient(135deg,#ffffff,#ffe6ee);border-color:#ffb3cb;width:100%"><b class="mi">🏁</b><b>첫 레이스 시작</b><small>서울 코스에서 10명과 함께 달려요<br>조작은 달리면서 하나씩 알려드릴게요</small></div>
     <button class="pill" id="heroMore" style="flex:none;background:#eef3f8;color:var(--txt);box-shadow:none;padding:9px 18px;font-size:13px">먼저 둘러볼게요</button>
   </div>
   <div class="modes">
-    <div class="mode" id="modeRhythm"><b class="mi">🎵</b><b>리듬 런</b><small>음악 비트에 맞춰 왼발·오른발!<br>홀드로 언덕을 넘고, 동시 탭으로 점프하는 리듬 게임</small></div>
+    <div class="mode" id="modeRhythm"><b class="mi">🎵</b><b>훈련 · 리듬 런</b><small>음악 비트에 맞춰 인터벌·템포런!<br>클리어하면 💪 컨디션이 올라 다음 레이스가 편해져요</small></div>
     <div class="mode" id="modeRace"><b class="mi">🏁</b><b>레이스</b><small>10명과 겨루는 전략 마라톤<br>드래프팅·급수·젤로 월드 메이저 정복</small></div>
   </div>
   <div class="row3"><button class="mini" id="achBtn">🏅 업적</button><button class="mini" id="shopBtn">👕 꾸미기</button><button class="mini" id="setBtn">⚙️ 설정</button></div>
@@ -200,8 +209,8 @@
 
 <div class="ov" id="rmenu" style="display:none">
   <button class="back" id="backTitle2">← 처음으로</button>
-  <h1>🎵 리듬 런</h1>
-  <p>화면 <b>왼쪽 = 왼발</b>, <b>오른쪽 = 오른발</b>. 비트에 맞춰 밟고, ⛰️ 길게 누르고, 🦘 양쪽 동시에!</p>
+  <h1>🎵 훈련 · 리듬 런</h1>
+  <p>곡 하나가 훈련 한 번! 클리어하면 <b>💪 컨디션</b>이 올라 다음 레이스에서 회복↑·소모↓<br>화면 <b>왼쪽 = 왼발</b>, <b>오른쪽 = 오른발</b>. 비트에 맞춰 밟고, ⛰️ 길게 누르고, 🦘 양쪽 동시에!</p>
   <div class="courses" id="songs"></div>
   <div class="ofs"><button class="pill q" id="ofsDn">−</button><span id="ofsTxt">싱크 0ms</span><button class="pill q" id="ofsUp">+</button><button class="pill" id="spdBtn">⏩ 노트 속도 x1</button></div>
   <div class="meta" id="rmeta"></div>
@@ -217,6 +226,7 @@
   <div class="stats" id="rrStats"></div>
   <button class="btn" id="rrAgain">다시 하기 🔁</button>
   <button class="btn sub" id="rrMenu">곡 선택</button>
+  <button class="btn sub" id="rrRace">🏁 레이스로 — 컨디션 쓰러 가기</button>
 </div>
 
 <div class="ov" id="menu">
@@ -232,6 +242,7 @@
     <div><b class="i">⚡</b><span><b>파워젤</b> 버튼<br>먹고 3초 뒤 회복</span></div>
   </div>
   <div class="row2"><button class="pill" id="dailyBtn">🗓️ 오늘의 레이스</button><button class="pill" id="trainBtn">🏋️ 훈련<small>능력치 강화</small></button></div>
+  <div class="season" id="season" style="display:none"></div>
   <button class="pill" id="friendBtn" style="flex:none;width:100%;max-width:360px;background:linear-gradient(135deg,#a06bff,#7b3ff2)">👥 친구 도전장으로 달리기</button>
   <div id="medals"></div>
   <div class="chips" id="lenRow"></div>
@@ -624,8 +635,8 @@ function update(dt){
   if(P.high>0) tgt+=6;
   P.speed+=(tgt-P.speed)*Math.min(1,dt*(tgt>P.speed?(wallOn2?1.4:2.3):4.5));
   P.blocked=false;
-  if(sprint&&P.fever<=0&&!(P.high>0)) P.stam-=DRAIN*(1-0.04*upLv('end'))*hillDrain*wDrain*(kick?0.5:1)*(wallOn2?1.15:1)*dt;
-  else if(!sprint) P.stam+=(P.draft?REGEN_DRAFT:REGEN)*(1+0.06*upLv('rec'))*hillRegen*wRegen*(wallOn2?0.5:1)*dt;
+  if(sprint&&P.fever<=0&&!(P.high>0)) P.stam-=DRAIN*(1-0.04*upLv('end'))*(1-0.03*condC)*hillDrain*wDrain*(kick?0.5:1)*(wallOn2?1.15:1)*dt;
+  else if(!sprint) P.stam+=(P.draft?REGEN_DRAFT:REGEN)*(1+0.06*upLv('rec'))*(1+0.04*condC)*hillRegen*wRegen*(wallOn2?0.5:1)*dt;
   // 🌬️ 세컨드 윈드: 벽에서 퍼지지 않고 계속 달린 시간이 차면 숨이 트인다(버티는 사람에게만 온다)
   const lenF=TRACK/10000;
   if(wallOn2){ if(!P.tired&&P.speed>CRUISE*0.72&&!(P.cramp>0)) P.grit+=dt; else P.grit=Math.max(0,P.grit-dt*0.5);
@@ -1063,6 +1074,23 @@ function renderTrain(){
     if(coins<cost){ b.textContent="코인 부족"; setTimeout(renderTrain,700); return; }
     coins-=cost; store.set('mv2_coins',coins); store.set('mv2_up_'+id,lv+1); audio(); sfx.fever(); if(lv+1>=UPS.find(u=>u.id===id).max) ach('trainmax'); renderTrain(); });
 }
+// 🗓️ 시즌: 이번 주 대회(해금된 가장 앞 코스) + 훈련 2회(리듬 런) → 💪 컨디션 → 대회 완주 시 다음 주
+const WK={warm:'🧘 회복 조깅',river:'🐢 LSD 장거리',half:'🎯 템포런',interval:'⚡ 인터벌',full:'🏁 레이스 페이스런'};
+function seasonGet(){ let o=null; try{ o=JSON.parse(store.get('mv2_season','null')); }catch(e){} return Object.assign({wk:1,done:[],cond:0},o||{}); }
+function seasonSet(o){ store.set('mv2_season',JSON.stringify(o)); }
+function seasonTarget(){ let i=COURSES.length-1; while(i>0&&!unlocked(i)) i--; return i; }
+function seasonPlan(){ const S=seasonGet(); if(S.plan&&S.plan.length) return S.plan.map(id=>SONGS.findIndex(x=>x.id===id)).filter(i=>i>=0);
+  const u=SONGS.map((x,i)=>i).filter(i=>rUnlocked(i)).slice(-2); S.plan=u.map(i=>SONGS[i].id); seasonSet(S); return u; }   // 주차가 시작될 때 해금된 가장 어려운 곡 2개로 고정
+const condDots=c=>'●'.repeat(c)+'○'.repeat(3-c);
+function renderSeason(){ const el=$("season"); if(racesN()<1){ el.style.display='none'; return; } el.style.display='block';
+  const S=seasonGet(), ti=seasonTarget(), c=COURSES[ti], plan=seasonPlan();
+  let h='<div class="hd">🗓️ 시즌 '+S.wk+'주차 · 이번 주 대회</div><div class="tg">'+c.ic+' '+c.n+' '+WEATHER[c.w].ic+'</div>';
+  plan.forEach(i=>{ const sg=SONGS[i], ok=S.done.includes(sg.id); h+='<div class="wk'+(ok?' ok':'')+'"><span>'+(ok?'✅ ':'⬜ ')+WK[sg.id]+' <small style="color:#8aa0b4">('+sg.n+')</small></span>'+(ok?'':'<button data-tr="'+i+'">훈련하기</button>')+'</div>'; });
+  h+='<div class="cond">💪 컨디션 '+condDots(S.cond)+(S.cond?' — 다음 레이스 회복 +'+(S.cond*4)+'% · 소모 −'+(S.cond*3)+'%':' — 훈련하면 올라가요')+'</div>';
+  h+='<button class="go" id="seasonGo">🏁 대회 출전 — '+c.n+'</button>'; el.innerHTML=h;
+  el.querySelectorAll('[data-tr]').forEach(b=>b.onclick=()=>{ audio(); rSel=+b.dataset.tr; store.set('mv2_rsel',rSel); rStart(rSel); });
+  $("seasonGo").onclick=()=>{ selIdx=ti; store.set('mv2_course',ti); startRace(false); }; }
+let condC=0, seasonTi=-1;
 function renderRaceOpts(){
   $("lenRow").innerHTML='<span>길이</span>'+Object.keys(LENS).map(k=>'<button class="chip'+(raceLen===k?' on':'')+'" data-len="'+k+'">'+LENS[k].n+'</button>').join('');
   $("goalRow").innerHTML='<span>🎯 목표</span>'+GOALS.map(g=>'<button class="chip'+(goalV===g.v?' on':'')+'" data-goal="'+g.v+'">'+g.n+'</button>').join('');
@@ -1076,6 +1104,8 @@ function startRace(isDaily){ audio(); daily=!!isDaily;
   else { course=COURSES[selIdx]; weather=course.w; rng=Math.random; }
   if(tutReq){ course=COURSES[0]; weather='clear'; }
   newRace(); rng=Math.random; state='count'; countT=3; sfx.count();
+  condC=daily?0:seasonGet().cond; seasonTi=daily?-1:seasonTarget();
+  if(condC>0) setTimeout(()=>{ if(state==='count'||state==='race') pop("💪 컨디션 "+condDots(condC)+" — 훈련 덕분에 몸이 가볍다",'#2a9d55'); },3600);
   tut=tutReq?{step:0,t:0,hold:0,rel:0,lane0:P.lane,draftT:0,w0:0,m0:0,flashT:-9,done:false}:null; tutReq=false;
   if(tut){ hint.hold=hint.lane=hint.gel=hint.draft=1; }   // 튜토리얼 카드가 대신 안내
   if(weather!=='clear') setTimeout(()=>{ if(state==='count'||state==='race') pop(WEATHER[weather].ic+" 오늘 날씨: "+WEATHER[weather].n+(weather==='heat'?" — 급수 필수!":weather==='rain'?" — 물웅덩이 조심":" — 드래프팅이 생명"),'#2b3a4a'); },400);
@@ -1120,7 +1150,11 @@ function finish(){
     if(course.major&&finsOf(id)===1) msg.push("🌟 메이저 완주 메달 획득! ("+majorDone()+"/6)");
     if(prevMajors<6&&majorDone()>=6){ earned+=300; msg.unshift("🏅🏅 식스스타 피니셔 달성!! +300🪙"); }
   }
-  if(tut) msg.push("🎓 첫 레이스 완주! 이제 리듬 런·업적·꾸미기가 열렸어요");
+  if(tut) msg.push("🎓 첫 레이스 완주! 이제 훈련(리듬 런)·업적·꾸미기가 열렸어요");
+  if(!daily){ const S=seasonGet(); if(condC>0) S.cond=0;
+    if(COURSES.indexOf(course)===seasonTi){ S.wk++; S.done=[]; S.plan=null; const nt=seasonTarget();
+      msg.push("🗓️ 시즌 "+(S.wk-1)+"주차 대회 완주! 다음 주: "+COURSES[nt].ic+" "+COURSES[nt].n+(nt===seasonTi?" 재도전 — 3위 안에 들면(또는 3회 완주) 다음 코스가 열려요":"")); }
+    seasonSet(S); }
   const goalHit=goalV>0&&time<=goalV, gName=goalV>0?GOALS.find(g=>g.v===goalV).n:'';
   if(goalV>0){ if(goalHit){ msg.unshift("🎯 목표 "+gName+" 달성!! (+15🪙)"); earned+=15; } else msg.unshift("🎯 목표 "+gName+"까지 "+fmtMS(time-goalV)+" 모자랐어요"+(time-goalV<120?" — 아깝다!":"")); }
   $("rStory").innerHTML='<b class="t">📖 나의 레이스</b>'+raceStory(time,goalHit,gName);
@@ -1221,7 +1255,7 @@ $("sndTg").addEventListener("click",()=>{ sndOn=!sndOn; store.set('mv2_snd',sndO
 $("vibTg").addEventListener("click",()=>{ vibOn=!vibOn; store.set('mv2_vib',vibOn?'1':'0'); renderToggles(); });
 document.addEventListener("visibilitychange",()=>{ if(document.hidden){ if(mode==="rhythm")rPause(); else pauseGame(); } });
 function showMenu(){ mode='race'; state='menu'; slowmo=false; crowdLevel(0); busFreq(20000); bgmOn=false; $("pauseBtn").style.display="none"; ["title","rmenu","rresult","result","train","cert","pause","achv","shop","settings","chal","sendOv"].forEach(id=>$(id).style.display="none"); $("menu").style.display="flex"; $("laneBtns").style.display="none"; $("gelBtn").style.display="none";
-  course=COURSES[selIdx]; weather='clear'; renderCourses(); renderMedals(); renderDaily(); renderRaceOpts();
+  course=COURSES[selIdx]; weather='clear'; renderCourses(); renderMedals(); renderDaily(); renderRaceOpts(); renderSeason();
   const total=COURSES.reduce((a,c)=>a+starsOf(c.id),0);
   $("howBox").style.display=total>0?"none":"grid";
   { const n=racesN(); $("friendBtn").style.display=n>=1?'block':'none'; $("dailyBtn").parentElement.style.display=n>=2?'flex':'none'; $("lenRow").style.display=n>=3?'flex':'none'; $("goalRow").style.display=n>=3?'flex':'none'; $("medals").style.display=n>=1?'block':'none';
@@ -1474,6 +1508,10 @@ function rFinish(){ if(!rs||rs.finished)return; rs.finished=true; const song=rs.
   if(fail) msg.push("💡 MISS가 쌓이면 체력이 줄어요. 💧 급수 노트로 회복!");
   else if(rs.early+rs.late>8) msg.push(rs.early>rs.late*1.5?"💡 조금 빨리 누르는 편이에요 — 싱크를 − 로 조절해 보세요":rs.late>rs.early*1.5?"💡 조금 늦게 누르는 편이에요 — 싱크를 + 로 조절해 보세요":"");
   const earned=Math.round(rs.score/1500)+({S:30,A:20,B:12,C:8,D:5,F:2}[rank])+(fc?20:0); coins+=earned; store.set('mv2_coins',coins);
+  if(!fail){ const S=seasonGet(), add=1+(rank==='S'?1:0), before=S.cond; S.cond=Math.min(3,S.cond+add);
+    const plan=seasonPlan().map(i=>SONGS[i].id); if(plan.includes(id)&&!S.done.includes(id)) S.done.push(id); seasonSet(S);
+    msg.unshift("💪 "+WK[id]+" 완료! 컨디션 "+condDots(S.cond)+(S.cond>before?"":" (최대)")+" — 다음 레이스 회복 +"+(S.cond*4)+"%");
+    if(plan.every(x=>S.done.includes(x))) msg.push("✅ 이번 주 훈련 완료! 이제 대회에 나가 보세요"); }
   store.set('mv2_rplays',(parseInt(store.get('mv2_rplays','0'))||0)+1); if(!fail) addKm(song.km);
   const apNow=fc&&rs.cnt.G+rs.cnt.O===0, maxC=rs.maxCombo;
   { const A=[]; if(!fail){ A.push('rclear'); if(rank==='S')A.push('rs'); if(fc)A.push('rfc'); if(apNow)A.push('rap'); if(SONGS.every(x=>rStars(x.id)>=1))A.push('rall'); } if(maxC>=100)A.push('r100');
@@ -1500,11 +1538,11 @@ function showTitle(){ if(rs&&rs.clock==='audio'&&actx&&actx.state==='suspended')
 function showRMenu(){ mode='rmenu'; state='menu'; rs=null; hideAll(); $("rmenu").style.display="flex"; if(!rUnlocked(rSel))rSel=0; renderSongs(); }
 function renderSongs(){
   $("songs").innerHTML=SONGS.map((s,i)=>{ const lk=!rUnlocked(i), st=rStars(s.id), best=parseInt(store.get('mv2_rbest_'+s.id,'0'))||0, rk=store.get('mv2_rrank_'+s.id,'');
-    const sub=lk?SONGS[i-1].n+' 클리어로 해금':s.bpm+'BPM · 난이도 '+'●'.repeat(s.lv)+'○'.repeat(5-s.lv)+(best?' · 최고 '+rk+' '+best.toLocaleString():' · '+s.sub);
+    const sub=lk?SONGS[i-1].n+' 클리어로 해금':WK[s.id]+' · '+s.bpm+'BPM · '+'●'.repeat(s.lv)+'○'.repeat(5-s.lv)+(best?' · 최고 '+rk+' '+best.toLocaleString():' · '+s.sub);
     return '<div class="crs'+(i===rSel?' sel':'')+(lk?' lock':'')+'" data-i="'+i+'"><span class="ic">'+(lk?'🔒':s.ic)+'</span><span class="tx"><b>'+s.n+'</b><small>'+sub+'</small></span><span class="stars">'+'★'.repeat(st)+'☆'.repeat(3-st)+'</span></div>'; }).join("");
   $("songs").querySelectorAll(".crs").forEach(el=>el.onclick=()=>{ const i=+el.dataset.i; if(!rUnlocked(i))return; rSel=i; store.set('mv2_rsel',i); renderSongs(); });
   $("ofsTxt").textContent="싱크 "+(rOfs>0?"+":"")+rOfs+"ms"; $("spdBtn").textContent="⏩ 노트 속도 x"+rSpd.toFixed(2).replace(/0$/,"");
-  $("rmeta").innerHTML="🪙 "+coins+" · 리듬에서 번 코인은 레이스 훈련에도 쓸 수 있어요";
+  { const S=seasonGet(); $("rmeta").innerHTML="💪 컨디션 "+condDots(S.cond)+" · 🪙 "+coins+"<div style=\"font-size:12px;color:#8aa0b4;font-weight:400\">클리어 1회 = 컨디션 +1 (S랭크 +2) · 최대 3 · 다음 레이스에서 소진</div>"; }
 }
 $("modeRhythm").addEventListener("click",()=>{ audio(); showRMenu(); });
 $("heroStart").addEventListener("click",()=>{ audio(); selIdx=0; raceLen='quick'; goalV=0; tutReq=true; startRace(false); });
@@ -1515,6 +1553,7 @@ $("backTitle2").addEventListener("click",showTitle);
 $("rStart").addEventListener("click",()=>rStart(rSel));
 $("rrAgain").addEventListener("click",()=>rStart(rSel));
 $("rrMenu").addEventListener("click",showRMenu);
+$("rrRace").addEventListener("click",()=>{ audio(); showMenu(); });
 $("ofsDn").addEventListener("click",()=>{ rOfs=Math.max(-150,rOfs-10); store.set('mv2_rofs',rOfs); renderSongs(); });
 $("ofsUp").addEventListener("click",()=>{ rOfs=Math.min(150,rOfs+10); store.set('mv2_rofs',rOfs); renderSongs(); });
 $("spdBtn").addEventListener("click",()=>{ const o=[1,1.25,1.5,0.8]; rSpd=o[(o.indexOf(rSpd)+1)%o.length]; store.set('mv2_rspd',rSpd); renderSongs(); });
