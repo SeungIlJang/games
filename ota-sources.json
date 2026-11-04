@@ -1,5 +1,4 @@
 {
-<<<<<<< HEAD
     "linedefense":  {
                         "repo":  "share-tower-defense",
                         "commit":  "27fadd389f6f854ab92364b1bf52ad4f59bbcdd6",
@@ -8,9 +7,9 @@
                     },
     "monsteridle":  {
                         "repo":  "monster-idle",
-                        "commit":  "740faae5439690d726734cb8096199c35b016d6d",
+                        "commit":  "07019e655d74d95ed0ab74205c65784d5305c25a",
                         "dirty":  false,
-                        "builtAt":  "2026-11-04T05:22:33.880Z"
+                        "builtAt":  "2026-11-04T06:10:40.620Z"
                     },
     "toilet.html":  {
                         "repo":  "urgent-toilet-game",
@@ -19,24 +18,3 @@
                         "builtAt":  "2026-11-04T05:47:45.067Z"
                     }
 }
-=======
-  "linedefense": {
-    "repo": "share-tower-defense",
-    "commit": "27fadd389f6f854ab92364b1bf52ad4f59bbcdd6",
-    "dirty": false,
-    "builtAt": "2026-11-03T01:19:15.216Z"
-  },
-  "monsteridle": {
-    "repo": "monster-idle",
-    "commit": "07019e655d74d95ed0ab74205c65784d5305c25a",
-    "dirty": false,
-    "builtAt": "2026-11-04T06:10:40.620Z"
-  },
-  "toilet.html": {
-    "repo": "urgent-toilet-game",
-    "commit": "74ad215d6151b2b414d61393c82b548d95846761",
-    "dirty": false,
-    "builtAt": "2026-11-03T01:19:15.451Z"
-  }
-}
->>>>>>> 211cd11 (monsteridle: 환생 2판 — 주 1회 리듬 + 영혼 트리 (07019e6))
