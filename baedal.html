@@ -85,8 +85,8 @@
     🍔 <b>음식점</b>과 🏠 <b>집</b>이 <b>색깔·번호 짝</b>으로 놓여 있어요<br>
     👆 방문할 순서대로 탭 — <b style="color:#7cf6ff">같은 색 음식점을 먼저</b> 들러 픽업!<br>
     ❤️ <b>하트 3개</b> — 순서 실수·시간 초과·음식 식음마다 1개씩 잃어요<br>
-    🚫 <b>1~2단계</b>는 픽업 전 집이 아예 안 눌려요 (연습 구간)<br>
-    ⚠️ <b>3단계부터</b>는 눌리지만, 그대로 출발하면 💔 하트를 잃어요<br>
+    🚫 <b>1단계</b>는 픽업 전 집이 아예 안 눌려요 (연습 구간)<br>
+    ⚠️ <b>2단계부터</b>는 경고 없이 눌려요 — 순서가 틀리면 💔 하트를 잃어요<br>
     🔴 경로가 <b style="color:#ff6a7a">빨갛게 꼬이면</b> 돌아가는 길 = 음식이 식어요<br>
     🛵 <b>출발!</b> → 관전(화면 탭 = ⏩빨리감기)<br>
     ⭐ <b>최적 경로에 가까울수록</b> 별이 많아요 (별3 = 완벽)<br>
@@ -236,12 +236,6 @@ function showRunOver(){ runEnded=false;
   $('over').classList.add('hidden'); $('bar').classList.add('hidden');
   $('runover').classList.remove('hidden');
   tone(180,0.5,'sawtooth',0.1); vib([60,80,60]); }
-// 픽업 전에 들르는 집이 순서에 있으면 그 순번(1-based), 없으면 0
-function badHomeAt(){ const picked=new Set();
-  for(let k=0;k<order.length;k++){ const n=nodes[order[k]];
-    if(n.type==='shop') picked.add(n.pair);
-    else if(!picked.has(n.pair)) return k+1; }
-  return 0; }
 
 const HINT_COST=40;
 let hintsLeft=0, hintNode=-1, hintPulse=0;
@@ -256,14 +250,14 @@ let combo=0, bestCombo=+LS.get('baedal_combo',0)||0;
 // 3단계부터는 픽업 전 집도 찍을 수 있고, 그대로 출발하면 배달 실수로 하트를 잃는다.
 // 순서 실수 / 시간 초과 / 음식 식음 각각 하트 1개. 0이 되면 런 종료.
 // 단계와 코인은 유지되고, 끊기는 것은 연속 기록과 콤보 배수다.
-const MAX_HEARTS=3, STRICT_FROM=3;   // STRICT_FROM 단계부터 탭 차단 해제
+const MAX_HEARTS=3, STRICT_FROM=2;   // STRICT_FROM 단계부터 탭 차단 해제(= 1단계만 막는다)
 let hearts=+LS.get('baedal_hearts',MAX_HEARTS); if(!(hearts>=0&&hearts<=MAX_HEARTS)) hearts=MAX_HEARTS;   // 0 은 아래 런 종료 가드가 처리한다
 let runStages=+LS.get('baedal_runstages',0)||0, runCoins=+LS.get('baedal_runcoins',0)||0;
 let bestRun=+LS.get('baedal_bestrun',0)||0, reviveUsed=LS.get('baedal_revive','0')==='1';
 // 하트 0 으로 저장돼 있으면 런이 이미 끝난 상태다. 새 런으로 초기화한다.
 // (이걸 안 하면 새로고침만으로 광고 없이 연속 기록을 유지한 채 이어하기가 된다)
 if(hearts<=0){ hearts=MAX_HEARTS; runStages=0; runCoins=0; reviveUsed=false; }
-let runEnded=false, confirmedBad=false;
+let runEnded=false;
 let daily=false, dailyKey=0, dailyDone=false;
 let pairs=2, nodes=[], order=[], pickedSet=new Set(), start=null, optLen=0, optOrder=[], crossPairs=new Set();
 let greedyRatio=1, mistakeAt=0, lastMyOrder=[], lastStars=0, lastEff=0;
@@ -354,7 +348,7 @@ function updateCross(){ crossPairs=new Set(); const pts=[start,...order.map(i=>n
 
 function newStage(regen){ if(regen) genStage(); order=[]; pickedSet=new Set(); crossPairs=new Set(); scoot=null; parts=[]; runSpeed=1; state='plan';
   adUsedThisStage=false; dblUsedThisStage=false; mistakeAt=0; hintNode=-1; hintsLeft=upLv('sen');
-  runEnded=false; confirmedBad=false; $('runover').classList.add('hidden'); renderHearts();
+  runEnded=false; $('runover').classList.add('hidden'); renderHearts();
   $('timeAdBtn').style.display='none'; $('dblBtn').style.display='none'; $('ansClose').style.display='none';
   if(!daily && stage>bestStage){ bestStage=stage; LS.set('baedal_best',bestStage); }
   stageTime=planTimeFor(pairs); timeLeft=stageTime; lastTick=999; updateTimer();
@@ -391,25 +385,20 @@ addEventListener('pointerdown',e=>{
   }
   const nd=nodes[hit];
   const badHome = nd.type==='home' && !pickedSet.has(nd.pair);
-  if(badHome && !daily && stage<STRICT_FROM){   // 1~2단계는 규칙을 익히는 구간 — 아예 못 찍게 막는다
+  if(badHome && !daily && stage<STRICT_FROM){   // 1단계는 규칙을 익히는 구간 — 아예 못 찍게 막는다
     $('hint').textContent='🚫 '+PAIRFOOD[nd.pair]+' 같은 색 음식점을 먼저 들러야 해요!';
     tone(220,0.12,'sawtooth',0.07); vib([18,40,18]); shake=Math.max(shake,7); return; }
   order.push(hit); if(nd.type==='shop') pickedSet.add(nd.pair);
-  if(hintNode===hit) hintNode=-1; confirmedBad=false;
-  updateCross(); tone(badHome?300:(nd.type==='shop'?520:760),badHome?0.1:0.05,badHome?'sawtooth':'square',0.08);
-  vib(badHome?20:10); updateHUD(); refreshBtns();
-  if(badHome) $('hint').textContent='⚠️ 픽업 안 한 집! 이대로 출발하면 💔 하트를 잃어요';
-  else if(order.length===nodes.length) $('hint').textContent='🛵 출발!을 눌러 배달 시작';
+  if(hintNode===hit) hintNode=-1;
+  // 2단계부터는 잘못 골라도 알려주지 않는다. 소리·진동·문구를 정상 선택과 동일하게 두고,
+  // 틀렸다는 사실은 주행 중 배달 실수로 드러난다. (badHome 은 위 차단 판정에만 쓰인다)
+  updateCross(); tone(nd.type==='shop'?520:760,0.05,'square',0.08);
+  vib(10); updateHUD(); refreshBtns();
+  if(order.length===nodes.length) $('hint').textContent='🛵 출발!을 눌러 배달 시작';
   else $('hint').textContent = nd.type==='shop' ? ('📦 '+PAIRFOOD[nd.pair]+' 픽업! 다음 목적지는?') : '✅ 배달 완료! 다음 목적지는?';
 });
-$('resetBtn').onclick=()=>{ if(state!=='plan')return; order=[]; pickedSet=new Set(); crossPairs=new Set(); hintNode=-1; confirmedBad=false; tone(320,0.06,'sine',0.07); updateHUD(); refreshBtns(); $('hint').textContent='👆 같은 색 음식점→집 순서로 탭 (음식점 먼저!)'; };
-$('goBtn').onclick=()=>{ if(!(state==='plan'&&order.length===nodes.length)) return;
-  const bad=badHomeAt();
-  if(bad && !confirmedBad){ confirmedBad=true;
-    $('goBtn').textContent='⚠️ 그대로 출발';
-    $('hint').textContent='⚠️ '+bad+'번째가 아직 픽업 안 한 집이에요. 한 번 더 누르면 💔 하트를 잃습니다';
-    tone(260,0.14,'sawtooth',0.08); vib([25,50,25]); shake=Math.max(shake,8); return; }
-  startRun(); };
+$('resetBtn').onclick=()=>{ if(state!=='plan')return; order=[]; pickedSet=new Set(); crossPairs=new Set(); hintNode=-1; tone(320,0.06,'sine',0.07); updateHUD(); refreshBtns(); $('hint').textContent='👆 같은 색 음식점→집 순서로 탭 (음식점 먼저!)'; };
+$('goBtn').onclick=()=>{ if(state==='plan'&&order.length===nodes.length) startRun(); };
 $('navBtn').onclick=()=>{ if(state!=='plan'||order.length===nodes.length) return;
   if(hintsLeft<=0){ if(coin<HINT_COST){ flash('🪙 코인이 부족해요','#ff9a5a'); tone(200,0.14,'sine',0.08); return; } addCoin(-HINT_COST); }
   else hintsLeft--;
