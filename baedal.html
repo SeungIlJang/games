@@ -12,7 +12,9 @@
   #timer{font-size:22px;font-weight:900;color:#ffd34d;margin-top:3px;min-height:26px;letter-spacing:1px}
   #timer.warn{color:#ff5a6e;animation:tk .5s ease-in-out infinite}
   @keyframes tk{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
-  #hint{position:fixed;bottom:calc(150px + env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;z-index:3;font-size:15px;font-weight:800;color:#ffe;pointer-events:none;min-height:22px;text-shadow:0 2px 8px rgba(0,0,0,.6);padding:0 16px}
+  /* 힌트는 버튼 바 바로 위(8px)에 붙인다. 바 높이 53px + 바 하단여백(16 / 배너 72).
+     예전엔 화면 하단 기준 고정값이라, 배너가 있으면 필드 안으로 25px 들어가 플레이를 가렸다. */
+  #hint{position:fixed;bottom:calc(78px + env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;z-index:3;font-size:15px;font-weight:800;color:#ffe;pointer-events:none;min-height:22px;text-shadow:0 2px 8px rgba(0,0,0,.6);padding:0 16px}
   #bar{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:0;right:0;z-index:4;display:flex;gap:8px;justify-content:center;padding:0 12px}
   .btn{background:#ff7a3a;color:#fff;border:none;border-radius:16px;padding:14px 20px;font-size:17px;font-weight:800;box-shadow:0 5px 0 #c2521f;cursor:pointer}
   .btn.g{background:#2ec77a;box-shadow:0 5px 0 #1c8a52}
@@ -23,7 +25,7 @@
   .btn:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.4)}
   #ver{position:fixed;left:8px;bottom:calc(2px + env(safe-area-inset-bottom,0px));font-size:10px;color:#42506a;z-index:6}
   body.has-banner #bar{bottom:calc(72px + env(safe-area-inset-bottom,0px))}
-  body.has-banner #hint{bottom:calc(206px + env(safe-area-inset-bottom,0px))}
+  body.has-banner #hint{bottom:calc(134px + env(safe-area-inset-bottom,0px))}
   body.has-banner #start,body.has-banner #over,body.has-banner #shopUI{padding-bottom:calc(70px + env(safe-area-inset-bottom,0px))}
   .flash{position:fixed;left:50%;top:34%;transform:translateX(-50%);font-size:32px;font-weight:900;z-index:8;pointer-events:none;text-align:center;white-space:nowrap;animation:fl 1.1s ease-out forwards}
   @keyframes fl{0%{opacity:0;transform:translate(-50%,14px) scale(.7)}18%{opacity:1;transform:translate(-50%,-4px) scale(1.12)}100%{opacity:0;transform:translate(-50%,-60px) scale(1)}}
@@ -67,7 +69,7 @@
   <button class="btn y sm" id="navBtn">💡 힌트</button>
   <button class="btn g" id="goBtn" disabled>🛵 출발!</button>
 </div>
-<div id="ver">v0.8.1 · 아트 캐시 수정(최신 그림 바로 반영)</div>
+<div id="ver">v0.8.2 · 안내문구 자동 사라짐·플레이영역 안 가림</div>
 
 <div id="start">
   <img class="brand-art" src="assets/baedal/icon-a-192.png" alt="빨간 스쿠터 배달 라이더"/><h1>모두의 배달</h1>
@@ -237,6 +239,11 @@ function showRunOver(){ runEnded=false;
   $('runover').classList.remove('hidden');
   tone(180,0.5,'sawtooth',0.1); vib([60,80,60]); }
 
+let hintT=0;
+// 안내 문구 — ms 뒤 자동으로 지운다(0이면 유지). 다음 메시지가 오면 이전 타이머는 취소.
+function setHint(t,ms){ clearTimeout(hintT); $('hint').textContent=t;
+  if(ms) hintT=setTimeout(()=>{ if($('hint').textContent===t) $('hint').textContent=''; }, ms); }
+
 const HINT_COST=40;
 let hintsLeft=0, hintNode=-1, hintPulse=0;
 
@@ -353,7 +360,8 @@ function newStage(regen){ if(regen) genStage(); order=[]; pickedSet=new Set(); c
   if(!daily && stage>bestStage){ bestStage=stage; LS.set('baedal_best',bestStage); }
   stageTime=planTimeFor(pairs); timeLeft=stageTime; lastTick=999; updateTimer();
   $('over').classList.add('hidden'); $('bar').classList.remove('hidden'); updateHUD(); refreshBtns(); renderWallet();
-  $('hint').textContent='👆 같은 색 음식점→집 순서로 탭 (음식점 먼저!)';
+  // 조작법 안내는 익히는 구간에만, 그것도 4초만. 계속 띄워두면 판을 가린다
+  setHint(stage<=3||daily ? '👆 같은 색 음식점→집 순서로 탭 (음식점 먼저!)' : '', 4000);
   if(!daily && stage>1 && (stage-1)%3===0) setTimeout(()=>{ flash('🎉 새 동네! '+district().n,'#ffd34d'); chord(440); },250);
 }
 function updateTimer(){ const t=Math.max(0,Math.ceil(timeLeft)); const m=Math.floor(t/60), s=t%60; $('timer').textContent='⏱️ '+m+':'+(s<10?'0':'')+s; $('timer').classList.toggle('warn', timeLeft<=10 && state==='plan'); }
@@ -380,7 +388,7 @@ addEventListener('pointerdown',e=>{
   if(already>=0){ // 다시 누르면 취소 — 그 지점부터 이후 경로 리셋
     order=order.slice(0,already); pickedSet=new Set(); order.forEach(i=>{ if(nodes[i].type==='shop') pickedSet.add(nodes[i].pair); });
     hintNode=-1; updateCross(); tone(300,0.07,'sine',0.07); vib(14); updateHUD(); refreshBtns();
-    $('hint').textContent = order.length ? '↩️ 취소됨 · 이어서 탭하세요' : '👆 같은 색 음식점→집 순서로 탭 (음식점 먼저!)';
+    setHint(order.length ? '↩️ 취소됨 · 이어서 탭하세요' : (stage<=3||daily ? '👆 같은 색 음식점→집 순서로 탭 (음식점 먼저!)' : ''), 2500);
     return;
   }
   const nd=nodes[hit];
@@ -394,8 +402,8 @@ addEventListener('pointerdown',e=>{
   // 틀렸다는 사실은 주행 중 배달 실수로 드러난다. (badHome 은 위 차단 판정에만 쓰인다)
   updateCross(); tone(nd.type==='shop'?520:760,0.05,'square',0.08);
   vib(10); updateHUD(); refreshBtns();
-  if(order.length===nodes.length) $('hint').textContent='🛵 출발!을 눌러 배달 시작';
-  else $('hint').textContent = nd.type==='shop' ? ('📦 '+PAIRFOOD[nd.pair]+' 픽업! 다음 목적지는?') : '✅ 배달 완료! 다음 목적지는?';
+  if(order.length===nodes.length) setHint('🛵 출발!을 눌러 배달 시작',2500);
+  else setHint(nd.type==='shop' ? ('📦 '+PAIRFOOD[nd.pair]+' 픽업!') : '✅ 배달 완료!', 1500);
 });
 $('resetBtn').onclick=()=>{ if(state!=='plan')return; order=[]; pickedSet=new Set(); crossPairs=new Set(); hintNode=-1; tone(320,0.06,'sine',0.07); updateHUD(); refreshBtns(); $('hint').textContent='👆 같은 색 음식점→집 순서로 탭 (음식점 먼저!)'; };
 $('goBtn').onclick=()=>{ if(state==='plan'&&order.length===nodes.length) startRun(); };
