@@ -217,7 +217,7 @@
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <div class="deck-eyebrow">G A L L O G  /  F L I G H T  D E C K</div>
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v8.8</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v8.9</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko"  class="btn-sm">한국어</button>
       <button data-lang="en"  class="btn-sm">English</button>
@@ -883,12 +883,17 @@ let best=0; try{ best=parseInt(localStorage.getItem('ss_best')||'0')||0; }catch{
 // ---- 개발자 튜닝 (로고 클릭+비번 799879) ----
 const TUNE_DEFAULTS={ hpWall:0.4, startPow:0.35, awakenStart:15, awakenStep:15, levelHp:8, reviveXp:0.95, enemyHp:1.0, enemySpeed:1.0, camFollow:4, bossPow:1.0, bossGem:1.0, goldMul:1.0, bossMul:8, bossMulStep:0.1, weaponCap:10, rerollMax:2, eliteChance:0.025, eliteMax:1, eliteHp:4, eliteDmg:1.4, chestGold:120,
   champHp:2.0, champDmg:1.2, tankBlock:0.35, shardDmg:1.6, weaverDmg:0.45,
-  fuseLast:18, fuseMid:7, speedMax:0, difficulty:5 };
+  fuseLast:18, fuseMid:7, speedMax:0, difficulty:0 };
 let TUNE=Object.assign({},TUNE_DEFAULTS);
-try{ TUNE=Object.assign(TUNE, JSON.parse(localStorage.getItem('ss_tune')||'{}')); }catch(e){}
+// 저장값 버전. 올리면 기기에 남아 있던 '난이도 개별설정'이 지워져 모두가 다시 코드값(LIVE_DIFFICULTY)을 따른다.
+const TUNE_VER=2;
+try{ const sv=JSON.parse(localStorage.getItem('ss_tune')||'{}');
+  if(sv.__ver!==TUNE_VER) delete sv.difficulty;   // 구버전이 저장해 둔 난이도 고정값 제거
+  TUNE=Object.assign(TUNE, sv); TUNE.__ver=TUNE_VER;
+}catch(e){}
 function saveTune(){ try{ localStorage.setItem('ss_tune', JSON.stringify(TUNE)); }catch(e){} }
 const DEV_KNOBS=[
-  {k:'difficulty', name:'★ 난이도 (1~10)', step:1, min:1, max:10, hint:'기본5=현행. 체력·피해·속도를 한 번에 조절 — 1=연습 10=극한'},
+  {k:'difficulty', name:'★ 난이도 (0~10)', step:1, min:0, max:10, hint:'0=라이브값 따름(모두에게 적용된 값). 1~10은 이 기기에서만 임시 적용'},
   {k:'hpWall',     name:'체력벽 계수',      step:0.05, hint:'중반+ 적 체력↑ (기본0.4)'},
   {k:'startPow',   name:'시작강도 계수',    step:0.05, hint:'강화 많을수록 초반 강도 (기본0.35)'},
   {k:'enemyHp',    name:'적 체력 배수',      step:0.1,  hint:'전체 적 HP× (기본1.0)'},
@@ -928,9 +933,12 @@ function openDev(){
     row.appendChild(inp); box.appendChild(row);
   }
   // 패널 상단에 현재 난이도와 그 배수를 그대로 보여 준다 — 숫자만 보고는 체감이 안 온다
-  { const d=diffLevel(), S=diffScale(), st=document.getElementById('devDiffNow');
+  { const d=diffLevel(), ov=diffOverride(), S=diffScale(), st=document.getElementById('devDiffNow');
     if(st) st.innerHTML='현재 <b style="color:'+(d>5?'#ff8a5c':d<5?'#7fd4a8':'#9fe3ff')+'">난이도 '+d+' / 10</b>'
-      +'<div style="opacity:.65;font-size:12px;margin-top:3px;">적 체력 ×'+S.hp.toFixed(2)+' · 피해 ×'+S.dmg.toFixed(2)+' · 속도 ×'+S.spd.toFixed(2)+'</div>'; }
+      +' <span style="font-size:12px;color:'+(ov?'#ffb347':'#7fd4a8')+'">'
+      +(ov?'· 이 기기에서만 임시 적용':'· 라이브값('+LIVE_DIFFICULTY+') 따름 — 전 플레이어 동일')+'</span>'
+      +'<div style="opacity:.65;font-size:12px;margin-top:3px;">적 체력 ×'+S.hp.toFixed(2)+' · 피해 ×'+S.dmg.toFixed(2)+' · 속도 ×'+S.spd.toFixed(2)
+      +(ov?' · 0을 넣으면 라이브값으로 복귀':'')+'</div>'; }
   const gn=document.getElementById('devGoldNow'); if(gn) gn.textContent=(meta.gold||0).toLocaleString();
   document.getElementById('devPanel').classList.remove('hidden');
 }
@@ -1046,7 +1054,12 @@ function edgePos(){ // 무한 필드: 플레이어 주변, 화면 밖 링에서 
 //   난이도 1 → 체력 0.11× 피해 0.25× 속도 0.62×
 //   난이도 5 → 전부 1.00× (현행)
 //   난이도 10 → 체력 2.55× 피해 1.80× 속도 1.27×
-function diffLevel(){ return Math.max(1,Math.min(10, TUNE.difficulty!=null?TUNE.difficulty:5)); }
+// ★ 라이브 난이도 — 모든 플레이어 공통값. 이 숫자만 바꿔 배포(OTA)하면 전원에게 적용된다.
+//   TUNE은 localStorage(기기별)라 거기에 난이도를 두면 내 기기에서만 바뀐다.
+//   그래서 '전원 공통값'은 코드에, '내 기기 임시값'은 TUNE.difficulty(0=자동)에 따로 둔다.
+const LIVE_DIFFICULTY=5;
+function diffOverride(){ const v=TUNE.difficulty; return (v&&v>0)?Math.max(1,Math.min(10,v)):0; }
+function diffLevel(){ return diffOverride()||Math.max(1,Math.min(10,LIVE_DIFFICULTY)); }
 function diffScale(){ const k=diffLevel()/5;
   return { hp:Math.pow(k,1.35), dmg:Math.pow(k,0.85), spd:Math.pow(k,0.35) }; }
 function makeEnemy(x,y,type,diff){
@@ -2690,9 +2703,10 @@ function drawWeaponSlots(bottom){
   ctx.save();ctx.font=fTech(9,true);ctx.fillStyle='#94aabd';ctx.textAlign='left';
   ctx.fillText('ARSENAL  '+Math.min(cap,entries.length)+' / '+cap,x,y-7);
   // 현재 난이도 — 기본(5)이 아닐 때만. 어떤 설정으로 돌고 있는지 화면에서 바로 보이게 한다.
-  const dv=diffLevel();
-  if(dv!==5){ ctx.textAlign='right'; ctx.fillStyle=dv>5?'#ff8a5c':'#7fd4a8';
-    ctx.fillText('난이도 '+dv+'/10',x+total,y-7); }
+  // 이 기기에서만 임시 적용 중일 때만 띄운다 — 라이브값으로 도는 평상시엔 안 보인다
+  const ov=diffOverride();
+  if(ov){ ctx.textAlign='right'; ctx.fillStyle=ov>LIVE_DIFFICULTY?'#ff8a5c':'#7fd4a8';
+    ctx.fillText('난이도 '+ov+'/10 (임시)',x+total,y-7); }
   else if(entries.length>cap){ctx.textAlign='right';ctx.fillStyle='#ffd47b';ctx.fillText('+'+(entries.length-cap),x+total,y-7);}
   for(let i=0;i<cap;i++){
     const item=entries[i],xx=x+(i%per)*(size+gap),yy=y+Math.floor(i/per)*(size+gap),evo=item&&player.evolved[item[0]];
