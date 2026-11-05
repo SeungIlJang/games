@@ -217,7 +217,7 @@
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <div class="deck-eyebrow">G A L L O G  /  F L I G H T  D E C K</div>
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v8.9</div>
+    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v9.0</div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko"  class="btn-sm">한국어</button>
       <button data-lang="en"  class="btn-sm">English</button>
@@ -1057,7 +1057,7 @@ function edgePos(){ // 무한 필드: 플레이어 주변, 화면 밖 링에서 
 // ★ 라이브 난이도 — 모든 플레이어 공통값. 이 숫자만 바꿔 배포(OTA)하면 전원에게 적용된다.
 //   TUNE은 localStorage(기기별)라 거기에 난이도를 두면 내 기기에서만 바뀐다.
 //   그래서 '전원 공통값'은 코드에, '내 기기 임시값'은 TUNE.difficulty(0=자동)에 따로 둔다.
-const LIVE_DIFFICULTY=5;
+const LIVE_DIFFICULTY=6;   // 2026-11-05: 5 → 6 (플레이테스트 "죽질 않아 / 맹맹해" 반영)
 function diffOverride(){ const v=TUNE.difficulty; return (v&&v>0)?Math.max(1,Math.min(10,v)):0; }
 function diffLevel(){ return diffOverride()||Math.max(1,Math.min(10,LIVE_DIFFICULTY)); }
 function diffScale(){ const k=diffLevel()/5;
@@ -1066,7 +1066,12 @@ function makeEnemy(x,y,type,diff){
   const DS=diffScale();
   const D=ETYPE[type], speedScale=1+Math.min(ddiff()/150,1.9), s=rand(D.spd[0],D.spd[1])*speedScale*TUNE.enemySpeed*0.5*DS.spd;  // 일반 적 속도 ×0.5(피할 공간 — 보스는 makeBoss로 별도라 영향 없음)
   const hp=D.hp*diff*TUNE.enemyHp*DS.hp;   // 체력 원복(개편 전 수준) × 개발자 난이도
-  return {x,y,type,tier:D.tier,r:D.r,hp,maxhp:hp,speed:s,dmg:D.dmg*DS.dmg,color:D.color,gem:D.gem,big:!!D.big,shape:D.shape,t:rand(0,6.28)};  // 접촉피해 원복
+  // ⚠️ 적 피해도 스테이지를 탄다. 예전엔 이 배수가 '지속 접촉' 한 줄에만 붙어 있어서
+  //    잡몹 충돌·weaver 탄·shard 돌진은 1스테이지든 16스테이지든 피해가 5로 고정이었다.
+  //    그 사이 플레이어 최대체력은 100 → 699로 올라, st16에서 잡몹에 156번 부딪혀야 죽었다.
+  //    ("죽질 않아 / 맹맹해"의 실제 원인) 배수를 생성 시점으로 옮겨 모든 경로가 함께 타게 한다.
+  const stageDmg=1+ddiff()/95+(stage-1)*0.08;
+  return {x,y,type,tier:D.tier,r:D.r,hp,maxhp:hp,speed:s,dmg:D.dmg*stageDmg*DS.dmg,color:D.color,gem:D.gem,big:!!D.big,shape:D.shape,t:rand(0,6.28)};  // 접촉피해 원복
 }
 function spawnEnemy(){
   if(enemies.length>=ENEMY_CAP) return; // 물량 상한
@@ -1833,7 +1838,7 @@ function update(dt){
         burst(e.x,e.y,e.color,14);   // 터지는 파티클(기존 처치 폭발에 더해 강조)
         hurtEnemy(e,e.hp+1,e.color);  // 정상 처치 처리(젬·골드·처치음)
       } else { // 중간·정예: 기존대로 지속 접촉 피해(안 죽음)
-        player.hp-=e.dmg*dt*3*(1+ddiff()/95+(stage-1)*0.08)*player.dmgReduce; shake=Math.min(shake+dt*10,2.2); hurtFlash=0.25; stageNoHit=false; hitBearing=Math.atan2(e.y-player.y,e.x-player.x); if(hurtSfxCd<=0){sfx.hurt(); hurtSfxCd=0.35;}
+        player.hp-=e.dmg*dt*3*player.dmgReduce;   // 스테이지 배수는 e.dmg 에 이미 포함(makeEnemy) shake=Math.min(shake+dt*10,2.2); hurtFlash=0.25; stageNoHit=false; hitBearing=Math.atan2(e.y-player.y,e.x-player.x); if(hurtSfxCd<=0){sfx.hurt(); hurtSfxCd=0.35;}
       }
     }
   }
