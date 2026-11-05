@@ -217,7 +217,7 @@
   <div id="start" class="center" style="justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),20px) 0 40px;">
     <div class="deck-eyebrow">G A L L O G  /  F L I G H T  D E C K</div>
     <h1><span id="devLogo" style="cursor:pointer;pointer-events:auto;">◆</span> <span data-i18n="title">갤로그의 귀환</span></h1>
-    <div style="font-size:11px;opacity:.5;margin-bottom:6px;">v9.0</div>
+    <div id="verTag" style="font-size:11px;opacity:.5;margin-bottom:6px;"></div>
     <div id="langSel" style="display:none;gap:6px;justify-content:center;margin-bottom:8px;">
       <button data-lang="ko"  class="btn-sm">한국어</button>
       <button data-lang="en"  class="btn-sm">English</button>
@@ -299,7 +299,7 @@
 
   <div id="devPanel" class="center hidden" style="background:rgba(6,8,16,.94);z-index:60;justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),24px) 0 40px;">
     <h1 style="font-size:22px;">🛠 개발자 튜닝</h1>
-    <p class="sub" style="margin-bottom:6px;">수치 변경 후 <b>적용</b> → 새 판부터 반영</p>
+    <p class="sub" style="margin-bottom:6px;">수치 변경 후 <b>적용</b> → 새 판부터 반영 · 앱을 껐다 켜도 유지됩니다</p>
     <div id="devDiffNow" style="margin-bottom:12px;font-size:15px;color:#cfe6ff;"></div>
     <div id="devFields" style="width:min(92vw,380px);text-align:left;font-size:14px;"></div>
     <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
@@ -324,6 +324,15 @@
         <button class="btn btn-neutral" id="devResetClass" style="padding:10px 14px;">전직 초기화</button>
       </div>
       <div id="devResetMsg" style="font-size:12px;color:#8fe6b0;margin-top:8px;min-height:16px;"></div>
+    </div>
+    <div style="margin-top:16px;border-top:1px solid #2b3350;padding-top:14px;width:min(92vw,380px);text-align:center;">
+      <div style="font-weight:700;margin-bottom:4px;">🌍 전 플레이어에게 적용</div>
+      <div style="font-size:12px;opacity:.6;margin-bottom:8px;line-height:1.5;">
+        이 패널 수치는 <b>이 기기에만</b> 저장됩니다(앱을 껐다 켜도 유지).<br>
+        모두에게 적용하려면 아래로 값을 뽑아 코드에 넣고 배포해야 합니다.</div>
+      <button class="btn btn-neutral" id="devExport" style="padding:10px 14px;">현재 수치 내보내기</button>
+      <textarea id="devExportBox" readonly style="display:none;width:100%;height:110px;margin-top:8px;font:11px ui-monospace,monospace;background:#0c1220;color:#9fe3ff;border:1px solid #2b3350;padding:8px;"></textarea>
+      <div id="devExportMsg" style="font-size:12px;color:#8fe6b0;margin-top:6px;min-height:16px;"></div>
     </div>
   </div>
 </div>
@@ -885,13 +894,22 @@ const TUNE_DEFAULTS={ hpWall:0.4, startPow:0.35, awakenStart:15, awakenStep:15, 
   champHp:2.0, champDmg:1.2, tankBlock:0.35, shardDmg:1.6, weaverDmg:0.45,
   fuseLast:18, fuseMid:7, speedMax:0, difficulty:0 };
 let TUNE=Object.assign({},TUNE_DEFAULTS);
-// 저장값 버전. 올리면 기기에 남아 있던 '난이도 개별설정'이 지워져 모두가 다시 코드값(LIVE_DIFFICULTY)을 따른다.
+// ★ 게임 버전. 타이틀 표기와 '개발 패널 저장값 무효화'에 함께 쓴다.
+//   배포할 때 이 값만 올리면 모든 기기의 개발 패널 수치가 버려지고 코드 기본값(TUNE_DEFAULTS)을 받는다.
+//   → 밸런스는 '코드가 유일한 진실'이 되고, 개발 패널은 내 기기에서 잠깐 돌려보는 용도로만 남는다.
+//   (골드/영구강화/전직은 ss_meta 라 영향 없음 — 그쪽은 계속 기기별로 유지된다)
+const GAME_VER='9.1';
+// 개발 패널 수치는 이 기기에 계속 남는다(앱을 껐다 켜도 유지). 배포해도 지우지 않는다 —
+// 모르는 사이에 설정이 사라지는 편이 더 나쁘다. 대신 '기본값' 버튼으로 언제든 코드값을 받을 수 있고,
+// 전 플레이어에게 반영하려면 '현재 수치 내보내기'로 뽑아 TUNE_DEFAULTS 에 넣고 배포한다.
+// TUNE_VER 은 난이도 한 키만 쓴다(v8.8이 difficulty:5를 저장해 둬 LIVE 값을 덮던 문제 정리용).
 const TUNE_VER=2;
 try{ const sv=JSON.parse(localStorage.getItem('ss_tune')||'{}');
-  if(sv.__ver!==TUNE_VER) delete sv.difficulty;   // 구버전이 저장해 둔 난이도 고정값 제거
+  if(sv.__ver!==TUNE_VER) delete sv.difficulty;
   TUNE=Object.assign(TUNE, sv); TUNE.__ver=TUNE_VER;
 }catch(e){}
 function saveTune(){ try{ localStorage.setItem('ss_tune', JSON.stringify(TUNE)); }catch(e){} }
+{ const vt=document.getElementById('verTag'); if(vt) vt.textContent='v'+GAME_VER; }
 const DEV_KNOBS=[
   {k:'difficulty', name:'★ 난이도 (0~10)', step:1, min:0, max:10, hint:'0=라이브값 따름(모두에게 적용된 값). 1~10은 이 기기에서만 임시 적용'},
   {k:'hpWall',     name:'체력벽 계수',      step:0.05, hint:'중반+ 적 체력↑ (기본0.4)'},
@@ -961,6 +979,28 @@ document.getElementById('devResetMeta').onclick=()=>{
   const n=Object.keys(meta.lvls||{}).length; meta.lvls={}; saveMeta();
   try{ renderShop(); }catch(e){}
   devMsg('영구강화 초기화됨 ('+n+'종) · 새 판부터 반영');
+};
+// 현재 개발 패널 수치를 '코드에 붙여 넣을 형태'로 뽑는다.
+// 기본값과 다른 것만 추려서 짧게. 골드·영구강화·전직(ss_meta)은 대상이 아니다 — 기기별 데이터다.
+document.getElementById('devExport').onclick=()=>{
+  const diff={};
+  for(const d of DEV_KNOBS){ const v=TUNE[d.k];
+    if(v!=null && v!==TUNE_DEFAULTS[d.k]) diff[d.k]=v; }
+  const box=document.getElementById('devExportBox'), msg=document.getElementById('devExportMsg');
+  const n=Object.keys(diff).length;
+  box.style.display='block';
+  box.value = n
+    ? '// gallog.html · TUNE_DEFAULTS 에 반영 (v'+GAME_VER+' 기준 변경 '+n+'건)\n'
+      + Object.entries(diff).map(([k,v])=>'  '+k+': '+v+',').join('\n')
+      + '\n// 난이도를 전원에게 적용하려면: const LIVE_DIFFICULTY='+diffLevel()+';'
+    : '// 기본값과 다른 수치가 없습니다. 노브를 바꾸고 [적용]을 누른 뒤 다시 내보내세요.';
+  box.select();
+  let copied=false;
+  try{ copied=document.execCommand('copy'); }catch(e){}
+  if(!copied && navigator.clipboard){ navigator.clipboard.writeText(box.value).then(()=>{},()=>{}); copied=true; }
+  msg.textContent = n ? (copied?'복사됨 · 이 내용을 전달하면 전 플레이어에게 반영합니다':'아래 내용을 복사해 전달하세요')
+                      : '변경된 수치 없음';
+  setTimeout(()=>{ msg.textContent=''; }, 4000);
 };
 document.getElementById('devResetClass').onclick=()=>{
   meta.cls={hero:true}; meta.sel='hero'; saveMeta();
