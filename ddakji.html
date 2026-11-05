@@ -13,6 +13,8 @@
   #ver{position:fixed;left:8px;right:8px;bottom:calc(env(safe-area-inset-bottom,0px) + 6px);font-size:10px;color:#8a6b4a;z-index:6;pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   #msg{top:38%;font-size:30px;font-weight:900;text-shadow:0 3px 0 #0007;transition:opacity .2s;opacity:0}
   #sub{top:calc(38% + 40px);font-size:15px;font-weight:700;color:#ffe9b0;text-shadow:0 2px 3px #000;opacity:0;transition:opacity .2s}
+  #stats{top:calc(38% + 74px);font-size:13px;font-weight:700;color:#e9d6bf;text-shadow:0 2px 3px #000;opacity:0;transition:opacity .2s;line-height:1.5}
+  #coach{top:17%;font-size:23px;font-weight:900;color:#ffe14d;text-shadow:0 3px 0 #0008,0 0 14px #0007;opacity:0;transition:opacity .15s}
   #hint{bottom:calc(env(safe-area-inset-bottom,0px) + 72px);font-size:15px;font-weight:800;color:#ffe9b0;text-shadow:0 2px 4px #000;animation:bob 1.1s ease-in-out infinite}
   @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
   #start{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:radial-gradient(120% 90% at 50% 20%,#3a281700,#1a110a 90%);color:#fff;text-align:center;padding:24px}
@@ -26,7 +28,7 @@
   #dexBtn2{position:static;margin-top:4px}
   #rewardBtn{pointer-events:auto;position:fixed;left:50%;transform:translateX(-50%);top:54%;background:#2ec77a;color:#fff;border:none;border-radius:14px;padding:13px 22px;font-size:17px;font-weight:900;box-shadow:0 5px 0 #1a8a52;cursor:pointer;z-index:9}
   #rewardBtn:active{transform:translateX(-50%) translateY(3px);box-shadow:0 2px 0 #1a8a52}
-  #dex{position:fixed;inset:0;z-index:12;background:rgba(18,12,7,.96);color:#fff;display:flex;flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 20px) 16px 20px;overflow-y:auto}
+  #dex{position:fixed;inset:0;z-index:12;background:rgba(18,12,7,.96);color:#fff;display:flex;flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 20px) 16px 20px;overflow-y:auto;justify-content:center}
   #dex h2{font-size:24px;color:#ffcf5c;margin-bottom:4px}
   #dexGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:min(94vw,440px);margin:12px 0}
   .dcard{background:#20160d;border:1px solid #3a2a18;border-radius:12px;padding:8px 4px;text-align:center;font-size:11px;font-weight:700}
@@ -39,9 +41,10 @@
   #adov .sp{width:40px;height:40px;border:5px solid rgba(255,255,255,.15);border-top-color:#ffcf5c;border-radius:50%;animation:spin .8s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
   #coinHud{position:fixed;left:10px;top:calc(env(safe-area-inset-top,0px) + 52px);font-size:14px;font-weight:800;color:#ffd75c;text-shadow:0 2px 3px #000;z-index:6;pointer-events:none}
+  #lives{position:fixed;left:10px;top:calc(env(safe-area-inset-top,0px) + 74px);font-size:15px;letter-spacing:1px;z-index:6;pointer-events:none;text-shadow:0 2px 3px #000}
   #shopBtnP{pointer-events:auto;position:fixed;right:104px;bottom:calc(env(safe-area-inset-bottom,0px) + 28px);background:rgba(22,16,10,.75);color:#8affb0;border:1px solid #2a6a40;border-radius:12px;padding:8px 14px;font-size:14px;font-weight:800;cursor:pointer;z-index:8}
   #shopBtn2{pointer-events:auto;background:#20263c00;color:#8affb0;border:1px solid #2a6a40;border-radius:12px;padding:10px 18px;font-size:15px;font-weight:800;cursor:pointer;margin-top:2px}
-  #shop{position:fixed;inset:0;z-index:12;background:rgba(18,12,7,.97);color:#fff;display:flex;flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 20px) 16px 20px;overflow-y:auto}
+  #shop{position:fixed;inset:0;z-index:12;background:rgba(18,12,7,.97);color:#fff;display:flex;flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 20px) 16px 20px;overflow-y:auto;justify-content:center}
   #shop h2{font-size:24px;color:#8affb0;margin-bottom:2px}
   #shopCoins{font-size:15px;color:#ffd75c;font-weight:800;margin-bottom:10px}
   .urow{display:flex;align-items:center;gap:8px;width:min(94vw,440px);background:#20160d;border:1px solid #3a2a18;border-radius:12px;padding:10px 12px;margin:5px 0;text-align:left}
@@ -55,7 +58,14 @@
   #lb{position:fixed;inset:0;z-index:12;background:rgba(18,12,7,.97);color:#fff;display:flex;flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 20px) 16px 20px;overflow-y:auto}
   #lb h2{font-size:24px;color:#ffcf5c}
   #lbClose{margin-top:12px;background:#ffcf5c;color:#5a3a10;border:none;border-radius:12px;padding:12px 34px;font-size:17px;font-weight:900;box-shadow:0 5px 0 #b5831f;cursor:pointer;pointer-events:auto}
-  #lbBtn2{pointer-events:auto;background:#20263c00;color:#ffcf5c;border:1px solid #6a4e2a;border-radius:12px;padding:10px 18px;font-size:15px;font-weight:800;cursor:pointer;margin-top:2px}
+  #lbBtn2,#tutBtn2{pointer-events:auto;background:#20263c00;color:#ffcf5c;border:1px solid #6a4e2a;border-radius:12px;padding:10px 18px;font-size:15px;font-weight:800;cursor:pointer;margin-top:2px}
+  #over{position:fixed;inset:0;z-index:14;background:rgba(14,9,5,.95);color:#fff;display:flex;
+        flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:24px;text-align:center}
+  #over h2{font-size:30px;color:#ff8a6a;font-weight:900}
+  #overScore{font-size:52px;font-weight:900;color:#ffcf5c;line-height:1.1}
+  #overSub{font-size:15px;color:#e9d6bf;margin-bottom:10px}
+  #over .btn{pointer-events:auto;background:#ffcf5c;color:#5a3a10;font-size:19px;font-weight:900;border:none;
+             border-radius:14px;padding:13px 34px;box-shadow:0 5px 0 #b5831f;cursor:pointer}
   #duelSetup,#duelResult{position:fixed;inset:0;z-index:13;background:rgba(18,12,7,.97);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:24px;text-align:center}
   #duelSetup h2,#duelResult h2{font-size:26px;color:#ff8a6a;margin-bottom:2px}
   .betb{pointer-events:auto;background:#2a1c10;color:#ffd75c;border:2px solid #6a4e2a;border-radius:12px;padding:10px 16px;font-size:16px;font-weight:800;cursor:pointer}
@@ -71,6 +81,28 @@
   body.has-banner #dexBtn{bottom:calc(env(safe-area-inset-bottom,0px) + 86px)}
   body.has-banner #shopBtnP{bottom:calc(env(safe-area-inset-bottom,0px) + 86px)}
   body.has-banner #hint{bottom:calc(env(safe-area-inset-bottom,0px) + 130px)}
+  /* 첫 플레이 가이드 — 손가락이 실제로 하는 동작을 보여준다 */
+  #tut{position:fixed;inset:0;z-index:16;background:rgba(10,7,4,.88);color:#fff;display:flex;
+       flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center}
+  #tut h3{font-size:22px;color:#ffcf5c;font-weight:900}
+  #tut p{font-size:15px;line-height:1.7;color:#e9d6bf;max-width:300px}
+  #tutStage{position:relative;width:150px;height:250px;margin:4px 0}
+  #tutTile{position:absolute;left:50%;transform:translateX(-50%);bottom:12px;width:62px;height:62px;
+           border-radius:10px;background:linear-gradient(135deg,#d8b27a,#9a7638)}
+  #tutGhost{position:absolute;left:50%;transform:translateX(-50%);top:4px;width:62px;height:62px;
+            border-radius:10px;border:3px dashed #ffe14d;opacity:.6}
+  #tutHand{position:absolute;left:50%;width:30px;height:30px;border-radius:50%;
+           background:rgba(255,255,255,.9);box-shadow:0 0 0 7px rgba(255,255,255,.22);
+           transform:translateX(-50%);bottom:26px}
+  #tut.s1 #tutTile{animation:tLift 2.4s ease-in-out infinite}
+  #tut.s1 #tutHand{animation:tLift 2.4s ease-in-out infinite}
+  #tut.s2 #tutTile{bottom:174px}
+  #tut.s2 #tutHand{animation:tSlam 1.5s ease-in infinite}
+  @keyframes tLift{0%,12%{bottom:12px}55%,100%{bottom:174px}}
+  @keyframes tSlam{0%,30%{bottom:188px;opacity:1}70%{bottom:26px;opacity:1}72%,100%{opacity:0}}
+  #tut .btn{pointer-events:auto;background:#ffcf5c;color:#5a3a10;font-size:19px;font-weight:900;
+            border:none;border-radius:14px;padding:13px 38px;box-shadow:0 5px 0 #b5831f;cursor:pointer}
+  #tutStep{font-size:13px;color:#9a815f;font-weight:800}
   .hidden{display:none!important}
 </style></head>
 <body>
@@ -85,8 +117,11 @@
 <div class="ui" id="foeLabel"></div>
 <div class="ui" id="msg"></div>
 <div class="ui" id="sub"></div>
-<div class="ui hidden" id="hint">① 끌어서 들어올리고 → ② 아래로 쓸어내려요!</div>
+<div class="ui" id="stats"></div>
+<div class="ui hidden" id="hint">딱지를 <b>누른 채</b> 위로 올렸다가 → 그대로 <b>바닥에 내리꽂아요</b></div>
+<div class="ui" id="coach"></div>
 <div id="coinHud" class="hidden"></div>
+<div id="lives"></div>
 <button id="dexBtn" class="hidden">📖 도감</button>
 <button id="shopBtnP" class="hidden">🔨 강화</button>
 <button id="rewardBtn" class="hidden"></button>
@@ -103,17 +138,37 @@
   <button id="dexClose">닫기</button>
 </div>
 <div id="adov" class="hidden"><div class="sp"></div><div id="adovTxt">광고 보는 중…</div></div>
-<div id="ver">모두의 딱지치기 v1.9 · ①끌어서 위치 ②쓸어내려 힘 · 중후반 난이도 완화 · 아트 전체</div>
+<div id="ver">모두의 딱지치기 v2.8 · 목숨3·런 종료·이어하기 · S22 천장+깊이배수 · 한 동작</div>
 <div id="start">
   <h1 style="font-size:38px">모두의 딱지치기</h1>
-  <p><b>①</b> 손가락을 <b>끌어서</b> 딱지를 들어올려요. 높이가 낼 수 있는 <b>힘의 한계</b>, 좌우가 <b>조준</b>이에요.<br/><b>②</b> <b>아래로 쓸어내려</b> 내리쳐요 — 쓸어내린 <b>속도가 곧 힘</b>이에요.<br/>넘기는 건 충격이 아니라 <b>밀려난 바람</b> — 높이 들고 <b>평평하게</b> 쳐야 들어가요 🌬️<br/><span style="color:#9a815f">스테이지 4에서 <b>평평도</b>, 9에서 <b>조준</b>이 열려요</span><br/><span id="bstage" style="color:#ffcf5c;font-weight:800"></span></p>
+  <p>한 번에 이어서 합니다 — <b>손을 떼지 않아요.</b><br/><b>①</b> 누른 채 <b>위로</b> 올리고 (노란 점선까지)<br/><b>②</b> 그대로 <b>아래로</b> 내려 <b>바닥에 꽂아요</b><br/>높이 올릴수록 세게 꽂힙니다. 좌우는 조준이에요.<br/>넘기는 건 충격이 아니라 <b>밀려난 바람</b> — 높이 들고 <b>평평하게</b> 쳐야 들어가요 🌬️<br/><span style="color:#9a815f">스테이지 4에서 <b>평평도</b>, 9에서 <b>조준</b>이 열리고<br/>22부터는 난이도가 멈추고 <b>점수 배수</b>가 올라요</span><br/><span id="bstage" style="color:#ffcf5c;font-weight:800"></span></p>
   <button class="btn" id="startBtn">시작</button>
   <button class="btn" id="duelBtn" style="background:#e85c5c;box-shadow:0 6px 0 #a33;font-size:19px;padding:13px 40px">⚔️ 딱지 대결</button>
   <div style="display:flex;gap:10px">
     <button id="dexBtn2">📖 도감</button>
     <button id="shopBtn2">🔨 강화</button>
     <button id="lbBtn2">🏆 랭킹</button>
+    <button id="tutBtn2">❓ 조작법</button>
   </div>
+</div>
+<div id="tut" class="hidden s1">
+  <div id="tutStep">1 / 2</div>
+  <h3 id="tutTitle">① 들어올리기</h3>
+  <div id="tutStage">
+    <div id="tutGhost"></div>
+    <div id="tutTile"></div>
+    <div id="tutHand"></div>
+  </div>
+  <p id="tutDesc">화면을 <b>누른 채 위로</b> 올려요.<br/>노란 점선까지 올리면 딱 좋아요. <b>손은 떼지 마세요.</b></p>
+  <button class="btn" id="tutNext">다음 →</button>
+</div>
+<div id="over" class="hidden">
+  <h2>게임 오버</h2>
+  <div id="overScore"></div>
+  <div id="overSub"></div>
+  <button class="btn" id="overCont">🎬 광고 보고 이어하기</button>
+  <button class="btn" id="overAgain" style="background:#2ec77a;box-shadow:0 5px 0 #1a8a52">다시 시작</button>
+  <button id="overHome" class="lnk">나가기</button>
 </div>
 <div id="duelSetup" class="hidden">
   <h2>⚔️ 딱지 대결</h2>
@@ -207,10 +262,9 @@ const T_COMFORT=0.45;     // 이 시간 넘기면 손이 떨리기 시작
 const TREM_RATE=0.55;     // 초당 떨림 증가
 const TREM_FREQ=7.5;      // 떨림 주파수(rad/s)
 const TILT_MAX=0.55;      // 이 각도(rad)만큼 기울면 평평도 0 (0.42→0.55 완화)
-let chargeT=0, aloftT=0, overHold=0, aimX=0, holding=false;
-let liftR=0, placeY=0, swing=0;      // 들어올린 높이비율 · 손가락 Y · 스와이프 세기
-const SWIPE_VMAX=2400;               // 이 속도(px/s)면 최대 힘
-const FORCE_FLOOR=0.40;              // 바닥에서 쳐도 낼 수 있는 힘의 상한
+let chargeT=0, aimX=0, holding=false;
+let liftR=0, apexR=0, swing=0, liveSwing=0, pullNow=0;   // apexR = 이번 스윙의 정점
+let tgtLift=0.6, tgtTol=0.15, tgtSpread=0.3, onTarget=false;   // 이번 라운드의 목표 높이      // 들어올린 높이비율 · 손가락 Y · 스와이프 세기
 let F=0, A=1, Dg=1, Pw=0, reqP=0.66;      // 마지막 타격의 각 축 값 (피드백용)
 let tilt=0, tremAmp=0, tremPhase=0;   // 떨림 위상은 매 라운드 랜덤 — 고정이면 같은 시각에 평평해져 머슬메모리로 뚫린다
 let OMEGA_MAX=6.4, tremBase=0.05, Dstar=60, sigmaD=52;
@@ -219,14 +273,32 @@ let OMEGA_MAX=6.4, tremBase=0.05, Dstar=60, sigmaD=52;
 function axAngle(){ return stage>=4; }
 function axAim(){ return stage>=9; }
 
-function applyDifficulty(){ const s=stage;
-  Gcur=Math.min(18, 9 + (s-1)*0.32);                 // 딱지 무게 = 뒤집기 임계. 29스테이지까지 계속 오름
+// ★ 난이도 천장 ★ S22 를 넘으면 더 어려워지지 않는다.
+// 그 위는 타이밍 창이 6~16% 로 떨어져 실력이 아니라 운이 되기 때문.
+// 대신 '깊이 배수'로 점수가 올라 — 실력 천장 위에서는 보상으로 경쟁한다.
+const SKILL_CAP=22;
+function depthMult(){ return 1 + Math.max(0, stage-SKILL_CAP)*0.08; }
+function applyDifficulty(){ const s=Math.min(stage, SKILL_CAP);
+  Gcur=Math.min(18, (s<=3 ? 7.4 : 9) + Math.max(0,s-1)*0.32);   // 1~3스테이지는 가볍게 — 첫 성공을 빨리                 // 딱지 무게 = 뒤집기 임계. 29스테이지까지 계속 오름
   OMEGA_MAX=6.4 + up.power*0.22;                      // 💪힘: 낼 수 있는 최대 타격 → 필요 힘이 낮아짐
   tremBase=Math.max(0.02, 0.05 + Math.max(0,s-4)*0.006 - up.barslow*0.012);  // 🐢집중력: 떨림 억제
   sigmaD=Math.max(16, 52 - Math.max(0,s-9)*1.8 + up.aim*8);                   // 🎯정확도: 조준 허용 폭
   Dstar=Math.min(W*0.26,120)*0.62;    // 최적 간격 — 바로 위(0)가 아니라 '딱지 옆'
+  // ★ 목표 높이는 매 라운드 바뀐다 ★ 고정이면 같은 자리에서 멈추는 머슬메모리로 뚫린다.
+  // (원래 게임이 초록 밴드를 매판 옮긴 것과 같은 이유)
+  const _nh=liftNeeded(Math.min(1, Math.pow(requiredP(),1/1.15)));
+  tgtSpread=Math.max(0.05, 0.34 - s*0.012);        // 목표가 움직이는 범위 (스테이지↑ 좁아짐)
+  tgtTol   =Math.max(0.05, 0.16 - s*0.005);        // 정타 허용 오차 (스테이지↑ 좁아짐)
+  tgtLift  =Math.min(0.93, _nh+0.06+Math.random()*tgtSpread);
 }
 const LIFT_MAX=230;                   // 최대로 들어올렸을 때 높이(px)
+const GROUND_GAP=40;                 // 딱지 바닥 여유(px)
+// 힘 = 끌어내린 거리 / LIFT_MAX. 끌 수 있는 최대 거리는 (GROUND_GAP + 높이*LIFT_MAX).
+// 따라서 어떤 높이에서 낼 수 있는 힘의 상한은 아래 한 줄로 결정된다.
+// ★ 게이지·고스트·실제 판정이 모두 이 함수를 써야 한다 ★
+function capForce(lift){ return Math.min(1, (GROUND_GAP + lift*LIFT_MAX)/LIFT_MAX); }
+function liftNeeded(needF){ return Math.max(0, Math.min(1, needF - GROUND_GAP/LIFT_MAX)); }
+const FORCE_FLOOR=GROUND_GAP/LIFT_MAX;
 const DROP_T=0.15;                    // 내리꽂히는 시간. 짧고 가속할수록 '쿵' 한다
 let dropFrom=LIFT_MAX, freeze=0, waves=[], squash=0, foeJolt=0, burst=null;
 // 바닥(치는 자리) 세로 위치 — 하단 게이지 바로 위까지 내린다
@@ -241,6 +313,10 @@ let Gcur=9.0;                       // 중력 토크(=딱지 무게). 스테이�
 let slamT=0, resultT=0, shake=0, flash=0, gt=0;
 const PHYS_DT=1/600; let physAcc=0;   // 고정 물리 스텝 (주사율 무관 결정성)
 let perfectHit=false, teetering=false, teetDeg=0, unlockMsg='';
+// ★ 목숨 ★ 런에 끝이 있어야 점수가 '실력'을 재고, 광고에 팔 물건(이어하기)이 생긴다.
+const MAX_LIVES=3;
+let lives=MAX_LIVES, continuedOnce=false, runOver=false;
+let lastStats=null;   // 직전 타격의 축별 수치 (결과 화면에 숫자로 보여준다)
 let parts=[];                       // 먼지/파편
 let dropY=0;                        // 내리치는 딱지 낙하
 // ---- 딱지 도감(레어도) ----
@@ -308,13 +384,16 @@ const UPG=[
 function coinMult(){ return 1 + up.coin*0.3; }
 
 function $(id){ return document.getElementById(id); }
-function setTop(){ $('score').textContent=score; $('combo').textContent=combo; $('stage').textContent=stage; $('best').textContent=best; const ch=$('coinHud'); if(ch) ch.textContent='🪙 '+coins; }
+function setTop(){ const dm=depthMult();
+  const lv=$('lives'); if(lv) lv.innerHTML=Array.from({length:MAX_LIVES},(_,i)=>'<span style="opacity:'+(i<lives?1:0.22)+'">🟫</span>').join('');
+  $('score').textContent=score; $('combo').textContent=combo;
+  $('stage').innerHTML=stage+(dm>1?' <span style="color:#ff9a5c">x'+dm.toFixed(1)+'</span>':''); $('best').textContent=best; const ch=$('coinHud'); if(ch) ch.textContent='🪙 '+coins; }
 function showMsg(t,c){ const m=$('msg'); m.textContent=t; m.style.color=c||'#fff'; m.style.opacity=1; }
 function showSub(t){ const s=$('sub'); s.textContent=t||''; s.style.opacity=t?1:0; }
-function clearMsg(){ $('msg').style.opacity=0; $('sub').style.opacity=0; }
+function clearMsg(){ setCoach(''); $('msg').style.opacity=0; $('sub').style.opacity=0; const st=$('stats'); if(st) st.style.opacity=0; }
 
 function newRound(keepFoe){ unlockMsg=''; if(!keepFoe) foe=pickFoe(); theta=0; omega=0; maxTheta=0; physAcc=0;
-  chargeT=0; aloftT=0; overHold=0; liftR=0; swing=0; trail=[]; tilt=0; tremAmp=0; tremPhase=Math.random()*Math.PI*2; holding=false; aimX=W/2; rewardUsed=false;
+  chargeT=0; liftR=0; apexR=0; swing=0; liveSwing=0; pullNow=0; tilt=0; tremAmp=0; tremPhase=Math.random()*Math.PI*2; holding=false; aimX=W/2; rewardUsed=false;
   waves=[]; squash=0; foeJolt=0; freeze=0; burst=null; applyDifficulty();
   aimX = axAim() ? W/2 + Dstar : W/2;
   if(easyNext){ Gcur*=0.80; tremBase*=0.6; sigmaD*=1.5; easyNext=false; }   // 리워드 '쉽게 다시' 1회
@@ -327,40 +406,50 @@ function newRound(keepFoe){ unlockMsg=''; if(!keepFoe) foe=pickFoe(); theta=0; o
 // ── 들어올리기: 누르는 동안 딱지가 올라가고, 오래 들수록 손이 떨린다 ──
 // ① 올리는 위치 조절 — 손가락을 끌어 '어디에, 얼마나 높이' 들어올릴지 정한다.
 //    세로 = 높이(낼 수 있는 힘의 상한), 가로 = 조준.
+// ★ 한 번의 연속 동작 ★ 딱지가 손가락에 붙어 다닌다.
+// 올렸다가(1박자) 그대로 바닥에 내리꽂으면(2박자) 끝. 실제 딱지치기도 공중에서 손을 떼지 않는다.
+// 전에는 '손 떼고 → 아무 데나 다시 눌러 N픽셀 내리기'였는데, 누르는 위치와 화면의 바닥선이
+// 따로 놀아서 "바닥까지"라는 말이 성립하지 않았다.
 function beginPlace(x,y){
   if(state!=='ready') return;
+  setCoach('누른 채 위로 올려요 ↑');
   state='place'; chargeT=0; tilt=0; tremAmp=0;
   aimX = (x==null? W/2 : x);
-  liftR = 0;                       // 바닥에서 시작해 끌어올린다
-  placeY = (y==null? groundCY() : y);
+  liftR = 0; apexR = 0; pullNow = 0; liveSwing = 0;
   $('hint').classList.add('hidden'); initAudio();
 }
 function updatePlace(x,y){
   if(state!=='place') return;
   if(axAim() && x!=null) aimX=x;
-  if(y!=null){
-    placeY=y;
-    const base=groundCY()-30;
-    liftR = Math.max(0, Math.min(1, (base-y)/LIFT_MAX));
-  }
+  if(y==null) return;
+  const base=groundCY()-GROUND_GAP;
+  liftR = Math.max(0, Math.min(1, (base-y)/LIFT_MAX));
+  if(liftR>apexR) apexR=liftR;                                  // 이번 스윙의 정점
+  pullNow = Math.max(0, (apexR-liftR)*LIFT_MAX);                // 정점에서 내려온 거리 = 힘
+  liveSwing = apexR>0.02 ? Math.min(1, pullNow/(apexR*LIFT_MAX+GROUND_GAP)) : 0;
+  if(apexR>=0.12 && liftR<=0.004) strike(pullNow+GROUND_GAP);   // 바닥에 닿으면 그 순간 꽂힌다
 }
 // ── 1박자 끝: 손을 떼면 딱지가 그 자리에 멈춘다. 위치(높이·조준)가 확정된다 ──
+// 공중에서 손을 떼면 — 내려온 만큼만 힘이 실린 채 떨어진다
 function endLift(){
   if(state!=='place') return;
-  state='aloft'; aloftT=0;
-  sfx.lift(liftR);
+  if(apexR<0.08){ state='ready'; $('hint').classList.remove('hidden'); return; }   // 그냥 탭
+  strike(pullNow);
 }
 // ── ② 내리치는 힘 조절 — 아래로 쓸어내린 '속도'가 그대로 타격 힘이 된다 ──
 //    높이는 힘의 상한만 정한다. 낮게 들면 아무리 빨리 휘둘러도 힘이 안 나온다.
-function strike(swipeV){
-  if(state!=='aloft') return;
-  const sw = Math.max(0, Math.min(1, (swipeV||0)/SWIPE_VMAX));
-  swing = sw;
-  F = Math.min(sw, FORCE_FLOOR + (1-FORCE_FLOOR)*liftR);
+function strike(pullPx){
+  if(state!=='place') return;
+  // 속도(px/s)로 재면 손·기기마다 달라 연습해도 감이 안 온다. '끌어내린 거리'로 잰다.
+  // 끌 수 있는 거리는 들어올린 높이가 정하므로, 높이가 힘의 상한이라는 성질은 그대로다.
+  const avail = GROUND_GAP + apexR*LIFT_MAX;               // 정점에서 바닥까지
+  const pull  = Math.max(0, Math.min(pullPx||0, avail));
+  swing = Math.min(1, pull/Math.max(1,avail));             // 바닥까지 내리찍었는가 (0~1)
+  F = Math.min(1, pull/LIFT_MAX);
   if(axAngle()){
     A = Math.max(0, 1 - Math.abs(tilt)/TILT_MAX);          // 때리는 순간 기울기
   } else {
-    A = Math.max(0.3, 1 - aloftT*0.30);                    // 각도 축 잠김: 꾸물댄 만큼만 벌점
+    A = Math.max(0.35, 1 - Math.max(0,chargeT-1.4)*0.22);  // 각도 축 잠김: 너무 오래 끈 만큼만 벌점
   }
   if(axAim()){
     const d = Math.abs(aimX - W/2);
@@ -368,8 +457,10 @@ function strike(swipeV){
   } else Dg = 1;
   // A 의 지수는 1.6 이었다. 세 축이 곱이라 오차가 복리로 커져, S12 부터
   // 5° 만 기울어도 최대 힘으로 못 넘기는 구간이 생겼다. 1.3 으로 낮춘다.
+  onTarget = Math.abs(apexR - tgtLift) <= tgtTol;      // 목표 고스트에 맞췄나
   Pw = Math.pow(F,1.15) * Math.pow(A,1.3) * Dg;
-  dropFrom = 40 + liftR*LIFT_MAX;      // 들어올린 '그 높이'에서 떨어진다
+  if(onTarget) Pw *= 1.12;                              // 정타 보너스 — '넘기만' 하는 게 아니라 '맞추게'
+  dropFrom = Math.max(10, GROUND_GAP + liftR*LIFT_MAX);   // 손을 뗀 그 높이에서 떨어진다
   state='slam'; slamT=0; dropY=-dropFrom; sfx.whoosh(F);
 }
 function doImpact(){
@@ -388,6 +479,10 @@ function doImpact(){
   for(let i=0;i<n;i++){ const a=Math.random()*Math.PI*2, sp=(1+Math.random()*3)*(0.7+hit*0.8);
     parts.push({x:sx,y:0,vx:Math.cos(a)*sp,vy:-Math.random()*4-1,life:0.5,r:2+Math.random()*3}); }
   reqP = requiredP();
+  // 달성률 = 낸 타격량 / 필요량. 100% 넘으면 뒤집힌다 — 이 한 숫자가 전부를 말한다.
+  lastStats = { pct:Math.round(Pw/reqP*100), F:Math.round(F*100), A:Math.round(A*100),
+                Dg:Math.round(Dg*100), lift:Math.round(liftR*100), sw:Math.round(swing*100),
+                needF:Math.round(Math.min(1,Math.pow(reqP,1/1.15))*100) };
   perfectHit = Pw >= reqP + (1-reqP)*0.72;      // 여유 있게 넘긴 타격 = 완벽타
   const thr = Math.sqrt(2*Gcur);
   // ω0 를 '연출 의도'대로 설계한다. 역진자는 sin(θmax)=r² 이라 r 을 그냥 쓰면
@@ -408,9 +503,9 @@ function doImpact(){
 function failHint(){
   const fNeed=Math.pow(reqP,1/1.15);
   const cand=[];
-  if(swing<0.55)               cand.push([ (0.55-swing)*2.2, '약하게 쓸어내렸어요 — 더 빠르게 내리쳐요' ]);
+  if(swing<0.75)               cand.push([ (0.75-swing)*2.2, '끝까지 안 내렸어요 — 바닥까지 쭉 끌어내려요' ]);
   if(liftR<0.55)               cand.push([ (0.55-liftR)*1.9,  '너무 낮게 들었어요 — 더 높이 끌어올려요' ]);
-  if(!axAngle() && aloftT>0.6) cand.push([ aloftT*1.1,        '들어올린 뒤 꾸물댔어요 — 바로 내리쳐요' ]);
+  if(!axAngle() && chargeT>1.8) cand.push([ (chargeT-1.4)*1.1, '너무 오래 끌었어요 — 올렸으면 바로 내리꽂아요' ]);
   if(F<fNeed)             cand.push([ (fNeed-F)*1.6,        '힘이 부족했어요' ]);
   if(axAngle()&&A<0.9)    cand.push([ (1-A)*1.6,            '딱지가 기울었어요 — 평평할 때 떼요' ]);
   if(axAim()&&Dg<0.9){
@@ -421,6 +516,74 @@ function failHint(){
   cand.sort((a,b)=>b[0]-a[0]);
   return cand[0][1];
 }
+// 축별 수치를 한 줄로. "왜 안 넘어갔는지"를 숫자로 보여준다.
+function showStats(){
+  const e=$('stats'); if(!e) return;
+  if(!lastStats){ e.style.opacity=0; return; }
+  const t=lastStats;
+  const col = t.pct>=100 ? '#8affb0' : t.pct>=85 ? '#ffd75c' : '#ff9a9a';
+  let parts = ['힘 '+t.F+'%<span style="opacity:.55">/필요 '+t.needF+'%</span>'];
+  if(axAngle()) parts.push('평평도 '+t.A+'%');
+  if(axAim())   parts.push('조준 '+t.Dg+'%');
+  e.innerHTML = '<b style="color:'+col+';font-size:15px">타격 '+t.pct+'%</b>'
+              + '<span style="opacity:.5"> (100% 넘기면 뒤집힘)</span><br>'
+              + '<span style="font-size:11px;opacity:.85">'+parts.join(' · ')
+              + ' <span style="opacity:.6">— 높이 '+t.lift+'% · 스와이프 '+t.sw+'%</span></span>';
+  e.style.opacity=1;
+}
+// 한 동작을 단계별로 말로 안내한다. 처음 하는 사람이 설명서를 안 읽어도 되게.
+let coachTxt='';
+function setCoach(t,c){ if(t===coachTxt) return; coachTxt=t;
+  const e=$('coach'); if(!e) return;
+  e.textContent=t||''; e.style.color=c||'#ffe14d'; e.style.opacity=t?1:0; }
+function coach(){
+  if(state!=='place'){ setCoach(''); return; }
+  const needF=Math.min(1, Math.pow(requiredP(), 1/1.15));
+  const needH=liftNeeded(needF);
+  if(apexR>=0.12 && pullNow>6){
+    const done=Math.min(1,pullNow/Math.max(1,GROUND_GAP+apexR*LIFT_MAX));
+    setCoach(done>0.75?'그대로 바닥까지! ↓':'좋아요, 내리꽂아요 ↓', '#8affb0');
+  } else if(Math.abs(liftR-tgtLift)<=tgtTol){
+    setCoach('정타! 이제 내리꽂아요 ↓', '#8affb0');
+  } else if(liftR>tgtLift){
+    setCoach('너무 높아요 — 조금 내려요 ↓', '#ffd75c');
+  } else if(liftR>=needH){
+    setCoach('조금만 더 위로 ↑', '#ffd75c');
+  } else if(liftR>0.04){
+    setCoach('더 위로 올려요 ↑');
+  } else {
+    setCoach('누른 채 위로 올려요 ↑');
+  }
+}
+// 런 종료 — 점수를 확정하고 랭킹에 올린다
+function gameOver(){
+  runOver=true; state='over'; duelAfter=null; clearMsg();
+  $('rewardBtn').classList.add('hidden'); $('dexBtn').classList.add('hidden'); $('shopBtnP').classList.add('hidden');
+  const isBest = score>best && score>0;
+  if(isBest){ best=score; try{localStorage.setItem('ddakji_best',best);}catch(e){} }
+  try{ submitScore(); }catch(e){}
+  $('overScore').textContent=score;
+  $('overSub').innerHTML='도달 스테이지 <b>'+stage+'</b> · 최고 <b>'+best+'</b>'+(isBest?' <span style="color:#ffe14d">🎉 신기록!</span>':'');
+  $('overCont').style.display = continuedOnce ? 'none' : '';
+  $('over').classList.remove('hidden');
+  sfx.fail(); setTop();
+}
+function continueRun(){
+  if(continuedOnce) return; continuedOnce=true;
+  $('overCont').style.display='none';
+  playAd(()=>{
+    lives=1; runOver=false; $('over').classList.add('hidden');
+    $('dexBtn').classList.remove('hidden'); $('shopBtnP').classList.remove('hidden');
+    newRound(); setTop(); lastTs=performance.now();
+  });
+}
+function startRun(){
+  score=0; combo=0; won=0; stage=1; easyNext=false;
+  lives=MAX_LIVES; continuedOnce=false; runOver=false;
+  $('over').classList.add('hidden'); $('start').classList.add('hidden');
+  $('dexBtn').classList.remove('hidden'); $('shopBtnP').classList.remove('hidden'); $('coinHud').classList.remove('hidden');
+  setTop(); newRound(); lastTs=performance.now();
+}
 function setReward(txt){ const b=$('rewardBtn'); b.textContent=txt; b.classList.remove('hidden'); }
 function endFlip(success){
   if(duel.on){ duelResolve(success); return; }   // 대결모드는 별도 정산
@@ -428,30 +591,37 @@ function endFlip(success){
   const deg=Math.round(maxTheta*180/Math.PI); const ri=RINFO[foe.rarity];
   if(success){
     won++; combo++; const pf=perfectHit;
-    let gain=Math.round((10+stage*3+combo*2)*ri.mult); if(pf) gain=Math.round(gain*1.5); lastGain=gain; score+=gain;
+    if(onTarget && !pf) showMsg('정타! 🎯','#8affb0');
+    let gain=Math.round((10+stage*3+combo*2)*ri.mult*depthMult()); if(pf) gain=Math.round(gain*1.5); lastGain=gain; score+=gain;
     const first=!(owned[foe.id]>0); owned[foe.id]=(owned[foe.id]||0)+1; saveDex();
     let earn=Math.round((3+stage)*ri.mult*coinMult()); if(pf) earn=Math.round(earn*1.5); coins+=earn; saveCoins();
     if(score>best){ best=score; try{localStorage.setItem('ddakji_best',best);}catch(e){} try{submitScore();}catch(e){} }
     stage++; if(stage>bestStage){ bestStage=stage; try{localStorage.setItem('ddakji_bstage',bestStage);}catch(e){} }
-    if(stage===4) unlockMsg='🆕 평평도 해금! 떼는 순간 딱지가 기울면 바람이 샙니다';
+    if(stage===SKILL_CAP+1) unlockMsg='🔥 난이도는 여기까지! 이제부터 깊이 배수로 점수가 오릅니다';
+    else if(stage===4) unlockMsg='🆕 평평도 해금! 떼는 순간 딱지가 기울면 바람이 샙니다';
     else if(stage===9) unlockMsg='🆕 조준 해금! 딱지 바로 위가 아니라 옆을 쳐야 바람이 들어갑니다';
     showMsg(foe.rarity==='e'?'전설 획득! 👑':foe.rarity==='r'?'레어 획득! ✨':(pf?'완벽하게 뒤집었다! 🎯':'뒤집기 성공! 🟫'), pf?'#ffe14d':(ri.mult>1?ri.color:'#aef5b0'));
-    showSub(unlockMsg || ((pf?'✨완벽타 x1.5 ':'')+(first?'🆕 새 딱지! ':'')+foe.name+' +'+gain+'점 · 🪙+'+earn+(ri.mult>1?' (x'+ri.mult+')':'')+' · STAGE '+stage));
+    const dm=depthMult();
+    showSub(unlockMsg || ((pf?'✨완벽타 x1.5 ':'')+(first?'🆕 새 딱지! ':'')+foe.name+' +'+gain+'점 · 🪙+'+earn+(ri.mult>1?' (x'+ri.mult+')':'')+(dm>1?' · 깊이 x'+dm.toFixed(2):'')+' · STAGE '+stage));
+    showStats();
     sfx.win(); sfx.vib([20,40,30]); shake=9; sfx.slam();   // 착지 쿵
     for(let i=0;i<10;i++){ const a=-Math.PI/2+(Math.random()-.5)*2.2, sp=1+Math.random()*3; parts.push({x:(Math.random()-.5)*60,y:30,vx:Math.cos(a)*sp,vy:-Math.random()*3-1,life:0.5,r:2+Math.random()*3}); }
     const cc=pf?['#ffe14d','#fff','#ffcf5c','#ffb04a']:(foe.rarity==='c'?['#ffcf5c','#ff7a5c','#5cff9e','#5cc8ff']:[ri.color,'#ffffff',ri.color,'#ffe9b0']);
     const n=pf?64:(foe.rarity==='c'?30:50); for(let i=0;i<n;i++){ const a=Math.random()*Math.PI*2, sp=2+Math.random()*(pf?6:5); parts.push({x:0,y:-10,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,life:0.9,r:3+Math.random()*4,c:cc[i%4]}); }
     setReward('🎬 광고 보고 점수 2배');
   } else {
-    combo=0; const lack=Math.max(1,90-deg); const nearly=deg>=78;
+    combo=0; if(!duel.on) lives--;
+    const lack=Math.max(1,90-deg); const nearly=deg>=78;
     showMsg(nearly?'으악! 거의 넘어갔는데! 😣':'아깝다! 😫', nearly?'#ff7a7a':'#ff9a9a');
     // 실패 원인을 축별로 특정한다. 예전엔 너무 세게 쳐도 "힘이 부족"이라고 떠서
     // 플레이어가 무엇을 고쳐야 할지 영영 알 수 없었다.
-    showSub((nearly? `90°까지 딱 ${lack}°!! ` : `${deg}°… `) + failHint() + ' · ' + foe.name);
+    showSub((nearly? `90°까지 딱 ${lack}°!! ` : `${deg}°… `) + failHint());
+    showStats();
     sfx.fail(); sfx.vib(nearly?[40,30,60]:60); if(nearly){ shake=7; flash=0.25; }
-    setReward('🎬 광고 보고 쉽게 다시');
+    if(lives>0) setReward('🎬 광고 보고 쉽게 다시');
   }
   setTop();
+  if(!duel.on && lives<=0){ duelAfter={t:1.1, fn:gameOver}; }   // 목숨 소진 → 런 종료
 }
 // ---- AdMob (Capacitor 네이티브=실제 광고 / 웹·터널=시뮬) ----
 // ⚠️ 실유닛. 테스트는 테스트 트랙 빌드(UA 에 MSAdsTest)로만 한다.
@@ -528,16 +698,11 @@ function update(dt){
 
   if(state==='place'){
     chargeT+=dt;
+    coach();
     // 높이 들수록·오래 들수록 손이 떨린다
     tremAmp = tremBase*(0.5+liftR) + Math.max(0, chargeT-T_COMFORT)*TREM_RATE*0.6;
     tilt = axAngle() ? tremAmp*Math.sin(chargeT*TREM_FREQ+tremPhase) : 0;
     if(chargeT>3.0) endLift();            // 너무 오래 끌면 저절로 멈춘다
-  } else if(state==='aloft'){
-    // 공중에 든 채로 때릴 순간을 고른다. 꾸물댈수록 팔이 떨려 평평하게 치기 어려워진다.
-    aloftT+=dt;
-    tremAmp = tremBase*(0.5+liftR) + Math.max(0, aloftT*1.4)*TREM_RATE;
-    tilt = axAngle() ? tremAmp*Math.sin((chargeT+aloftT)*TREM_FREQ+tremPhase) : 0;
-    if(aloftT>2.2) strike(SWIPE_VMAX*0.22);   // 팔이 아파서 흘려 떨어뜨린다
   } else if(state==='aiaim'){             // 상대(AI) 조준 → 일정 시간 후 자동 타격
     chargeT+=dt;
     tremAmp = tremBase + Math.max(0, chargeT-T_COMFORT)*TREM_RATE;
@@ -704,7 +869,7 @@ function render(){
   }
 
   // 조준 마커 (조준 축이 열린 뒤에만)
-  if((state==='ready'||state==='place'||state==='aloft'||state==='aiaim') && axAim()){
+  if((state==='ready'||state==='place'||state==='aiaim') && axAim()){
     const d=Math.abs(aimX-CX), eff=Math.exp(-((d-Dstar)*(d-Dstar))/(2*sigmaD*sigmaD));
     ctx.save(); ctx.globalAlpha=0.35+eff*0.5;
     ctx.strokeStyle = eff>0.8?'#8affb0' : eff>0.45?'#ffd75c' : '#ff8a8a';
@@ -717,26 +882,61 @@ function render(){
     ctx.setLineDash([]); ctx.restore();
   }
 
+  // ★ 목표 고스트 ★ "여기까지 올려" 를 숫자가 아니라 그 자리에 그려준다
+  if(state==='ready'||state==='place'){
+    const tgt=tgtLift;                                    // 이번 라운드의 목표 (매판 바뀜)
+    const gx=axAim()?aimX:CX, gy=CY-GROUND_GAP-tgt*LIFT_MAX;
+    const hit=state==='place' && Math.abs(liftR-tgt)<=tgtTol;
+    // 허용 범위를 띠로 보여준다 — 어디까지가 정타인지 눈에 보이게
+    ctx.save(); ctx.globalAlpha=0.13; ctx.fillStyle=hit?'#8affb0':'#ffe14d';
+    ctx.fillRect(gx-SZ*0.72, CY-GROUND_GAP-(tgt+tgtTol)*LIFT_MAX, SZ*1.44, tgtTol*2*LIFT_MAX);
+    ctx.restore();
+    const pulse=0.5+0.5*Math.sin(gt*5);
+    ctx.save();
+    ctx.globalAlpha=hit?(0.75+pulse*0.25):(0.40+pulse*0.18);
+    ctx.strokeStyle=hit?'#8affb0':'#ffe14d'; ctx.lineWidth=hit?5:3.5;
+    ctx.setLineDash(hit?[]:[11,8]);
+    const gw=SZ*1.0;
+    roundRect(gx-gw/2, gy-gw/2, gw, gw, 12); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font='800 13px system-ui'; ctx.textAlign='center'; ctx.fillStyle=hit?'#8affb0':'#ffe14d';
+    ctx.fillText(hit?'정타! 이대로 내리꽂아요':'여기까지 올려요', gx, gy-gw/2-9);
+    ctx.restore();
+  }
+
   // 들어올린 내 딱지 — 파워바 대신 '딱지 자체'가 게이지다
-  if(state==='place'||state==='aloft'||state==='aiaim'){
+  if(state==='place'||state==='aiaim'){
     const f = (state==='aiaim') ? Math.min(1,chargeT/T_FULL) : liftR;
     const lx=axAim()?aimX:CX;
-    const ly=CY - 40 - f*LIFT_MAX;
+    // 2박자에 끌어내리는 동안 딱지가 손가락을 따라 내려온다 — 내가 누르는 느낌
+    const ly=CY - GROUND_GAP - f*LIFT_MAX;
     // 최대 높이 안내선
     ctx.save(); ctx.globalAlpha=0.30; ctx.strokeStyle='#ffe14d'; ctx.lineWidth=2; ctx.setLineDash([7,6]);
-    const ty=CY-40-LIFT_MAX;
+    const ty=CY-GROUND_GAP-LIFT_MAX;
     ctx.beginPath(); ctx.moveTo(lx-SZ*0.9,ty); ctx.lineTo(lx+SZ*0.9,ty); ctx.stroke();
     ctx.setLineDash([]); ctx.restore();
     // 과충전 경고
     if(false){ ctx.save(); ctx.globalAlpha=0.30+0.25*Math.sin(gt*18);
       ctx.fillStyle='#ff6a6a'; ctx.fillRect(0,0,W,H); ctx.restore(); }
     // 공중에 든 상태 — 내리칠 궤적과 "때려!" 신호
-    if(state==='aloft'){
+    if(state==='place' && apexR>=0.12 && (pullNow>2 || liftR>=tgtLift-tgtTol)){
       const pulse=0.5+0.5*Math.sin(gt*9);
       ctx.save();
-      ctx.globalAlpha=0.20+pulse*0.22; ctx.strokeStyle='#ffe14d'; ctx.lineWidth=3; ctx.setLineDash([9,8]);
-      ctx.beginPath(); ctx.moveTo(lx, ly+SZ*0.6); ctx.lineTo(lx, CY-SZ*0.5); ctx.stroke();
-      ctx.setLineDash([]);
+      // 끌어내릴 길 — 바닥까지 쭉. 목표는 '바닥'이라 눈으로 바로 안다.
+      const floorY=CY-SZ*0.30, done=Math.min(1,pullNow/Math.max(1,GROUND_GAP+apexR*LIFT_MAX));
+      ctx.globalAlpha=0.14+pulse*0.10; ctx.strokeStyle='#ffe14d'; ctx.lineWidth=SZ*0.62;
+      ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(lx, ly+SZ*0.5); ctx.lineTo(lx, floorY); ctx.stroke();
+      // 끌어내린 만큼 초록으로 채워진다
+      if(done>0.02){ ctx.globalAlpha=0.30+done*0.35; ctx.strokeStyle=done>0.85?'#8affb0':'#ffcf5c';
+        ctx.beginPath(); ctx.moveTo(lx, ly+SZ*0.5); ctx.lineTo(lx, ly+SZ*0.5+(floorY-(ly+SZ*0.5))*done); ctx.stroke(); }
+      ctx.lineCap='butt';
+      // 바닥 목표선
+      ctx.globalAlpha=0.55+pulse*0.4; ctx.strokeStyle=done>0.85?'#8affb0':'#ffe14d'; ctx.lineWidth=4;
+      ctx.beginPath(); ctx.moveTo(lx-SZ*0.62, floorY); ctx.lineTo(lx+SZ*0.62, floorY); ctx.stroke();
+      ctx.font='900 15px system-ui'; ctx.textAlign='center';
+      ctx.globalAlpha=0.75+pulse*0.25; ctx.fillStyle=done>0.85?'#8affb0':'#ffe14d';
+      ctx.fillText(done>0.85?'지금! 놓아요':'바닥까지 끌어내려요 ↓', lx, CY+SZ*0.86);   // 딱지를 가리지 않게 아래로
       // 아래쪽 화살표
       const ay=CY-SZ*0.52;
       ctx.fillStyle='#ffe14d';
@@ -792,23 +992,39 @@ function render(){
   // 충격 플래시
   if(flash>0){ ctx.fillStyle='rgba(255,240,200,'+(flash*0.5)+')'; ctx.fillRect(0,0,W,H); }
 
-  // 힘 게이지 (charge / aiaim) — 보조 표시. 주 게이지는 '올라가는 딱지' 자체다.
-  if(state==='place' || state==='aloft' || state==='aiaim'){
+  // ── 계기판 ── 한 동작이라 축도 하나. 올릴 땐 높이, 내려찍을 땐 진행률.
+  if(state==='place' || state==='aiaim'){
     const bw=Math.min(W*0.72,300), bx=(W-bw)/2, by=Math.max(H*0.56,H-BAR_BOTTOM), bh=16;
-    const f=(state==='aiaim')?Math.min(1,chargeT/T_FULL):liftR, over=false;
+    const needF=Math.min(1, Math.pow(requiredP(), 1/1.15));
+    const needH=liftNeeded(needF);
+    const lift=(state==='aiaim')?Math.min(1,chargeT/T_FULL):liftR;
+    const slamming = state==='place' && apexR>=0.12 && pullNow>2;
+    const done=slamming?Math.min(1,pullNow/Math.max(1,GROUND_GAP+apexR*LIFT_MAX)):0;
+
     ctx.save();
-    ctx.fillStyle='rgba(0,0,0,.45)'; roundRect(bx-4,by-4,bw+8,bh+8,10); ctx.fill();
+    ctx.fillStyle='rgba(0,0,0,.5)'; roundRect(bx-4,by-4,bw+8,bh+8,10); ctx.fill();
     roundRect(bx,by,bw,bh,7); ctx.clip();
     ctx.fillStyle='#3a2a18'; ctx.fillRect(bx,by,bw,bh);
-    ctx.fillStyle = over? '#ff7a5c' : '#ffcf5c';
-    ctx.fillRect(bx,by,bw*f,bh);
+    if(slamming){
+      ctx.fillStyle='rgba(90,220,130,.30)'; ctx.fillRect(bx,by,bw,bh);
+      ctx.fillStyle = done>0.9?'#8affb0':'#ffcf5c'; ctx.fillRect(bx,by,bw*done,bh);
+    } else {
+      const recEnd=Math.min(1,needH+0.26);
+      ctx.fillStyle='rgba(255,90,90,.30)';  ctx.fillRect(bx,by,bw*needH,bh);
+      ctx.fillStyle='rgba(90,220,130,.34)'; ctx.fillRect(bx+bw*needH,by,bw*(recEnd-needH),bh);
+      ctx.fillStyle = lift>=needH?'#ffcf5c':'#ff8a6a'; ctx.fillRect(bx,by,bw*lift,bh);
+    }
     ctx.restore();
-    // 필요 힘 눈금 — 여기를 넘겨야 뒤집힌다
-    const need=Math.pow(requiredP(), 1/1.15);
-    const needH=Math.max(0,Math.min(1,(need-FORCE_FLOOR)/(1-FORCE_FLOOR)));
-    ctx.fillStyle='rgba(140,255,170,.95)'; ctx.fillRect(bx+bw*needH-1.5,by-5,3,bh+10);
-    ctx.fillStyle='#e9d6bf'; ctx.font='700 11px system-ui'; ctx.textAlign='center';
-    ctx.fillText(state==='aloft' ? '② 아래로 쓸어내려 내리쳐요!' : '① 끌어서 위치 잡기 — 높이가 힘의 한계', bx+bw/2, by-7);
+    if(!slamming){ ctx.fillStyle='rgba(140,255,170,.95)'; ctx.fillRect(bx+bw*needH-1.5,by-5,3,bh+10); }
+
+    ctx.textAlign='center'; ctx.font='800 12px system-ui';
+    if(slamming){
+      ctx.fillStyle=done>0.9?'#8affb0':'#ffcf5c';
+      ctx.fillText(done>0.9?'바닥! 꽂힙니다':('내리찍는 중 '+Math.round(done*100)+'%'), bx+bw/2, by-9);
+    } else {
+      ctx.fillStyle = lift>=needH?'#8affb0':'#e9d6bf';
+      ctx.fillText('높이 '+Math.round(lift*100)+'%  (초록선 '+Math.round(needH*100)+'% 넘게)', bx+bw/2, by-9);
+    }
 
     // 평평도 표시 (각도 축이 열린 뒤)
     if(axAngle()){
@@ -819,7 +1035,7 @@ function render(){
       ctx.fillRect(gx+gw2/2-1.5, gy, 3, 4);                       // 중앙(완전 평평)
       ctx.fillRect(gx+gw2*(0.5+tilt/(TILT_MAX*2))-4, gy, 8, 4);    // 현재 기울기
       ctx.fillStyle='#e9d6bf'; ctx.font='700 10px system-ui';
-      ctx.fillText('평평하게 ─ 가운데서 떼기', W/2, gy+15);
+      ctx.fillText('평평도 '+Math.round(a*100)+'%  ─ 가운데일 때 때려요', W/2, gy+15);
     }
   }
 }
@@ -837,43 +1053,17 @@ requestAnimationFrame(loop);
 // ---- Input ----
 // 누르기 = 들어올리기, 떼기 = 내리치기. 탭 한 번이 아니라 '한 번의 연속 터치'다.
 // 터치한 x 위치가 조준(조준 축이 열린 뒤).
-// 스와이프 속도 측정용 최근 좌표 버퍼
-let trail=[];
-function pushTrail(y){ const t=performance.now(); trail.push([t,y]); while(trail.length>8) trail.shift();
-  while(trail.length>2 && t-trail[0][0]>140) trail.shift(); }
-function swipeSpeed(){                 // 아래로 내려간 속도(px/s). 위로 간 건 0.
-  if(trail.length<2) return 0;
-  const a=trail[0], b=trail[trail.length-1];
-  const dy=b[1]-a[1], dtm=(b[0]-a[0])/1000;
-  if(dtm<=0.004 || dy<=0) return 0;
-  return dy/dtm;
-}
 
 function onDown(x,y){
   initAudio();
   if(state==='ready'){ holding=true; beginPlace(x,y); }
-  else if(state==='aloft'){ holding=true; trail=[]; pushTrail(y); }   // ★ 2박자 시작 — 쓸어내릴 준비
   else if(state==='result' && !duel.on){   // 솔로만 탭으로 다음 라운드(듀얼은 자동 진행)
     if(resultT<0.35) return;
     newRound();
   }
 }
-function onMove(x,y){
-  if(state==='place' && holding) updatePlace(x,y);
-  else if(state==='aloft' && holding){
-    pushTrail(y);
-    // 충분히 빠르게 쓸어내리는 순간 바로 때린다 (손을 뗄 때까지 기다리지 않는다)
-    const v=swipeSpeed(); if(v>SWIPE_VMAX*0.45) strike(v);
-  }
-}
-function onUp(){
-  if(!holding) return; holding=false;
-  if(state==='place') endLift();
-  else if(state==='aloft'){
-    const v=swipeSpeed();
-    strike(v>0 ? v : SWIPE_VMAX*0.30);   // 제자리 탭은 약한 타격으로 처리
-  }
-}
+function onMove(x,y){ if(state==='place' && holding) updatePlace(x,y); }
+function onUp(){ if(!holding) return; holding=false; if(state==='place') endLift(); }
 cv.addEventListener('pointerdown',e=>{ e.preventDefault(); onDown(e.clientX,e.clientY); });
 cv.addEventListener('pointermove',e=>{ e.preventDefault(); onMove(e.clientX,e.clientY); });
 addEventListener('pointerup',e=>{ onUp(); });
@@ -886,7 +1076,14 @@ $('shopBtnP').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopProp
 $('shopBtn2').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); openShop(); });
 $('shopClose').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); $('shop').classList.add('hidden'); });
 
-$('startBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); initAudio(); score=0; combo=0; won=0; stage=1; easyNext=false; $('start').classList.add('hidden'); $('dexBtn').classList.remove('hidden'); $('shopBtnP').classList.remove('hidden'); $('coinHud').classList.remove('hidden'); setTop(); newRound(); lastTs=performance.now(); });
+$('startBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); initAudio(); if(!tutSeen()) openTut(); startRun(); });
+$('overCont').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); continueRun(); });
+$('overAgain').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation();
+  interCount++; if(interCount%2===0) showInterstitial(); startRun(); });
+$('overHome').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation();
+  interCount++; if(interCount%2===0) showInterstitial();
+  $('over').classList.add('hidden'); $('coinHud').classList.add('hidden'); state='start';
+  $('start').classList.remove('hidden'); if(bestStage>1) $('bstage').textContent='🏆 최고 스테이지 '+bestStage; });
 
 // ---- 글로벌 랭킹 (Firebase) ----
 function getUid(){ let u=localStorage.getItem('ddakji_uid'); if(!u){ u='d'+Math.random().toString(36).slice(2,10); localStorage.setItem('ddakji_uid',u); } return u; }
@@ -909,6 +1106,7 @@ async function renderLB(){
 }
 function openLB(){ $('lb').classList.remove('hidden'); submitScore().then(renderLB).catch(()=>renderLB()); }
 $('lbBtn2').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); openLB(); });
+$('tutBtn2').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); openTut(); });
 $('lbClose').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); $('lb').classList.add('hidden'); });
 $('lbNameBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); const n=prompt('랭킹에 표시할 이름 (최대 12자)', getName()); if(n&&n.trim()){ localStorage.setItem('ddakji_name', n.trim().slice(0,12)); submitScore().then(renderLB).catch(()=>renderLB()); } });
 
@@ -939,7 +1137,7 @@ function startDuel(){ if(setupBet>coins) return; duel.on=true; duel.bet=setupBet
 function beginDuelTurn(){ duelAfter=null;
   if(duel.attacker==='P'){ foe=duel.oDak; attackerCols=duel.pDak.cols; attackerId=duel.pDak.id; }
   else { foe=duel.pDak; attackerCols=duel.oDak.cols; attackerId=duel.oDak.id; }
-  theta=0; omega=0; maxTheta=0; physAcc=0; chargeT=0; aloftT=0; overHold=0; liftR=0; swing=0; trail=[]; tilt=0; tremAmp=0; tremPhase=Math.random()*Math.PI*2; holding=false; aimX=W/2; teetering=false; dropY=0; waves=[]; squash=0; foeJolt=0; freeze=0; burst=null; applyDifficulty();
+  theta=0; omega=0; maxTheta=0; physAcc=0; chargeT=0; liftR=0; apexR=0; swing=0; liveSwing=0; pullNow=0; tilt=0; tremAmp=0; tremPhase=Math.random()*Math.PI*2; holding=false; aimX=W/2; teetering=false; dropY=0; waves=[]; squash=0; foeJolt=0; freeze=0; burst=null; applyDifficulty();
   foeGlow=foe.rarity==='c'?0:1; $('foeLabel').innerHTML=''; clearMsg(); updateDuelHud();
   if(duel.attacker==='P'){ state='ready'; $('hint').classList.remove('hidden'); }
   else { state='aiaim'; aiAimT=0; chargeT=0; tilt=0; aiHold=0.55+Math.random()*0.55; aimX=W/2+(Math.random()*2-1)*Dstar; $('hint').classList.add('hidden'); }
@@ -1002,6 +1200,28 @@ $('duelGoBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPro
 $('drAgain').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); $('duelResult').classList.add('hidden'); openDuelSetup(); });
 $('drHome').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); exitDuel(); });
 
+// ---- 첫 플레이 가이드 ----
+let tutStep=0;
+function tutSeen(){ try{ return localStorage.getItem('ddakji_tut')==='2'; }catch(e){ return false; } }
+function openTut(){ tutStep=0; paintTut(); $('tut').classList.remove('hidden'); }
+function paintTut(){
+  const t=$('tut');
+  t.classList.toggle('s1', tutStep===0); t.classList.toggle('s2', tutStep===1);
+  $('tutStep').textContent=(tutStep+1)+' / 2';
+  if(tutStep===0){
+    $('tutTitle').textContent='① 들어올리기';
+    $('tutDesc').innerHTML='화면을 <b>누른 채 위로</b> 올려요.<br/>노란 점선까지 올리면 딱 좋아요. <b>손은 떼지 마세요.</b>';
+    $('tutNext').textContent='다음 →';
+  } else {
+    $('tutTitle').textContent='② 그대로 내리꽂기';
+    $('tutDesc').innerHTML='<b>손을 떼지 말고</b> 그대로 아래로 내려요.<br/>딱지가 <b>바닥에 닿는 순간</b> 꽂힙니다. 빠를 필요 없어요.';
+    $('tutNext').textContent='해볼게요!';
+  }
+}
+$('tutNext').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation();
+  if(tutStep===0){ tutStep=1; paintTut(); }
+  else { $('tut').classList.add('hidden'); try{localStorage.setItem('ddakji_tut','2');}catch(e2){} }
+});
 $('muteBtn').addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); muted=!muted; try{localStorage.setItem('ddakji_mute',muted?'1':'0');}catch(e2){} renderMute(); if(!muted){ initAudio(); tone(660,0.05,'square',0.08); } }); renderMute();
 setTop(); if(bestStage>1) $('bstage').textContent='🏆 최고 스테이지 '+bestStage;
 </script>
