@@ -35,11 +35,7 @@
   .dcell.lock{filter:grayscale(1);opacity:.28}
   #overTitle{font-size:34px}
   #reviveBtn{background:#2ec77a;box-shadow:0 6px 0 #1a8a52}
-  #gripWrap{position:fixed;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom,0px));z-index:6;text-align:center;pointer-events:none}
-  #gripLbl{font-size:18px;font-weight:900;color:#fff;text-shadow:0 0 12px rgba(255,90,110,.6);margin-bottom:6px;animation:pulse .5s ease-in-out infinite alternate}
   @keyframes pulse{from{transform:scale(1)}to{transform:scale(1.08)}}
-  #gripBar{width:72%;max-width:300px;height:20px;margin:0 auto;background:rgba(255,255,255,.12);border-radius:12px;overflow:hidden;border:2px solid rgba(255,255,255,.25)}
-  #gripFill{height:100%;width:100%;background:#5cffb0;border-radius:10px;transition:width .05s linear}
   #combo{font-size:22px;font-weight:900;margin-top:3px;min-height:26px;letter-spacing:1px;text-shadow:0 0 14px rgba(255,140,40,.7)}
   .dcell.secret{background:linear-gradient(135deg,rgba(255,92,225,.18),rgba(124,180,255,.18));border:1.5px solid rgba(255,120,220,.5)}
   .dcell.secret.ready{animation:secglow 1s ease-in-out infinite alternate;filter:none;opacity:1}
@@ -88,6 +84,11 @@
   #trophyRow{display:flex;gap:6px;justify-content:center;margin:2px 0 4px}
   .trophy{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;background:rgba(255,255,255,.06);filter:grayscale(1);opacity:.35;border:1px solid transparent}
   .trophy.master{filter:none;opacity:1;background:linear-gradient(135deg,#ffe066,#ffb04d);border:1px solid #fff2c0;box-shadow:0 0 10px rgba(255,211,77,.8);color:#4a2e00}
+  /* 트로피 줄이 테마 넘겨보기 역할도 한다 */
+  .trophy{pointer-events:auto;cursor:pointer;transition:transform .12s}
+  .trophy:not(.lk){filter:none;opacity:.72}
+  .trophy.sel{opacity:1;transform:scale(1.14);border:1px solid #ff9ae0;box-shadow:0 0 10px rgba(255,120,220,.55)}
+  .trophy.lk{filter:grayscale(1);opacity:.3}
 </style></head>
 <body>
 <div id="stage"><canvas id="cv"></canvas></div>
@@ -101,10 +102,9 @@
   <div id="lastAccTop"></div>
   <div id="streak"></div>
 </div>
-<div id="gripWrap" class="hidden"><div id="gripLbl">🔥 탭 연타! 꽉 잡아!</div><div id="gripBar"><div id="gripFill"></div></div></div>
 <div id="goldBar" class="hidden"><div id="goldLbl">⚡ 황금 찬스!</div><div id="goldTrack"><div id="goldFill"></div></div></div>
 <div id="hint"></div>
-<div id="ver">v3.3 · 붙잡기 연타 · 더미가 반응 · 구석 난이도 · 간판</div>
+<div id="ver">v3.4 · 기계 몸체 · 도감 등록 연출 · 테마 둘러보기</div>
 
 <div id="start">
   <h1>모두의 뽑기</h1>
@@ -123,7 +123,7 @@
     <button class="btn" id="rankBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:13px 26px">🏅 랭킹</button>
     <button class="btn" id="shareBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:13px 26px">🔗 공유</button>
   </div>
-  <div id="changelog">🆕 <b>v3.3</b> · 🔥<b>운반 중 연타!</b> 놓치기 직전 인형을 되잡을 수 있어요 (성공은 절대 안 뒤집힘)<br>· 집으면 옆 인형들이 무너져요 · 🧱구석 인형은 더 어려움 · 기계 간판 · 인형이 바닥에 가득</div>
+  <div id="changelog">🆕 <b>v3.4</b> · 🧸<b>도감을 다 둘러볼 수 있어요</b> — 위 트로피를 눌러보세요 · 새로 모으면 등록 도장!<br>· 기계 아래가 꽉 찼어요 · 투입구·받는 곳이 한눈에<br><b>v3.3</b> · 🔥운반 중 연타로 되잡기 · 집으면 옆 인형이 무너져요 · 🧱구석은 더 어려움</div>
 </div>
 
 <div id="rank">
@@ -289,7 +289,23 @@ function secretUnlocked(theme){ return !!theme.secret && themeCaught(theme) >= t
 function secretCaught(theme){ return theme.secret && has(theme,theme.secret); }
 function themeMastered(theme){ return themeCaught(theme)>=theme.dolls.length && (!theme.secret || secretCaught(theme)); }  // 기본10+시크릿 = 완전 마스터(황금 보상)
 function masteredCount(){ return THEMES.filter(themeMastered).length; }
-function renderTrophies(){ const el=$('trophyRow'); if(!el) return; el.innerHTML=THEMES.map(t=>'<div class="trophy'+(themeMastered(t)?' master':'')+'" title="'+t.name+(themeMastered(t)?' 마스터! 🏆':' (미완성)')+'">'+(themeMastered(t)?t.ico:'🔒')+'</div>').join(''); }
+// v3.5: 트로피 줄을 '테마 넘겨보기'로 겸용한다. 예전엔 현재 테마 11칸만 볼 수 있어서
+// 55종 중 44종이 아예 안 보였다. 수집 게임은 '아직 없는 것'이 보여야 모으고 싶어진다.
+let viewTheme=-1;                                   // -1 = 현재 테마
+function VIEW(){ return THEMES[viewTheme<0?curTheme:viewTheme]; }
+function themeOpen(i){ return i<=curTheme; }        // 해금된 테마만 내용 공개
+function renderTrophies(){ const el=$('trophyRow'); if(!el) return;
+  const vi=(viewTheme<0?curTheme:viewTheme);
+  el.innerHTML=THEMES.map((t,i)=>{
+    const open=themeOpen(i), done=themeMastered(t), sel=(i===vi);
+    const face = open ? t.ico : '🔒';
+    const tip  = open ? (t.name+' '+themeCaught(t)+'/'+t.dolls.length) : (t.name+' (잠김)');
+    return '<div class="trophy'+(done?' master':'')+(sel?' sel':'')+(open?'':' lk')+'" data-i="'+i+'" title="'+tip+'">'+face+'</div>';
+  }).join('');
+  [...el.children].forEach(c=>{ c.onclick=()=>{ const i=+c.dataset.i;
+    viewTheme = (i===(viewTheme<0?curTheme:viewTheme)) ? -1 : i;   // 같은 걸 또 누르면 현재 테마로
+    preloadTheme(THEMES[i], renderDexGrid); renderDexGrid(); renderTrophies(); renderStartStats(); }; });
+}
 // ── 인형 아트 (v2.8) ──
 // assets/dolls/{theme}/{name}.png 를 쓰고, 파일이 없거나 로드에 실패하면 이모지로 그린다.
 // OTA로 받은 HTML도 앱 안에서는 앱 번들을 기준으로 상대경로를 풀기 때문에 APK 안의 파일이 쓰인다.
@@ -322,8 +338,13 @@ function fillCell(c,theme,d,got){ const a=got&&dollArt(theme,d);
   else { c.style.backgroundImage=''; c.textContent=got?d.e:'❔'; } }
 
 function renderDexGrid(){ const g=$('dexGrid'); g.innerHTML='';
-  THEME().dolls.forEach(d=>{ const got=has(THEME(),d); const c=document.createElement('div'); c.className='dcell'+(got?'':' lock'); fillCell(c,THEME(),d,got); c.title=d.n+' '+'★'.repeat(d.r); g.appendChild(c); });
-  const T=THEME(); if(T.secret){ const sc=document.createElement('div'); const caught=secretCaught(T), unlocked=secretUnlocked(T);
+  const V=VIEW(), locked=!themeOpen(THEMES.indexOf(V));
+  V.dolls.forEach(d=>{ const got=has(V,d); const c=document.createElement('div'); c.className='dcell'+(got?'':' lock');
+    // 잠긴 테마는 '무엇이 들었는지'만 이모지 실루엣으로 귀띔한다. 전부 ❔ 이면 갖고 싶어지지 않는다.
+    if(locked){ c.style.backgroundImage=''; c.textContent=d.e; }
+    else fillCell(c,V,d,got);
+    c.title=locked? (d.n+' (잠김)') : (d.n+' '+'★'.repeat(d.r)); g.appendChild(c); });
+  const T=V; if(T.secret){ const sc=document.createElement('div'); const caught=secretCaught(T), unlocked=secretUnlocked(T);
     sc.className='dcell secret'+(caught?'':(unlocked?' ready':' lock'));
     fillCell(sc,T,T.secret,caught);
     sc.title = caught? (T.secret.n+' ✨시크릿') : (unlocked? '✨시크릿 등장! 잡아보세요' : '🔒 시크릿 — 기본 10종을 다 모으면 등장');
@@ -331,7 +352,11 @@ function renderDexGrid(){ const g=$('dexGrid'); g.innerHTML='';
 
 // ── 캔버스 ──
 const cv=$('cv'), ctx=cv.getContext('2d'); let W=412,H=740,DPR=1, sc=1;
-function resize(){ DPR=Math.min(devicePixelRatio||1,2); const vw=innerWidth,vh=innerHeight; W=412; H=Math.round(W*vh/vw); cv.width=W*DPR; cv.height=H*DPR; cv.style.width=vw+'px'; cv.style.height=vh+'px'; ctx.setTransform(DPR,0,0,DPR,0,0); }
+function resize(){ DPR=Math.min(devicePixelRatio||1,2); const vw=innerWidth,vh=innerHeight; W=412; H=Math.round(W*vh/vw); cv.width=W*DPR; cv.height=H*DPR; cv.style.width=vw+'px'; cv.style.height=vh+'px'; ctx.setTransform(DPR,0,0,DPR,0,0); measureHud(); }
+// 상단 HUD 는 DOM 이라 높이가 기기마다 다르다. 캔버스 좌표로 환산해두고
+// 간판이 들어갈 자리가 없으면(16:9 처럼 짧은 화면) 간판을 그리지 않는다 — 겹치는 것보단 낫다.
+let hudBottomL=0;
+function measureHud(){ try{ const el=$('top'); hudBottomL = el ? el.getBoundingClientRect().bottom*(H/innerHeight) : 0; }catch(e){ hudBottomL=0; } }
 addEventListener('resize',resize); resize();
 
 // 필드(유리장) 영역
@@ -345,9 +370,21 @@ function caseBottom(){ const f=field(); return f.y+f.h+24; }                   /
 // 투입구는 '운반 중 인형이 매달린 높이'에 정확히 맞춘다.
 // 운반 시 집게는 y=field().y-30, 인형은 그보다 34 아래 → field().y+4 가 인형 중심.
 function exitHole(){ const f=field(), w=64, h=52, x=f.x+4, y=f.y+4-h/2; return {x,y,w,h,cx:x+w/2,cy:y+h/2}; }
-function tray(){ const f=field(), w=142, h=42, x=f.x-8, y=caseBottom()+12; return {x,y,w,h,cx:x+w/2,cy:y+h/2}; }
+// v3.4: 유리장 아래를 '기계 몸체'로 채운다. 예전엔 받는 곳·패널만 떠 있고 하단 60~130px 이 비었고,
+// 연타 게이지는 CSS bottom 기준 DOM 이라 캔버스 좌표와 다른 체계였다 → 기기 비율에 따라 패널과 겹쳤다.
+// 이제 몸체·받는 곳·패널·게이지가 전부 같은 캔버스 좌표계 안에 있다.
+// 최소 126 = 여백8 + 패널56 + 간격14 + 라벨16 + 게이지20 + 여백12.
+// 16:9 처럼 짧은 화면에서도 패널과 게이지가 겹치지 않게 몸체가 이만큼은 확보한다.
+function cabinetBase(){ const f=field(), y=caseBottom()+8; return {x:f.x-8, y, w:f.w+16, h:Math.max(126, H-52-y)}; }
+function tray(){ const B=cabinetBase(), w=142, h=42, x=B.x+6, y=B.y+8; return {x,y,w,h,cx:x+w/2,cy:y+h/2}; }
+function gripBarRect(){
+  const B=cabinetBase(), TR=tray(), h=20;
+  const panelBottom=TR.y-2+TR.h+14;              // 조작 패널 아래쪽
+  const y=Math.max(B.y+B.h-h-14, panelBottom+30); // 몸체가 짧아도 패널 밑으로 밀어낸다
+  return {x:B.x+24, y, w:B.w-48, h, cy:y+h/2};
+}
 function showcase(){ return {x:W/2, y:H*0.56}; }                               // 획득 인형을 크게 보여주는 자리
-let prizeDoll=null, prizeT=0;   // 배출구로 나온 인형(획득 연출 동안 유지)
+let prizeDoll=null, prizeT=0, prizeNew=false, prizeDexN=0;   // 배출구로 나온 인형(획득 연출 동안 유지)
 let state='start';           // start|aimX|aimY|drop|result
 let dolls=[];                // 화면 배치된 인형들
 let target=-1;               // 목표 인형 index(dolls)
@@ -504,7 +541,7 @@ function pendingHTML(){ const out=[];
   return out.length ? '<div style="margin:4px 0;font-size:14px;font-weight:800;background:rgba(255,211,77,.10);border:1px solid rgba(255,211,77,.35);border-radius:10px;padding:7px 12px">'+out.join('<br>')+'</div>' : ''; }
 function renderPending(){ const h=pendingHTML(); ['pending','overPending'].forEach(id=>{ const el=$(id); if(el) el.innerHTML=h; }); }
 function newRound(keepTarget){
-  prizeDoll=null; prizeT=0;
+  prizeDoll=null; prizeT=0; prizeNew=false; measureHud();   // HUD 내용에 따라 높이가 조금 변한다
   $('top').style.visibility='visible';
   const goal = keepTarget||pickTarget();
   window._goal=goal;
@@ -574,7 +611,7 @@ function startSpectate(){
   state='drop'; claw.phase='descend'; claw.x=cx; anim=0; pulseT=performance.now(); shakeN=0; claw.grip=1;
   gripNeed=0; gripTaps=0; gripDone=false; gripBonus=false;
   play('claw_descend',{tag:'motor'});
-  $('hint').textContent=''; $('gripWrap').classList.add('hidden'); $('goldBar').classList.add('hidden'); // 조준 완료 → 황금 타이머 멈춤(결정됨)
+  $('hint').textContent=''; $('goldBar').classList.add('hidden'); // 조준 완료 → 황금 타이머 멈춤(결정됨)
 }
 
 function startGrip(){
@@ -586,17 +623,12 @@ function startGrip(){
   // 실패의 긴장이 사라지고, 너무 어려우면 구제가 아니라 벌이 된다.
   gripNeed = outcome.nearMiss ? Math.min(12, Math.round(6+gap*17)) : 9;
   gripTaps=0; gripDone=false; gripBonus=false;
-  $('gripLbl').textContent = outcome.nearMiss ? '🔥 연타! 놓치기 전에 붙잡아!' : '✨ 연타! 퍼펙트 캐치!';
-  $('gripFill').style.background = outcome.nearMiss ? '#ff6a7a' : '#ffd34d';
-  $('gripFill').style.width='0%';
-  $('gripWrap').classList.remove('hidden');
 }
 function gripTap(){
   if(gripDone || !gripNeed) return;
   gripTaps++; play('ui_tap'); vib(9);
-  $('gripFill').style.width = Math.min(100, gripTaps/gripNeed*100).toFixed(0)+'%';
   if(gripTaps < gripNeed) return;
-  gripDone=true; $('gripWrap').classList.add('hidden');
+  gripDone=true;
   if(outcome.nearMiss){                                   // 역전 — 떨어지기 직전에 되잡았다
     outcome.nearMiss=false; outcome.success=true; claw.grip=1; shakeMag=0;
     $('hint').textContent='';
@@ -643,7 +675,7 @@ function stepSpectate(dt){
       const shakeAt=[0.35,0.85,1.35];                                  // 흔들림 한 번 더 — 길어진 만큼 긴장도 더
       if(shakeN<shakeAt.length && anim>=shakeAt[shakeN]){ shakeN++; shakeMag=16; screenShake=Math.max(screenShake,6); claw.grip-=0.18; play('grip_slip'); disturb(claw.x,claw.y+40,0.45); vib([15,35]); burst(claw.x-4,claw.y+44,'#bfe0ff',6); }
       $('hint').textContent = claw.grip<0.5?'앗, 미끄러진다…!':'불안하게 흔들린다…';
-      if(claw.grip<=0.02){ $('hint').textContent=''; $('gripWrap').classList.add('hidden'); claw.phase='drop'; anim=0; }
+      if(claw.grip<=0.02){ $('hint').textContent=''; claw.phase='drop'; anim=0; }
     } else { claw.grip=1; }
     const g=claw.grip;
     claw.open=clamp((1-g)*0.75+0.05,0.05,0.85);
@@ -651,7 +683,7 @@ function stepSpectate(dt){
     if(claw.holding){ claw.holding.x=claw.x+Math.sin(anim*30)*shakeMag*0.2; claw.holding.y=claw.y+34+slip; }
     shakeMag*=0.92;
     timeScale = (outcome.nearMiss && g<0.45)?0.4:0.6;                  // 위기 슬로모
-    if(outcome.success && anim>1.6){ $('gripWrap').classList.add('hidden'); claw.phase='deposit'; anim=0; }
+    if(outcome.success && anim>1.6){ claw.phase='deposit'; anim=0; }
   } else if(claw.phase==='drop'){
     claw.open=0.9; // 집게 완전히 벌어짐(놓침)
     // 출구 바로 앞에서 낙하 (아—! 놓쳤다)
@@ -695,12 +727,13 @@ function prizePose(a){
   return {x:x, y:y+bob, s:s};
 }
 function endResult(win, kind){
-  if(state==='result') return; state='result'; timeScale=1; claw.sway=0; $('gripWrap').classList.add('hidden');
+  if(state==='result') return; state='result'; timeScale=1; claw.sway=0;
   const goal=window._goal;
   if(win){
     const T=THEME(); const id=did(T,goal.n); const wasNew=!dex.includes(id);
     const isSecret = goal.r>=4;
     if(wasNew){ dex.push(id); saveDex(dex); }
+    prizeNew=wasNew; prizeDexN=totalCaughtDolls();   // 도감 등록 스탬프용
     failStreak=0; try{localStorage.setItem('ppopgi_fs',0);}catch(e){}
     clawBonus=0;
     successStreak++; totalCaught++; if(successStreak>bestStreak) bestStreak=successStreak; saveStats();
@@ -849,6 +882,7 @@ function draw(){
     ctx.restore(); })();
   // ── 마키 간판 (v3.3) — 실제 기계의 머리 간판. 전구가 돌아간다 ──
   (function(){ const M=marquee(), tm=performance.now()/1000;
+    if(M.y < hudBottomL+6) return;                 // 자리가 없으면 간판 생략
     const mg=ctx.createLinearGradient(0,M.y,0,M.y+M.h);
     mg.addColorStop(0,'#5a3f8f'); mg.addColorStop(.5,'#3a2563'); mg.addColorStop(1,'#241640');
     ctx.fillStyle=mg; roundRect(M.x,M.y,M.w,M.h,10); ctx.fill();
@@ -881,9 +915,15 @@ function draw(){
   led.addColorStop(1,'hsla('+((hue+150)%360)+',85%,72%,.85)');
   ctx.strokeStyle=led; ctx.lineWidth=3.5; ctx.shadowColor='hsla('+((hue+70)%360)+',90%,70%,.75)'; ctx.shadowBlur=13;
   roundRect(CX,CY,CW,CH,18); ctx.stroke(); ctx.restore();
-  const HOLE=exitHole(), TR=tray();
+  const HOLE=exitHole(), TR=tray(), BASE=cabinetBase();
   const dropping=(claw.phase==='deposit'), waiting=(claw.phase==='chute');
   ctx.textAlign='center';
+  // ── 기계 몸체 — 유리장 아래를 화면 끝까지 채운다 ──
+  const bodyG=ctx.createLinearGradient(0,BASE.y,0,BASE.y+BASE.h);
+  bodyG.addColorStop(0,'#4b3a78'); bodyG.addColorStop(.35,'#36284f'); bodyG.addColorStop(1,'#1d1434');
+  ctx.fillStyle=bodyG; roundRect(BASE.x,BASE.y,BASE.w,BASE.h,16); ctx.fill();
+  ctx.strokeStyle='rgba(190,160,245,.35)'; ctx.lineWidth=2; roundRect(BASE.x,BASE.y,BASE.w,BASE.h,16); ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,.08)'; roundRect(BASE.x+8,BASE.y+3,BASE.w-16,4,2); ctx.fill();   // 상단 하이라이트
   // ── 슈트: 투입구와 받는 곳을 잇는 관 (유리장 왼쪽 바깥) ──
   const pipeX=5, pipeW=11;
   const pg=ctx.createLinearGradient(pipeX,0,pipeX+pipeW,0);
@@ -896,38 +936,61 @@ function draw(){
       ctx.beginPath(); ctx.moveTo(pipeX+2.5,yy); ctx.lineTo(pipeX+pipeW/2,yy+4.5); ctx.lineTo(pipeX+pipeW-2.5,yy); ctx.stroke(); }
     ctx.globalAlpha=1;
   }
-  // ── 투입구 — 집게가 인형을 떨어뜨리는 구멍 ──
+  // ── 투입구 (v3.5) — 글자 없이 '들어가는 구멍'으로 읽히게 ──
+  // 안쪽을 깔때기(위가 넓고 아래가 좁음)로 깎고 아래로 향하는 화살표를 새긴다.
   const rimG=ctx.createLinearGradient(0,HOLE.y-6,0,HOLE.y+10);          // 금속 테두리
   rimG.addColorStop(0,'#e2d4ff'); rimG.addColorStop(.55,'#9b86cc'); rimG.addColorStop(1,'#5b4489');
   ctx.fillStyle=rimG; roundRect(HOLE.x-5,HOLE.y-5,HOLE.w+10,HOLE.h+10,14); ctx.fill();
+  ctx.save();
+  ctx.beginPath(); roundRect(HOLE.x,HOLE.y,HOLE.w,HOLE.h,10); ctx.clip();
   const inG=ctx.createLinearGradient(0,HOLE.y,0,HOLE.y+HOLE.h);          // 안쪽 깊이감
-  inG.addColorStop(0,'#07040f'); inG.addColorStop(.6,'#140a24'); inG.addColorStop(1,'#241440');
-  ctx.fillStyle=inG; roundRect(HOLE.x,HOLE.y,HOLE.w,HOLE.h,10); ctx.fill();
+  inG.addColorStop(0,'#1d1030'); inG.addColorStop(.45,'#0c0718'); inG.addColorStop(1,'#05030c');
+  ctx.fillStyle=inG; ctx.fillRect(HOLE.x,HOLE.y,HOLE.w,HOLE.h);
+  const fx=HOLE.w*0.20, fy=HOLE.y+HOLE.h*0.52;                           // 깔때기 벽면(빛 받는 경사)
+  ctx.fillStyle='rgba(176,150,230,.26)';
+  ctx.beginPath(); ctx.moveTo(HOLE.x,HOLE.y); ctx.lineTo(HOLE.x+fx,fy); ctx.lineTo(HOLE.x+fx,HOLE.y+HOLE.h); ctx.lineTo(HOLE.x,HOLE.y+HOLE.h); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='rgba(120,96,180,.22)';
+  ctx.beginPath(); ctx.moveTo(HOLE.x+HOLE.w,HOLE.y); ctx.lineTo(HOLE.x+HOLE.w-fx,fy); ctx.lineTo(HOLE.x+HOLE.w-fx,HOLE.y+HOLE.h); ctx.lineTo(HOLE.x+HOLE.w,HOLE.y+HOLE.h); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle=dropping?'rgba(255,211,77,.95)':'rgba(190,165,245,.5)'; // 아래로 향하는 화살표 = 넣는 곳
+  ctx.lineWidth=2.6; ctx.lineCap='round'; ctx.lineJoin='round';
+  for(let k=0;k<2;k++){ const ay=HOLE.cy-4+k*11;
+    ctx.globalAlpha=dropping?(0.55+0.45*Math.sin(performance.now()/110+k)):(k?0.52:0.85);
+    ctx.beginPath(); ctx.moveTo(HOLE.cx-9,ay); ctx.lineTo(HOLE.cx,ay+7); ctx.lineTo(HOLE.cx+9,ay); ctx.stroke(); }
+  ctx.globalAlpha=1; ctx.restore();
   ctx.strokeStyle='rgba(255,255,255,.30)'; ctx.lineWidth=1.5;           // 입구 윗면 하이라이트
   ctx.beginPath(); ctx.moveTo(HOLE.x+8,HOLE.y+2); ctx.lineTo(HOLE.x+HOLE.w-8,HOLE.y+2); ctx.stroke();
-  if(dropping){ ctx.save(); ctx.globalAlpha=0.70+0.30*Math.sin(performance.now()/80);   // 최저점에서도 안 꺼지게
+  if(dropping){ ctx.save(); ctx.globalAlpha=0.70+0.30*Math.sin(performance.now()/80);
     ctx.shadowColor='#ffd34d'; ctx.shadowBlur=18; ctx.strokeStyle='#ffd34d'; ctx.lineWidth=2.5;
     roundRect(HOLE.x,HOLE.y,HOLE.w,HOLE.h,10); ctx.stroke(); ctx.restore(); }
-  // 라벨은 구멍 아래에 — 위에 두면 투입 순간 집게 헤드에 가려진다
-  ctx.fillStyle=dropping?'#ffd34d':'#c3a9ea'; ctx.font='bold 10px system-ui';
-  ctx.fillText('투입구',HOLE.cx,HOLE.y+HOLE.h+12);
-  // ── 받는 곳 — 인형이 나오는 배출구 ──
+  // ── 받는 곳 (v3.5) — 글자 없이 '손 넣어 꺼내는 문'으로 읽히게 ──
+  // 실제 기계의 상징은 밀어 여는 투명 뚜껑. 경첩·판·손잡이 홈을 그린다.
   const frG=ctx.createLinearGradient(0,TR.y-6,0,TR.y+TR.h+8);           // 바깥 프레임
   frG.addColorStop(0,'#d7c6fb'); frG.addColorStop(.5,'#8a72c2'); frG.addColorStop(1,'#3d2d63');
   ctx.fillStyle=frG; roundRect(TR.x-6,TR.y-6,TR.w+12,TR.h+14,16); ctx.fill();
-  const tinG=ctx.createLinearGradient(0,TR.y,0,TR.y+TR.h-6);            // 안쪽 구멍
+  const tinG=ctx.createLinearGradient(0,TR.y,0,TR.y+TR.h-6);            // 안쪽 어둠(깊이)
   tinG.addColorStop(0,'#05030b'); tinG.addColorStop(1,'#1b1030');
   ctx.fillStyle=tinG; roundRect(TR.x,TR.y,TR.w,TR.h-4,11); ctx.fill();
+  (function(){ const fh2=(TR.h-4)*0.62, inset=7;                        // 밀어 여는 투명 뚜껑
+    const fl=ctx.createLinearGradient(0,TR.y+2,0,TR.y+2+fh2);
+    fl.addColorStop(0,'rgba(216,234,255,.46)'); fl.addColorStop(.55,'rgba(172,202,247,.26)'); fl.addColorStop(1,'rgba(152,182,237,.12)');
+    ctx.fillStyle=fl;
+    ctx.beginPath(); ctx.moveTo(TR.x+inset,TR.y+3); ctx.lineTo(TR.x+TR.w-inset,TR.y+3);
+    ctx.lineTo(TR.x+TR.w-inset-5,TR.y+3+fh2); ctx.lineTo(TR.x+inset+5,TR.y+3+fh2); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(232,244,255,.66)'; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.save(); ctx.globalAlpha=.20; ctx.fillStyle='#fff';      // 유리 반짝임(비스듬한 줄기)
+    ctx.beginPath(); ctx.moveTo(TR.x+inset+8,TR.y+3); ctx.lineTo(TR.x+inset+20,TR.y+3); ctx.lineTo(TR.x+inset+9,TR.y+3+fh2); ctx.lineTo(TR.x+inset+2,TR.y+3+fh2); ctx.closePath(); ctx.fill(); ctx.restore();
+    ctx.strokeStyle='rgba(255,255,255,.75)'; ctx.lineWidth=2.2;         // 경첩선(위쪽 고정)
+    ctx.beginPath(); ctx.moveTo(TR.x+inset-1,TR.y+3); ctx.lineTo(TR.x+TR.w-inset+1,TR.y+3); ctx.stroke();
+    const gy2=TR.y+3+fh2-6;                                             // 손잡이 홈(아래 가운데)
+    ctx.fillStyle='rgba(12,8,22,.55)'; roundRect(TR.cx-14,gy2,28,6,3); ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.50)'; ctx.lineWidth=1.2; roundRect(TR.cx-14,gy2,28,6,3); ctx.stroke();
+  })();
   ctx.fillStyle='rgba(255,255,255,.13)'; roundRect(TR.x+5,TR.y+TR.h-4,TR.w-10,7,4); ctx.fill();   // 받침 턱
-  ctx.strokeStyle='rgba(255,255,255,.22)'; ctx.lineWidth=1.5;           // 입구 윗면 하이라이트
-  ctx.beginPath(); ctx.moveTo(TR.x+10,TR.y+2); ctx.lineTo(TR.x+TR.w-10,TR.y+2); ctx.stroke();
-  if(waiting){ ctx.save(); ctx.globalAlpha=0.70+0.30*Math.sin(performance.now()/90);   // 최저점에서도 안 꺼지게
+  if(waiting){ ctx.save(); ctx.globalAlpha=0.70+0.30*Math.sin(performance.now()/90);
     ctx.shadowColor='#ffd34d'; ctx.shadowBlur=26; ctx.strokeStyle='#ffd34d'; ctx.lineWidth=3;
     roundRect(TR.x-2,TR.y-2,TR.w+4,TR.h+2,13); ctx.stroke(); ctx.restore(); }
-  ctx.fillStyle=waiting?'#ffd34d':'#c3a9ea'; ctx.font='bold 10px system-ui';
-  ctx.fillText('받는 곳',TR.cx,TR.y+TR.h+11);
   // ── 조작 패널 (v3.2) — 받는 곳 오른쪽. 이게 있어야 '떠 있는 상자'가 아니라 '기계'로 보인다 ──
-  (function(){ const px=TR.x+TR.w+14, py=TR.y-2, pw=(f.x+f.w+8)-px, ph=TR.h+14;
+  (function(){ const px=TR.x+TR.w+14, py=TR.y-2, pw=(BASE.x+BASE.w-6)-px, ph=TR.h+14;
     if(pw<86) return;
     const pg2=ctx.createLinearGradient(0,py,0,py+ph);
     pg2.addColorStop(0,'#6d5a9b'); pg2.addColorStop(.45,'#4a3a73'); pg2.addColorStop(1,'#2a2047');
@@ -964,6 +1027,23 @@ function draw(){
     ctx.fillStyle='#b79be0'; ctx.font='bold 8px system-ui';
     ctx.fillText('CREDIT', dx+dw/2, dy+27);
   })();
+  // ── 붙잡기 게이지 (v3.4: DOM → 캔버스) — 기계 몸체 안에 있어 패널과 겹칠 수 없다 ──
+  if(gripNeed && !gripDone && state==='drop' && claw.phase==='carry'){
+    const G=gripBarRect(), rescue=outcome.nearMiss;
+    const p=clamp(gripTaps/gripNeed,0,1);
+    ctx.save(); ctx.textAlign='center'; ctx.textBaseline='middle';
+    const pulse=1+0.05*Math.sin(performance.now()/95);
+    ctx.font='900 '+Math.round(16*pulse)+'px system-ui';
+    ctx.fillStyle=rescue?'#ff7a88':'#ffd34d';
+    ctx.shadowColor=rescue?'rgba(255,90,110,.75)':'rgba(255,211,77,.75)'; ctx.shadowBlur=10;
+    ctx.fillText(rescue?'🔥 연타! 놓치기 전에 붙잡아!':'✨ 연타! 퍼펙트 캐치!', G.x+G.w/2, G.y-14);
+    ctx.shadowBlur=0;
+    ctx.fillStyle='rgba(255,255,255,.14)'; roundRect(G.x,G.y,G.w,G.h,G.h/2); ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.30)'; ctx.lineWidth=2; roundRect(G.x,G.y,G.w,G.h,G.h/2); ctx.stroke();
+    if(p>0){ ctx.fillStyle=rescue?'#ff6a7a':'#ffd34d';
+      roundRect(G.x+2,G.y+2,Math.max(G.h-4,(G.w-4)*p),G.h-4,(G.h-4)/2); ctx.fill(); }
+    ctx.restore();
+  }
   drawPile();     // 바닥에 빽빽이 쌓인 인형 더미(장식) — 집을 수 있는 인형보다 먼저
   // 인형들
   ctx.textAlign='center'; ctx.textBaseline='middle';
@@ -1050,6 +1130,20 @@ function draw(){
       ctx.font='bold 13px system-ui';
       ctx.fillText('★'.repeat(prizeDoll.r)+' '+R.name, p.x, p.y+sz*0.66+21);
       ctx.globalAlpha=1; }
+    // v3.5: 도감 등록 스탬프 — 예전엔 new_collection 소리만 있고 눈에 보이는 게 없었다.
+    // 도감 그리드는 시작 화면에만 있어 플레이 중에는 수집이 전혀 보이지 않았다.
+    if(prizeNew && a>0.62){
+      const t2=clamp((a-0.62)/0.16,0,1), e=1-Math.pow(1-t2,3);
+      const ss=1.55-0.55*e, rot=(-0.10)*(1-e);
+      const sy=p.y+sz*0.66+46, txt='NEW · 도감 '+prizeDexN+'/'+TOTAL_DOLLS;
+      ctx.save(); ctx.translate(p.x,sy); ctx.rotate(rot); ctx.scale(ss,ss);
+      ctx.font='900 13px system-ui';
+      const tw=ctx.measureText(txt).width, bw=tw+22, bh=24;
+      ctx.fillStyle='rgba(14,8,26,.88)'; roundRect(-bw/2,-bh/2,bw,bh,bh/2); ctx.fill();
+      ctx.strokeStyle=R.hex; ctx.lineWidth=2; roundRect(-bw/2,-bh/2,bw,bh,bh/2); ctx.stroke();
+      ctx.fillStyle=R.hex; ctx.fillText(txt,0,1);
+      ctx.restore();
+    }
     ctx.restore();
   }
   // 파티클
@@ -1129,8 +1223,13 @@ setInterval(()=>{ renderHearts(); if(!$('noheart').classList.contains('hidden'))
 let successStreak=0, bestStreak=+(localStorage.getItem('ppopgi_best')||0), totalCaught=+(localStorage.getItem('ppopgi_total')||0);
 function saveStats(){ try{ localStorage.setItem('ppopgi_best',bestStreak); localStorage.setItem('ppopgi_total',totalCaught); }catch(e){} }
 function renderStartStats(){
-  const h=$('themeHdr'); if(h){ const done=themeCaught(THEME()); const all=totalCaughtDolls();
-    h.innerHTML=THEME().ico+' <b>'+THEME().name+'</b> 테마 '+done+'/'+THEME().dolls.length+(done>=THEME().dolls.length?(curTheme<THEMES.length-1?' ✅':' 👑'):'')+' <span style="opacity:.6;font-weight:600">· 전체 '+all+'/'+TOTAL_DOLLS+'</span>'; }
+  const h=$('themeHdr'); if(h){ const V=VIEW(), vi=THEMES.indexOf(V), done=themeCaught(V), all=totalCaughtDolls();
+    const locked=!themeOpen(vi);
+    h.innerHTML = locked
+      ? ('🔒 <b>'+V.name+'</b> 테마 <span style="opacity:.7;font-weight:600">· 앞 테마를 마스터하면 열려요</span>')
+      : (V.ico+' <b>'+V.name+'</b> 테마 '+done+'/'+V.dolls.length+(done>=V.dolls.length?(vi<THEMES.length-1?' ✅':' 👑'):'')
+         +(vi!==curTheme?' <span style="opacity:.6;font-weight:600">· 구경 중</span>':'')
+         +' <span style="opacity:.6;font-weight:600">· 전체 '+all+'/'+TOTAL_DOLLS+'</span>'); }
   const sec=THEMES.filter(t=>secretCaught(t)).length;
   $('startStats').innerHTML='🏆 최고 연속 <b>'+bestStreak+'</b> · 🧸 누적 <b>'+totalCaught+'</b> · ✨ 시크릿 <b>'+sec+'/'+THEMES.length+'</b><br><span style="opacity:.75">🎯 목표: 5테마 + 시크릿 = 55종 마스터</span>'; }
 
@@ -1265,7 +1364,7 @@ function shareGame(){ const txt='모두의 뽑기 🧸 도감 '+totalCaughtDolls
 // ── 화면 전환 ──
 function toStart(){ state='start'; isGolden=false; $('goldBar').classList.add('hidden'); $('top').style.visibility='hidden'; renderLives(); $('combo').textContent=''; $('lastAccTop').textContent=''; $('streak').textContent=''; $('over').classList.add('hidden'); $('noheart').classList.add('hidden'); $('start').classList.remove('hidden'); renderHearts(); renderStartStats(); renderMeta(); renderDexGrid(); renderPending(); showBanner(); submitScore(); }
 function showNoHearts(){ state='result'; $('over').classList.add('hidden'); $('start').classList.add('hidden'); $('heartMsg').innerHTML='다음 하트까지 <b>'+heartTimer()+'</b><br>지금 바로 하려면 광고로 하트 +5!'+pendingHTML(); $('noheart').classList.remove('hidden'); showBanner(); }
-function startRound(goal){ loadHearts(); if(hearts<=0){ showNoHearts(); return; } if(hearts===MAX_HEARTS) heartTs=Date.now(); hearts--; saveHearts(); renderHearts(); lives=MAX_LIVES; renderLives(); $('over').classList.add('hidden'); $('noheart').classList.add('hidden'); hideBanner(); newRound(goal); }
+function startRound(goal){ viewTheme=-1; loadHearts(); if(hearts<=0){ showNoHearts(); return; } if(hearts===MAX_HEARTS) heartTs=Date.now(); hearts--; saveHearts(); renderHearts(); lives=MAX_LIVES; renderLives(); $('over').classList.add('hidden'); $('noheart').classList.add('hidden'); hideBanner(); newRound(goal); }
 
 // 버튼
 function begin(){ audioCtx(); loadSfx(); uiTap(); $('start').classList.add('hidden'); clawBonus=0; startRound(); }  // 첫 터치에서 오디오 활성화 + 프리로드
