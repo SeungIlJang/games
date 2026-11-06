@@ -50,6 +50,12 @@
           22
         ],
         "fps": 9
+      },
+      "ready": {
+        "frames": [
+          13
+        ],
+        "fps": 6
       }
     },
     "icon": "icon_soldier.png"
@@ -139,11 +145,11 @@
       },
       "attack": {
         "frames": [
-          10,
-          11,
+          8,
+          12,
           12,
           13,
-          14
+          6
         ],
         "fps": 12
       },
@@ -156,6 +162,12 @@
           19
         ],
         "fps": 8
+      },
+      "ready": {
+        "frames": [
+          8
+        ],
+        "fps": 6
       }
     },
     "icon": "icon_knight.png"
@@ -209,6 +221,12 @@
           24
         ],
         "fps": 7
+      },
+      "ready": {
+        "frames": [
+          14
+        ],
+        "fps": 6
       }
     },
     "icon": "icon_mage.png"
@@ -655,6 +673,12 @@
           22
         ],
         "fps": 9
+      },
+      "ready": {
+        "frames": [
+          12
+        ],
+        "fps": 6
       }
     },
     "icon": "icon_rogue.png"
@@ -755,6 +779,12 @@
           14
         ],
         "fps": 6
+      },
+      "ready": {
+        "frames": [
+          8
+        ],
+        "fps": 6
       }
     },
     "icon": "icon_earthmage.png"
@@ -801,6 +831,12 @@
           15,
           16,
           17
+        ],
+        "fps": 6
+      },
+      "ready": {
+        "frames": [
+          10
         ],
         "fps": 6
       }
@@ -1435,6 +1471,12 @@
           22
         ],
         "fps": 9
+      },
+      "ready": {
+        "frames": [
+          13
+        ],
+        "fps": 6
       }
     },
     "icon": "icon_soldier@legend.png"
@@ -1524,11 +1566,11 @@
       },
       "attack": {
         "frames": [
-          10,
-          11,
+          8,
+          12,
           12,
           13,
-          14
+          6
         ],
         "fps": 12
       },
@@ -1541,6 +1583,12 @@
           19
         ],
         "fps": 8
+      },
+      "ready": {
+        "frames": [
+          8
+        ],
+        "fps": 6
       }
     },
     "icon": "icon_knight@legend.png"
@@ -1594,6 +1642,12 @@
           24
         ],
         "fps": 7
+      },
+      "ready": {
+        "frames": [
+          14
+        ],
+        "fps": 6
       }
     },
     "icon": "icon_mage@legend.png"
@@ -1648,6 +1702,12 @@
           22
         ],
         "fps": 9
+      },
+      "ready": {
+        "frames": [
+          12
+        ],
+        "fps": 6
       }
     },
     "icon": "icon_rogue@legend.png"
@@ -1958,6 +2018,12 @@
           14
         ],
         "fps": 6
+      },
+      "ready": {
+        "frames": [
+          8
+        ],
+        "fps": 6
       }
     },
     "icon": "icon_earthmage@legend.png"
@@ -2004,6 +2070,12 @@
           15,
           16,
           17
+        ],
+        "fps": 6
+      },
+      "ready": {
+        "frames": [
+          10
         ],
         "fps": 6
       }
