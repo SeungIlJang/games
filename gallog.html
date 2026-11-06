@@ -987,7 +987,7 @@ let lifestealAcc=0, lifestealT=0; // 흡혈 초당 회복 상한용
 let combo=0, comboTimer=0, maxCombo=0;
 let best=0; try{ best=parseInt(localStorage.getItem('ss_best')||'0')||0; }catch{}
 // ---- 개발자 튜닝 (로고 클릭+비번 799879) ----
-const TUNE_DEFAULTS={ hpWall:0.4, startPow:0.45, awakenStart:15, awakenStep:15, levelHp:8, reviveXp:0.95, enemyHp:1.0, enemySpeed:1.0, camFollow:4, bossPow:5, bossGem:5, goldMul:1.0, bossMul:8, bossMulStep:0.1, weaponCap:10, rerollMax:2, eliteChance:0.025, eliteMax:1, eliteHp:4, eliteDmg:1.4, chestGold:120,
+const TUNE_DEFAULTS={ hpWall:0.4, startPow:0, metaCompHp:0.55, metaCompDmg:0.55, metaCompSpd:0.30, awakenStart:15, awakenStep:15, levelHp:8, reviveXp:0.95, enemyHp:1.0, enemySpeed:1.0, camFollow:4, bossPow:5, bossGem:5, goldMul:1.0, bossMul:8, bossMulStep:0.1, weaponCap:10, rerollMax:2, eliteChance:0.025, eliteMax:1, eliteHp:4, eliteDmg:1.4, chestGold:120,
   champHp:2.0, champDmg:1.2, tankBlock:0.35, shardDmg:1.6, weaverDmg:0.45,
   fuseLast:18, fuseMid:7, speedMax:3, difficulty:0 };
 let TUNE=Object.assign({},TUNE_DEFAULTS);
@@ -997,7 +997,8 @@ let TUNE=Object.assign({},TUNE_DEFAULTS);
 //   (이 기기 개발 패널 값에는 적용하지 않는다 — 내 기기에서 극단값을 시험하는 건 의도된 동작)
 //   speedMax 3 상한은 실측 근거다: 느린 프레임에서 4배속부터 탄이 적을 통과한다(DPS 0).
 const TUNE_RANGE={
-  difficulty:[0,10], hpWall:[0,2], startPow:[0,3], enemyHp:[0.1,10], enemySpeed:[0.2,3],
+  difficulty:[0,10], hpWall:[0,2], startPow:[0,3],
+  metaCompHp:[0,1.2], metaCompDmg:[0,1.2], metaCompSpd:[0,1], enemyHp:[0.1,10], enemySpeed:[0.2,3],
   awakenStart:[1,100], awakenStep:[1,100], levelHp:[0,100], reviveXp:[0,1], camFollow:[0,10],
   bossPow:[0.1,20], bossMul:[0.5,200], bossMulStep:[0,5], weaponCap:[1,20], rerollMax:[0,20],
   fuseLast:[0,100], fuseMid:[0,100], speedMax:[0,3], eliteChance:[0,1], eliteMax:[0,20],
@@ -1021,7 +1022,7 @@ function sanitizeTune(obj){
 //   배포할 때 이 값만 올리면 모든 기기의 개발 패널 수치가 버려지고 코드 기본값(TUNE_DEFAULTS)을 받는다.
 //   → 밸런스는 '코드가 유일한 진실'이 되고, 개발 패널은 내 기기에서 잠깐 돌려보는 용도로만 남는다.
 //   (골드/영구강화/전직은 ss_meta 라 영향 없음 — 그쪽은 계속 기기별로 유지된다)
-const GAME_VER='9.8';
+const GAME_VER='9.9';
 // 개발 패널 수치는 이 기기에 계속 남는다(앱을 껐다 켜도 유지). 배포해도 지우지 않는다 —
 // 모르는 사이에 설정이 사라지는 편이 더 나쁘다. 대신 '기본값' 버튼으로 언제든 코드값을 받을 수 있고,
 // 전 플레이어에게 반영하려면 '현재 수치 내보내기'로 뽑아 TUNE_DEFAULTS 에 넣고 배포한다.
@@ -1048,7 +1049,10 @@ function saveTune(){ try{ localStorage.setItem('ss_tune', JSON.stringify(TUNE));
 const DEV_KNOBS=[
   {k:'difficulty', name:'★ 난이도 (0~10)', step:1, min:0, max:10, hint:'0=라이브값 따름. 1~10은 이 기기에 적용되고, [전체 적용]을 누르면 전 플레이어에게 반영'},
   {k:'hpWall',     name:'체력벽 계수',      step:0.05, hint:'중반+ 적 체력↑ (기본0.4)'},
-  {k:'startPow',   name:'시작강도 계수',    step:0.05, hint:'강화 많을수록 초반 강도 (기본0.35)'},
+  {k:'startPow',   name:'시작강도 계수',    step:0.05, hint:'강화 레벨당 난이도 시계를 N초 앞당긴다. 기본0 — 체력/피해 보정은 아래 3개가 맡는다'},
+  {k:'metaCompHp', name:'영구강화→적 체력',  step:0.05, min:0, max:1.2, hint:'내 공격 배수^N 만큼 적 체력↑ (기본0.55, 0=보정없음, 1=완전상쇄)'},
+  {k:'metaCompDmg',name:'영구강화→적 피해',  step:0.05, min:0, max:1.2, hint:'내 체력 배수^N 만큼 적 피해↑ (기본0.55)'},
+  {k:'metaCompSpd',name:'영구강화→적 속도',  step:0.05, min:0, max:1,   hint:'내 이동 배수^N 만큼 적 속도↑ (기본0.30, 최대 2배까지만)'},
   {k:'enemyHp',    name:'적 체력 배수',      step:0.1,  hint:'전체 적 HP× (기본1.0)'},
   {k:'enemySpeed', name:'적 속도 배수',      step:0.1,  hint:'전체 적 속도× (기본1.0)'},
   {k:'awakenStart',name:'각성 시작레벨',     step:1,    hint:'첫 각성 레벨 (기본15)'},
@@ -1254,7 +1258,34 @@ const STAGE_BOSS_DELAY=20; // 스테이지 시작 후 보스 등장까지(초)
 function dtime(){ return startOffset + (stage-1)*22 + stageTime; }
 // 스테이지1은 강화/오프셋 무시하고 순수 경과시간만 → 몸풀기 난이도
 function ddiff(){ return stage===1 ? stageTime*0.6 : dtime(); }
-function metaPower(){ return Object.values(meta.lvls).reduce((a,b)=>a+b,0); }
+// ⚠️ 전투에 실제로 기여하는 강화만 센다. 예전엔 meta.lvls 전체를 더해서
+//    '🪙 골드 획득'도 합산됐는데, 그건 플레이어를 전혀 세게 만들지 않으면서
+//    startOffset 만 올렸다 — 찍을수록 적만 강해지는 순수 페널티였다.
+//    (실측: gold 99레벨 = 적에게 44.6초 핸디캡, 플레이어 수치는 강화 0과 동일)
+const META_COMBAT=META_DEFS.filter(d=>d.key!=='gold').map(d=>d.key);
+function metaPower(){ return META_COMBAT.reduce((a,k)=>a+(meta.lvls[k]||0),0); }
+
+// ── 영구강화 보정 ───────────────────────────────────────────────
+// 영구강화만으로 얻은 '배수'를 판 시작 때 한 번 뽑는다. 실제 적용 함수(one)를
+// 빈 객체에 그대로 돌려서 구하므로 META_DEFS 를 고쳐도 따로 손댈 필요가 없다.
+function metaGains(){
+  const probe={maxhp:100, hp:100, dmg:15, speed:105, magnet:90, dmgReduce:1, fireRate:2.2};
+  try{ applyMeta(probe); }catch(e){}
+  return { atk:probe.dmg/15, hp:probe.maxhp/100, spd:probe.speed/105 };
+}
+let META={atk:1,hp:1,spd:1};
+// 적 보정 — 플레이어가 실제로 얻은 배수를 따라간다(스테이지와 무관하게 일정).
+//   공격↑ → 적 체력↑ / 체력↑ → 적 피해↑ / 이동↑ → 적 속도↑
+// 지수가 1보다 작아서 강화는 여전히 명확한 이득이다. 예: 공격 ×43 일 때
+// 적 체력은 ×8 에 그쳐 순이득 5.4배.
+// 예전 방식(startOffset = 고정 초 더하기)은 경과시간이 길어질수록 묻혀
+// st2 ×1.61 → st20 ×1.09 로 사라졌다. 플레이어 강화는 안 사라지는데도.
+function metaComp(){
+  return { hp : Math.pow(META.atk, TUNE.metaCompHp),
+           dmg: Math.pow(META.hp,  TUNE.metaCompDmg),
+           // 적 속도는 상한을 둔다 — 피할 수 없게 빨라지면 보정이 아니라 사고다
+           spd: Math.min(2.0, Math.pow(META.spd, TUNE.metaCompSpd)) };
+}
 
 let cam={x:0,y:0};   // 카메라(무한 필드, 플레이어 추적)
 function reset(){
@@ -1276,7 +1307,8 @@ function reset(){
   stage=1; stageTime=0; bossSpawned=false; bossQueue=[]; won=false;
   catchUpStage=(meta.bestStage||0);   // 죽고 재도전 시, 이전 최고 스테이지 전까지 가속(초반 지루함↓)
   { const bs=meta.bestStage||0; catchUpSpeed = Math.min(2.0, Math.round((1.1 + 0.1*Math.floor((Math.max(1,bs)-1)/10))*10)/10); } // 최고스테이지별 가속 배율: 10스테이지마다 +0.1 (1~10=1.1 … 91+=2.0)
-  startOffset = metaPower()*TUNE.startPow;    // 시작강도 계수 (TUNE)
+  startOffset = metaPower()*TUNE.startPow;    // 시작강도 계수 (TUNE) — 기본 0, 페이싱용으로만 남겨 둔다
+  META = metaGains();                          // 이번 판의 영구강화 배수(적 보정 기준)
 }
 
 // ---- Input: floating joystick / drag ----
@@ -1352,15 +1384,15 @@ function diffLevel(){ return diffOverride()||Math.max(1,Math.min(10,liveDifficul
 function diffScale(){ const k=diffLevel()/5;
   return { hp:Math.pow(k,1.35), dmg:Math.pow(k,0.85), spd:Math.pow(k,0.35) }; }
 function makeEnemy(x,y,type,diff){
-  const DS=diffScale();
-  const D=ETYPE[type], speedScale=1+Math.min(ddiff()/150,1.9), s=rand(D.spd[0],D.spd[1])*speedScale*TUNE.enemySpeed*0.5*DS.spd;  // 일반 적 속도 ×0.5(피할 공간 — 보스는 makeBoss로 별도라 영향 없음)
-  const hp=D.hp*diff*TUNE.enemyHp*DS.hp;   // 체력 원복(개편 전 수준) × 개발자 난이도
+  const DS=diffScale(), MC=metaComp();
+  const D=ETYPE[type], speedScale=1+Math.min(ddiff()/150,1.9), s=rand(D.spd[0],D.spd[1])*speedScale*TUNE.enemySpeed*0.5*DS.spd*MC.spd;  // 일반 적 속도 ×0.5(피할 공간 — 보스는 makeBoss로 별도라 영향 없음)
+  const hp=D.hp*diff*TUNE.enemyHp*DS.hp*MC.hp;   // 체력 원복(개편 전 수준) × 개발자 난이도 × 영구강화 보정
   // ⚠️ 적 피해도 스테이지를 탄다. 예전엔 이 배수가 '지속 접촉' 한 줄에만 붙어 있어서
   //    잡몹 충돌·weaver 탄·shard 돌진은 1스테이지든 16스테이지든 피해가 5로 고정이었다.
   //    그 사이 플레이어 최대체력은 100 → 699로 올라, st16에서 잡몹에 156번 부딪혀야 죽었다.
   //    ("죽질 않아 / 맹맹해"의 실제 원인) 배수를 생성 시점으로 옮겨 모든 경로가 함께 타게 한다.
   const stageDmg=1+ddiff()/95+(stage-1)*0.08;
-  return {x,y,type,tier:D.tier,r:D.r,hp,maxhp:hp,speed:s,dmg:D.dmg*stageDmg*DS.dmg,color:D.color,gem:D.gem,big:!!D.big,shape:D.shape,t:rand(0,6.28)};  // 접촉피해 원복
+  return {x,y,type,tier:D.tier,r:D.r,hp,maxhp:hp,speed:s,dmg:D.dmg*stageDmg*DS.dmg*MC.dmg,color:D.color,gem:D.gem,big:!!D.big,shape:D.shape,t:rand(0,6.28)};  // 접촉피해 원복
 }
 function spawnEnemy(){
   if(enemies.length>=ENEMY_CAP) return; // 물량 상한
@@ -1485,16 +1517,16 @@ function makeBoss(spec){
   const mile=!!spec.mile, hpMul=spec.hpMul!=null?spec.hpMul:(mile?2.2:1);
   const p=edgePos(), e=makeEnemy(p.x,p.y,'tank',1);
   e.type='boss'; e.boss=true; e.big=true; e.r=mile?58:46;
-  const bp=(TUNE.bossPow!=null?TUNE.bossPow:1), DS=diffScale();
+  const bp=(TUNE.bossPow!=null?TUNE.bossPow:1), DS=diffScale(), MC=metaComp();
   // 보스 HP는 일반 적과 '같은 난이도 스케일'을 탄다 — 기준은 정예(tank) 몇 기분인가.
   // 기존 (140+95s)(1+0.05s) 공식은 2차식이라, 3차로 커지는 일반 적 체력에 밀려
   // 중반부터 역전되고 100스테이지에선 잡몹의 6%까지 떨어졌다.
   const bT=ddiff();
   const bDiff=(1+bT/(stage===1?60:50))*(1+(stage-1)*0.18)*(1+Math.max(0,stage-7)*TUNE.hpWall);
   const bMul=(TUNE.bossMul!=null?TUNE.bossMul:8)+(TUNE.bossMulStep!=null?TUNE.bossMulStep:0.1)*stage;
-  e.hp=e.maxhp=ETYPE.tank.hp*bDiff*bMul*hpMul*TUNE.enemyHp*bp*DS.hp;
-  e.speed=(38+stage*1.5)*(mile?0.92:1)*TUNE.enemySpeed*DS.spd;
-  e.dmg=(18+stage*2.4)*(mile?1.5:1)*bp*DS.dmg;
+  e.hp=e.maxhp=ETYPE.tank.hp*bDiff*bMul*hpMul*TUNE.enemyHp*bp*DS.hp*MC.hp;
+  e.speed=(38+stage*1.5)*(mile?0.92:1)*TUNE.enemySpeed*DS.spd*MC.spd;
+  e.dmg=(18+stage*2.4)*(mile?1.5:1)*bp*DS.dmg*MC.dmg;
   e.gem=0; e.bossKind=spec.k; e.abilityCd=mile?2:3; e.dashT=0; e.spin=0;
   e.kind2=spec.k2||null; e.phase=1;   // 마일스톤 보스: 체력 50%에서 2페이즈로 패턴 전환
   e.color=spec.c; e.shape=spec.s!=null?spec.s:(BKIND[spec.k]?BKIND[spec.k].s:0);
