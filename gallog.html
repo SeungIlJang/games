@@ -1022,7 +1022,7 @@ function sanitizeTune(obj){
 //   배포할 때 이 값만 올리면 모든 기기의 개발 패널 수치가 버려지고 코드 기본값(TUNE_DEFAULTS)을 받는다.
 //   → 밸런스는 '코드가 유일한 진실'이 되고, 개발 패널은 내 기기에서 잠깐 돌려보는 용도로만 남는다.
 //   (골드/영구강화/전직은 ss_meta 라 영향 없음 — 그쪽은 계속 기기별로 유지된다)
-const GAME_VER='10.4';
+const GAME_VER='10.5';
 // 개발 패널 수치는 이 기기에 계속 남는다(앱을 껐다 켜도 유지). 배포해도 지우지 않는다 —
 // 모르는 사이에 설정이 사라지는 편이 더 나쁘다. 대신 '기본값' 버튼으로 언제든 코드값을 받을 수 있고,
 // 전 플레이어에게 반영하려면 '현재 수치 내보내기'로 뽑아 TUNE_DEFAULTS 에 넣고 배포한다.
@@ -1293,7 +1293,8 @@ function reset(){
     speed:105, fireRate:2.2, dmg:15, bulletSpeed:430, range:280,
     pierce:0, level:1, xp:0, xpNeed:5, magnet:90, lifesteal:0,
     weapons:{ bolt:1 }, timers:{ bolt:0 }, orbs:[], novas:[], blades:[], holes:[], slashFx:[], flames:[], zaps:[], orbAngle:0, evolved:{}, fuseCd:{}, bladeEnt:[],
-    awakened:false, awakenAt:TUNE.awakenStart, awakenCount:0, dmgReduce:1, sigCd:0, cls:'hero', baseCls:'hero', invuln:0 };
+    awakened:false, awakenAt:TUNE.awakenStart, awakenCount:0, dmgReduce:1, sigCd:0, cls:'hero', baseCls:'hero', invuln:0,
+    statCount:{}, promo:{}, pacts:{}, bossDmg:1, mobDmg:1 };   // 스탯 승격·계약 카드(판당 초기화)
   featureArt.reroll=null;featureArt.slotsFull=false;featureArt.chests=[];featureArt.rank=null;
   applyMeta(player); applyClass(player);
   cam.x=player.x-W/2; cam.y=player.y-H/2;   // 카메라 스냅
@@ -1567,8 +1568,18 @@ function hurtEnemy(e,dmg,color){
     if(Math.abs(((a-e.face+Math.PI*3)%(Math.PI*2))-Math.PI)<1.047)   // ±60°
       dmg*=(TUNE.tankBlock!=null?TUNE.tankBlock:0.35);
   }
+  // ⚔️ 결투 계약 — 보스/잡몹으로 피해를 갈라 준다
+  if(e.boss){ if(player.bossDmg) dmg*=player.bossDmg; }
+  else if(player.mobDmg) dmg*=player.mobDmg;
   e.flash=0.06; e.hp-=dmg;
-  if(e.hp<=0){ e.dead=true; kills++; killRings.push({x:e.x,y:e.y,r:e.r*(e.boss?2:1.6),life:.24,color:e.color});if(killRings.length>32)killRings.shift();
+  if(e.hp<=0){ e.dead=true; kills++;
+    // ⭐ 흡혈 특화 — 처치한 자리에서 주변 적에게 피해가 전이된다
+    if(player.promo&&player.promo.steal&&!e.__chain){
+      const R=70+6*(player.lifesteal||0), d2=player.dmg*0.9;
+      for(const o of enemies){ if(o.dead||o===e) continue;
+        if(dist2(o,e)<(R+o.r)*(R+o.r)){ o.__chain=1; hurtEnemy(o,d2,'#ff8aa8'); o.__chain=0; } }
+      for(let i=0;i<6;i++){ const a=i/6*6.283;
+        particles.push({x:e.x+Math.cos(a)*18,y:e.y+Math.sin(a)*18,vx:Math.cos(a)*110,vy:Math.sin(a)*110,life:0.22,color:'#ff8aa8'}); } } killRings.push({x:e.x,y:e.y,r:e.r*(e.boss?2:1.6),life:.24,color:e.color});if(killRings.length>32)killRings.shift();
     combo++; comboTimer=2.5; if(combo>maxCombo) maxCombo=combo;
     { const g=Math.round((e.boss?20:1)*goldMult()*stageGoldMul(stage)); meta.gold+=g; runGold+=g; } // 실시간 골드(골드획득 강화 + 10스테이지마다 ×2)
     const gv=Math.max(1,Math.round((e.gem||0)*Math.pow(1.13,stage-1)*3));  // 적 경험치(젬): 스테이지 스케일 ×3 (적 수 1/3로 줄어든 만큼 개체 경험치 보정 → 레벨 속도 유지)
@@ -1921,15 +1932,43 @@ function weaponFireTick(dt){
 function burst(x,y,color,n){ for(let i=0;i<n;i++){ const a=rand(0,Math.PI*2),s=rand(40,180); particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:rand(.3,.6),color}); } }
 
 // ---- Level up ----
+// 스탯업에 키를 달아 '몇 번 집었는지'를 센다 → 5회에서 특화로 승격한다.
 const STAT_UPS=[
-  {t:'⚡ 연사 +20%', d:'모든 무기 발사 속도', a:p=>p.fireRate*=1.2},
-  {t:'💥 공격력 +25%', d:'전체 데미지 증가', a:p=>p.dmg*=1.25},
-  {t:'👟 이동 +15%', d:'이동 속도 증가', a:p=>p.speed*=1.15},
-  {t:'🎯 사거리 +20%', d:'조준 범위 증가', a:p=>p.range*=1.2},
-  {t:'➡️ 관통 +1', d:'총알이 적을 관통', a:p=>p.pierce+=1},
-  {t:'❤️ 최대 체력 +25', d:'체력 회복 포함', a:p=>{p.maxhp+=25;p.hp=Math.min(p.maxhp,p.hp+25);}},
-  {t:'🧲 자석 +50%', d:'젬 흡수 범위', a:p=>p.magnet*=1.5},
-  {t:'🩸 흡혈 +1', d:'적 처치 시 체력 회복', a:p=>p.lifesteal+=1},
+  {k:'fire',  t:'⚡ 연사 +20%', d:'모든 무기 발사 속도', a:p=>p.fireRate*=1.2},
+  {k:'dmg',   t:'💥 공격력 +25%', d:'전체 데미지 증가', a:p=>p.dmg*=1.25},
+  {k:'speed', t:'👟 이동 +15%', d:'이동 속도 증가', a:p=>p.speed*=1.15},
+  {k:'range', t:'🎯 사거리 +20%', d:'조준 범위 증가', a:p=>p.range*=1.2},
+  {k:'pierce',t:'➡️ 관통 +1', d:'총알이 적을 관통', a:p=>p.pierce+=1},
+  {k:'hp',    t:'❤️ 최대 체력 +25', d:'체력 회복 포함', a:p=>{p.maxhp+=25;p.hp=Math.min(p.maxhp,p.hp+25);}},
+  {k:'magnet',t:'🧲 자석 +50%', d:'젬 흡수 범위', a:p=>p.magnet*=1.5},
+  {k:'steal', t:'🩸 흡혈 +1', d:'적 처치 시 체력 회복', a:p=>p.lifesteal+=1},
+];
+// ═══════ 스탯 승격 ═══════
+// 같은 스탯을 5번 집으면 '그 스탯이 빌드의 축이 되는' 특화로 바뀐다.
+// 예전엔 10번째 관통이 1번째와 똑같이 심심했다 — 모으는 동안 목표가 없었다.
+const PROMOTE_AT=5;
+const PROMOTES={
+  pierce:{t:'⭐ 관통 특화', d:'한 탄이 적을 뚫을 때마다 그 탄의 피해 +10%'},
+  steal: {t:'⭐ 흡혈 특화', d:'적을 처치하면 주변 적에게 피해가 전이된다'},
+  magnet:{t:'⭐ 자석 특화', d:'젬을 흡수할 때 주변 적에게 피해'},
+};
+// ═══════ 계약 카드 ═══════
+// 기존 스탯업은 전부 '그냥 좋은' 카드라, 무기가 다 차고 나면 아무거나 눌러도
+// 손해가 없다. 그래서 선택이 선택이 아니게 된다(후반이 지루한 진짜 이유).
+// 계약은 대가를 붙여 "지금 내 빌드가 이걸 감당할 수 있나"를 묻는다.
+// 판당 각 1회만. 레벨 15부터 등장한다 — 빌드가 서기 전엔 판단 자체가 불가능하다.
+const PACT_FROM_LEVEL=15;
+const PACTS=[
+  {k:'berserk', t:'🔥 광전사 계약', d:'공격 +80% · 최대 체력 −30%',
+    a:p=>{ p.dmg*=1.8; p.maxhp=Math.max(10,Math.round(p.maxhp*0.7)); p.hp=Math.min(p.hp,p.maxhp); }},
+  {k:'overload',t:'⚡ 과부하 계약', d:'연사 +60% · 사거리 −35%',
+    a:p=>{ p.fireRate*=1.6; p.range*=0.65; }},
+  {k:'gale',    t:'🌪️ 질풍 계약',   d:'이동 +50% · 받는 피해 +40%',
+    a:p=>{ p.speed*=1.5; p.dmgReduce*=1.4; }},
+  {k:'devour',  t:'🩸 포식 계약',   d:'흡혈 +3 · 젬 흡수 범위 −50%',
+    a:p=>{ p.lifesteal+=3; p.magnet*=0.5; }},
+  {k:'duel',    t:'⚔️ 결투 계약',   d:'보스 피해 +120% · 잡몹 피해 −25%',
+    a:p=>{ p.bossDmg=(p.bossDmg||1)*2.2; p.mobDmg=(p.mobDmg||1)*0.75; }},
 ];
 function buildChoices(){
   const wpool=[], spool=[];   // wpool=무기(강화·진화·새무기) / spool=스탯업
@@ -1974,7 +2013,27 @@ function buildChoices(){
       d:`${F.desc} · 세 무기가 한 칸으로 합쳐진다 (슬롯 2칸 확보)`,
       a:()=>fuse(F)});
   }
-  for(const s of STAT_UPS) spool.push({...s, weight:2});
+  for(const s of STAT_UPS){
+    const n=(player.statCount&&player.statCount[s.k])||0;
+    // 5회를 채웠고 아직 승격 안 했으면, 그 스탯 자리에 '특화' 카드를 대신 올린다
+    if(n>=PROMOTE_AT && PROMOTES[s.k] && !(player.promo&&player.promo[s.k])){
+      const P=PROMOTES[s.k];
+      spool.push({t:P.t, d:P.d, evolution:true, weight:9,
+        a:p=>{ (p.promo||(p.promo={}))[s.k]=true;
+          rewardPulse={life:.8,color:'#ffd25c',evolution:true}; try{ sfx.evolve(); }catch(e){} }});
+      continue;
+    }
+    spool.push({...s, weight:2,
+      d:s.d+(PROMOTES[s.k] ? '  ('+Math.min(n,PROMOTE_AT)+'/'+PROMOTE_AT+' → 특화)' : ''),
+      a:p=>{ s.a(p); (p.statCount||(p.statCount={}))[s.k]=((p.statCount[s.k])||0)+1; }});
+  }
+  // 계약 카드 — 빌드가 선 뒤부터, 각 1회만
+  if(player.level>=PACT_FROM_LEVEL){
+    for(const P of PACTS){ if(player.pacts&&player.pacts[P.k]) continue;
+      spool.push({t:P.t, d:P.d, evolution:true, weight:5,
+        a:p=>{ P.a(p); (p.pacts||(p.pacts={}))[P.k]=true;
+          rewardPulse={life:.8,color:'#ff8a5c',evolution:true}; try{ sfx.evolve(); }catch(e){} }}); }
+  }
   // 가중치 랜덤 뽑기(해당 bag에서 제거)
   const pick=(bag)=>{ let tot=bag.reduce((a,b)=>a+b.weight,0), r=Math.random()*tot, i=0; for(;i<bag.length;i++){ r-=bag[i].weight; if(r<=0) break; } return bag.splice(Math.min(i,bag.length-1),1)[0]; };
   const chosen=[];
@@ -2235,7 +2294,10 @@ function update(dt){
         burst(b.x,b.y,'#8fd0ff',3); sfx.hit();
         if(b.pierce>0){b.pierce--;} else {b.life=0;}
         if(b.arrow)emitWeaponFx('impact',b.x,b.y,0,!!player.evolved.arrow);
-        hurtEnemy(e, b.dmg);
+        // ⭐ 관통 특화 — 이미 뚫은 수만큼 그 탄의 피해가 커진다
+        { const prev=(b.hitSet?b.hitSet.size:1)-1;
+          const mul=(player.promo&&player.promo.pierce)?(1+0.10*prev):1;
+          hurtEnemy(e, b.dmg*mul); }
         break;
       }
     }
@@ -2245,6 +2307,10 @@ function update(dt){
     const d=dist2(g,player);
     if(d<player.magnet*player.magnet){ const a=Math.atan2(player.y-g.y,player.x-g.x); const sp=380; g.x+=Math.cos(a)*sp*dt; g.y+=Math.sin(a)*sp*dt; }
     if(d<(player.r+8)*(player.r+8)){ g.got=true; player.xp+=g.v; if(gemSfxCd<=0){sfx.gem(); gemSfxCd=0.04;}
+      // ⭐ 자석 특화 — 젬을 흡수할 때마다 주변 적을 친다(모으는 행동 자체가 공격이 된다)
+      if(player.promo&&player.promo.magnet){ const R=76, d2=player.dmg*0.55;
+        for(const o of enemies){ if(o.dead) continue;
+          if(dist2(o,player)<(R+o.r)*(R+o.r)) hurtEnemy(o,d2,'#7df3ff'); } }
       if(player.xp>=player.xpNeed) grantLevel(); }
   }
   // 보상 상자 획득 (젬보다 조금 넓은 자석 범위 · 더 큰 획득 반경)
