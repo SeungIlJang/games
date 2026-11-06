@@ -1021,7 +1021,7 @@ function sanitizeTune(obj){
 //   배포할 때 이 값만 올리면 모든 기기의 개발 패널 수치가 버려지고 코드 기본값(TUNE_DEFAULTS)을 받는다.
 //   → 밸런스는 '코드가 유일한 진실'이 되고, 개발 패널은 내 기기에서 잠깐 돌려보는 용도로만 남는다.
 //   (골드/영구강화/전직은 ss_meta 라 영향 없음 — 그쪽은 계속 기기별로 유지된다)
-const GAME_VER='9.5';
+const GAME_VER='9.6';
 // 개발 패널 수치는 이 기기에 계속 남는다(앱을 껐다 켜도 유지). 배포해도 지우지 않는다 —
 // 모르는 사이에 설정이 사라지는 편이 더 나쁘다. 대신 '기본값' 버튼으로 언제든 코드값을 받을 수 있고,
 // 전 플레이어에게 반영하려면 '현재 수치 내보내기'로 뽑아 TUNE_DEFAULTS 에 넣고 배포한다.
@@ -1089,7 +1089,8 @@ function openDev(){
   { const d=diffLevel(), ov=diffOverride(), S=diffScale(), st=document.getElementById('devDiffNow');
     if(st) st.innerHTML='현재 <b style="color:'+(d>5?'#ff8a5c':d<5?'#7fd4a8':'#9fe3ff')+'">난이도 '+d+' / 10</b>'
       +' <span style="font-size:12px;color:'+(ov?'#ffb347':'#7fd4a8')+'">'
-      +(ov?'· 이 기기에 적용됨 — [전체 적용] 시 전원':'· 라이브값('+LIVE_DIFFICULTY+') 따름 — 전 플레이어 동일')+'</span>'
+      +(ov?'· 이 기기에 적용됨 — [전체 적용] 시 전원'
+          :'· 라이브값('+liveDifficulty()+(REMOTE_TUNE&&REMOTE_TUNE.difficulty>0?', 서버':', 코드')+') 따름 — 전 플레이어 동일')+'</span>'
       +'<div style="opacity:.65;font-size:12px;margin-top:3px;">적 체력 ×'+S.hp.toFixed(2)+' · 피해 ×'+S.dmg.toFixed(2)+' · 속도 ×'+S.spd.toFixed(2)
       +(ov?' · 0을 넣으면 라이브값으로 복귀':'')+'</div>'; }
   const gn=document.getElementById('devGoldNow'); if(gn) gn.textContent=(meta.gold||0).toLocaleString();
@@ -1326,8 +1327,14 @@ function edgePos(){ // 무한 필드: 플레이어 주변, 화면 밖 링에서 
 //   TUNE은 localStorage(기기별)라 거기에 난이도를 두면 내 기기에서만 바뀐다.
 //   그래서 '전원 공통값'은 코드에, '내 기기 임시값'은 TUNE.difficulty(0=자동)에 따로 둔다.
 const LIVE_DIFFICULTY=6;   // 2026-11-05: 5 → 6 (플레이테스트 "죽질 않아 / 맹맹해" 반영)
+// 서버에 난이도가 올라가 있으면 '라이브값'은 코드 상수가 아니라 그 값이다.
+// 이게 없으면: 개발 패널에서 난이도를 0(=라이브값 따름)으로 둔 기기가
+// ss_tune 의 0 으로 원격값을 덮어써, 서버가 5인데 혼자 6으로 도는 일이 생긴다
+// (실제로 그렇게 동작했다 — 2026-11-06 확인).
+function liveDifficulty(){ const r=REMOTE_TUNE&&REMOTE_TUNE.difficulty;
+  return (r>0)?Math.max(1,Math.min(10,r)):LIVE_DIFFICULTY; }
 function diffOverride(){ const v=TUNE.difficulty; return (v&&v>0)?Math.max(1,Math.min(10,v)):0; }
-function diffLevel(){ return diffOverride()||Math.max(1,Math.min(10,LIVE_DIFFICULTY)); }
+function diffLevel(){ return diffOverride()||Math.max(1,Math.min(10,liveDifficulty())); }
 function diffScale(){ const k=diffLevel()/5;
   return { hp:Math.pow(k,1.35), dmg:Math.pow(k,0.85), spd:Math.pow(k,0.35) }; }
 function makeEnemy(x,y,type,diff){
@@ -2978,7 +2985,7 @@ function drawWeaponSlots(bottom){
   // 현재 난이도 — 기본(5)이 아닐 때만. 어떤 설정으로 돌고 있는지 화면에서 바로 보이게 한다.
   // 이 기기에서만 임시 적용 중일 때만 띄운다 — 라이브값으로 도는 평상시엔 안 보인다
   const ov=diffOverride();
-  if(ov){ ctx.textAlign='right'; ctx.fillStyle=ov>LIVE_DIFFICULTY?'#ff8a5c':'#7fd4a8';
+  if(ov){ ctx.textAlign='right'; ctx.fillStyle=ov>liveDifficulty()?'#ff8a5c':'#7fd4a8';
     ctx.fillText('난이도 '+ov+'/10 (임시)',x+total,y-7); }
   else if(entries.length>cap){ctx.textAlign='right';ctx.fillStyle='#ffd47b';ctx.fillText('+'+(entries.length-cap),x+total,y-7);}
   for(let i=0;i<cap;i++){
