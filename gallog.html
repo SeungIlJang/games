@@ -987,7 +987,7 @@ let lifestealAcc=0, lifestealT=0; // 흡혈 초당 회복 상한용
 let combo=0, comboTimer=0, maxCombo=0;
 let best=0; try{ best=parseInt(localStorage.getItem('ss_best')||'0')||0; }catch{}
 // ---- 개발자 튜닝 (로고 클릭+비번 799879) ----
-const TUNE_DEFAULTS={ hpWall:0.4, startPow:0, metaCompHp:0.55, metaCompDmg:0.55, metaCompSpd:0.30, awakenStart:15, awakenStep:15, levelHp:8, reviveXp:0.95, enemyHp:1.0, enemySpeed:1.0, camFollow:4, bossPow:5, bossGem:5, goldMul:1.0, bossMul:8, bossMulStep:0.1, weaponCap:10, rerollMax:2, eliteChance:0.025, eliteMax:1, eliteHp:4, eliteDmg:1.4, chestGold:120,
+const TUNE_DEFAULTS={ hpWall:0.4, startPow:0, metaCompHp:0.55, metaCompDmg:0.55, metaCompSpd:0.30, awakenStart:15, awakenStep:15, levelHp:8, reviveXp:0.95, enemyHp:1.0, enemySpeed:1.0, camFollow:4, bossPow:5, bossGem:5, goldMul:1.0, bossMul:8, bossMulStep:0.1, weaponCap:12, rerollMax:2, eliteChance:0.025, eliteMax:1, eliteHp:4, eliteDmg:1.4, chestGold:120,
   champHp:2.0, champDmg:1.2, tankBlock:0.35, shardDmg:1.6, weaverDmg:0.45,
   fuseLast:18, fuseMid:7, speedMax:3, difficulty:0 };
 let TUNE=Object.assign({},TUNE_DEFAULTS);
@@ -1022,7 +1022,7 @@ function sanitizeTune(obj){
 //   배포할 때 이 값만 올리면 모든 기기의 개발 패널 수치가 버려지고 코드 기본값(TUNE_DEFAULTS)을 받는다.
 //   → 밸런스는 '코드가 유일한 진실'이 되고, 개발 패널은 내 기기에서 잠깐 돌려보는 용도로만 남는다.
 //   (골드/영구강화/전직은 ss_meta 라 영향 없음 — 그쪽은 계속 기기별로 유지된다)
-const GAME_VER='9.9';
+const GAME_VER='10.0';
 // 개발 패널 수치는 이 기기에 계속 남는다(앱을 껐다 켜도 유지). 배포해도 지우지 않는다 —
 // 모르는 사이에 설정이 사라지는 편이 더 나쁘다. 대신 '기본값' 버튼으로 언제든 코드값을 받을 수 있고,
 // 전 플레이어에게 반영하려면 '현재 수치 내보내기'로 뽑아 TUNE_DEFAULTS 에 넣고 배포한다.
@@ -1063,7 +1063,7 @@ const DEV_KNOBS=[
   {k:'bossPow',    name:'보스 강함 배수',    step:0.1,  hint:'보스 체력·데미지× (기본1.0, 예 1.5=1.5배 강함)'},
   {k:'bossMul',    name:'보스=정예 몇기분',  step:0.5,  hint:'스테이지1 기준 보스 HP (기본8 = 정예 8기분)'},
   {k:'bossMulStep',name:'보스 배수 증가/st', step:0.02, hint:'스테이지당 위 수치 증가 (기본0.1 → 100st에 17기분)'},
-  {k:'weaponCap',  name:'무기 슬롯 상한',    step:1,    hint:'보유 가능 무기 수 (기본10). 낮추면 개별 무기가 빨리 만렙이 된다'},
+  {k:'weaponCap',  name:'무기 슬롯 상한',    step:1,    hint:'보유 가능 무기 수 (기본12, 무기는 총 16종). 낮추면 개별 무기가 빨리 만렙이 된다'},
   {k:'rerollMax',  name:'레벨업 리롤 횟수',  step:1,    hint:'판당 다시 뽑기 횟수 (기본2)'},
   {k:'fuseLast',   name:'융합 마지막재료 노출',step:2,   hint:'재료 2/3일 때 남은 1개 카드 가중치 (기본18, 일반강화=3)'},
   {k:'fuseMid',    name:'융합 두번째재료 노출',step:1,   hint:'재료 1/3일 때 가중치 (기본7)'},
