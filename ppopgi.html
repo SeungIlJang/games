@@ -161,6 +161,9 @@ function renderMute(){ const b=$('muteBtn'); if(b) b.textContent=muted?'🔇':'�
 let AC; function tone(f,d,type,g){ if(muted)return; try{ if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)(); const o=AC.createOscillator(),v=AC.createGain(); o.type=type||'square'; o.frequency.value=f; v.gain.value=g||0.06; o.connect(v);v.connect(AC.destination); const t=AC.currentTime;o.start(t); v.gain.exponentialRampToValueAtTime(0.0001,t+(d||0.1)); o.stop(t+(d||0.1)); }catch(e){} }
 function chord(b){[0,4,7,12].forEach((s,i)=>setTimeout(()=>tone(b*Math.pow(2,s/12),0.18,'triangle',0.07),i*70));}
 function vib(m){try{navigator.vibrate&&navigator.vibrate(m);}catch(e){}}
+// 에셋 2단 폴백의 2단계 주소(v3.5). 자세한 설명은 아래 '인형 아트' 절 주석에 있다.
+// loadSfx() 가 이 줄보다 먼저 나오므로 선언을 위로 올려둔다(TDZ 방지).
+const REMOTE_BASE='https://seungiljang.github.io/games/';
 // ── 효과음 18종 (v2.9) ──
 // assets/audio/sfx/*.wav 를 미리 디코딩해두고 재생한다. 파일이 없거나 디코딩에 실패하면
 // 예전 합성음(tone/chord)으로 떨어진다 — 웹 배포본처럼 에셋이 없는 환경에서도 소리가 유지된다.
@@ -172,10 +175,12 @@ const sfxBuf={}; let voices=[]; const MAX_VOICES=4;
 function audioCtx(){ try{ if(!AC) AC=new(window.AudioContext||window.webkitAudioContext)();
   if(AC.state==='suspended') AC.resume(); }catch(e){} return AC; }
 function loadSfx(){ const ctx=audioCtx(); if(!ctx) return;
+  const grab=u=>fetch(u).then(r=>r.ok?r.arrayBuffer():Promise.reject(0));
   Object.keys(SFX_DUR).forEach(id=>{ if(id in sfxBuf) return; sfxBuf[id]=undefined;
-    fetch('assets/audio/sfx/'+id+'.wav').then(r=>r.ok?r.arrayBuffer():Promise.reject(0))
+    const rel='assets/audio/sfx/'+id+'.wav';
+    grab(rel).catch(()=>grab(REMOTE_BASE+rel))     // 인형 아트와 같은 2단 폴백(아래 주석 참고)
       .then(ab=>new Promise((ok,no)=>ctx.decodeAudioData(ab,ok,no)))
-      .then(b=>{ sfxBuf[id]=b; }).catch(()=>{ sfxBuf[id]=null; }); });   // null = 폴백 대상
+      .then(b=>{ sfxBuf[id]=b; }).catch(()=>{ sfxBuf[id]=null; }); });   // null = 합성음 폴백 대상
 }
 function play(id,opt){ opt=opt||{};
   if(muted) return;
@@ -316,10 +321,14 @@ function renderTrophies(){ const el=$('trophyRow'); if(!el) return;
     viewTheme = (i===(viewTheme<0?curTheme:viewTheme)) ? -1 : i;   // 같은 걸 또 누르면 현재 테마로
     preloadTheme(THEMES[i], renderDexGrid); renderDexGrid(); renderTrophies(); renderStartStats(); }; });
 }
-// ── 인형 아트 (v2.8) ──
+// ── 인형 아트 (v2.8, v3.5에서 원격 폴백 추가) ──
 // assets/dolls/{theme}/{name}.png 를 쓰고, 파일이 없거나 로드에 실패하면 이모지로 그린다.
 // OTA로 받은 HTML도 앱 안에서는 앱 번들을 기준으로 상대경로를 풀기 때문에 APK 안의 파일이 쓰인다.
-// 순수 웹(github.io)에서는 같은 경로에 파일이 없으면 자동으로 이모지로 떨어진다.
+// 그래서 번들보다 나중에 추가된 테마는 앱에서 404가 난다 — AAB를 다시 올리기 전까지 이모지로 보였다.
+// v3.5: 번들을 먼저 보고 없으면 웹 배포본에서 받는 2단 폴백을 넣었다.
+//   번들 히트 → 즉시(오프라인도 OK) / 번들 미스 → 원격 / 둘 다 실패 → 이모지
+// 웹(github.io)에서는 1단계가 곧 배포본이라 2단계까지 가지 않는다.
+// 캔버스에 그리기만 하고 픽셀을 되읽지 않으므로(getImageData 없음) 교차 출처 오염은 문제되지 않는다.
 const DOLL_FILE={
 'animal:곰돌이':'bear','animal:토끼':'bunny','animal:개구리':'frog','animal:냥이':'cat','animal:펭귄':'penguin','animal:판다':'panda','animal:코알라':'koala','animal:여우':'fox','animal:사자':'lion','animal:호랑이':'tiger','animal:공룡':'secret_dino',
 'food:버거':'burger','food:피자':'pizza','food:감자튀김':'fries','food:도넛':'donut','food:케이크':'cake','food:초코':'chocolate','food:아이스크림':'icecream','food:초밥':'sushi','food:라멘':'ramen','food:컵케이크':'cupcake','food:왕사탕':'secret_lollipop',
@@ -338,9 +347,11 @@ function preloadTheme(theme,done){        // 현재 테마 11종만 올린다(�
   list.forEach(d=>{ const id=theme.key+':'+d.n;
     if(id in dollImg){ fin(); return; }
     const src=artSrc(theme,d); if(!src){ dollImg[id]=null; fin(); return; }
-    const im=new Image();
+    const im=new Image(); let retried=false;
     im.onload=()=>{ dollImg[id]=im; fin(); };
-    im.onerror=()=>{ dollImg[id]=null; fin(); };   // 파일이 없으면 이모지 폴백
+    im.onerror=()=>{
+      if(!retried){ retried=true; im.src=REMOTE_BASE+src; return; }   // 번들에 없다 → 웹 배포본에서
+      dollImg[id]=null; fin(); };                                     // 둘 다 없으면 이모지 폴백
     im.src=src; });
 }
 function drawDoll(theme,d,x,y,s){ const a=dollArt(theme,d);
