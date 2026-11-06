@@ -1021,7 +1021,7 @@ function sanitizeTune(obj){
 //   배포할 때 이 값만 올리면 모든 기기의 개발 패널 수치가 버려지고 코드 기본값(TUNE_DEFAULTS)을 받는다.
 //   → 밸런스는 '코드가 유일한 진실'이 되고, 개발 패널은 내 기기에서 잠깐 돌려보는 용도로만 남는다.
 //   (골드/영구강화/전직은 ss_meta 라 영향 없음 — 그쪽은 계속 기기별로 유지된다)
-const GAME_VER='9.4';
+const GAME_VER='9.5';
 // 개발 패널 수치는 이 기기에 계속 남는다(앱을 껐다 켜도 유지). 배포해도 지우지 않는다 —
 // 모르는 사이에 설정이 사라지는 편이 더 나쁘다. 대신 '기본값' 버튼으로 언제든 코드값을 받을 수 있고,
 // 전 플레이어에게 반영하려면 '현재 수치 내보내기'로 뽑아 TUNE_DEFAULTS 에 넣고 배포한다.
@@ -1046,7 +1046,7 @@ setTimeout(()=>{ try{ if(window.LB&&LB.ready) LB.getTune().then(d=>{
 function saveTune(){ try{ localStorage.setItem('ss_tune', JSON.stringify(TUNE)); }catch(e){} }
 { const vt=document.getElementById('verTag'); if(vt) vt.textContent='v'+GAME_VER; }
 const DEV_KNOBS=[
-  {k:'difficulty', name:'★ 난이도 (0~10)', step:1, min:0, max:10, hint:'0=라이브값 따름(모두에게 적용된 값). 1~10은 이 기기에서만 임시 적용'},
+  {k:'difficulty', name:'★ 난이도 (0~10)', step:1, min:0, max:10, hint:'0=라이브값 따름. 1~10은 이 기기에 적용되고, [전체 적용]을 누르면 전 플레이어에게 반영'},
   {k:'hpWall',     name:'체력벽 계수',      step:0.05, hint:'중반+ 적 체력↑ (기본0.4)'},
   {k:'startPow',   name:'시작강도 계수',    step:0.05, hint:'강화 많을수록 초반 강도 (기본0.35)'},
   {k:'enemyHp',    name:'적 체력 배수',      step:0.1,  hint:'전체 적 HP× (기본1.0)'},
@@ -1089,7 +1089,7 @@ function openDev(){
   { const d=diffLevel(), ov=diffOverride(), S=diffScale(), st=document.getElementById('devDiffNow');
     if(st) st.innerHTML='현재 <b style="color:'+(d>5?'#ff8a5c':d<5?'#7fd4a8':'#9fe3ff')+'">난이도 '+d+' / 10</b>'
       +' <span style="font-size:12px;color:'+(ov?'#ffb347':'#7fd4a8')+'">'
-      +(ov?'· 이 기기에서만 임시 적용':'· 라이브값('+LIVE_DIFFICULTY+') 따름 — 전 플레이어 동일')+'</span>'
+      +(ov?'· 이 기기에 적용됨 — [전체 적용] 시 전원':'· 라이브값('+LIVE_DIFFICULTY+') 따름 — 전 플레이어 동일')+'</span>'
       +'<div style="opacity:.65;font-size:12px;margin-top:3px;">적 체력 ×'+S.hp.toFixed(2)+' · 피해 ×'+S.dmg.toFixed(2)+' · 속도 ×'+S.spd.toFixed(2)
       +(ov?' · 0을 넣으면 라이브값으로 복귀':'')+'</div>'; }
   const gn=document.getElementById('devGoldNow'); if(gn) gn.textContent=(meta.gold||0).toLocaleString();
@@ -1097,13 +1097,19 @@ function openDev(){
   document.getElementById('devPanel').classList.remove('hidden');
 }
 function devGrantGold(n){ meta.gold=Math.max(0,(meta.gold||0)+n); saveMeta(); if(typeof renderShop==='function'){try{renderShop();}catch(e){}} const el=document.getElementById('devGoldNow'); if(el) el.textContent=meta.gold.toLocaleString(); }
-function applyDev(){
+// 입력칸 → TUNE. [적용]과 [전체 적용]이 같이 쓴다.
+// 예전엔 이 코드가 applyDev 안에만 있었고 applyDev 가 패널까지 닫아서,
+// 숫자를 고치고 [전체 적용]을 바로 누르면 "올릴 것이 없습니다"가 떴다
+// (고친 값이 아직 TUNE 에 안 들어갔으므로). 적용→다시 열기→전체 적용을
+// 밟아야만 동작하는 셈이라, 화면에 보이는 값을 그대로 쓰도록 분리했다.
+function readDevFields(){
   document.querySelectorAll('#devFields input').forEach(inp=>{ let v=parseFloat(inp.value); if(!isFinite(v)) return;
     const d=DEV_KNOBS.find(x=>x.k===inp.dataset.k);
     if(d){ if(d.min!=null) v=Math.max(d.min,v); if(d.max!=null) v=Math.min(d.max,v); if(d.step===1) v=Math.round(v); }
     TUNE[inp.dataset.k]=v; });
-  saveTune(); document.getElementById('devPanel').classList.add('hidden');
+  saveTune();
 }
+function applyDev(){ readDevFields(); document.getElementById('devPanel').classList.add('hidden'); }
 document.getElementById('devLogo').onclick=async()=>{ const pw=await uiPrompt('개발자 비밀번호','password'); if(pw==='799879') openDev(); };
 document.getElementById('devApply').onclick=applyDev;
 document.getElementById('devReset').onclick=()=>{ TUNE=Object.assign({},TUNE_DEFAULTS); saveTune(); openDev(); };
@@ -1184,6 +1190,7 @@ function renderServerTune(){
   }).catch(()=>{ el.innerHTML='<span style="opacity:.55">서버 값을 읽지 못했습니다</span>'; });
 }
 document.getElementById('devPublish').onclick=async()=>{
+  readDevFields();   // 화면에 입력된 값을 먼저 반영 — [적용]을 따로 누르지 않아도 되게
   // 서버로 보내기 전에 한 번 더 범위를 통과시킨다 — 받는 쪽에서도 어차피 걸러지므로,
   // 걸리는 값이 있으면 올리기 전에 알려 주는 편이 낫다.
   const s=sanitizeTune(tuneDiff()), diff=s.clean, n=Object.keys(diff).length;
