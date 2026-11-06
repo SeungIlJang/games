@@ -1022,7 +1022,7 @@ function sanitizeTune(obj){
 //   배포할 때 이 값만 올리면 모든 기기의 개발 패널 수치가 버려지고 코드 기본값(TUNE_DEFAULTS)을 받는다.
 //   → 밸런스는 '코드가 유일한 진실'이 되고, 개발 패널은 내 기기에서 잠깐 돌려보는 용도로만 남는다.
 //   (골드/영구강화/전직은 ss_meta 라 영향 없음 — 그쪽은 계속 기기별로 유지된다)
-const GAME_VER='10.1';
+const GAME_VER='10.2';
 // 개발 패널 수치는 이 기기에 계속 남는다(앱을 껐다 켜도 유지). 배포해도 지우지 않는다 —
 // 모르는 사이에 설정이 사라지는 편이 더 나쁘다. 대신 '기본값' 버튼으로 언제든 코드값을 받을 수 있고,
 // 전 플레이어에게 반영하려면 '현재 수치 내보내기'로 뽑아 TUNE_DEFAULTS 에 넣고 배포한다.
@@ -1600,55 +1600,64 @@ const EVOLVE = { bolt:'레일건 ⚡', arrow:'폭풍화살 🏹', spread:'스플
 function ensureSpiritEnt(){ if(!player.spiritEnt||player.spiritEnt.length<3){ player.spiritEnt=[0,1,2].map(i=>({x:player.x+Math.cos(i*2.0944)*50, y:player.y+Math.sin(i*2.0944)*50})); } return player.spiritEnt; }
 function spiritPositions(){ return ensureSpiritEnt(); }
 // 삼수호령: 이동(리시) + 세 원소 "독립 쿨다운" 발사(=3무기 동시 운용 재현). 검령은 플레이어 근처 우선 방어.
-// ═══════ 천검진 — 검 유닛 ═══════
-// 삼수호령처럼 '실체가 있는 유닛'으로 띄운다. 링만 번쩍이던 때는
-// 무엇이 때리는지 안 보여서 존재감이 없었다.
-// 검들은 플레이어 주위를 공전하다가 가까운 적에게 찔러 들어갔다 돌아온다.
+// ═══════ 천검진 — 우주전사 1기 ═══════
+// 삼수호령은 셋이 흩어지지만, 천검진은 '한 명'이다. 대신 재료 세 속성을
+// 그 한 명이 전부 들고 싸운다 — 궤도(몸을 감는 칼날 띠) · 참격(전방 호) ·
+// 볼트(원거리 사격). 여러 기를 띄워 봤더니 누가 때리는지 더 안 읽혔다.
 // 한 바퀴 돌 때마다 터지는 전방위 대참격(시그니처)은 그대로 유지한다.
-function bladeUnitCount(lv){ return Math.min(10, 3+Math.floor(lv/2)); }   // Lv1:3 … Lv10:8
 function ensureBladeEnt(){
-  const n=bladeUnitCount(player.weapons.bladearray||0);
-  if(!player.bladeEnt) player.bladeEnt=[];
-  const B=player.bladeEnt;
-  while(B.length<n) B.push({x:player.x,y:player.y,a:B.length/n*6.283,cd:rand(0,0.5),lunge:0,tx:0,ty:0,ang:0});
-  if(B.length>n) B.length=n;
-  // 칸이 늘면 간격을 다시 고르게 편다
-  if(B.__n!==n){ B.forEach((b,i)=>{ b.a=i/n*6.283; }); B.__n=n; }
-  return B;
+  if(!player.bladeEnt || !player.bladeEnt.length)
+    player.bladeEnt=[{x:player.x+60,y:player.y,ang:0,spin:0,slashT:0,slashR:0,thrust:0,cd:{o:0,s:0,b:0}}];
+  return player.bladeEnt[0];
 }
 function updateBladeUnits(dt){
   const lv=player.weapons.bladearray; if(!lv) return;
   const B=ensureBladeEnt(), evo=!!player.evolved.bladearray;
-  const ringR=72+3.2*lv, spin=(evo?2.0:1.5), LUNGE=0.18;
-  const reach=(150+6*lv)*(150+6*lv);
-  const dmg=player.dmg*(0.9+0.18*lv)*(evo?1.5:1);   // fusePow 는 '재료' 키용이라 여기엔 안 쓴다
-  const hitR=24+1.6*lv;
-  for(const b of B){
-    b.a+=spin*dt;
-    const hx=player.x+Math.cos(b.a)*ringR, hy=player.y+Math.sin(b.a)*ringR;
-    // 자기 자리에서 가장 가까운 적만 노린다 — 전부 한 적에게 몰리지 않게
-    let tg=null, bd=reach;
-    for(const e of enemies){ if(e.dead) continue; const d=(e.x-hx)*(e.x-hx)+(e.y-hy)*(e.y-hy); if(d<bd){ bd=d; tg=e; } }
-    b.cd-=dt;
-    if(tg && b.cd<=0 && b.lunge<=0){
-      b.cd=Math.max(0.32, 1.05-0.07*lv)*(evo?0.72:1);
-      b.lunge=LUNGE; b.tx=tg.x; b.ty=tg.y;
-      for(const e of enemies){ if(e.dead) continue;
-        if((e.x-b.tx)*(e.x-b.tx)+(e.y-b.ty)*(e.y-b.ty) < (hitR+e.r)*(hitR+e.r)) hurtEnemy(e,dmg,'#cdfffb'); }
-      for(let k=0;k<3;k++){ const a=rand(0,6.28);
-        particles.push({x:b.tx+Math.cos(a)*hitR*0.6,y:b.ty+Math.sin(a)*hitR*0.6,
-          vx:Math.cos(a)*70,vy:Math.sin(a)*70,life:0.18,color:'#cdfffb'}); }
-    }
-    if(b.lunge>0){
-      b.lunge-=dt;
-      const t=Math.max(0,Math.min(1,1-b.lunge/LUNGE)), k=Math.sin(t*Math.PI);  // 나갔다 돌아오기
-      b.x=hx+(b.tx-hx)*k; b.y=hy+(b.ty-hy)*k;
-      b.ang=Math.atan2(b.ty-hy, b.tx-hx);
-    } else {
-      b.x=hx; b.y=hy;
-      b.ang=tg? Math.atan2(tg.y-hy, tg.x-hx) : b.a+Math.PI/2;   // 적이 없으면 날을 바깥으로
-    }
-  }
+  const leash=80+2.6*lv, spd=evo?290:240;
+  // 가장 가까운 적을 쫓되 플레이어에게서 leash 안쪽에 묶인다(혼자 멀리 나가 죽은 역할이 되지 않게)
+  let tg=null, bd=(210+8*lv)*(210+8*lv);
+  for(const e of enemies){ if(e.dead) continue; const d=dist2(B,e); if(d<bd){ bd=d; tg=e; } }
+  let tx,ty;
+  if(tg){ tx=tg.x; ty=tg.y; }
+  else { const a=time*1.8; tx=player.x+Math.cos(a)*leash*0.62; ty=player.y+Math.sin(a)*leash*0.62; }
+  { const dx=tx-B.x, dy=ty-B.y, d=Math.hypot(dx,dy)||1, mv=Math.min(d,spd*dt);
+    B.x+=dx/d*mv; B.y+=dy/d*mv; }
+  { const px=B.x-player.x, py=B.y-player.y, pd=Math.hypot(px,py)||1;
+    if(pd>leash){ B.x=player.x+px/pd*leash; B.y=player.y+py/pd*leash; }
+    B.ang = tg ? Math.atan2(tg.y-B.y, tg.x-B.x) : Math.atan2(py,px); }
+  B.spin += dt*(evo?9:6);
+  if(B.slashT>0) B.slashT-=dt;
+  if(B.thrust>0) B.thrust-=dt;
+
+  // ⟳ 궤도 속성 — 몸을 감고 도는 칼날 띠가 붙어 있는 적을 계속 깎는다
+  B.cd.o-=dt;
+  if(B.cd.o<=0){ B.cd.o=0.25;
+    const R=30+2.2*lv, dmg=player.dmg*(0.30+0.06*lv)*(evo?1.5:1);
+    for(const e of enemies){ if(e.dead) continue;
+      if(dist2(e,B)<(R+e.r)*(R+e.r)) hurtEnemy(e,dmg,'#cdfffb'); } }
+
+  // ⚔ 참격 속성 — 바라보는 쪽으로 큰 호를 벤다
+  B.cd.s-=dt;
+  if(B.cd.s<=0){ B.cd.s=Math.max(0.45,1.25-0.075*lv)*(evo?0.72:1);
+    const R=48+3.4*lv, dmg=player.dmg*(1.1+0.22*lv)*(evo?1.5:1);
+    B.slashT=0.3; B.slashR=R; B.thrust=0.16;
+    for(const e of enemies){ if(e.dead) continue;
+      if(dist2(e,B)>(R+e.r)*(R+e.r)) continue;
+      const a=Math.atan2(e.y-B.y,e.x-B.x);
+      let da=a-B.ang; da=Math.atan2(Math.sin(da),Math.cos(da));
+      if(Math.abs(da)<1.15) hurtEnemy(e,dmg,'#eafff0'); }
+    for(let k=0;k<5;k++){ const a=B.ang+rand(-1.1,1.1);
+      particles.push({x:B.x+Math.cos(a)*R*0.75,y:B.y+Math.sin(a)*R*0.75,
+        vx:Math.cos(a)*90,vy:Math.sin(a)*90,life:0.2,color:'#eafff0'}); } }
+
+  // ✦ 볼트 속성 — 사거리 밖 적에게 탄을 쏜다
+  B.cd.b-=dt;
+  if(B.cd.b<=0 && tg){ B.cd.b=Math.max(0.3,0.95-0.055*lv)*(evo?0.75:1);
+    const n=1+Math.floor(lv/4), base=Math.atan2(tg.y-B.y,tg.x-B.x);
+    for(let i=0;i<n;i++){ const a=base+(i-(n-1)/2)*0.16;
+      bullets.push({x:B.x,y:B.y,vx:Math.cos(a)*430,vy:Math.sin(a)*430,
+        dmg:player.dmg*(0.8+0.14*lv)*(evo?1.5:1), life:1.3,
+        pierce:1+Math.floor(lv/5), size:5, color:'#cdfffb', fresh:true}); } }
 }
 function updateSpirits(dt){ if(!player.weapons.spirits) return; const S=ensureSpiritEnt();
   const L=player.weapons.spirits, Lp=L+1, evo=player.evolved.spirits, crisis=player.hp/player.maxhp<=0.4;  // Lp=공격력 기준 레벨(각 원소 +1레벨 보너스)
@@ -1763,7 +1772,7 @@ const WEAPONS = {
     interval:()=>Infinity, fire:()=>{} },
   swarm:{ name:'벌떼포화', icon:'🐝', desc:'유도미사일·산탄·화살촉 융합 · 주기적 전방위 유도탄 일제사격', max:10,
     interval:()=>Infinity, fire:()=>{} },
-  bladearray:{ name:'천검진', icon:'⚔', desc:'궤도·참격·볼트 융합 · 검 소환(레벨당 증가) + 전방위 대참격', max:10,
+  bladearray:{ name:'천검진', icon:'⚔', desc:'궤도·참격·볼트 융합 · 우주전사 1기가 세 속성을 모두 쓴다', max:10,
     interval:()=>Infinity, fire:()=>{} },
 };
 // 블랙홀 씨앗탄이 착탄한 자리에 회오리 생성(아주 작게 시작 → 점점 커짐)
@@ -1799,7 +1808,7 @@ const FUSIONS=[
       playWeaponSound('homing',true); } },   // 재료 유도탄(#ffd25c·size5)보다 밝고 굵게 — 일제사격임이 읽히게
   { key:'bladearray', name:'천검진', icon:'⚔', color:'#cdfffb',
     parts:['orbit','slash','bolt'], partNames:'궤도·참격·볼트',
-    desc:'검들이 소환돼 적을 찔러 들어간다 · 주기적으로 전방위 대참격',
+    desc:'우주전사 1기 소환 · 궤도·참격·볼트를 모두 쓴다 · 주기적으로 전방위 대참격',
     sigCd:2.2, sig:(p,lv)=>{ const R=118+11*lv, dmg=p.dmg*(2.0+0.35*lv);
       for(const e of enemies){ if(e.dead) continue; if(dist2(e,p)<(R+e.r)*(R+e.r)) hurtEnemy(e,dmg,'#ffffff'); }
       for(let i=0;i<22;i++){ const a=i/22*Math.PI*2;
@@ -2911,24 +2920,83 @@ function guardianSprite(kind,evo){
   if(evo){g.strokeStyle=col;g.lineWidth=1.2;for(const sign of [-1,1]){g.beginPath();g.moveTo(sign*12,-9);g.lineTo(sign*18,-4);g.lineTo(sign*16,9);g.stroke();}g.fillStyle='#eaffff';g.fillRect(-1,-19,2,3);g.fillRect(-1,17,2,3);}
   guardianCache.set(key,c);return c;
 }
-// ⚔ 천검진 검 유닛 — 기존 swordSprite 를 그대로 쓰되 플레이어가 아니라
-//   유닛 자기 위치를 자루로 삼는다(찌를 때 몸째 나갔다 돌아온다).
+// ⚔ 천검진 — 우주전사 스프라이트.
+// 오른쪽(+x)이 정면. 플레이어 전용인 '흰 외곽선'과 적 전용인 '포화 적색'은 피하고,
+// 천검진 고유색(#cdfffb) 계열로 아군임이 읽히게 한다.
+const warriorCache=new Map();
+function warriorSprite(evo){
+  const key=Number(evo); if(warriorCache.has(key)) return warriorCache.get(key);
+  const c=mkCv(96,96), g=c.getContext('2d'); g.translate(48,48);
+  const edge=evo?'#a7ffdc':'#cdfffb', plate=evo?'#4a8f88':'#36708a',
+        dark='#101d2e', core='#eaffff', metal=evo?'#ffe7a4':'#dac28c';
+  g.lineJoin='round';
+  // 추진 잔광 — 뒤로 흐르는 삼각 꼬리
+  g.globalAlpha=.30; g.fillStyle=edge;
+  g.beginPath(); g.moveTo(-11,-7); g.lineTo(-30,0); g.lineTo(-11,7); g.closePath(); g.fill();
+  g.globalAlpha=1;
+  // 다리 — 뒤로 접힌 추진부
+  g.fillStyle=dark; g.strokeStyle=edge; g.lineWidth=1.3;
+  for(const s of [-1,1]){ g.beginPath();
+    g.moveTo(-3,s*4); g.lineTo(-15,s*12); g.lineTo(-19,s*8); g.lineTo(-7,s*2); g.closePath(); g.fill(); g.stroke(); }
+  // 몸통 — 각진 장갑(위로 좁아지는 사다리꼴)
+  g.fillStyle=plate; g.strokeStyle=edge; g.lineWidth=1.6;
+  g.beginPath(); g.moveTo(-8,-10); g.lineTo(7,-8); g.lineTo(12,0); g.lineTo(7,8); g.lineTo(-8,10); g.lineTo(-4,0);
+  g.closePath(); g.fill(); g.stroke();
+  // 가슴 코어
+  g.fillStyle=core; g.beginPath(); g.ellipse(2,0,3.0,4.2,0,0,6.283); g.fill();
+  g.globalAlpha=.45; g.beginPath(); g.ellipse(2,0,6.0,8.0,0,0,6.283); g.fill(); g.globalAlpha=1;
+  // 어깨 플레이트 2장
+  g.fillStyle=dark; g.strokeStyle=edge; g.lineWidth=1.4;
+  for(const s of [-1,1]){ g.beginPath();
+    g.moveTo(-6,s*10); g.lineTo(5,s*13); g.lineTo(9,s*7); g.lineTo(-3,s*6); g.closePath(); g.fill(); g.stroke(); }
+  // 머리 — 바이저
+  g.fillStyle=plate; g.strokeStyle=edge; g.lineWidth=1.3;
+  g.beginPath(); g.moveTo(6,-5); g.lineTo(16,-4); g.lineTo(18,0); g.lineTo(16,4); g.lineTo(6,5); g.closePath();
+  g.fill(); g.stroke();
+  g.fillStyle=core; g.fillRect(11,-2.2,6,4.4);
+  // 검 — 앞으로 뻗은 장검
+  g.fillStyle='#e8fbff'; g.strokeStyle='#3d6480'; g.lineWidth=1;
+  g.beginPath(); g.moveTo(16,-2.6); g.lineTo(38,-2.0); g.lineTo(44,0); g.lineTo(38,2.0); g.lineTo(16,2.6);
+  g.closePath(); g.fill(); g.stroke();
+  g.fillStyle=edge; g.globalAlpha=.55;
+  g.beginPath(); g.moveTo(18,-1.0); g.lineTo(40,-0.7); g.lineTo(40,0.7); g.lineTo(18,1.0); g.closePath(); g.fill();
+  g.globalAlpha=1;
+  g.fillStyle=metal; g.fillRect(13,-6,3,12);                    // 가드
+  if(evo){ // 진화: 등 뒤로 펼쳐지는 광익
+    g.globalAlpha=.5; g.strokeStyle=edge; g.lineWidth=1.6;
+    for(const s of [-1,1]){ g.beginPath();
+      g.moveTo(-6,s*8); g.quadraticCurveTo(-24,s*20,-34,s*9); g.stroke(); }
+    g.globalAlpha=1;
+  }
+  warriorCache.set(key,c); return c;
+}
 function drawBladeUnits(){
   const lv=player.weapons.bladearray; if(!lv) return;
-  const B=player.bladeEnt; if(!B||!B.length) return;
-  const evo=!!player.evolved.bladearray, len=26+1.4*lv;
-  const sprite=swordSprite(len,evo);
+  const B=player.bladeEnt&&player.bladeEnt[0]; if(!B) return;
+  const evo=!!player.evolved.bladearray;
   ctx.save();
-  for(const b of B){
-    const act=b.lunge>0;
-    // 찌르는 순간엔 날 앞쪽으로 잔광을 한 줄 긋는다 — 어느 검이 때렸는지 읽히게
-    if(act){ ctx.globalAlpha=0.30; ctx.strokeStyle=evo?'#a7ffdc':'#cdfffb'; ctx.lineWidth=2;
-      ctx.beginPath(); ctx.moveTo(b.x,b.y); ctx.lineTo(b.x+Math.cos(b.ang)*len, b.y+Math.sin(b.ang)*len); ctx.stroke(); }
-    ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(b.ang);
-    ctx.globalAlpha=act?1:0.88;
-    ctx.drawImage(sprite,-sprite.pad,-sprite.half);
-    ctx.restore();
-  }
+  ctx.globalCompositeOperation='source-over';   // 앞 단계(가산합성)가 새어 들어오면 흰 덩어리가 된다
+  ctx.globalAlpha=1;
+  ctx.strokeStyle=evo?'#a7ffdc':'#cdfffb';
+  // ⟳ 궤도 속성 — 몸을 감고 도는 칼날 띠 2줄
+  { const oR=30+2.2*lv;
+    ctx.globalAlpha=.32; ctx.lineWidth=1.6;
+    for(const o of [0,Math.PI]){ ctx.beginPath(); ctx.arc(B.x,B.y,oR,B.spin+o,B.spin+o+2.0); ctx.stroke(); } }
+  // ⚔ 참격 속성 — 벤 직후 전방 호
+  if(B.slashT>0){ const f=Math.max(0,B.slashT/0.3);
+    ctx.globalAlpha=.60*f; ctx.lineWidth=3.5;
+    ctx.beginPath(); ctx.arc(B.x,B.y,B.slashR,B.ang-1.15,B.ang+1.15); ctx.stroke();
+    ctx.globalAlpha=.22*f; ctx.lineWidth=9;
+    ctx.beginPath(); ctx.arc(B.x,B.y,B.slashR,B.ang-1.15,B.ang+1.15); ctx.stroke(); }
+  ctx.restore();
+  // 본체 — 벨 때 살짝 앞으로 내딛는다
+  const push=B.thrust>0 ? Math.sin(Math.max(0,B.thrust)/0.16*Math.PI)*7 : 0;
+  const size=evo?62:54, sp=warriorSprite(evo);
+  ctx.save();
+  ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=1;
+  ctx.translate(B.x+Math.cos(B.ang)*push, B.y+Math.sin(B.ang)*push);
+  ctx.rotate(B.ang);
+  ctx.drawImage(sp,-size/2,-size/2,size,size);
   ctx.restore();
 }
 function drawGuardians(){
