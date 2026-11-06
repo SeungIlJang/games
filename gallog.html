@@ -1022,7 +1022,7 @@ function sanitizeTune(obj){
 //   배포할 때 이 값만 올리면 모든 기기의 개발 패널 수치가 버려지고 코드 기본값(TUNE_DEFAULTS)을 받는다.
 //   → 밸런스는 '코드가 유일한 진실'이 되고, 개발 패널은 내 기기에서 잠깐 돌려보는 용도로만 남는다.
 //   (골드/영구강화/전직은 ss_meta 라 영향 없음 — 그쪽은 계속 기기별로 유지된다)
-const GAME_VER='10.2';
+const GAME_VER='10.3';
 // 개발 패널 수치는 이 기기에 계속 남는다(앱을 껐다 켜도 유지). 배포해도 지우지 않는다 —
 // 모르는 사이에 설정이 사라지는 편이 더 나쁘다. 대신 '기본값' 버튼으로 언제든 코드값을 받을 수 있고,
 // 전 플레이어에게 반영하려면 '현재 수치 내보내기'로 뽑아 TUNE_DEFAULTS 에 넣고 배포한다.
@@ -3344,7 +3344,6 @@ function render(){
   }
   ctx.globalAlpha=1;
   // Dedicated guardians stay small and never cover the player hull.
-  drawBladeUnits();
   drawGuardians();
   drawOrbits();
   drawWeaponFx();
@@ -3365,6 +3364,10 @@ function render(){
     drawEnemyFeatureOverlay(e);
     if(!e.boss && e.hp<e.maxhp){ const w=e.r*2; ctx.fillStyle='rgba(0,0,0,.5)'; ctx.fillRect(e.x-e.r,e.y-e.r-8,w,4); ctx.fillStyle='#8fff9e'; ctx.fillRect(e.x-e.r,e.y-e.r-8,w*(e.hp/e.maxhp),4); }
   }
+  // ⚔ 천검진 우주전사 — 적보다 '뒤에' 그린다.
+  //   삼수호령은 셋이 흩어져 있어 적 밑에 깔려도 보이지만, 천검진은 1기가
+  //   적진 한가운데로 파고드는 구조라 적 밑에 두면 거의 늘 가려진다.
+  drawBladeUnits();
   // floating 데미지/처치 숫자
   for(const tx of texts){ ctx.globalAlpha=Math.max(0,Math.min(1,tx.life*2)); ctx.fillStyle=tx.color; ctx.font=fTech(tx.size||14,true); ctx.textAlign='center'; ctx.fillText(tx.str,tx.x,tx.y); }
   ctx.globalAlpha=1; ctx.textAlign='left';
