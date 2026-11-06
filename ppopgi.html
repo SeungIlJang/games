@@ -104,7 +104,7 @@
 </div>
 <div id="goldBar" class="hidden"><div id="goldLbl">⚡ 황금 찬스!</div><div id="goldTrack"><div id="goldFill"></div></div></div>
 <div id="hint"></div>
-<div id="ver">v3.4 · 기계 몸체 · 도감 등록 연출 · 테마 둘러보기</div>
+<div id="ver">v3.5 · 몬스터·용사 테마 · 도감 77종</div>
 
 <div id="start">
   <h1>모두의 뽑기</h1>
@@ -123,7 +123,7 @@
     <button class="btn" id="rankBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:13px 26px">🏅 랭킹</button>
     <button class="btn" id="shareBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f;padding:13px 26px">🔗 공유</button>
   </div>
-  <div id="changelog">🆕 <b>v3.4</b> · 🧸<b>도감을 다 둘러볼 수 있어요</b> — 위 트로피를 눌러보세요 · 새로 모으면 등록 도장!<br>· 기계 아래가 꽉 찼어요 · 투입구·받는 곳이 한눈에<br><b>v3.3</b> · 🔥운반 중 연타로 되잡기 · 집으면 옆 인형이 무너져요 · 🧱구석은 더 어려움</div>
+  <div id="changelog">🆕 <b>v3.5</b> · 👹<b>몬스터</b>·🏰<b>용사</b> 테마 추가 — 도감이 <b>55종 → 77종</b>!<br>· 전설 테마를 마스터하면 몬스터가 열려요<br><b>v3.4</b> · 🧸도감 둘러보기(위 트로피) · 기계 아래가 꽉 찼어요<br><b>v3.3</b> · 🔥운반 중 연타로 되잡기 · 집으면 옆 인형이 무너져요</div>
 </div>
 
 <div id="rank">
@@ -250,7 +250,7 @@ async function playAd(cb){ if(adPlaying)return; adPlaying=true; stopAllSfx(); co
   setTimeout(()=>{ adPlaying=false; cb(); },700); // 웹 시뮬
 }
 
-// ── 테마 도감 (5테마 × 10종 = 50) ──
+// ── 테마 도감 (7테마 × (기본10 + 시크릿1) = 77) ──
 const THEMES=[
   {key:'animal', name:'동물', ico:'🐻', dolls:[
     {e:'🐻',n:'곰돌이',r:1},{e:'🐰',n:'토끼',r:1},{e:'🐸',n:'개구리',r:1},
@@ -272,8 +272,18 @@ const THEMES=[
     {e:'🐉',n:'용',r:1},{e:'🦄',n:'유니콘',r:1},{e:'🔥',n:'불사조',r:1},
     {e:'👑',n:'왕관',r:2},{e:'💎',n:'보석',r:2},{e:'🗡️',n:'성검',r:2},{e:'🏆',n:'트로피',r:2},
     {e:'🌈',n:'무지개',r:3},{e:'💫',n:'정령',r:3},{e:'👾',n:'전설몬',r:3} ], secret:{e:'🐲',n:'용왕',r:4}},
+  // v3.5: 6·7번째 테마. monster-idle 몬스터와 타워디펜스 아군 유닛을 플러시화한 것.
+  // 등급은 원본의 티어 변형에 맞춰 배치했다 — base=★, t2=★★, t3=★★★.
+  {key:'monster', name:'몬스터', ico:'👹', dolls:[
+    {e:'🟢',n:'슬라임',r:1},{e:'🍄',n:'버섯몬',r:1},{e:'🕷️',n:'거미',r:1},
+    {e:'🦇',n:'박쥐',r:2},{e:'👻',n:'유령',r:2},{e:'👺',n:'고블린',r:2},{e:'💀',n:'해골',r:2},
+    {e:'🐺',n:'늑대',r:3},{e:'🗿',n:'골렘',r:3},{e:'🐍',n:'뱀룡',r:3} ], secret:{e:'🐉',n:'레드드래곤',r:4}},
+  {key:'hero', name:'용사', ico:'🏰', dolls:[
+    {e:'⚔️',n:'병사',r:1},{e:'🏹',n:'궁수',r:1},{e:'🥷',n:'도적',r:1},
+    {e:'🛡️',n:'기사',r:2},{e:'🧙',n:'마법사',r:2},{e:'🙏',n:'성직자',r:2},{e:'🔱',n:'창병',r:2},
+    {e:'🐎',n:'기병',r:3},{e:'💣',n:'대포병',r:3},{e:'🪖',n:'방패병',r:3} ], secret:{e:'👼',n:'페가수스 성기사',r:4}},
 ];
-const TOTAL_DOLLS=THEMES.reduce((s,t)=>s+t.dolls.length+(t.secret?1:0),0);  // 기본 50 + 시크릿 5 = 55
+const TOTAL_DOLLS=THEMES.reduce((s,t)=>s+t.dolls.length+(t.secret?1:0),0);  // 7테마 × (기본10 + 시크릿1) = 77
 let curTheme=+(localStorage.getItem('ppopgi_theme')||0); if(curTheme>=THEMES.length) curTheme=THEMES.length-1;
 function THEME(){ return THEMES[curTheme]; }
 function did(theme,name){ return theme.key+':'+name; }
@@ -315,7 +325,9 @@ const DOLL_FILE={
 'food:버거':'burger','food:피자':'pizza','food:감자튀김':'fries','food:도넛':'donut','food:케이크':'cake','food:초코':'chocolate','food:아이스크림':'icecream','food:초밥':'sushi','food:라멘':'ramen','food:컵케이크':'cupcake','food:왕사탕':'secret_lollipop',
 'space:로켓':'rocket','space:UFO':'ufo','space:별':'star','space:달':'moon','space:혜성':'comet','space:토성':'saturn','space:외계인':'alien','space:은하':'galaxy','space:유성':'meteor','space:망원경':'telescope','space:초신성':'secret_supernova',
 'sea:물고기':'fish','sea:문어':'octopus','sea:게':'crab','sea:돌고래':'dolphin','sea:고래':'whale','sea:상어':'shark','sea:거북':'turtle','sea:오징어':'squid','sea:복어':'pufferfish','sea:인어':'mermaid','sea:흰수염고래':'secret_bluewhale',
-'legend:용':'dragon','legend:유니콘':'unicorn','legend:불사조':'phoenix','legend:왕관':'crown','legend:보석':'gem','legend:성검':'sword','legend:트로피':'trophy','legend:무지개':'rainbow','legend:정령':'spirit','legend:전설몬':'legendmon','legend:용왕':'secret_dragonking'};
+'legend:용':'dragon','legend:유니콘':'unicorn','legend:불사조':'phoenix','legend:왕관':'crown','legend:보석':'gem','legend:성검':'sword','legend:트로피':'trophy','legend:무지개':'rainbow','legend:정령':'spirit','legend:전설몬':'legendmon','legend:용왕':'secret_dragonking',
+'monster:슬라임':'slime','monster:버섯몬':'mushroom','monster:거미':'spider','monster:박쥐':'bat','monster:유령':'ghost','monster:고블린':'goblin','monster:해골':'skeleton','monster:늑대':'wolf','monster:골렘':'golem','monster:뱀룡':'wyrm','monster:레드드래곤':'secret_dragon',
+'hero:병사':'soldier','hero:궁수':'archer','hero:도적':'rogue','hero:기사':'knight','hero:마법사':'mage','hero:성직자':'cleric','hero:창병':'spear','hero:기병':'cavalry','hero:대포병':'cannon','hero:방패병':'shield','hero:페가수스 성기사':'secret_pegasus'};
 const dollImg={};
 function artSrc(theme,d){ const f=DOLL_FILE[theme.key+':'+d.n]; return f?('assets/dolls/'+theme.key+'/'+f+'.png'):null; }
 function dollArt(theme,d){ return dollImg[theme.key+':'+d.n]||null; }
@@ -783,7 +795,7 @@ function endResult(win, kind){
         setTimeout(()=>{ curTheme++; try{localStorage.setItem('ppopgi_theme',curTheme);}catch(e){} flash('🔓 새 테마 해금! '+nx.ico+' '+nx.name,'#7cf6ff'); preloadTheme(THEME(),renderDexGrid); renderStartStats(); },2100);
         delay=3200;
       } else {
-        setTimeout(()=>{ flash('👑 전체 마스터! 55종 완성!','#ffd34d'); burst(W/2,H*0.4,'#ffd34d',120); screenShake=18; },900);
+        setTimeout(()=>{ flash('👑 전체 마스터! '+TOTAL_DOLLS+'종 완성!','#ffd34d'); burst(W/2,H*0.4,'#ffd34d',120); screenShake=18; },900);
         delay=3000;
       }
     }
@@ -1231,7 +1243,7 @@ function renderStartStats(){
          +(vi!==curTheme?' <span style="opacity:.6;font-weight:600">· 구경 중</span>':'')
          +' <span style="opacity:.6;font-weight:600">· 전체 '+all+'/'+TOTAL_DOLLS+'</span>'); }
   const sec=THEMES.filter(t=>secretCaught(t)).length;
-  $('startStats').innerHTML='🏆 최고 연속 <b>'+bestStreak+'</b> · 🧸 누적 <b>'+totalCaught+'</b> · ✨ 시크릿 <b>'+sec+'/'+THEMES.length+'</b><br><span style="opacity:.75">🎯 목표: 5테마 + 시크릿 = 55종 마스터</span>'; }
+  $('startStats').innerHTML='🏆 최고 연속 <b>'+bestStreak+'</b> · 🧸 누적 <b>'+totalCaught+'</b> · ✨ 시크릿 <b>'+sec+'/'+THEMES.length+'</b><br><span style="opacity:.75">🎯 목표: '+THEMES.length+'테마 + 시크릿 = '+TOTAL_DOLLS+'종 마스터</span>'; }
 
 // ══════════ Phase 2: 칭호·출석·일일미션·황금찬스·랭킹 ══════════
 function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
