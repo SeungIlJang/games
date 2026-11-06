@@ -30,6 +30,7 @@
    설계 패턴만 참고(상태머신·파티/클래스·아이템·상점·세이브). 전부 오리지널. */
 const cv=document.getElementById('screen'), g=cv.getContext('2d');
 const W=480,H=270,TILE=30, SAVE_KEY='three-seals-save-v2';
+var DEBUG_ENCOUNTER=true; /* 개발용: 적 조우(풀) 타일을 빨간 점으로 표시. 출시 전 false. */
 function resizeCanvas(){ const s=Math.min(window.innerWidth/W, window.innerHeight/H); cv.style.width=(W*s)+'px'; cv.style.height=(H*s)+'px'; }
 addEventListener('resize',resizeCanvas); resizeCanvas();
 
@@ -774,7 +775,8 @@ function drawField(){ const pal=cur.pal; g.fillStyle=pal.bg; g.fillRect(0,0,W,H)
     if(t==='5'){ g.fillStyle='#caa44a'; g.fillRect(sx+TILE*0.22,sy+TILE*0.36,TILE*0.56,TILE*0.4); g.fillStyle='#7a5a22'; g.fillRect(sx+TILE*0.22,sy+TILE*0.47,TILE*0.56,TILE*0.08); }
     if(t==='7'){ g.fillStyle='#c76a54'; for(let k=0;k<3;k++){ g.beginPath(); g.moveTo(sx+6+k*7,sy+TILE-4); g.lineTo(sx+9+k*7,sy+TILE-13); g.lineTo(sx+12+k*7,sy+TILE-4); g.closePath(); g.fill(); } }
     if(t==='8'){ const on=storyFlags['sw_'+cur.id+'_'+x+','+y]; g.fillStyle=on?'#9fe8c4':'#5a5a68'; g.beginPath(); g.arc(sx+TILE/2,sy+TILE/2,TILE*0.22,0,7); g.fill(); g.strokeStyle=on?'#dfffe8':'#3a3a46'; g.lineWidth=2; g.stroke(); g.lineWidth=1; }
-    if(t==='9'){ g.fillStyle='#7a7a9a'; for(let k=0;k<4;k++) g.fillRect(sx+4+k*6,sy+3,3,TILE-6); g.fillStyle='#4a4a66'; g.fillRect(sx+2,sy+2,TILE-4,3); g.fillRect(sx+2,sy+TILE-6,TILE-4,3); } }
+    if(t==='9'){ g.fillStyle='#7a7a9a'; for(let k=0;k<4;k++) g.fillRect(sx+4+k*6,sy+3,3,TILE-6); g.fillStyle='#4a4a66'; g.fillRect(sx+2,sy+2,TILE-4,3); g.fillRect(sx+2,sy+TILE-6,TILE-4,3); }
+    if(DEBUG_ENCOUNTER&&t==='2'&&cur.enc){ g.fillStyle='#ff2d2d'; g.beginPath(); g.arc(sx+TILE/2,sy+TILE/2,3.2,0,7); g.fill(); g.strokeStyle='rgba(255,255,255,.8)'; g.lineWidth=1; g.stroke(); } }
   // 워프(출구) 표식
   if(cur.warps) for(const w of cur.warps){ const sx=w.x*TILE-camOX, sy=w.y*TILE-camOY;
     g.fillStyle='rgba(159,232,196,.16)'; g.fillRect(sx+2,sy+2,TILE-4,TILE-4);
