@@ -13,6 +13,10 @@
   // 글로벌 리더보드 (Firebase Firestore) — analytics는 웹뷰 불필요로 제외
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
   import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+  // 원격 밸런스 '쓰기'는 관리자 1명만 — Firestore 규칙이 request.auth.uid 로 막는다.
+  // 읽기는 로그인 없이 누구나(모든 플레이어가 받아야 하므로).
+  import { getAuth, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence, onAuthStateChanged }
+    from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
   const firebaseConfig = {
     apiKey: "AIzaSyDUanex0x7CmvCQxBK2d3a7SkyscuEGzwY",
     authDomain: "gallog-return-be90f.firebaseapp.com",
@@ -21,8 +25,13 @@
     messagingSenderId: "317854999265",
     appId: "1:317854999265:web:c78708adabdef449a08da0"
   };
-  let db=null;
-  try { db=getFirestore(initializeApp(firebaseConfig)); } catch(e){ console.warn('fb init fail', e); }
+  let db=null, auth=null;
+  try { const app=initializeApp(firebaseConfig); db=getFirestore(app);
+    auth=getAuth(app);
+    // 한 번 로그인하면 기기에 남는다 — 앱을 껐다 켜도 관리자 상태 유지.
+    setPersistence(auth, browserLocalPersistence).catch(()=>{});
+    onAuthStateChanged(auth, ()=>{ try{ window.dispatchEvent(new Event('lb-admin')); }catch(e){} });
+  } catch(e){ console.warn('fb init fail', e); }
   window.LB = {
     get ready(){ return !!db; },
     async submit(id,name,stage,kills){
@@ -39,15 +48,26 @@
     // 개발 패널에서 올리면 config/tune 문서 하나에 저장되고,
     // 다른 기기는 다음 실행 때 이 값을 받아 적용한다(코드 배포 없이).
     async putTune(obj){
-      if(!db) return false;
-      try{ await setDoc(doc(db,'config','tune'), {tune:obj, ts:Date.now()}); return true; }
-      catch(e){ console.warn('LB.putTune', e); return false; }
+      if(!db) return {ok:false, code:'no-db'};
+      if(!auth || !auth.currentUser) return {ok:false, code:'not-admin'};
+      try{ await setDoc(doc(db,'config','tune'), {tune:obj, ts:Date.now(), by:auth.currentUser.uid}); return {ok:true}; }
+      catch(e){ console.warn('LB.putTune', e&&e.code, e&&e.message); return {ok:false, code:(e&&e.code)||'unknown'}; }
     },
     async getTune(){
       if(!db) return null;
       try{ const s=await getDoc(doc(db,'config','tune')); return s.exists()?s.data():null; }
       catch(e){ console.warn('LB.getTune', e); return null; }
-    }
+    },
+    // ── 관리자(나) 로그인 — 개발 패널에서만 쓴다 ──────────────────
+    get admin(){ return !!(auth && auth.currentUser); },
+    get adminId(){ return auth&&auth.currentUser ? (auth.currentUser.email||auth.currentUser.uid) : ''; },
+    get adminUid(){ return auth&&auth.currentUser ? auth.currentUser.uid : ''; },
+    async adminLogin(email,pw){
+      if(!auth) return {ok:false, code:'no-auth'};
+      try{ await signInWithEmailAndPassword(auth, String(email||'').trim(), String(pw||'')); return {ok:true}; }
+      catch(e){ console.warn('LB.adminLogin', e&&e.code); return {ok:false, code:(e&&e.code)||'unknown'}; }
+    },
+    async adminLogout(){ if(auth) try{ await signOut(auth); }catch(e){} }
   };
 </script>
 <style>
@@ -343,6 +363,15 @@
       <div style="font-size:12px;opacity:.6;margin-bottom:8px;line-height:1.5;">
         누르면 서버에 바로 올라가고, <b>다른 유저는 앱을 새로 켤 때</b> 적용됩니다.<br>
         골드 지급·영구강화/전직 초기화는 제외됩니다.</div>
+      <div style="background:#0c1220;border:1px solid #2b3350;padding:10px;margin-bottom:10px;text-align:left;">
+        <div id="devAdminState" style="font-size:12px;margin-bottom:7px;min-height:16px;"></div>
+        <div id="devAdminForm">
+          <input id="devAdminEmail" class="field" type="email" autocomplete="username" placeholder="관리자 이메일" style="width:100%;font-size:14px;margin-bottom:6px;">
+          <input id="devAdminPw" class="field" type="password" autocomplete="current-password" placeholder="비밀번호" style="width:100%;font-size:14px;margin-bottom:7px;">
+          <button class="btn btn-neutral" id="devAdminLogin" style="padding:8px 12px;font-size:13px;">관리자 로그인</button>
+        </div>
+        <button class="btn btn-neutral" id="devAdminLogout" style="display:none;padding:6px 10px;font-size:12px;">로그아웃</button>
+      </div>
       <button class="btn btn-gold" id="devPublish" style="padding:12px 20px;">🌍 전체 적용 (서버 반영)</button>
       <div style="margin-top:8px;"><button class="btn btn-neutral" id="devExport" style="padding:8px 12px;font-size:13px;">코드용으로 복사</button></div>
       <textarea id="devExportBox" readonly style="display:none;width:100%;height:110px;margin-top:8px;font:11px ui-monospace,monospace;background:#0c1220;color:#9fe3ff;border:1px solid #2b3350;padding:8px;"></textarea>
@@ -908,11 +937,37 @@ const TUNE_DEFAULTS={ hpWall:0.4, startPow:0.45, awakenStart:15, awakenStep:15, 
   champHp:2.0, champDmg:1.2, tankBlock:0.35, shardDmg:1.6, weaverDmg:0.45,
   fuseLast:18, fuseMid:7, speedMax:3, difficulty:0 };
 let TUNE=Object.assign({},TUNE_DEFAULTS);
+// ★ 원격 설정이 들어올 수 있는 범위. 서버에서 받은 값은 '반드시' 이 표를 통과해야 한다.
+//   Firestore 규칙으로 관리자만 쓰게 막아 두지만, 앱을 뜯으면 Firebase 설정이 보이는 구조라
+//   규칙이 뚫렸을 때의 피해 상한을 코드에서 한 번 더 잠근다. 표에 없는 키는 그냥 버린다.
+//   (이 기기 개발 패널 값에는 적용하지 않는다 — 내 기기에서 극단값을 시험하는 건 의도된 동작)
+//   speedMax 3 상한은 실측 근거다: 느린 프레임에서 4배속부터 탄이 적을 통과한다(DPS 0).
+const TUNE_RANGE={
+  difficulty:[0,10], hpWall:[0,2], startPow:[0,3], enemyHp:[0.1,10], enemySpeed:[0.2,3],
+  awakenStart:[1,100], awakenStep:[1,100], levelHp:[0,100], reviveXp:[0,1], camFollow:[0,10],
+  bossPow:[0.1,20], bossMul:[0.5,200], bossMulStep:[0,5], weaponCap:[1,20], rerollMax:[0,20],
+  fuseLast:[0,100], fuseMid:[0,100], speedMax:[0,3], eliteChance:[0,1], eliteMax:[0,20],
+  eliteHp:[0.5,50], chestGold:[0,100000], champHp:[0.5,50], tankBlock:[0,1],
+  shardDmg:[0,10], weaverDmg:[0,10], bossGem:[0,50], goldMul:[0,100]
+};
+// 서버에서 받은 수치를 걸러 낸다. { clean: 적용할 값, clamped: 범위에 걸려 깎인 키, dropped: 모르는 키 }
+function sanitizeTune(obj){
+  const clean={}, clamped=[], dropped=[];
+  if(!obj || typeof obj!=='object') return {clean, clamped, dropped};
+  for(const k of Object.keys(obj)){
+    const r=TUNE_RANGE[k], v=obj[k];
+    if(!r || typeof v!=='number' || !isFinite(v)){ dropped.push(k); continue; }
+    const c=Math.max(r[0], Math.min(r[1], v));
+    if(c!==v) clamped.push(k);
+    clean[k]=c;
+  }
+  return {clean, clamped, dropped};
+}
 // ★ 게임 버전. 타이틀 표기와 '개발 패널 저장값 무효화'에 함께 쓴다.
 //   배포할 때 이 값만 올리면 모든 기기의 개발 패널 수치가 버려지고 코드 기본값(TUNE_DEFAULTS)을 받는다.
 //   → 밸런스는 '코드가 유일한 진실'이 되고, 개발 패널은 내 기기에서 잠깐 돌려보는 용도로만 남는다.
 //   (골드/영구강화/전직은 ss_meta 라 영향 없음 — 그쪽은 계속 기기별로 유지된다)
-const GAME_VER='9.2';
+const GAME_VER='9.3';
 // 개발 패널 수치는 이 기기에 계속 남는다(앱을 껐다 켜도 유지). 배포해도 지우지 않는다 —
 // 모르는 사이에 설정이 사라지는 편이 더 나쁘다. 대신 '기본값' 버튼으로 언제든 코드값을 받을 수 있고,
 // 전 플레이어에게 반영하려면 '현재 수치 내보내기'로 뽑아 TUNE_DEFAULTS 에 넣고 배포한다.
@@ -922,14 +977,17 @@ const TUNE_VER=2;
 //  · 원격은 직전 실행 때 받아 둔 캐시를 먼저 쓴다(실행 즉시 반영). 새 값은 백그라운드로 받아 다음 실행에 반영.
 //  · 그래서 개발 패널에서 '전체 적용'을 누르면 다른 유저는 앱을 새로 켤 때 그 값을 받는다.
 let REMOTE_TUNE={};
-try{ REMOTE_TUNE=JSON.parse(localStorage.getItem('ss_rtune')||'{}')||{}; TUNE=Object.assign(TUNE,REMOTE_TUNE); }catch(e){}
+try{ REMOTE_TUNE=sanitizeTune(JSON.parse(localStorage.getItem('ss_rtune')||'{}')).clean; TUNE=Object.assign(TUNE,REMOTE_TUNE); }catch(e){}
 try{ const sv=JSON.parse(localStorage.getItem('ss_tune')||'{}');
   if(sv.__ver!==TUNE_VER) delete sv.difficulty;
   TUNE=Object.assign(TUNE, sv); TUNE.__ver=TUNE_VER;
 }catch(e){}
 // 최신 원격 설정을 받아 캐시만 갱신한다(이번 실행 중에 밸런스가 갑자기 바뀌지 않게).
 setTimeout(()=>{ try{ if(window.LB&&LB.ready) LB.getTune().then(d=>{
-  if(d&&d.tune) try{ localStorage.setItem('ss_rtune', JSON.stringify(d.tune)); }catch(e){}
+  if(!d||!d.tune) return;
+  const s=sanitizeTune(d.tune);
+  if(s.dropped.length||s.clamped.length) console.warn('원격 설정 일부 거부', s);
+  try{ localStorage.setItem('ss_rtune', JSON.stringify(s.clean)); }catch(e){}
 }); }catch(e){} }, 1500);
 function saveTune(){ try{ localStorage.setItem('ss_tune', JSON.stringify(TUNE)); }catch(e){} }
 { const vt=document.getElementById('verTag'); if(vt) vt.textContent='v'+GAME_VER; }
@@ -981,6 +1039,7 @@ function openDev(){
       +'<div style="opacity:.65;font-size:12px;margin-top:3px;">적 체력 ×'+S.hp.toFixed(2)+' · 피해 ×'+S.dmg.toFixed(2)+' · 속도 ×'+S.spd.toFixed(2)
       +(ov?' · 0을 넣으면 라이브값으로 복귀':'')+'</div>'; }
   const gn=document.getElementById('devGoldNow'); if(gn) gn.textContent=(meta.gold||0).toLocaleString();
+  try{ renderAdmin(); }catch(e){}
   document.getElementById('devPanel').classList.remove('hidden');
 }
 function devGrantGold(n){ meta.gold=Math.max(0,(meta.gold||0)+n); saveMeta(); if(typeof renderShop==='function'){try{renderShop();}catch(e){}} const el=document.getElementById('devGoldNow'); if(el) el.textContent=meta.gold.toLocaleString(); }
@@ -1009,18 +1068,68 @@ document.getElementById('devResetMeta').onclick=()=>{
 function tuneDiff(){ const d={};
   for(const k of DEV_KNOBS) if(TUNE[k.k]!=null && TUNE[k.k]!==TUNE_DEFAULTS[k.k]) d[k.k]=TUNE[k.k];
   return d; }
+// 관리자 로그인 상태 표시 — 서버 쓰기는 관리자만이라 패널에서 바로 보여 준다.
+const AUTH_ERR={
+  'auth/invalid-credential':'이메일 또는 비밀번호가 다릅니다',
+  'auth/invalid-login-credentials':'이메일 또는 비밀번호가 다릅니다',
+  'auth/wrong-password':'비밀번호가 다릅니다',
+  'auth/missing-password':'비밀번호를 넣어 주세요',
+  'auth/user-not-found':'없는 계정입니다',
+  'auth/user-disabled':'사용 중지된 계정입니다',
+  'auth/invalid-email':'이메일 형식이 아닙니다',
+  // 이 둘은 '내 설정이 아직 안 됐다'는 뜻 — 콘솔에서 Authentication을 켜야 한다
+  'auth/configuration-not-found':'콘솔 → Authentication → 시작하기 → 이메일/비밀번호를 켜 주세요',
+  'auth/operation-not-allowed':'Firebase 콘솔에서 이메일/비밀번호 로그인을 켜 주세요',
+  'auth/too-many-requests':'시도가 많아 잠시 막혔습니다',
+  'auth/network-request-failed':'네트워크 오류',
+  'permission-denied':'규칙이 막았습니다 — 규칙의 관리자 UID가 맞는지 확인하세요',
+  'not-admin':'관리자 로그인이 필요합니다',
+  'no-db':'서버 연결 없음', 'no-auth':'Firebase 초기화 실패'
+};
+function authErr(c){ return AUTH_ERR[c] || ('오류: '+c); }
+function renderAdmin(){
+  const st=document.getElementById('devAdminState'), form=document.getElementById('devAdminForm'),
+        out=document.getElementById('devAdminLogout');
+  if(!st) return;
+  if(!(window.LB&&LB.ready)){
+    st.innerHTML='<span style="color:#ff8a5c">서버 연결 없음</span> <span style="opacity:.6">— 전체 적용을 쓸 수 없습니다</span>';
+    form.style.display='none'; out.style.display='none'; return; }
+  const on=!!LB.admin;
+  form.style.display=on?'none':'block'; out.style.display=on?'inline-block':'none';
+  st.innerHTML = on
+    ? '<span style="color:#8fe6b0">✅ 관리자</span> <span style="opacity:.6">'+LB.adminId+'</span>'
+    : '<span style="color:#ffb347">관리자 로그인 필요</span> <span style="opacity:.6">— 한 번 하면 계속 유지됩니다</span>';
+}
+window.addEventListener('lb-admin', renderAdmin);
+document.getElementById('devAdminLogin').onclick=async()=>{
+  const st=document.getElementById('devAdminState');
+  const em=document.getElementById('devAdminEmail').value, pw=document.getElementById('devAdminPw').value;
+  if(!em||!pw){ st.innerHTML='<span style="color:#ffb347">이메일과 비밀번호를 넣어 주세요</span>'; return; }
+  st.textContent='로그인 중…';
+  const r=await LB.adminLogin(em,pw);
+  document.getElementById('devAdminPw').value='';
+  if(r.ok) renderAdmin();
+  else st.innerHTML='<span style="color:#ff8a5c">로그인 실패</span> <span style="opacity:.6">'+authErr(r.code)+'</span>';
+};
+document.getElementById('devAdminLogout').onclick=async()=>{ await LB.adminLogout(); renderAdmin(); };
 document.getElementById('devPublish').onclick=async()=>{
   const msg=document.getElementById('devExportMsg');
-  const diff=tuneDiff(), n=Object.keys(diff).length;
+  // 서버로 보내기 전에 한 번 더 범위를 통과시킨다 — 받는 쪽에서도 어차피 걸러지므로,
+  // 걸리는 값이 있으면 올리기 전에 알려 주는 편이 낫다.
+  const s=sanitizeTune(tuneDiff()), diff=s.clean, n=Object.keys(diff).length;
   if(!n){ msg.textContent='기본값과 다른 수치가 없습니다'; return; }
+  if(!(window.LB&&LB.ready)){ msg.textContent='⚠️ 서버 연결 없음 — 아래 [코드용으로 복사]를 쓰세요'; return; }
+  if(!LB.admin){ msg.textContent='⚠️ 관리자 로그인이 필요합니다 (위에서 로그인)'; return; }
   if(!confirm('현재 수치 '+n+'건을 전 플레이어에게 적용합니다.\n다른 유저는 앱을 새로 켤 때 반영됩니다.\n\n'
-    +Object.entries(diff).map(([k,v])=>k+': '+v).join('\n')+'\n\n진행할까요?')) return;
+    +Object.entries(diff).map(([k,v])=>k+': '+v).join('\n')
+    +(s.clamped.length?'\n\n⚠️ 허용 범위에 걸려 조정됨: '+s.clamped.join(', '):'')
+    +'\n\n진행할까요?')) return;
   msg.textContent='올리는 중…';
-  const ok=(window.LB&&LB.ready)?await LB.putTune(diff):false;
-  if(ok){ try{ localStorage.setItem('ss_rtune', JSON.stringify(diff)); }catch(e){}
+  const r=await LB.putTune(diff);
+  if(r.ok){ try{ localStorage.setItem('ss_rtune', JSON.stringify(diff)); }catch(e){}
     msg.textContent='✅ 서버 반영됨 ('+n+'건) · 다른 유저는 앱 재시작 시 적용'; }
-  else msg.textContent='⚠️ 서버 연결 실패 — 아래 [코드용으로 복사]를 쓰세요';
-  setTimeout(()=>{ msg.textContent=''; }, 6000);
+  else msg.textContent='⚠️ 실패 — '+authErr(r.code);
+  setTimeout(()=>{ msg.textContent=''; }, 8000);
 };
 document.getElementById('devExport').onclick=()=>{
   const diff={};
