@@ -762,7 +762,7 @@ function syncAudioMix(){
 }
 document.addEventListener('visibilitychange',syncAudioMix);
 
-let hurtSfxCd=0, gemSfxCd=0;
+let hurtSfxCd=0, gemSfxCd=0, magPulseCd=0;   // magPulseCd = 자석 특화 피해 쿨다운
 
 // ---- Meta 진행 (localStorage 영구 저장) ----
 const META_DEFS=[
@@ -1022,7 +1022,7 @@ function sanitizeTune(obj){
 //   배포할 때 이 값만 올리면 모든 기기의 개발 패널 수치가 버려지고 코드 기본값(TUNE_DEFAULTS)을 받는다.
 //   → 밸런스는 '코드가 유일한 진실'이 되고, 개발 패널은 내 기기에서 잠깐 돌려보는 용도로만 남는다.
 //   (골드/영구강화/전직은 ss_meta 라 영향 없음 — 그쪽은 계속 기기별로 유지된다)
-const GAME_VER='10.5';
+const GAME_VER='10.6';
 // 개발 패널 수치는 이 기기에 계속 남는다(앱을 껐다 켜도 유지). 배포해도 지우지 않는다 —
 // 모르는 사이에 설정이 사라지는 편이 더 나쁘다. 대신 '기본값' 버튼으로 언제든 코드값을 받을 수 있고,
 // 전 플레이어에게 반영하려면 '현재 수치 내보내기'로 뽑아 TUNE_DEFAULTS 에 넣고 배포한다.
@@ -1576,7 +1576,9 @@ function hurtEnemy(e,dmg,color){
     // ⭐ 흡혈 특화 — 처치한 자리에서 주변 적에게 피해가 전이된다
     if(player.promo&&player.promo.steal&&!e.__chain){
       const R=70+6*(player.lifesteal||0), d2=player.dmg*0.9;
-      for(const o of enemies){ if(o.dead||o===e) continue;
+      // ⚠️ enemies 를 그대로 순회하면 안 된다 — 전이로 splitter 가 죽으면 새 적이
+      //    배열에 추가되고, 그 적이 다시 전이를 타면서 끝없이 번진다. 스냅샷을 쓴다.
+      for(const o of enemies.slice()){ if(o.dead||o===e) continue;
         if(dist2(o,e)<(R+o.r)*(R+o.r)){ o.__chain=1; hurtEnemy(o,d2,'#ff8aa8'); o.__chain=0; } }
       for(let i=0;i<6;i++){ const a=i/6*6.283;
         particles.push({x:e.x+Math.cos(a)*18,y:e.y+Math.sin(a)*18,vx:Math.cos(a)*110,vy:Math.sin(a)*110,life:0.22,color:'#ff8aa8'}); } } killRings.push({x:e.x,y:e.y,r:e.r*(e.boss?2:1.6),life:.24,color:e.color});if(killRings.length>32)killRings.shift();
@@ -2129,7 +2131,7 @@ function update(dt){
   weaponFx=weaponFx.filter(f=>(f.life-=dt)>0);
   if(rewardPulse&&(rewardPulse.life-=dt)<=0)rewardPulse=null;
   killRings=killRings.filter(f=>(f.life-=dt)>0);
-  time+=dt; hurtSfxCd-=dt; gemSfxCd-=dt; if(player.invuln>0) player.invuln-=dt; if(startHintT>0) startHintT-=dt;
+  time+=dt; hurtSfxCd-=dt; gemSfxCd-=dt; magPulseCd-=dt; if(player.invuln>0) player.invuln-=dt; if(startHintT>0) startHintT-=dt;
   // move — 방향만 주면 전속력(반응성↑). moveDir은 미조작 시 0이라 자동 정지
   const mag = 1;
   player.x+=moveDir.x*player.speed*mag*dt; player.y+=moveDir.y*player.speed*mag*dt;
@@ -2307,8 +2309,10 @@ function update(dt){
     const d=dist2(g,player);
     if(d<player.magnet*player.magnet){ const a=Math.atan2(player.y-g.y,player.x-g.x); const sp=380; g.x+=Math.cos(a)*sp*dt; g.y+=Math.sin(a)*sp*dt; }
     if(d<(player.r+8)*(player.r+8)){ g.got=true; player.xp+=g.v; if(gemSfxCd<=0){sfx.gem(); gemSfxCd=0.04;}
-      // ⭐ 자석 특화 — 젬을 흡수할 때마다 주변 적을 친다(모으는 행동 자체가 공격이 된다)
-      if(player.promo&&player.promo.magnet){ const R=76, d2=player.dmg*0.55;
+      // ⭐ 자석 특화 — 젬을 흡수할 때 주변 적을 친다(모으는 행동 자체가 공격이 된다).
+      //   ⚠️ 쿨다운이 없으면 한 프레임에 젬 20개를 먹을 때 20번 터져 DPS가 폭주한다.
+      if(player.promo&&player.promo.magnet&&magPulseCd<=0){ magPulseCd=0.12;
+        const R=76, d2=player.dmg*0.55;
         for(const o of enemies){ if(o.dead) continue;
           if(dist2(o,player)<(R+o.r)*(R+o.r)) hurtEnemy(o,d2,'#7df3ff'); } }
       if(player.xp>=player.xpNeed) grantLevel(); }
