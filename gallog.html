@@ -989,7 +989,7 @@ let best=0; try{ best=parseInt(localStorage.getItem('ss_best')||'0')||0; }catch{
 // ---- 개발자 튜닝 (로고 클릭+비번 799879) ----
 const TUNE_DEFAULTS={ hpWall:0.4, startPow:0, metaCompHp:0.55, metaCompDmg:0.55, metaCompSpd:0.30, awakenStart:15, awakenStep:15, levelHp:8, reviveXp:0.95, enemyHp:1.0, enemySpeed:1.0, camFollow:4, bossPow:5, bossGem:5, goldMul:1.0, bossMul:8, bossMulStep:0.1, weaponCap:10, rerollMax:2, eliteChance:0.025, eliteMax:1, eliteHp:4, eliteDmg:1.4, chestGold:120,
   champHp:2.0, champDmg:1.2, tankBlock:0.35, shardDmg:1.6, weaverDmg:0.45,
-  fuseLast:18, fuseMid:7, speedMax:3, difficulty:0 };
+  fuseLast:18, fuseMid:7, fuseNeedEvo:1, speedMax:3, difficulty:0 };
 let TUNE=Object.assign({},TUNE_DEFAULTS);
 // ★ 원격 설정이 들어올 수 있는 범위. 서버에서 받은 값은 '반드시' 이 표를 통과해야 한다.
 //   Firestore 규칙으로 관리자만 쓰게 막아 두지만, 앱을 뜯으면 Firebase 설정이 보이는 구조라
@@ -1001,7 +1001,7 @@ const TUNE_RANGE={
   metaCompHp:[0,1.2], metaCompDmg:[0,1.2], metaCompSpd:[0,1], enemyHp:[0.1,10], enemySpeed:[0.2,3],
   awakenStart:[1,100], awakenStep:[1,100], levelHp:[0,100], reviveXp:[0,1], camFollow:[0,10],
   bossPow:[0.1,20], bossMul:[0.5,200], bossMulStep:[0,5], weaponCap:[1,20], rerollMax:[0,20],
-  fuseLast:[0,100], fuseMid:[0,100], speedMax:[0,3], eliteChance:[0,1], eliteMax:[0,20],
+  fuseLast:[0,100], fuseMid:[0,100], fuseNeedEvo:[0,1], speedMax:[0,3], eliteChance:[0,1], eliteMax:[0,20],
   eliteHp:[0.5,50], chestGold:[0,100000], champHp:[0.5,50], tankBlock:[0,1],
   shardDmg:[0,10], weaverDmg:[0,10], bossGem:[0,50], goldMul:[0,100]
 };
@@ -1022,7 +1022,7 @@ function sanitizeTune(obj){
 //   배포할 때 이 값만 올리면 모든 기기의 개발 패널 수치가 버려지고 코드 기본값(TUNE_DEFAULTS)을 받는다.
 //   → 밸런스는 '코드가 유일한 진실'이 되고, 개발 패널은 내 기기에서 잠깐 돌려보는 용도로만 남는다.
 //   (골드/영구강화/전직은 ss_meta 라 영향 없음 — 그쪽은 계속 기기별로 유지된다)
-const GAME_VER='10.8';
+const GAME_VER='10.9';
 // 개발 패널 수치는 이 기기에 계속 남는다(앱을 껐다 켜도 유지). 배포해도 지우지 않는다 —
 // 모르는 사이에 설정이 사라지는 편이 더 나쁘다. 대신 '기본값' 버튼으로 언제든 코드값을 받을 수 있고,
 // 전 플레이어에게 반영하려면 '현재 수치 내보내기'로 뽑아 TUNE_DEFAULTS 에 넣고 배포한다.
@@ -1067,6 +1067,7 @@ const DEV_KNOBS=[
   {k:'rerollMax',  name:'레벨업 리롤 횟수',  step:1,    hint:'판당 다시 뽑기 횟수 (기본2)'},
   {k:'fuseLast',   name:'융합 마지막재료 노출',step:2,   hint:'재료 2/3일 때 남은 1개 카드 가중치 (기본18, 일반강화=3)'},
   {k:'fuseMid',    name:'융합 두번째재료 노출',step:1,   hint:'재료 1/3일 때 가중치 (기본7)'},
+  {k:'fuseNeedEvo',name:'융합에 진화까지 요구',step:1, min:0, max:1, hint:'1=재료를 만렙+진화까지 해야 융합(기본). 0=만렙만(예전 동작). 너무 빡빡하면 0으로 내리고 [전체 적용] — 배포 없이 되돌아간다'},
   {k:'speedMax',   name:'속도 슬라이더 상한',step:0.5, hint:'0=기록연동 자동. 5를 넣으면 5배까지 열린다(테스트용)'},
   {k:'eliteChance',name:'엘리트 출현 확률',  step:0.005,hint:'스폰당 확률 (기본0.025=2.5%). 올리면 상자가 레벨을 과공급한다'},
   {k:'eliteMax',   name:'엘리트 동시 상한',  step:1,    hint:'화면 내 동시 엘리트 수 (기본1)'},
@@ -1794,7 +1795,7 @@ function plantHole(x,y,l,evo){
     nova:!!player.weapons.horizon});   // 사건의 지평선: 닫힐 때 초신성으로 터진다
   tone(52,0.5,'sine',0.2,24); noise(0.35,0.16);
 }
-// ═══════ 무기 융합 (재료 3종 Lv6 → 1슬롯) ═══════
+// ═══════ 무기 융합 (재료 3종 만렙+진화 → 1슬롯) ═══════
 // 슬롯 상한 6을 넣은 뒤로 융합은 "강해지는 길"이자 "자리를 되찾는 길"이 됐다.
 // 3칸을 1칸으로 줄여 주므로, 후반 빌드의 핵심 결정이 된다.
 //
@@ -1840,14 +1841,31 @@ const RECIPES=[{key:'spirits',name:'삼수호령',parts:['lightning','flame','sa
 // 레시피가 거의 다 모였을 때, 남은 재료의 카드를 집중 노출한다.
 // 안내문("재료 2/3 · 남은 재료: 볼트 Lv6")만 띄워 놓고 정작 그 볼트 카드가 안 뜨면
 // 융합은 노리는 것이 아니라 운에 맡기는 것이 된다. 실측상 3판 중 2판이 융합 0회였다.
+//
+// 재료가 '완성'인지는 두 단계로 나눠 둔다.
+//   partLeveled = 만렙 (WEAPONS[k].max 를 직접 읽는다 — 재료 12종은 전부 6)
+//   partReady   = 만렙 + 진화까지   ← 융합이 열리는 조건
+// 숫자 6을 코드에 박지 않는다. 만렙을 손대면 융합 조건도 같이 따라온다.
+// fuseNeedEvo=0 이면 둘이 같아져 예전 동작(만렙만)으로 돌아간다. 진화 요구가 너무
+// 빡빡한 것으로 드러나면 개발 패널에서 0으로 내리고 [전체 적용]만 누르면 된다 —
+// 배포 없이 전 플레이어가 되돌아간다.
+function partLeveled(k){ const w=WEAPONS[k]; return !!w && (player.weapons[k]||0)>=w.max; }
+function partReady(k){ return partLeveled(k) && (TUNE.fuseNeedEvo ? !!player.evolved[k] : true); }
+// 이 재료에 아직 남은 것 — 카드 안내문에 그대로 쓴다
+function partNeed(k){ const w=WEAPONS[k]; if(!w) return '';
+  return partLeveled(k) ? '진화' : ('Lv'+w.max+(TUNE.fuseNeedEvo?'·진화':'')); }
 function fuseWeight(key){
-  if((player.weapons[key]||0)>=6) return 0;   // 이미 Lv6인 재료는 보정 불필요
+  if(partReady(key)) return 0;   // 이 재료는 끝났다 — 보정 불필요
   let best=0;
   for(const R of RECIPES){
     if(player.weapons[R.key] || !R.parts.includes(key)) continue;
-    const have=R.parts.filter(k=>(player.weapons[k]||0)>=6).length;
-    if(have===2) best=Math.max(best, TUNE.fuseLast!=null?TUNE.fuseLast:18);   // 마지막 1개
-    else if(have===1) best=Math.max(best, TUNE.fuseMid!=null?TUNE.fuseMid:7); // 두 번째
+    // 가중치는 '만렙까지 간 재료 수'로 센다 — 노브 설명(재료 n/3)과 기준을 맞추면서,
+    // 셋 다 만렙인데 진화만 남은 상태(lvd=3)에도 마지막 가중치가 걸리게 >= 로 둔다.
+    // 이게 없으면 "3개 다 Lv6인데 진화 카드가 안 뜨는" 막다른 길이 생긴다.
+    // fuseNeedEvo=0 이면 3개 만렙은 위에서 이미 0으로 빠지므로 예전과 완전히 같다.
+    const lvd=R.parts.filter(partLeveled).length;
+    if(lvd>=2) best=Math.max(best, TUNE.fuseLast!=null?TUNE.fuseLast:18);    // 마지막 1개
+    else if(lvd===1) best=Math.max(best, TUNE.fuseMid!=null?TUNE.fuseMid:7); // 두 번째
   }
   return best;
 }
@@ -1859,18 +1877,22 @@ function fuseFinisher(key){
   if((player.weapons[key]||0)>0) return false;
   for(const R of RECIPES){
     if(player.weapons[R.key] || !R.parts.includes(key)) continue;
-    if(R.parts.every(k=>k===key || (player.weapons[k]||0)>=6)) return R.name;
+    if(R.parts.every(k=>k===key || partReady(k))) return R.name;
   }
   return false;
 }
 function fuseHint(key){
   for(const R of RECIPES){
     if(player.weapons[R.key] || !R.parts.includes(key)) continue;
-    const have=R.parts.filter(k=>(player.weapons[k]||0)>=6).length;
-    if(!have) continue;   // 0/3부터 띄우면 첫 레벨업부터 모든 카드가 길어진다.
-                          // 재료 하나를 Lv6으로 올린 순간 "이게 재료였구나"로 알게 하는 편이 낫다.
-    const rest=R.parts.filter(k=>(player.weapons[k]||0)<6).map(k=>WEAPONS[k].name);
-    return ` · 🌟 ${R.name} 재료 ${have}/3` + (rest.length?` (남은 재료: ${rest.join('·')} Lv6)`:'');
+    if(!R.parts.some(partLeveled)) continue;   // 0/3부터 띄우면 첫 레벨업부터 모든 카드가 길어진다.
+                          // 재료 하나를 만렙으로 올린 순간 "이게 재료였구나"로 알게 하는 편이 낫다.
+                          // 기준은 '만렙' — 진화까지 요구하는 동안에도 안내가 늦어지지 않게 한다.
+    const have=R.parts.filter(partReady).length;
+    // 남은 것은 요구사항이 같은 것끼리 묶어 짧게 쓴다 — "궤도·참격 Lv6·진화, 볼트 진화"
+    const g=new Map();
+    for(const k of R.parts) if(!partReady(k)){ const n=partNeed(k); g.set(n,(g.get(n)||[]).concat(WEAPONS[k].name)); }
+    const rest=[...g].map(([n,names])=>names.join('·')+' '+n);
+    return ` · 🌟 ${R.name} 재료 ${have}/3` + (rest.length?` (남은 재료: ${rest.join(', ')})`:'');
   }
   return '';
 }
@@ -1979,7 +2001,9 @@ function buildChoices(){
     if(FUSE_KEYS.has(key) && !player.weapons[key]) continue;   // 융합 무기도 같은 규칙 — 재료를 모아야만 등장한다
     if(owned){
       if(owned<w.max) wpool.push({weapon:key,t:`${w.icon} ${w.name} 강화 (Lv${owned}→${owned+1})`, d:w.desc+fuseHint(key), weight:Math.max(3,fuseWeight(key)), a:()=>player.weapons[key]++});
-      else if(!player.evolved[key]) wpool.push({weapon:key,evolution:true,t:`🌟 진화 · ${w.name} → ${EVOLVE[key]}`, d:'무기가 상위 형태로 각성!'+fuseHint(key), weight:6, a:()=>{ player.evolved[key]=true; rewardPulse={life:.8,color:'#ffb1e8',evolution:true};sfx.evolve(); }});
+      // 진화 카드에도 융합 가중치를 태운다 — 진화가 융합의 마지막 단계가 됐으므로,
+      // 여기에 보정이 없으면 "재료는 다 만렙인데 진화 카드가 안 떠서" 융합이 막힌다.
+      else if(!player.evolved[key]) wpool.push({weapon:key,evolution:true,t:`🌟 진화 · ${w.name} → ${EVOLVE[key]}`, d:'무기가 상위 형태로 각성!'+fuseHint(key), weight:Math.max(6,fuseWeight(key)), a:()=>{ player.evolved[key]=true; rewardPulse={life:.8,color:'#ffb1e8',evolution:true};sfx.evolve(); }});
     }
     // 무기 슬롯 상한 — 꽉 차면 '새 무기'를 제안하지 않는다.
     // 상한이 없으면 레벨업이 '선택'이 아니라 '수집'이 되어 모든 런이 같은 빌드로 수렴한다.
@@ -1991,13 +2015,13 @@ function buildChoices(){
       if(fin || held < cap)
         wpool.push({weapon:key, evolution:!!fin,
           t: fin ? `🌟 ${w.icon} ${w.name} — ${fin} 마지막 재료!` : `${w.icon} 새 무기 · ${w.name}`,
-          d: fin ? `Lv6까지 올리면 ${fin} 융합 개방 · 세 무기가 한 칸으로 합쳐진다` : w.desc+fuseHint(key),
+          d: fin ? `${partNeed(key)}까지 올리면 ${fin} 융합 개방 · 세 무기가 한 칸으로 합쳐진다` : w.desc+fuseHint(key),
           weight: fin ? (TUNE.fuseLast!=null?TUNE.fuseLast:18) : Math.max(key==='blackhole'?6:4, fuseWeight(key)),
           a:()=>{ player.weapons[key]=1; if(key!=='orbit') player.timers[key]=0; }});
     }
   }
-  // 🌟 삼수호령 융합 각성: 번개·화염방사·삼도류를 모두 Lv6 마스터하면 등장(우선노출) → 세 무기 소모 후 수호령 합체
-  if(!player.weapons.spirits && player.weapons.lightning>=6 && player.weapons.flame>=6 && player.weapons.santoryu>=6){
+  // 🌟 삼수호령 융합 각성: 번개·화염방사·삼도류를 모두 완성(만렙+진화)하면 등장(우선노출) → 세 무기 소모 후 수호령 합체
+  if(!player.weapons.spirits && ['lightning','flame','santoryu'].every(partReady)){
     wpool.push({t:'🌟 삼수호령 각성! (번개·화염·삼도류 융합)', d:'세 무기가 합쳐져 세 수호정령이 깃든다 · 흡혈+3 · 위기 때 분노', weight:999, a:()=>{
       for(const k of ['lightning','flame','santoryu']){ delete player.weapons[k]; delete player.timers[k]; delete player.evolved[k]; }
       player.weapons.spirits=6; player.timers.spirits=0; player.spiritCd={l:0,f:0,s:0}; player.invuln=Math.max(player.invuln||0,3); player.lifesteal+=3;   // 흡혈+3(처치 시 회복)
@@ -2006,10 +2030,10 @@ function buildChoices(){
       shake=Math.min((shake||0)+7,10);
       sfx.fuse(); banner=trDesc('🌟 삼수호령 강림!'); bannerT=2.2; flashT=0.8; }});
   }
-  // 🌟 융합 3종 — 재료 3개를 전부 Lv6으로 올리면 등장. 3슬롯 → 1슬롯이라 상한의 숨통이 된다.
+  // 🌟 융합 3종 — 재료 3개를 전부 완성(만렙+진화)하면 등장. 3슬롯 → 1슬롯이라 상한의 숨통이 된다.
   for(const F of FUSIONS){
     if(player.weapons[F.key]) continue;
-    if(!F.parts.every(k=>player.weapons[k]>=6)) continue;
+    if(!F.parts.every(partReady)) continue;
     wpool.push({weapon:F.key,evolution:true,weight:999,
       t:`🌟 ${F.name} 융합! (${F.partNames})`,
       d:`${F.desc} · 세 무기가 한 칸으로 합쳐진다 (슬롯 2칸 확보)`,
