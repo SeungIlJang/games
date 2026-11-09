@@ -1022,7 +1022,7 @@ function sanitizeTune(obj){
 //   배포할 때 이 값만 올리면 모든 기기의 개발 패널 수치가 버려지고 코드 기본값(TUNE_DEFAULTS)을 받는다.
 //   → 밸런스는 '코드가 유일한 진실'이 되고, 개발 패널은 내 기기에서 잠깐 돌려보는 용도로만 남는다.
 //   (골드/영구강화/전직은 ss_meta 라 영향 없음 — 그쪽은 계속 기기별로 유지된다)
-const GAME_VER='10.6';
+const GAME_VER='10.7';
 // 개발 패널 수치는 이 기기에 계속 남는다(앱을 껐다 켜도 유지). 배포해도 지우지 않는다 —
 // 모르는 사이에 설정이 사라지는 편이 더 나쁘다. 대신 '기본값' 버튼으로 언제든 코드값을 받을 수 있고,
 // 전 플레이어에게 반영하려면 '현재 수치 내보내기'로 뽑아 TUNE_DEFAULTS 에 넣고 배포한다.
@@ -2994,69 +2994,57 @@ function guardianSprite(kind,evo){
 // 오른쪽(+x)이 정면. 플레이어 전용인 '흰 외곽선'과 적 전용인 '포화 적색'은 피하고,
 // 천검진 고유색(#cdfffb) 계열로 아군임이 읽히게 한다.
 const warriorCache=new Map();
-function warriorSprite(evo){
-  const key=Number(evo); if(warriorCache.has(key)) return warriorCache.get(key);
-  const c=mkCv(96,96), g=c.getContext('2d'); g.translate(48,48);
-  // ⚠️ 배경이 거의 검정(#05060f)이라 '본체를 밝게 채우는 것'이 곧 실루엣이다.
-  //    처음엔 본체를 #101d2e(짙은 남색)로 칠했다가 전투 화면에서 유닛을 아예
-  //    찾지 못했다 — 몸이 배경에 묻히고 가는 외곽선만 남았다.
-  //    그래서 채움은 밝게, 디테일 선은 반대로 어둡게 넣는다(삼수호령과 같은 원리).
-  const line=evo?'#2f7d6b':'#2d5a74',    // 밝은 본체 위에 올리는 어두운 디테일선
-        body=evo?'#d8fff0':'#bfeff5',    // 본체 주색 — 밝게
-        mid =evo?'#7fc9b6':'#6ea8c0',    // 중간톤 — 다리·관절
-        core='#eaffff', glow=evo?'#a7ffdc':'#cdfffb',
-        metal=evo?'#ffe7a4':'#dac28c';
-  g.lineJoin='round';
-  // 뒤에 깔리는 글로우 — 젬·이펙트가 깔린 난전에서 위치를 잡아 준다
-  g.globalAlpha=.14; g.fillStyle=glow;
-  g.beginPath(); g.arc(0,0,21,0,6.283); g.fill();
-  // 추진 잔광 — 뒤로 흐르는 삼각 꼬리
-  g.globalAlpha=.34;
-  g.beginPath(); g.moveTo(-11,-7); g.lineTo(-30,0); g.lineTo(-11,7); g.closePath(); g.fill();
-  g.globalAlpha=1;
-  // 다리 — 뒤로 접힌 추진부
-  g.fillStyle=mid; g.strokeStyle=line; g.lineWidth=1.3;
-  for(const s of [-1,1]){ g.beginPath();
-    g.moveTo(-3,s*4); g.lineTo(-15,s*12); g.lineTo(-19,s*8); g.lineTo(-7,s*2); g.closePath(); g.fill(); g.stroke(); }
-  // 몸통 — 각진 장갑(위로 좁아지는 사다리꼴)
-  g.fillStyle=body; g.strokeStyle=line; g.lineWidth=1.6;
-  g.beginPath(); g.moveTo(-8,-10); g.lineTo(7,-8); g.lineTo(12,0); g.lineTo(7,8); g.lineTo(-8,10); g.lineTo(-4,0);
-  g.closePath(); g.fill(); g.stroke();
-  // 가슴 코어
-  g.fillStyle=core; g.beginPath(); g.ellipse(2,0,3.0,4.2,0,0,6.283); g.fill();
-  // 어깨 플레이트 2장 — 본체보다 한 단 어둡게 해서 경계를 만든다
-  g.fillStyle=mid; g.strokeStyle=line; g.lineWidth=1.4;
-  for(const s of [-1,1]){ g.beginPath();
-    g.moveTo(-6,s*10); g.lineTo(5,s*13); g.lineTo(9,s*7); g.lineTo(-3,s*6); g.closePath(); g.fill(); g.stroke(); }
-  // 머리 — 목 간격을 두어 몸통과 분리한다
-  g.fillStyle=body; g.strokeStyle=line; g.lineWidth=1.3;
-  g.beginPath(); g.moveTo(7,-5); g.lineTo(16,-4); g.lineTo(18,0); g.lineTo(16,4); g.lineTo(7,5); g.closePath();
-  g.fill(); g.stroke();
-  g.fillStyle=line; g.fillRect(11,-2.4,6,4.8);        // 바이저 슬릿(어둡게 파인 느낌)
-  g.fillStyle=core; g.fillRect(12,-1.4,4,2.8);
-  // 검 — 몸 축에서 비껴 들어 '들고 있다'가 읽히게 (일직선이면 부리처럼 보인다)
-  g.save(); g.translate(10,6); g.rotate(-0.30);
-  g.fillStyle='#f2feff'; g.strokeStyle=line; g.lineWidth=1;
-  g.beginPath(); g.moveTo(6,-2.6); g.lineTo(28,-2.0); g.lineTo(34,0); g.lineTo(28,2.0); g.lineTo(6,2.6);
-  g.closePath(); g.fill(); g.stroke();
-  g.fillStyle=glow; g.globalAlpha=.6;
-  g.beginPath(); g.moveTo(8,-1.0); g.lineTo(30,-0.7); g.lineTo(30,0.7); g.lineTo(8,1.0); g.closePath(); g.fill();
-  g.globalAlpha=1;
-  g.fillStyle=metal; g.strokeStyle=line; g.lineWidth=.8;
-  g.fillRect(3,-5.5,3,11); g.strokeRect(3,-5.5,3,11);            // 가드
-  g.fillStyle=mid; g.fillRect(-4,-1.8,7,3.6);                     // 자루
+function warriorSprite(evo,pose='idle'){
+  const strike=pose==='slash',key=Number(evo)+'|'+Number(strike);
+  if(warriorCache.has(key))return warriorCache.get(key);
+  const c=mkCv(192,192),g=c.getContext('2d');g.translate(96,96);g.scale(86,86);
+  // Three opaque materials. Pale alloy fills the silhouette; teal lives only in joints.
+  const alloy=evo?'#a7ffdc':'#cdfffb',joint=evo?'#347664':'#367080',gold=evo?'#f2cf80':'#d9bd75';
+  g.lineJoin='miter';g.lineCap='square';
+  function plate(points,fill=alloy){g.beginPath();points.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));g.closePath();g.fillStyle=fill;g.fill();g.strokeStyle=joint;g.lineWidth=.035;g.stroke();}
+  function limb(points,width,color){g.beginPath();points.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));g.lineWidth=width;g.strokeStyle=color;g.stroke();}
+  // Rear arm is a compact bent elbow, never a wing.
+  limb([[-.21,-.22],[-.43,-.06],[-.28,.09]],.14,joint);
+  plate([[-.43,-.16],[-.34,-.10],[-.34,.03],[-.44,.07],[-.50,-.03]]);
+  // Two separated legs: long dark cleft remains readable at native size.
+  const front=strike?.20:.06,back=strike?-.08:0;
+  limb([[-.14,.20],[-.30+back,.45],[-.31+back,.72]],.14,joint);
+  plate([[-.39+back,.38],[-.24+back,.42],[-.23+back,.66],[-.35+back,.72],[-.43+back,.61]]);
+  plate([[-.36+back,.65],[-.24+back,.65],[-.19+back,.80],[-.43+back,.80],[-.43+back,.73]],gold);
+  limb([[.02,.22],[.16+front,.43],[.12+front,.69]],.15,joint);
+  plate([[.06+front,.37],[.23+front,.38],[.21+front,.64],[.10+front,.70],[.04+front,.60]]);
+  plate([[.10+front,.64],[.23+front,.64],[.34+front,.77],[.09+front,.79],[.04+front,.73]],gold);
+  // Hip / neck gaps are deliberately exposed dark joints.
+  plate([[-.21,.11],[.09,.12],[.15,.25],[-.03,.31],[-.24,.24]],joint);
+  plate([[-.27,-.28],[.04,-.29],[.17,-.12],[.09,.13],[-.19,.17],[-.32,-.06]]);
+  plate([[-.20,-.20],[.02,-.20],[.05,-.08],[-.08,.02],[-.23,-.08]],gold);
+  plate([[-.20,-.04],[.04,-.04],[.02,.05],[-.17,.09]],joint);
+  // Helmet sits above the torso, joined through a visible narrow neck.
+  limb([[-.09,-.32],[-.08,-.39]],.10,joint);
+  plate([[-.21,-.63],[-.01,-.68],[.14,-.56],[.14,-.41],[-.02,-.34],[-.22,-.41]]);
+  plate([[-.12,-.54],[.17,-.52],[.12,-.43],[-.10,-.44]],joint);
+  limb([[.00,-.49],[.12,-.48]],.035,gold);
+  // One thick, squared shoulder and a bent sword arm create asymmetry.
+  plate([[.08,-.27],[.26,-.23],[.29,-.07],[.15,-.01],[.06,-.12]],gold);
+  const hand=strike?[.40,.00]:[.32,.23];
+  limb([[.19,-.09],[.32,.07],hand],.13,joint);
+  plate([[.23,.01],[.38,.04],[hand[0]+.04,hand[1]-.03],[hand[0]-.08,hand[1]+.06]]);
+  // Sword is a hand-held diagonal, visibly detached from helmet and chest.
+  g.save();g.translate(hand[0],hand[1]);g.rotate(strike?-.42:.57);
+  plate([[-.10,-.035],[.08,-.035],[.08,.035],[-.10,.035]],joint);
+  plate([[.04,-.13],[.10,-.13],[.10,.13],[.04,.13]],gold);
+  plate([[.12,-.065],[.51,-.052],[.64,0],[.51,.052],[.12,.065]]);
+  plate([[.14,.009],[.51,.015],[.62,0],[.51,.052],[.14,.052]],joint);
   g.restore();
-  // 검을 쥔 팔 — 몸통에서 검 자루로 이어지는 짧은 마디
-  g.strokeStyle=body; g.lineWidth=3.4; g.lineCap='round';
-  g.beginPath(); g.moveTo(4,5); g.lineTo(11,6.6); g.stroke();
-  g.lineCap='butt';
-  if(evo){ // 진화: 등 뒤로 펼쳐지는 광익
-    g.globalAlpha=.55; g.strokeStyle=glow; g.lineWidth=1.8;
-    for(const s of [-1,1]){ g.beginPath();
-      g.moveTo(-6,s*8); g.quadraticCurveTo(-24,s*20,-34,s*9); g.stroke(); }
-    g.globalAlpha=1;
+  plate([[hand[0]-.045,hand[1]-.055],[hand[0]+.045,hand[1]-.055],[hand[0]+.045,hand[1]+.055],[hand[0]-.045,hand[1]+.055]],gold);
+  if(evo){
+    // Evolution is solid armor and a three-prong crest, not a faint halo.
+    plate([[-.19,-.62],[-.25,-.83],[-.10,-.73],[-.03,-.91],[.04,-.71],[.18,-.77],[.12,-.58]],gold);
+    plate([[-.32,-.27],[-.43,-.26],[-.46,-.11],[-.30,-.02]],gold);
+    plate([[-.24,.03],[-.34,.20],[-.28,.36],[-.13,.22]],gold);
+    plate([[.09,.03],[.20,.12],[.23,.29],[.08,.24]],gold);
   }
-  warriorCache.set(key,c); return c;
+  warriorCache.set(key,c);return c;
 }
 function drawBladeUnits(){
   const lv=player.weapons.bladearray; if(!lv) return;
@@ -3079,7 +3067,7 @@ function drawBladeUnits(){
   ctx.restore();
   // 본체 — 벨 때 살짝 앞으로 내딛는다
   const push=B.thrust>0 ? Math.sin(Math.max(0,B.thrust)/0.16*Math.PI)*7 : 0;
-  const size=evo?62:54, sp=warriorSprite(evo);
+  const size=evo?62:54, sp=warriorSprite(evo,B.thrust>0?'slash':'idle');
   ctx.save();
   ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=1;
   ctx.translate(B.x+Math.cos(B.ang)*push, B.y+Math.sin(B.ang)*push);
