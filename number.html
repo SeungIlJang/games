@@ -37,6 +37,18 @@
   .near{animation:near .18s ease-in-out infinite alternate}
   @keyframes near{0%{transform:scale(1)}100%{transform:scale(1.09)}}
   .float{position:fixed;left:50%;top:46%;transform:translateX(-50%);font-size:34px;font-weight:900;z-index:7;pointer-events:none;animation:fl .7s ease-out forwards}
+  /* 판정 리본 — 글자가 리본 안에 들어가도록 가로세로를 2:1로 고정 */
+  /* 리본은 숫자 무대(중심 57%) 아래 빈 공간에 띄운다 — 버스트와 겹쳐 뭉개지지 않게 */
+  .float.stamped{top:auto;bottom:7%;width:236px;height:118px;display:flex;align-items:center;justify-content:center;
+    background-size:contain;background-position:center;background-repeat:no-repeat;font-size:26px;letter-spacing:.5px}
+  /* 성공 버스트 — 숫자 뒤에서 한 번 터지고 사라진다 */
+  .vfxb{position:fixed;left:50%;top:0;width:240px;height:240px;pointer-events:none;z-index:1;
+    background-size:contain;background-position:center;background-repeat:no-repeat;
+    animation:vfxb .52s ease-out forwards}
+  @keyframes vfxb{
+    0%{opacity:0;transform:translate(-50%,-50%) scale(.42)}
+    16%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+    100%{opacity:0;transform:translate(-50%,-50%) scale(1.42)}}
   @keyframes fl{0%{opacity:0;transform:translate(-50%,10px) scale(.7)}20%{opacity:1;transform:translate(-50%,-4px) scale(1.1)}100%{opacity:0;transform:translate(-50%,-52px) scale(1)}}
   #over,#start,#lb{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,10,22,.92);gap:10px;padding:24px;text-align:center;z-index:10}
   #lb{z-index:12;justify-content:flex-start;padding-top:calc(28px + env(safe-area-inset-top,0px))}
@@ -288,7 +300,7 @@
   </div>
   <div id="boostRow"></div>
   <div id="dailyBox"></div>
-  <div id="changelog">🆕 <b id="clVer">v3.0</b> · <span id="clNote"><b>홈 화면을 단정하게</b> 정리했어요 · 최고 기록과 코인을 한눈에</span></div>
+  <div id="changelog">🆕 <b id="clVer">v3.1</b> · <span id="clNote"><b>맞혔을 때 연출이 화려해졌어요</b> · PERFECT·체인에 전용 리본과 빛 폭발</span></div>
 </div>
 
 <div id="help" class="hidden">
@@ -378,7 +390,7 @@
   <div id="shopList"></div>
   <button class="btn" id="shopClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v3.0 · 홈 화면 리디자인</div>
+<div id="ver">v3.1 · 판정 연출(리본·버스트)</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -446,7 +458,11 @@ function setRing(locked){
 function initPlayArt(){
   const cw=$('curWrap'); if(cw) cw.style.backgroundImage='url('+PLAY_DIR+'number_stage.png)';
   setRing(false); setBG('normal');
-  setTimeout(()=>['golden','roll'].forEach(k=>{ const i=new Image(); i.src=PLAY_DIR+'play_bg_'+k+'.png'; }), 1200);
+  setTimeout(()=>{
+    ['golden','roll'].forEach(k=>{ const i=new Image(); i.src=PLAY_DIR+'play_bg_'+k+'.png'; });
+    ['burst_hit','burst_perfect','burst_chain','stamp_perfect','stamp_good','stamp_miss','chain_link']
+      .forEach(n=>{ const i=new Image(); i.src=PLAY_DIR+n+'.webp'; });
+  }, 1200);
   const i=new Image(); i.src=PLAY_DIR+'target_ring_locked.png';
 }
 function renderMute(){ const b=$('muteBtn'); if(b){ b.textContent=sfxOn?'\u{1F50A}':'\u{1F507}'; b.classList.toggle('off',!sfxOn); } }
@@ -606,7 +622,21 @@ function fxloop(){ requestAnimationFrame(fxloop);
   $('wrap').style.transform='translate('+sx.toFixed(1)+'px,'+sy.toFixed(1)+'px)';
 }
 fxloop();
-function floatText(txt,col){ const d=document.createElement('div'); d.className='float'; d.textContent=txt; d.style.color=col; document.body.appendChild(d); setTimeout(()=>d.remove(),720); }
+// stamp를 주면 글자가 판정 리본 안에 담겨 함께 떠오른다
+function floatText(txt,col,stamp){
+  const d=document.createElement('div'); d.className='float'; d.textContent=txt; d.style.color=col;
+  if(stamp){ d.classList.add('stamped'); d.style.backgroundImage='url('+PLAY_DIR+stamp+'.webp)'; }
+  document.body.appendChild(d); setTimeout(()=>d.remove(),720);
+}
+// 성공 순간 숫자 뒤에서 터지는 버스트
+function burstFx(kind){
+  const w=$('curWrap'); if(!w) return;
+  const r=w.getBoundingClientRect();
+  const d=document.createElement('div'); d.className='vfxb';
+  d.style.backgroundImage='url('+PLAY_DIR+'burst_'+kind+'.webp)';
+  d.style.top=Math.round(r.top+r.height/2)+'px';
+  document.body.appendChild(d); setTimeout(()=>d.remove(),560);
+}
 function hitFlash(col){ const f=$('flash'); f.style.background='radial-gradient(circle at 50% 46%,'+col+'66,transparent 62%)'; f.style.opacity='1'; setTimeout(()=>{ f.style.opacity='0'; },120); }
 function banner(txt,col){ const b=$('banner'); b.textContent=txt; b.style.color=col||'#fff'; b.classList.remove('show'); void b.offsetWidth; b.classList.add('show'); }
 
@@ -864,7 +894,8 @@ function chainCount(){
 function renderChainTag(){
   const el=$('chainTag'); if(!el) return;
   if(chainAll.length<2 || curIsRoll || inChoice){ el.innerHTML=''; return; }
-  el.innerHTML='🔗 '+chainAll.map((v,i)=>'<span class="'+(i<chainIdx?'done':(i===chainIdx?'now':'todo'))+'">'+v+'</span>').join('<span class="todo"> → </span>');
+  el.innerHTML='<img src="'+PLAY_DIR+'chain_link.webp" alt="" width="19" height="19" class="art" style="margin-right:5px" onerror="this.replaceWith(document.createTextNode(\'🔗\'))">'
+    +chainAll.map((v,i)=>'<span class="'+(i<chainIdx?'done':(i===chainIdx?'now':'todo'))+'">'+v+'</span>').join('<span class="todo"> → </span>');
 }
 function renderChase(){
   const el=$('chase'); if(!el) return;
@@ -980,20 +1011,20 @@ function hitOK(){
   mset('score',score); mset('streak',hits);
   const [x,y]=centerXY();
   if(wasRoll){ const was=hearts; hearts=Math.min(heartMax,hearts+1); renderHearts(); mprog('roll',1);
-    burst(x,y,'#ffd34d',52,9); hitFlash('#ffd34d'); floatText(hearts>was?'⚡ 롤링 성공! 💛 생명 +1':'⚡ 롤링 성공! (생명 최대)','#ffd34d'); if(!sfx('rolling_success')){ chord(523); setTimeout(()=>chord(784),120); } vib([20,40,20,40,60]); shake=6; }
-  else if(grade==='PERFECT'){ burst(x,y,'#ffe14d',46,9); hitFlash('#ffe14d'); floatText('PERFECT!'+(mult>1?('  ×'+mult):''),'#ffe14d'); if(!sfx('hit_perfect',jg)){ chord(660); setTimeout(()=>tone(990,0.08,'triangle',0.06),90); } vib([12,26,12]); shake=8; }
-  else if(hits%5===0){ burst(x,y,'#ffd34d',48,8); hitFlash('#ffd34d'); floatText('🔥 '+hits+' 연속!','#ffd34d'); if(!sfx('combo_5',jg)) chord(440); vib([15,30,15]); shake=8; }
-  else { burst(x,y,'#5cffb0',28,6); hitFlash('#5cffb0'); floatText(pick(['GOOD!','NICE!','좋아!','정확!']),'#5cffb0'); if(!sfx('hit_good',jg)) tone(720+hits*8,0.07,'square',0.07); vib(18); }
+    burst(x,y,'#ffd34d',52,9); hitFlash('#ffd34d'); floatText(hearts>was?'💛 생명 +1':'롤링 성공!','#ffd34d','stamp_perfect'); burstFx('perfect'); if(!sfx('rolling_success')){ chord(523); setTimeout(()=>chord(784),120); } vib([20,40,20,40,60]); shake=6; }
+  else if(grade==='PERFECT'){ burst(x,y,'#ffe14d',46,9); hitFlash('#ffe14d'); floatText('PERFECT!'+(mult>1?(' ×'+mult):''),'#ffe14d','stamp_perfect'); burstFx('perfect'); if(!sfx('hit_perfect',jg)){ chord(660); setTimeout(()=>tone(990,0.08,'triangle',0.06),90); } vib([12,26,12]); shake=8; }
+  else if(hits%5===0){ burst(x,y,'#ffd34d',48,8); hitFlash('#ffd34d'); floatText(hits+' 연속!','#ffd34d','stamp_perfect'); burstFx('perfect'); if(!sfx('combo_5',jg)) chord(440); vib([15,30,15]); shake=8; }
+  else { burst(x,y,'#5cffb0',28,6); hitFlash('#5cffb0'); floatText(pick(['GOOD!','NICE!','좋아!','정확!']),'#5cffb0','stamp_good'); burstFx('hit'); if(!sfx('hit_good',jg)) tone(720+hits*8,0.07,'square',0.07); vib(18); }
   // 🔗 체인 — 다음 목표가 남으면 전환 텀 없이 바로 이어서(긴장 유지)
   if(chain.length){
     chainIdx++; target=chain.shift(); renderChainTag();
-    if(!sfx('chain_step')) tone(940,0.07,'triangle',0.07); render(false); nextTick(Math.max(200, speed()));
+    if(!sfx('chain_step')) tone(940,0.07,'triangle',0.07); burstFx('chain'); render(false); nextTick(Math.max(200, speed()));
     return;
   }
   if(chainAll.length>1){   // 체인 완성 보너스
     const cb=Math.round(base*chainAll.length*0.6*modChainBonus*modScore*(runBoost.score2?2:1));
     score+=cb; addCoins(cb); mset('score',score); mprog('chain',1);
-    burst(x,y,'#ffd34d',56,10); floatText('🔗 체인 완성! +'+cb,'#ffd34d'); if(!sfx('chain_complete')) chord(880); vib([20,40,20,40,80]); shake=10;
+    burst(x,y,'#ffd34d',56,10); floatText('체인 완성 +'+cb,'#ffd34d','stamp_perfect'); burstFx('chain'); if(!sfx('chain_complete')) chord(880); vib([20,40,20,40,80]); shake=10;
   }
   if(wasGolden) mprog('golden',1);
   inGap=true; clearTimeout(timer); clearTimeout(rollTO);   // 전환 텀 — 그 사이 입력 무시
@@ -1135,7 +1166,7 @@ function takeMod(id){
 }
 function rollMiss(timeout){
   inGap=true; clearTimeout(timer); clearTimeout(rollTO);
-  floatText(timeout?'⏰ 롤링 놓침 (손해 없음)':'아깝다! (롤링)','#c9a3ff'); if(!sfx('rolling_miss')) tone(220,0.12,'sawtooth',0.07); vib(25);
+  floatText(timeout?'시간 초과':'아깝다!','#c9a3ff','stamp_miss'); if(!sfx('rolling_miss')) tone(220,0.12,'sawtooth',0.07); vib(25);
   setTimeout(()=>{ if(state!=='play') return; newRound(false); nextTick(Math.max(320, speed())); }, GAP_MS);
 }
 function tap(){
@@ -1185,8 +1216,8 @@ function chooseWin(){
   const base=15 + (hits-1)*2, gain=Math.round(base*mult*modScore*(runBoost.score2?2:1));   // 콤보 배수·부스터 일관 적용
   score += gain; addCoins(gain); mset('score',score); mset('streak',hits); renderChase();
   const x=innerWidth/2, y=innerHeight*0.4;
-  if(hits%5===0){ burst(x,y,'#ffd34d',44,8); hitFlash('#ffd34d'); floatText('🔥 '+hits+' 연속!','#ffd34d'); if(!sfx('combo_5')) chord(440); vib([15,30,15]); shake=7; }
-  else { burst(x,y,'#5cffb0',28,6); hitFlash('#5cffb0'); floatText(pick(['정답!','NICE!','좋아!']),'#5cffb0'); if(!sfx('hit_good')) tone(760,0.07,'square',0.07); vib(18); }
+  if(hits%5===0){ burst(x,y,'#ffd34d',44,8); hitFlash('#ffd34d'); floatText(hits+' 연속!','#ffd34d','stamp_perfect'); if(!sfx('combo_5')) chord(440); vib([15,30,15]); shake=7; }
+  else { burst(x,y,'#5cffb0',28,6); hitFlash('#5cffb0'); floatText(pick(['정답!','NICE!','좋아!']),'#5cffb0','stamp_good'); if(!sfx('hit_good')) tone(760,0.07,'square',0.07); vib(18); }
   $('score').textContent=score;
   inGap=true;   // 전환 텀
   setTimeout(()=>{ if(state!=='play') return; $('wrap').classList.remove('choice'); newRound(true); if(rule.type!=='choice') nextTick(Math.max(220, speed())); }, GAP_MS);
