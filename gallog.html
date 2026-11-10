@@ -113,6 +113,7 @@
   .card.evolution { border-color:#ffd25c; background:linear-gradient(120deg,rgba(76,57,25,.95),rgba(21,22,37,.93)); }
   .card.evolution .t { color:#ffe08a; }
   .tech-icon { width:24px; height:24px; display:inline-block; vertical-align:-5px; flex-shrink:0; }
+  #fuseGuide .tech-icon { width:15px; height:15px; vertical-align:-2px; }
   #ui button { min-height:44px; }
   #levelup { overflow-y:auto;justify-content:safe center;padding-top:max(24px,env(safe-area-inset-top)); }
   #levelup .cards { flex-shrink:0; }
@@ -227,7 +228,7 @@
   <button id="muteBtn" class="hudbtn" aria-label="소리 끄기" title="소리" style="right:12px;"></button>
   <button id="playShopBtn" class="hudbtn gold" aria-label="상점" title="상점" style="left:12px;display:none;"></button>
   <button id="pauseBtn" class="hudbtn" aria-label="일시정지" title="일시정지" style="left:64px;display:none;"></button>
-  <div id="paused" class="center hidden">
+  <div id="paused" class="center hidden" style="overflow-y:auto;justify-content:safe center;padding:max(20px,env(safe-area-inset-top)) 0 24px;">
     <h1 data-i18n="pauseTitle">⏸ 일시정지</h1>
     <button class="btn" id="resumeBtn" data-i18n="resume">계속하기</button>
     <div id="speedRow" style="margin-top:18px;width:min(82vw,330px);pointer-events:auto;">
@@ -236,6 +237,9 @@
       <div style="display:flex;justify-content:space-between;font-size:11px;color:#8892b0;margin-top:2px;"><span>0.5x</span><span data-i18n="speedHint">느리게=오래생존</span><span id="speedMaxLbl">2.0x</span></div>
       <div id="speedCapNote" style="font-size:11px;color:#7f8ca3;margin-top:7px;line-height:1.45;"></div>
     </div>
+    <!-- 융합 조건 — 레벨업 카드 한 줄로만 알 수 있던 레시피를 멈춘 김에 전부 펼쳐 본다 -->
+    <button class="btn-sm" id="fuseGuideBtn" style="margin-top:16px;">▼ 🌟 융합 조건</button>
+    <div id="fuseGuide" style="display:none;width:min(88vw,400px);max-height:38vh;overflow-y:auto;margin-top:9px;pointer-events:auto;text-align:left;"></div>
     <button class="btn btn-gold" id="pauseShopBtn" data-i18n="pauseShop" style="margin-top:14px;">🪙 상점</button>
     <button id="quitBtn" data-i18n="quit" style="margin-top:14px;" class="btn-sm">포기하고 상점으로</button>
   </div>
@@ -1022,7 +1026,7 @@ function sanitizeTune(obj){
 //   배포할 때 이 값만 올리면 모든 기기의 개발 패널 수치가 버려지고 코드 기본값(TUNE_DEFAULTS)을 받는다.
 //   → 밸런스는 '코드가 유일한 진실'이 되고, 개발 패널은 내 기기에서 잠깐 돌려보는 용도로만 남는다.
 //   (골드/영구강화/전직은 ss_meta 라 영향 없음 — 그쪽은 계속 기기별로 유지된다)
-const GAME_VER='10.10';
+const GAME_VER='10.11';
 // 개발 패널 수치는 이 기기에 계속 남는다(앱을 껐다 켜도 유지). 배포해도 지우지 않는다 —
 // 모르는 사이에 설정이 사라지는 편이 더 나쁘다. 대신 '기본값' 버튼으로 언제든 코드값을 받을 수 있고,
 // 전 플레이어에게 반영하려면 '현재 수치 내보내기'로 뽑아 TUNE_DEFAULTS 에 넣고 배포한다.
@@ -3833,7 +3837,58 @@ function syncSpeedSlider(){ const sl=document.getElementById('speedSlider'); if(
                      `上限 ${mx.toFixed(1)}x · 最高記録10ステージごとに +0.1x (最高 ${bs}, 次は ${(Math.floor(Math.max(1,bs)/10)+1)*10})`); }
   paintSpeedSlider(); }
 (function(){ const sl=document.getElementById('speedSlider'); if(sl) sl.oninput=()=>{ userSpeed=Math.max(0.5,Math.min(5,parseFloat(sl.value)||1)); speedSet=true; document.getElementById('speedVal').textContent=userSpeed.toFixed(1); try{localStorage.setItem('ss_speed',String(userSpeed));}catch(e){}paintSpeedSlider(); };paintSpeedSlider(); })();
-document.getElementById('pauseBtn').onclick=()=>{ if(state!=='play') return; state='paused'; syncSpeedSlider(); document.getElementById('paused').classList.remove('hidden'); };
+document.getElementById('pauseBtn').onclick=()=>{ if(state!=='play') return; state='paused'; syncSpeedSlider(); paintFuseGuide(); document.getElementById('paused').classList.remove('hidden'); };
+// ── 일시정지 · 융합 조건 ───────────────────────────────────────────────
+// 융합은 이 게임에서 가장 큰 보상인데, 레벨업 카드 꼬리에 붙는 한 줄
+// ("재료 2/3 · 남은 재료: 볼트 Lv6·진화")로만 알 수 있었다. 그 카드가 안 뜨면
+// 뭘 모으는 중이었는지 확인할 방법이 아예 없다 — 멈춘 김에 레시피 4개를 전부 펼친다.
+// 조건 문구는 fuseNeedEvo 를 따라간다(원격으로 내리면 여기 설명도 같이 바뀐다).
+function fuseGuideRows(){
+  const needEvo=!!TUNE.fuseNeedEvo;
+  let html='<div style="font-size:11px;color:#8aa0b5;line-height:1.65;margin-bottom:9px;padding:0 2px;">'
+    + featureLabel('재료 3종을 모두 <b style="color:#cfe6f5">만렙'+(needEvo?' + 진화':'')+'</b> 시키면 융합 · 무기 3칸이 1칸이 됩니다',
+                   'Max'+(needEvo?' and evolve':'')+' all 3 parts to fuse · 3 slots become 1',
+                   '素材3種をすべて<b style="color:#cfe6f5">最大'+(needEvo?'＋進化':'')+'</b>にすると融合 · 3枠が1枠に')
+    +'</div>';
+  for(const R of RECIPES){
+    const fc=FUSE_COLOR[R.key]||'#9fe3ff', WR=WEAPONS[R.key], own=player.weapons[R.key];
+    const done=R.parts.filter(partReady).length;
+    html+='<div style="border:1px solid '+(own?fc:'#2b3a4e')+';background:rgba(10,20,34,.72);'
+      +'clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px);padding:9px 11px;margin-bottom:7px;">'
+      +'<div style="display:flex;align-items:center;gap:7px;color:'+fc+';">'
+      +(WR?WR.icon:'')
+      +'<b style="font-size:13px;">'+trDesc(R.name)+'</b>'
+      +'<span style="margin-left:auto;font-size:11px;font-weight:800;color:'+(own?'#8fe6b0':'#8aa0b5')+';">'
+      +(own?('✓ Lv'+own):(featureLabel('재료','PARTS','素材')+' '+done+'/3'))+'</span></div>';
+    if(!own){   // 이미 만든 융합은 재료 칸을 접는다 — 재료는 그 안에 들어가 있다
+      html+='<div style="display:flex;gap:5px;margin-top:8px;">';
+      for(const k of R.parts){
+        const w=WEAPONS[k], lv=player.weapons[k]||0;
+        let col='#5d7186', txt=featureLabel('미보유','—','未所持');
+        if(partReady(k)){ col='#8fe6b0'; txt='Lv'+w.max+' ★'; }
+        else if(partLeveled(k)){ col='#ffd47b'; txt='Lv'+w.max+' → '+featureLabel('진화','EVO','進化'); }
+        else if(lv>0){ col='#9fe3ff'; txt='Lv'+lv+' / '+w.max; }
+        html+='<div style="flex:1 1 0;min-width:0;border:1px solid '+col+'55;background:'+col+'18;padding:5px 3px;text-align:center;">'
+          +'<div style="font-size:10px;color:#c6d8e8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+trDesc(w.name)+'</div>'
+          +'<div style="font-size:10px;font-weight:800;color:'+col+';margin-top:3px;white-space:nowrap;">'+txt+'</div></div>';
+      }
+      html+='</div>';
+    }
+    html+='</div>';
+  }
+  return html;
+}
+// 펼침 상태는 기기에 남긴다 — 매번 접었다 펴게 하지 않는다
+let fuseGuideOpen=(()=>{ try{ return localStorage.getItem('ss_fguide')!=='0'; }catch(e){ return true; } })();
+function paintFuseGuide(){
+  const box=document.getElementById('fuseGuide'), btn=document.getElementById('fuseGuideBtn'); if(!box||!btn) return;
+  btn.textContent=(fuseGuideOpen?'▼':'▶')+' 🌟 '+featureLabel('융합 조건','FUSIONS','融合条件');
+  box.style.display=fuseGuideOpen?'block':'none';
+  if(fuseGuideOpen) box.innerHTML=(player&&player.weapons)?fuseGuideRows():'';
+}
+document.getElementById('fuseGuideBtn').onclick=()=>{ fuseGuideOpen=!fuseGuideOpen;
+  try{ localStorage.setItem('ss_fguide', fuseGuideOpen?'1':'0'); }catch(e){}
+  paintFuseGuide(); };
 document.getElementById('playShopBtn').onclick=()=>{ if(state!=='play') return; state='paused'; shopReturnTo='play'; document.getElementById('potionBtn').style.display='block'; document.getElementById('ingameShop').classList.remove('hidden'); renderShop(); };
 document.getElementById('resumeBtn').onclick=()=>{ if(state!=='paused') return; document.getElementById('paused').classList.add('hidden'); state='play'; lastTs=performance.now(); };
 document.getElementById('quitBtn').onclick=()=>{ document.getElementById('paused').classList.add('hidden'); document.getElementById('pauseBtn').style.display='none'; document.getElementById('playShopBtn').style.display='none'; gameOver(); };
