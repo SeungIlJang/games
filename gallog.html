@@ -1032,7 +1032,7 @@ function sanitizeTune(obj){
 //   배포할 때 이 값만 올리면 모든 기기의 개발 패널 수치가 버려지고 코드 기본값(TUNE_DEFAULTS)을 받는다.
 //   → 밸런스는 '코드가 유일한 진실'이 되고, 개발 패널은 내 기기에서 잠깐 돌려보는 용도로만 남는다.
 //   (골드/영구강화/전직은 ss_meta 라 영향 없음 — 그쪽은 계속 기기별로 유지된다)
-const GAME_VER='10.19';
+const GAME_VER='10.21';
 // 개발 패널 수치는 이 기기에 계속 남는다(앱을 껐다 켜도 유지). 배포해도 지우지 않는다 —
 // 모르는 사이에 설정이 사라지는 편이 더 나쁘다. 대신 '기본값' 버튼으로 언제든 코드값을 받을 수 있고,
 // 전 플레이어에게 반영하려면 '현재 수치 내보내기'로 뽑아 TUNE_DEFAULTS 에 넣고 배포한다.
@@ -1868,8 +1868,13 @@ const WEAPONS = {
 };
 // 블랙홀 씨앗탄이 착탄한 자리에 회오리 생성(아주 작게 시작 → 점점 커짐)
 function plantHole(x,y,l,evo){
+  // hz = 사건의 지평선 레벨(0=미보유). 0보다 크면 충격파·서리가 이 회오리 '안에서' 같이 돈다.
+  //   재료를 플레이어 옆에서 따로 터뜨리지 않고 블랙홀 안에 넣은 이유:
+  //   세 개가 각자 다른 자리에서 터지면 '세 무기를 동시에 쓰는 중'으로만 보이고,
+  //   합쳐서 하나가 됐다는 느낌이 안 난다. 빨려든 적이 그 안에서 얼고 터져야 읽힌다.
+  const hz=player.weapons.horizon||0;
   player.holes.push({x,y, r:2, maxr:(56+10*l)*(evo?1.3:1), pull:(150+22*l)*(evo?1.4:1), dmg:player.dmg*(0.45+0.11*l)*(evo?1.8:1)*fusePow('blackhole'), life:(3.0+0.2*l)*(evo?1.4:1), max:(3.0+0.2*l)*(evo?1.4:1), spin:0,
-    nova:!!player.weapons.horizon});   // 사건의 지평선: 닫힐 때 초신성으로 터진다
+    nova:!!hz, hz, ring:0, pulseCd:0, flash:0});   // 사건의 지평선: 닫힐 때 초신성으로 터진다
   tone(52,0.5,'sine',0.2,24); noise(0.35,0.16);
 }
 // ═══════ 무기 융합 (재료 3종 만렙+진화 → 1슬롯) ═══════
@@ -1884,7 +1889,7 @@ function plantHole(x,y,l,evo){
 const FUSIONS=[
   { key:'horizon', name:'사건의 지평선', icon:'🕳', color:'#c9a3ff',
     parts:['blackhole','nova','frost'], partNames:'블랙홀·충격파·서리',
-    desc:'공간을 접는다 · 블랙홀에 빨린 적은 얼어붙고, 블랙홀이 닫힐 때 초신성으로 터진다',
+    desc:'블랙홀 하나만 쏜다 · 그 안에서 충격파와 서리가 같이 돈다 · 빨려든 적은 얼어붙고 0.55초마다 충격파를 맞는다 · 닫힐 때 초신성',
     sigCd:0.5, sig:(p)=>{   // 빨아들인 적을 얼린다 — 블랙홀 단독으로는 못 하던 것
       for(const h of p.holes){ const rr=h.r+6;
         for(const e of enemies){ if(e.dead||e.boss) continue;
@@ -2011,6 +2016,9 @@ function fuse(F){
   shake=Math.min((shake||0)+7,10); rewardPulse={life:.9,color:F.color,evolution:true};
   sfx.fuse(); banner=trDesc('🌟 '+F.name+' 융합!'); bannerT=2.2; flashT=0.8;
 }
+// 융합 본체 안으로 들어간 재료 — 플레이어 옆에서 따로 발사하지 않는다.
+// 사건의 지평선은 블랙홀만 쏘고, 충격파·서리는 그 회오리 안에서 돈다(plantHole 참조).
+const BOUND_PARTS={ horizon:['nova','frost'] };
 function updateFusions(dt){
   if(!player.fuseCd) player.fuseCd={};
   for(const F of FUSIONS){
@@ -2018,6 +2026,7 @@ function updateFusions(dt){
     const cd=player.fuseCd[F.key]||(player.fuseCd[F.key]={});
     for(const k of F.parts){
       if(k==='orbit') continue;                       // 궤도는 상시 효과 — 쿨다운이 없다
+      if(BOUND_PARTS[F.key] && BOUND_PARTS[F.key].includes(k)) continue;  // 융합 본체 안에 묶인 재료 — 따로 쏘지 않는다
       const W=WEAPONS[k], el=W.max;
       cd[k]=(cd[k]||0)-dt;
       if(cd[k]<=0){ cd[k]=W.interval(player,el)/player.fireRate;
@@ -2297,11 +2306,32 @@ function update(dt){
   for(const h of player.holes){ h.life-=dt; h.spin+=dt*7;
     const grown=1-h.life/h.max; h.r=h.maxr*Math.min(1, grown/0.6);   // 아주 작게 시작 → 수명 60% 지점서 최대
     const R=Math.max(8,h.r);                                          // 흡입/피해 범위 = 현재 크기(커질수록 넓어짐)
+    // ── 사건의 지평선: 충격파·서리가 이 안에서 같이 돈다 ──────────────
+    // 서리는 '빨려든 내내' 걸리고(지속), 충격파는 주기적으로 안쪽 전체를 친다(박자).
+    // 둘을 같은 박자로 두면 하나로 뭉쳐 보여서, 하나는 상시 하나는 주기로 나눴다.
+    let pulse=false, novaDmg=0, frostMul=1, frostDur=0;
+    if(h.hz){
+      h.ring+=dt*2.2;                                  // 안에서 도는 서리 결정 고리
+      if(h.flash>0) h.flash-=dt;
+      h.pulseCd-=dt;
+      if(h.pulseCd<=0){ h.pulseCd=0.55; pulse=true; h.flash=0.22; }
+      novaDmg=player.dmg*(1.4+0.3*h.hz)*fusePow('nova');
+      frostMul=Math.max(0, 0.45-0.04*h.hz);            // 레벨이 오르면 거의 정지한다
+      frostDur=0.45;                                   // 회오리를 벗어나도 잠깐 남는다
+    }
     for(const e of enemies){ if(e.dead) continue; const dx=h.x-e.x, dy=h.y-e.y, d=Math.hypot(dx,dy)||0.001;
       if(d<R){
         if(!e.boss){ const pf=h.pull*dt*(1-d/R)*(e.tier==='e'?0.5:1); e.x+=dx/d*pf; e.y+=dy/d*pf; }
         hurtEnemy(e, h.dmg*dt, '#b06bff');
-      } } }
+        if(h.hz && !e.boss){
+          // ❄️ 서리 — 안에 있는 동안 계속 걸린다. 이미 더 센 둔화가 걸려 있으면 건드리지 않는다
+          e.slowT=Math.max(e.slowT||0, frostDur);
+          e.slowMul=Math.min(e.slowMul!=null?e.slowMul:1, frostMul);
+          // 💥 충격파 — 0.55초마다 회오리 안쪽을 통째로 때린다
+          if(pulse) hurtEnemy(e, novaDmg, '#e6d2ff');
+        }
+      } }
+    if(pulse){ tone(180,0.09,'sine',0.07,90); } }
   // 사건의 지평선: 블랙홀이 닫히는 순간 초신성으로 터진다 — 모아둔 적을 한 번에 친다
   for(const h of player.holes){ if(h.life>0||!h.nova) continue; h.nova=false;
     player.novas.push({x:h.x,y:h.y,r:12,maxr:h.maxr*2.4,dmg:player.dmg*(3.2+0.4*(player.weapons.horizon||1))*fusePow('nova'),hit:new Set(),evo:true});
@@ -3105,8 +3135,8 @@ const warriorCache=new Map();
 function warriorSprite(evo,pose='idle'){
   const strike=pose==='slash',key=Number(evo)+'|'+Number(strike);
   if(warriorCache.has(key))return warriorCache.get(key);
-  const c=mkCv(192,192),g=c.getContext('2d');g.translate(96,96);g.scale(86,86);
-  // Three opaque materials. Pale alloy fills the silhouette; teal lives only in joints.
+  const c=mkCv(192,192),g=c.getContext('2d');g.translate(96,96);g.scale(70,86);
+  // Slim silhouette: 70:86 canvas axes, narrow armor and separated legs.
   const alloy=evo?'#c8fff0':'#d3edf7',joint=evo?'#345668':'#344866',gold=evo?'#f0d496':'#d8bf80';
   g.lineJoin='miter';g.lineCap='square';
   function plate(points,fill=alloy){g.beginPath();points.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));g.closePath();g.fillStyle=fill;g.fill();g.strokeStyle=joint;g.lineWidth=.035;g.stroke();}
@@ -3119,19 +3149,19 @@ function warriorSprite(evo,pose='idle'){
   plate([[-.03,.03],[.17,.16],[.24,.47],[.48,.70],[.25,.65],[.06,.42]],joint);
   plate([[.06,.13],[.17,.25],[.21,.46],[.36,.61],[.20,.54],[.04,.26]]);
   // Rear arm is a compact bent elbow, never a wing.
-  limb([[-.21,-.22],[-.43,-.06],[-.28,.09]],.14,joint);
+  limb([[-.21,-.22],[-.43,-.06],[-.28,.09]],.10,joint);
   plate([[-.43,-.16],[-.34,-.10],[-.34,.03],[-.44,.07],[-.50,-.03]]);
   // Two separated legs: long dark cleft remains readable at native size.
   const front=strike?.20:.06,back=strike?-.08:0;
-  limb([[-.14,.20],[-.30+back,.45],[-.31+back,.72]],.14,joint);
-  plate([[-.39+back,.38],[-.24+back,.42],[-.23+back,.66],[-.35+back,.72],[-.43+back,.61]]);
+  limb([[-.14,.20],[-.30+back,.45],[-.31+back,.72]],.10,joint);
+  plate([[-.36+back,.39],[-.26+back,.42],[-.25+back,.66],[-.33+back,.70],[-.38+back,.61]]);
   plate([[-.36+back,.65],[-.24+back,.65],[-.19+back,.80],[-.43+back,.80],[-.43+back,.73]]);
-  limb([[.02,.22],[.16+front,.43],[.12+front,.69]],.15,joint);
-  plate([[.06+front,.37],[.23+front,.38],[.21+front,.64],[.10+front,.70],[.04+front,.60]]);
+  limb([[.02,.22],[.16+front,.43],[.12+front,.69]],.11,joint);
+  plate([[.09+front,.38],[.20+front,.39],[.19+front,.64],[.12+front,.69],[.08+front,.60]]);
   plate([[.10+front,.64],[.23+front,.64],[.34+front,.77],[.09+front,.79],[.04+front,.73]]);
   // Hip / neck gaps are deliberately exposed dark joints.
   plate([[-.21,.11],[.09,.12],[.15,.25],[-.03,.31],[-.24,.24]],joint);
-  plate([[-.23,-.28],[.03,-.29],[.14,-.10],[.05,.13],[-.15,.17],[-.27,-.06]],joint);
+  plate([[-.20,-.28],[.02,-.29],[.10,-.10],[.02,.13],[-.12,.17],[-.22,-.06]],joint);
   plate([[-.23,-.24],[-.12,-.20],[-.07,.02],[-.15,.12],[-.25,-.04]]);
   plate([[.01,-.24],[.11,-.10],[.06,.04],[-.03,-.01],[-.03,-.18]]);
   limb([[-.12,-.20],[-.07,.02],[-.15,.12]],.025,gold);
@@ -3147,11 +3177,11 @@ function warriorSprite(evo,pose='idle'){
   // Long side lock stays separate from the shoulder, rather than a wing.
   plate([[-.18,-.46],[-.24,-.27],[-.33,-.13],[-.31,-.30],[-.24,-.51]]);
   // One thick, squared shoulder and a bent sword arm create asymmetry.
-  plate([[.08,-.27],[.23,-.22],[.25,-.09],[.14,-.04],[.06,-.12]]);
-  limb([[.09,-.25],[.23,-.21],[.24,-.10]],.035,gold);
+  plate([[.08,-.25],[.19,-.21],[.21,-.10],[.13,-.07],[.07,-.13]]);
+  limb([[.09,-.23],[.19,-.20],[.20,-.11]],.035,gold);
   const hand=strike?[.40,.00]:[.32,.23];
-  limb([[.19,-.09],[.32,.07],hand],.13,joint);
-  plate([[.23,.01],[.38,.04],[hand[0]+.04,hand[1]-.03],[hand[0]-.08,hand[1]+.06]]);
+  limb([[.19,-.09],[.32,.07],hand],.095,joint);
+  plate([[.26,.02],[.35,.04],[hand[0]+.03,hand[1]-.025],[hand[0]-.055,hand[1]+.045]]);
   // Sword is a hand-held diagonal, visibly detached from helmet and chest.
   g.save();g.translate(hand[0],hand[1]);g.rotate(strike?-.42:.57);
   plate([[-.10,-.035],[.08,-.035],[.08,.035],[-.10,.035]],joint);
@@ -3193,7 +3223,7 @@ function drawBladeUnits(){
   ctx.restore();
   // 본체 — 벨 때 살짝 앞으로 내딛는다
   const push=B.thrust>0 ? Math.sin(Math.max(0,B.thrust)/0.16*Math.PI)*7 : 0;
-  const size=evo?62:54, sp=warriorSprite(evo,B.thrust>0?'slash':'idle');
+  const size=evo?54:46, sp=warriorSprite(evo,B.thrust>0?'slash':'idle');
   ctx.save();
   ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=1;
   ctx.translate(B.x+Math.cos(B.ang)*push, B.y+Math.sin(B.ang)*push);
@@ -3657,6 +3687,30 @@ function render(){
       ctx.beginPath();
       for(let t=0;t<=1.001;t+=0.1){ const rr=void_+(rStart-void_)*t, ang=-t*3.4; const x=Math.cos(ang)*rr, y=Math.sin(ang)*rr; t===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
       ctx.stroke(); ctx.restore();
+    }
+    // ── 사건의 지평선: 충격파·서리가 회오리 '안에서' 같이 도는 것을 보여 준다 ──
+    // 중심 void 를 칠하기 전에 그린다 — void 가 안쪽을 덮어 깊이가 생긴다.
+    if(h.hz){
+      // ❄️ 서리 — 안쪽을 도는 6각 결정 고리
+      // 회오리 팔(14줄, #e6dcff)이 밝아서 가는 선은 묻힌다 — 고리는 굵게, 결정은 크게.
+      const fr=void_+(h.r-void_)*0.55;
+      ctx.save(); ctx.rotate(h.ring);
+      ctx.globalAlpha=a*0.72; ctx.strokeStyle='#8fe4ff'; ctx.lineWidth=1.8;
+      ctx.beginPath();
+      for(let i=0;i<6;i++){ const ang=i*1.0472, x=Math.cos(ang)*fr, y=Math.sin(ang)*fr; i?ctx.lineTo(x,y):ctx.moveTo(x,y); }
+      ctx.closePath(); ctx.stroke();
+      // 결정 6개 — 이게 '서리가 안에서 돌고 있다'를 만드는 주된 단서다
+      ctx.globalAlpha=a; ctx.fillStyle='#eafdff';
+      for(let i=0;i<6;i++){ const ang=i*1.0472, cx=Math.cos(ang)*fr, cy=Math.sin(ang)*fr;
+        ctx.beginPath();
+        for(let k=0;k<4;k++){ const b=ang+k*1.5708, rr=k%2?1.3:3.0;
+          const x=cx+Math.cos(b)*rr, y=cy+Math.sin(b)*rr; k?ctx.lineTo(x,y):ctx.moveTo(x,y); }
+        ctx.closePath(); ctx.fill(); }
+      ctx.restore();
+      // 💥 충격파 — 터질 때마다 안쪽에서 바깥으로 퍼지는 고리
+      if(h.flash>0){ const f=Math.max(0,h.flash/0.22);
+        ctx.globalAlpha=a*0.75*f; ctx.strokeStyle='#e6d2ff'; ctx.lineWidth=2.6;
+        ctx.beginPath(); ctx.arc(0,0, void_+(h.r-void_)*(1-f), 0, 6.283); ctx.stroke(); }
     }
     // 어두운 중심 void + 보라 테두리 글로우
     ctx.globalAlpha=a; ctx.fillStyle='#050109'; ctx.beginPath(); ctx.arc(0,0,void_,0,Math.PI*2); ctx.fill();
