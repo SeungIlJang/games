@@ -81,7 +81,22 @@
     100%{opacity:0;transform:translate(-50%,-50%) scale(1.42)}}
   @keyframes fl{0%{opacity:0;transform:translate(-50%,10px) scale(.7)}20%{opacity:1;transform:translate(-50%,-4px) scale(1.1)}100%{opacity:0;transform:translate(-50%,-52px) scale(1)}}
   #over,#start,#lb{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,10,22,.92);gap:10px;padding:24px;text-align:center;z-index:10}
-  #lb{z-index:12;justify-content:flex-start;padding-top:calc(28px + env(safe-area-inset-top,0px))}
+  /* 전체를 덮는 패널은 불투명해야 한다 — 반투명이면 뒤 화면 글자가 겹쳐 읽힌다.
+     일일 챌린지 화면과 같은 처리(배경 그라디언트 + 아주 옅은 플레이 배경 아트). */
+  #over,#lb{background:linear-gradient(180deg,#0c1427 0%,#080b17 55%,#05070f 100%)}
+  #over::before,#lb::before,#shop::before,#ranks::before{content:'';position:fixed;inset:0;
+    background:url(img/number/play/play_bg_normal.png) center/cover;opacity:.22;pointer-events:none}
+  #over>*,#lb>*,#shop>*,#ranks>*{position:relative;z-index:1;flex:0 0 auto}
+  #lb h1,#ranks h1{font-size:26px}
+  /* ✕ 가 있으니 아래 '닫기'는 보조로 — 없애면 한 손으로 쓸 때 우상단이 멀다 */
+  #shopClose,#lbClose,#ranksClose{background:transparent;box-shadow:none;border:1px solid rgba(255,255,255,.22);
+    color:#cfe;padding:11px 26px;font-size:15px}
+  #shopClose:active,#lbClose:active,#ranksClose:active{background:rgba(255,255,255,.1);transform:none}
+  #lb{z-index:12;justify-content:center;padding-top:calc(28px + env(safe-area-inset-top,0px))}
+  /* 가운데 정렬로 바꾸니 좌상단 음소거 버튼(y 46~82)과는 더 이상 겹치지 않는다.
+     목록이 최대(60vh)여도 닉네임 줄은 360x560 에서 y 86 부터라 여유가 있다.
+     그래서 좌우 여백은 주지 않는다 — 주면 기본 닉네임이 두 줄로 깨진다. */
+  #lbName{font-size:13.5px}
   #over{justify-content:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-top:calc(16px + env(safe-area-inset-top,0px));padding-bottom:26px;gap:7px}
   #start{overflow-y:auto;-webkit-overflow-scrolling:touch;background:transparent;gap:0;padding-left:20px;padding-right:20px}
   /* 테마 배경이 비치도록 두고, 플레이 배경 아트를 아주 옅게 겹쳐 톤을 맞춘다 */
@@ -92,7 +107,8 @@
   #start>*{position:relative;z-index:1;flex:0 0 auto}
   /* 이 파일엔 전역 border-box 규칙이 없다. 폭을 지정한 블록만 패딩 포함으로 맞춘다 */
   #rankCard,#dailyBox,#changelog,#statRow,#navRow,#boostRow,#startBtn,#dailyBtn,
-  #dailyCard,#dailyTabs,#dailyStart,#dailyLbList,#dailyLog,#ranksList,#shopList{box-sizing:border-box}
+  #dailyCard,#dailyTabs,#dailyStart,#dailyLbList,#dailyLog,#ranksList,#shopList,
+  #lbList,#overLbList,#overCard,#overBtns,#reviveBtn,#shopTabs{box-sizing:border-box}
   #startIcon{border-radius:18px;box-shadow:0 0 28px rgba(124,246,255,.16);margin-bottom:4px}
   #startTitle{font-size:31px;margin:0 0 12px}
   #startTag{font-size:13px;color:#9fb0cc;font-weight:700;margin-bottom:11px}
@@ -113,8 +129,8 @@
   body.menu #hud,body.menu #wrap,body.menu #chase,body.menu #mult,body.menu #banner{visibility:hidden}   /* 메뉴에선 플레이 화면이 비쳐 보이지 않게 */
   #lbX{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:16px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:#cfe;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:50%;cursor:pointer;z-index:13}
   #lbX:active{background:rgba(255,255,255,.2)}
-  #lbList{width:100%;max-width:340px;margin:6px 0;max-height:60vh;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
-  #overLbList{width:100%;max-width:320px;margin:2px 0 4px;max-height:32vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  #lbList{width:min(92vw,352px);margin:6px 0;max-height:60vh;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+  #overLbList{width:min(92vw,352px);margin:2px 0 4px;max-height:32vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
   .lbrow{display:flex;justify-content:space-between;align-items:center;padding:9px 14px;margin:5px 0;border-radius:10px;font-size:17px;font-weight:700}
   #lbEdit{color:#7cf6ff;text-decoration:underline;margin-left:8px;font-size:13px}
   .hidden{display:none!important}
@@ -140,10 +156,10 @@
   .cbtn.ok{background:#1f7a4d;border-color:#5cffb0;box-shadow:0 6px 0 #0e4a2c}
   .cbtn.bad{background:#7a2432;border-color:#ff5a6e;box-shadow:0 6px 0 #4a1420}
   /* 상점 */
-  #shop{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:rgba(8,10,22,.94);gap:10px;padding:24px;padding-top:calc(28px + env(safe-area-inset-top,0px));text-align:center;z-index:12}
+  #shop{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:linear-gradient(180deg,#0c1427 0%,#080b17 55%,#05070f 100%);gap:10px;padding:24px;padding-top:calc(28px + env(safe-area-inset-top,0px));text-align:center;z-index:12}
   #shopX{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:16px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:#cfe;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:50%;cursor:pointer}
   #shopX:active{background:rgba(255,255,255,.2)}
-  #shopList{width:100%;max-width:360px;margin:8px 0;max-height:62vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  #shopList{width:min(92vw,352px);margin:8px 0;max-height:62vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
   .shoprow{display:flex;align-items:center;gap:12px;padding:11px 14px;margin:6px 0;border-radius:12px;background:rgba(255,255,255,.05);font-size:17px;font-weight:700}
   .shoprow .sw{width:34px;height:34px;border-radius:9px;border:2px solid #7cf6ff;flex:0 0 auto}
   .shoprow .sn{flex:1;text-align:left}
@@ -151,7 +167,10 @@
   .sbtn.use{background:#20263c;box-shadow:0 4px 0 #10131f}
   .sbtn:active{transform:translateY(2px)}
   /* 상점 탭 */
-  #shopTabs{display:flex;gap:8px;margin:4px 0 2px}
+  #shopTabs{display:flex;width:min(92vw,352px);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+    border-radius:14px;padding:4px;margin:10px 0 2px;gap:4px}
+  #shopTabs .stab{flex:1;border:none;background:transparent;border-radius:10px;padding:9px 0;font-size:14px}
+  #shopTabs .stab.on{background:#3a7bff;color:#fff;border-color:transparent}
   .stab{background:#1a2033;color:#8892b0;border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:8px 18px;font-size:15px;font-weight:800;cursor:pointer}
   .stab.on{background:#3a7bff;color:#fff;border-color:#7cf6ff}
   /* 기록 추격 */
@@ -262,9 +281,9 @@
   #rankCard{cursor:pointer}
   #rankMore{font-size:11.5px;color:#7cf6ff;opacity:.85;margin-top:7px;font-weight:700}
   /* 랭크 전체 보기 */
-  #ranks{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:rgba(8,10,22,.95);gap:4px;padding:24px;padding-top:calc(26px + env(safe-area-inset-top,0px));z-index:12;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  #ranks{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:linear-gradient(180deg,#0c1427 0%,#080b17 55%,#05070f 100%);gap:4px;padding:24px;padding-top:calc(26px + env(safe-area-inset-top,0px));z-index:12;overflow-y:auto;-webkit-overflow-scrolling:touch}
   #ranksX{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:16px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:#cfe;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:50%;cursor:pointer;z-index:13}
-  #ranksList{width:100%;max-width:360px;margin:6px 0}
+  #ranksList{width:min(92vw,352px);margin:6px 0}
   .rrow{display:flex;align-items:center;gap:13px;padding:10px 13px;margin:7px 0;border-radius:13px;background:rgba(255,255,255,.05);text-align:left}
   .rrow.now{background:rgba(124,246,255,.15);border:1px solid rgba(124,246,255,.55)}
   .rrow.locked{opacity:.4}
@@ -272,7 +291,21 @@
   .rrow .rn{flex:1;font-weight:800;font-size:17px}
   .rrow .rp{font-size:12px;color:#8892b0;font-weight:700;text-align:right}
   /* 결과창 랭크 */
-  #overRankNow{display:flex;align-items:center;justify-content:center;gap:8px;margin:4px 0 0;white-space:nowrap;max-width:100%}
+  /* 점수가 제일 궁금한 정보인데 한 줄짜리들 사이에 묻혀 있었다. 카드로 묶어 키운다. */
+  #overCard{width:min(92vw,352px);background:linear-gradient(160deg,rgba(124,246,255,.14),rgba(124,246,255,.03));
+    border:1px solid rgba(124,246,255,.3);border-radius:20px;padding:14px 18px 12px;margin-top:4px;
+    box-shadow:0 12px 34px rgba(0,0,0,.4)}
+  #overCard .ok{font-size:11.5px;color:#8fa8c4;font-weight:800;letter-spacing:.5px}
+  #overScore{font-size:46px;font-weight:900;line-height:1.05;margin:3px 0 1px;color:#ffd34d;
+    text-shadow:0 0 24px rgba(255,211,77,.3)}
+  #overRec{font-size:13px;min-height:18px;color:#9fb0cc;font-weight:700}
+  #overMeta{display:flex;justify-content:center;align-items:center;gap:14px;flex-wrap:wrap;
+    margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.1);
+    font-size:13px;color:#9fb0cc;font-weight:700}
+  #overBtns{display:flex;gap:8px;width:min(92vw,352px);margin-top:8px}
+  #overBtns .btn{flex:1;padding:13px 0;font-size:16px;margin-top:0}
+  #reviveBtn{width:min(92vw,352px);font-size:16px;padding:14px 10px;margin-top:10px}
+  #overRankNow{display:flex;align-items:center;justify-content:center;gap:8px;margin:10px 0 0;white-space:nowrap;max-width:100%}
   #overRankNow .obar{width:78px;height:6px;flex:0 0 auto;background:rgba(255,255,255,.13);border-radius:3px;overflow:hidden}
   #overRankNow .ofill{height:100%;background:linear-gradient(90deg,#7cf6ff,#5cffb0);border-radius:3px}
   .bprev{display:flex;gap:9px;justify-content:center;align-items:center;opacity:.5}
@@ -331,7 +364,7 @@
   </div>
   <div id="boostRow"></div>
   <div id="dailyBox"></div>
-  <div id="changelog">🆕 <b id="clVer">v3.4</b> · <span id="clNote"><b>숫자와 아이콘이 전용 디자인으로 바뀌었어요</b> · 기기마다 다르던 이모지도 통일</span></div>
+  <div id="changelog">🆕 <b id="clVer">v3.5</b> · <span id="clNote"><b>상점·랭킹·결과 화면이 깔끔해졌어요</b> · 뒤 화면이 비치던 것도 고침</span></div>
 </div>
 
 <div id="help" class="hidden">
@@ -349,20 +382,26 @@
 <div id="over" class="hidden">
   <h1 id="overTitle">아깝다!</h1>
   <div class="miss" id="overMsg"></div>
-  <div class="sub">점수 <b id="overScore">0</b> <span id="overRec"></span></div>
-  <div class="sub" id="overCoin" style="min-height:20px"></div>
-  <div id="overRankNow"></div>
+  <div id="overCard">
+    <div class="ok">점수</div>
+    <div id="overScore">0</div>
+    <div id="overRec"></div>
+    <div id="overMeta">
+      <span>최고 <b id="overBest" style="color:#cfe">0</b></span>
+      <span id="overCoin"></span>
+    </div>
+    <div id="overRankNow"></div>
+  </div>
   <div class="sub" id="overRankUp" style="font-weight:800;min-height:0"></div>
   <div class="sub" id="overMission" style="color:#5cffb0;font-weight:800;min-height:0"></div>
   <div class="sub" id="overRank" style="color:#ffd34d;font-weight:800;min-height:20px"></div>
-  <div class="sub" style="opacity:.7">최고 <b id="overBest">0</b></div>
   <div class="sub" id="overLbTitle" style="margin-top:6px;font-weight:800;color:#ffd34d"><img class="art" src="img/number/ui/ui_trophy.webp" alt="" width="15" height="15" data-fb="🏆" onerror="uiFB(this)"/> 랭킹</div>
   <div id="overLbList"></div>
   <button class="btn" id="reviveBtn" style="background:#2ec77a;box-shadow:0 6px 0 #1a8a52;display:none">🎬 광고 보고 이어하기</button>
-  <div style="display:flex;gap:8px;margin-top:8px">
-    <button class="btn" id="retryBtn" style="padding:13px 20px;font-size:18px">한 판 더</button>
-    <button class="btn" id="homeBtn" style="padding:13px 18px;font-size:17px;background:#20263c;box-shadow:0 6px 0 #10131f">🏠 홈</button>
-    <button class="btn" id="shareBtn" style="padding:13px 18px;font-size:17px;background:#20263c;box-shadow:0 6px 0 #10131f"><img class="art" src="img/number/ui/ui_trophy.webp" alt="" width="17" height="17" data-fb="🏆" onerror="uiFB(this)"/> 공유</button>
+  <div id="overBtns">
+    <button class="btn" id="retryBtn">한 판 더</button>
+    <button class="btn" id="homeBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f">🏠 홈</button>
+    <button class="btn" id="shareBtn" style="background:#20263c;box-shadow:0 6px 0 #10131f"><img class="art" src="img/number/ui/ui_trophy.webp" alt="" width="17" height="17" data-fb="🏆" onerror="uiFB(this)"/> 공유</button>
   </div>
   <div class="sub" style="font-size:12px;opacity:.6;margin-top:2px">🏠 홈에서 랭크·일일 미션·부스터를 확인할 수 있어요</div>
 </div>
@@ -415,13 +454,13 @@
 
 <div id="shop" class="hidden">
   <div id="shopX" role="button" aria-label="닫기">✕</div>
-  <h1 style="font-size:32px"><img class="art" src="img/number/ui/ui_shop.webp" alt="" width="26" height="26" data-fb="🛒" onerror="uiFB(this)"/> 상점</h1>
+  <h1 style="font-size:26px"><img class="art" src="img/number/ui/ui_shop.webp" alt="" width="26" height="26" data-fb="🛒" onerror="uiFB(this)"/> 상점</h1>
   <div class="sub">보유 <img class="art" src="img/number/ui/ui_coin.webp" alt="" width="15" height="15" data-fb="💰" onerror="uiFB(this)"/> <b id="shopCoins" style="color:#ffd34d">0</b> · 한 판 하면 코인이 쌓여요</div>
   <div id="shopTabs"><button class="stab on" data-tab="theme">🎨 테마</button><button class="stab" data-tab="boost">⚡ 부스터</button></div>
   <div id="shopList"></div>
   <button class="btn" id="shopClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v3.4 · HUD 아이콘</div>
+<div id="ver">v3.5 · 화면 정리</div>
 
 <script>
 const $=id=>document.getElementById(id);
