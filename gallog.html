@@ -1022,7 +1022,7 @@ function sanitizeTune(obj){
 //   배포할 때 이 값만 올리면 모든 기기의 개발 패널 수치가 버려지고 코드 기본값(TUNE_DEFAULTS)을 받는다.
 //   → 밸런스는 '코드가 유일한 진실'이 되고, 개발 패널은 내 기기에서 잠깐 돌려보는 용도로만 남는다.
 //   (골드/영구강화/전직은 ss_meta 라 영향 없음 — 그쪽은 계속 기기별로 유지된다)
-const GAME_VER='10.9';
+const GAME_VER='10.10';
 // 개발 패널 수치는 이 기기에 계속 남는다(앱을 껐다 켜도 유지). 배포해도 지우지 않는다 —
 // 모르는 사이에 설정이 사라지는 편이 더 나쁘다. 대신 '기본값' 버튼으로 언제든 코드값을 받을 수 있고,
 // 전 플레이어에게 반영하려면 '현재 수치 내보내기'로 뽑아 TUNE_DEFAULTS 에 넣고 배포한다.
@@ -1834,6 +1834,12 @@ const FUSIONS=[
       playWeaponSound('slash',true); } },
 ];
 const FUSE_KEYS=new Set(FUSIONS.map(F=>F.key));
+// HUD 무기 슬롯에서 융합 무기를 따로 그리기 위한 고유색.
+// 삼수호령은 FUSIONS 가 아니라 RECIPES 쪽에만 있어서 따로 넣는다(뇌운령의 번개색).
+// 색만으로는 구분이 안 된다 — 벌떼포화(#ffd25c)가 진화 금색(#ffd47b)과 거의 같다.
+// 그래서 슬롯 모양(이중 테두리 + 재료 3점)이 실제 구분을 맡고 색은 어느 융합인지만 알린다.
+const FUSE_COLOR={ spirits:'#aee3ff' };
+for(const F of FUSIONS) FUSE_COLOR[F.key]=F.color;
 // 삼수호령까지 포함한 전체 레시피 — 카드에 진행도를 띄워 '조합이 있다'를 알린다.
 // 이게 없으면 재료 3종을 전부 Lv6까지 올리는 일은 우연으로만 일어난다.
 const RECIPES=[{key:'spirits',name:'삼수호령',parts:['lightning','flame','santoryu']},
@@ -3260,6 +3266,12 @@ function syncFeatureLevelUp(){
 }
 // 칸 수는 TUNE.weaponCap을 따라간다(예전엔 6칸 고정이라 상한을 바꾸면 UI가 거짓말을 했다).
 // 7칸 이상이면 두 줄로 접어 아이콘 크기를 지킨다 — 한 줄로 늘리면 10칸에서 30px까지 작아진다.
+// 슬롯 외곽(좌상·우하 모서리를 깎은 육각). inset>0 이면 같은 모양을 안쪽으로 한 겹 더 —
+// 융합 슬롯의 이중 테두리에 쓴다. 모서리 깎임도 같이 줄여야 두 겹이 평행하게 보인다.
+function slotShape(xx,yy,s,inset){
+  const b=Math.max(2,5-inset), x0=xx+inset, y0=yy+inset, x1=xx+s-inset, y1=yy+s-inset;
+  ctx.beginPath();ctx.moveTo(x0+b,y0);ctx.lineTo(x1,y0);ctx.lineTo(x1,y1-b);ctx.lineTo(x1-b,y1);ctx.lineTo(x0,y1);ctx.lineTo(x0,y0+b);ctx.closePath();
+}
 function drawWeaponSlots(bottom){
   const cap=TUNE.weaponCap!=null?TUNE.weaponCap:10, entries=Object.entries(player.weapons), gap=5;
   const per=cap<=6?cap:Math.ceil(cap/2), rows=Math.ceil(cap/per);
@@ -3274,11 +3286,34 @@ function drawWeaponSlots(bottom){
     ctx.fillText('난이도 '+ov+'/10 (임시)',x+total,y-7); }
   else if(entries.length>cap){ctx.textAlign='right';ctx.fillStyle='#ffd47b';ctx.fillText('+'+(entries.length-cap),x+total,y-7);}
   for(let i=0;i<cap;i++){
-    const item=entries[i],xx=x+(i%per)*(size+gap),yy=y+Math.floor(i/per)*(size+gap),evo=item&&player.evolved[item[0]];
-    ctx.fillStyle=item?'rgba(15,32,49,.96)':'rgba(7,14,25,.8)';ctx.strokeStyle=evo?'#ffd47b':item?'#527d94':'#304150';ctx.lineWidth=evo?1.5:1;
-    ctx.beginPath();ctx.moveTo(xx+5,yy);ctx.lineTo(xx+size,yy);ctx.lineTo(xx+size,yy+size-5);ctx.lineTo(xx+size-5,yy+size);ctx.lineTo(xx,yy+size);ctx.lineTo(xx,yy+5);ctx.closePath();ctx.fill();ctx.stroke();
-    if(item){canvasIcon(item[0],xx+6,yy+5,size-18,evo?'#ffdc87':'#b6ebf5');ctx.font=fTech(10,true);ctx.fillStyle=evo?'#ffdc87':'#e9f7ff';ctx.textAlign='right';ctx.fillText(item[1],xx+size-5,yy+size-5);
-      if(evo){ctx.font=fTech(9,true);ctx.textAlign='left';ctx.fillText('★',xx+4,yy+size-5);}
+    const item=entries[i],xx=x+(i%per)*(size+gap),yy=y+Math.floor(i/per)*(size+gap);
+    const key=item&&item[0], evo=!!(item&&player.evolved[key]), fc=key?FUSE_COLOR[key]:null;
+    if(fc){
+      // 융합 무기 — 재료 3종을 한 칸에 담은 최상위 보상이다. 일반 무기와 같은 틀로 그리면
+      // "내가 뭘 만들었는지"가 슬롯에서 사라진다. 세 가지를 겹쳐 확실히 떼어 놓는다.
+      //   ① 고유색 배경 틴트  ② 이중 테두리(바깥 2px + 안쪽 1px)  ③ 윗변의 재료 3점
+      // 진화(금색 외곽 1.5px + ★)와는 '이중 테두리와 3점'이 있는지로 갈린다 — 색이 겹쳐도 구분된다.
+      const pulse=0.78+0.22*Math.sin(time*2.6+i*0.9);
+      slotShape(xx,yy,size,0); ctx.fillStyle='rgba(10,20,34,.96)'; ctx.fill();
+      ctx.globalAlpha=0.14; ctx.fillStyle=fc; ctx.fill(); ctx.globalAlpha=1;
+      ctx.strokeStyle=fc; ctx.lineWidth=2; ctx.globalAlpha=pulse; ctx.stroke();
+      ctx.globalAlpha=0.6; ctx.lineWidth=1; slotShape(xx,yy,size,4); ctx.stroke();
+      ctx.globalAlpha=1;
+      // 재료 3점 — 이 한 칸이 무기 셋을 삼켰다는 표시.
+      // 실측상 이게 색보다 중요하다: 벌떼포화(#ffd25c)와 진화 금색(#ffd47b)은 42px에서
+      // 색으로는 거의 같아 보이고, 점 3개와 안쪽 테두리가 있는지로 갈린다.
+      ctx.fillStyle=fc;
+      for(let d=0; d<3; d++){ ctx.beginPath(); ctx.arc(xx+size/2+(d-1)*5.5, yy+4, 1.6, 0, 6.283); ctx.fill(); }
+    }else{
+      ctx.fillStyle=item?'rgba(15,32,49,.96)':'rgba(7,14,25,.8)';ctx.strokeStyle=evo?'#ffd47b':item?'#527d94':'#304150';ctx.lineWidth=evo?1.5:1;
+      slotShape(xx,yy,size,0);ctx.fill();ctx.stroke();
+    }
+    if(item){
+      const icol=fc?mixHex(fc,'#ffffff',0.3):(evo?'#ffdc87':'#b6ebf5');
+      canvasIcon(key,xx+6,yy+6,size-18,icol);
+      ctx.font=fTech(10,true);ctx.fillStyle=icol;ctx.textAlign='right';ctx.fillText(item[1],xx+size-5,yy+size-5);
+      // ★ 는 '진화했는가'만 뜻한다. 융합 무기도 만렙(10)에서 진화하므로 둘이 겹칠 수 있다.
+      if(evo){ctx.font=fTech(9,true);ctx.textAlign='left';ctx.fillStyle=fc?icol:'#ffdc87';ctx.fillText('★',xx+4,yy+size-5);}
     }else{ctx.strokeStyle='#344b60';ctx.beginPath();ctx.moveTo(xx+size/2-3,yy+size/2);ctx.lineTo(xx+size/2+3,yy+size/2);ctx.moveTo(xx+size/2,yy+size/2-3);ctx.lineTo(xx+size/2,yy+size/2+3);ctx.stroke();}
   }ctx.restore();
 }
