@@ -1,9 +1,9 @@
 {
   "linedefense": {
     "repo": "share-tower-defense",
-    "commit": "545f70cd320f9a6ee71984dc33374ed63c16e475",
+    "commit": "82f53009f78293c8df7faf7639227c3fa2543e53",
     "dirty": false,
-    "builtAt": "2026-11-06T08:19:52.909Z"
+    "builtAt": "2026-11-10T04:22:08.903Z"
   },
   "monsteridle": {
     "repo": "monster-idle",
