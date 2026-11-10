@@ -7,9 +7,9 @@
   },
   "monsteridle": {
     "repo": "monster-idle",
-    "commit": "b052945e3a75a57537c269dbbf8f3026a0fa1092",
+    "commit": "5812bfae35448214237bb2d0dbfcc3b04e3dbfb8",
     "dirty": true,
-    "builtAt": "2026-11-10T04:50:08.471Z"
+    "builtAt": "2026-11-10T23:41:58.786Z"
   },
   "toilet.html": {
     "repo": "urgent-toilet-game",
