@@ -1032,7 +1032,7 @@ function sanitizeTune(obj){
 //   배포할 때 이 값만 올리면 모든 기기의 개발 패널 수치가 버려지고 코드 기본값(TUNE_DEFAULTS)을 받는다.
 //   → 밸런스는 '코드가 유일한 진실'이 되고, 개발 패널은 내 기기에서 잠깐 돌려보는 용도로만 남는다.
 //   (골드/영구강화/전직은 ss_meta 라 영향 없음 — 그쪽은 계속 기기별로 유지된다)
-const GAME_VER='10.18';
+const GAME_VER='10.19';
 // 개발 패널 수치는 이 기기에 계속 남는다(앱을 껐다 켜도 유지). 배포해도 지우지 않는다 —
 // 모르는 사이에 설정이 사라지는 편이 더 나쁘다. 대신 '기본값' 버튼으로 언제든 코드값을 받을 수 있고,
 // 전 플레이어에게 반영하려면 '현재 수치 내보내기'로 뽑아 TUNE_DEFAULTS 에 넣고 배포한다.
@@ -3246,6 +3246,29 @@ function queenSprite(evo){
   }
   queenCache.set(key,c);return c;
 }
+// Tiny four-point glints read as royal shimmer, never as round hostile plasma.
+// No particles, blur, gradients or allocations: fixed stars use the existing game clock.
+function drawQueenSparkles(size,evo){
+  const r=size/2,n=evo?8:5,t=Number.isFinite(time)?time:0;
+  ctx.save();ctx.globalCompositeOperation='lighter';
+  for(let i=0;i<n;i++){
+    const phase=((t/(evo?1.45:1.8)+i*.618)%1+1)%1;
+    const pulse=Math.pow(Math.sin(phase*Math.PI),3);
+    if(pulse<.05)continue;
+    const a=i*2.399+.25,spread=r*(.79+(i%3)*.17);
+    const x=Math.cos(a)*spread,y=Math.sin(a)*spread-phase*r*.09;
+    const reach=r*(evo?.15:.12)*(.55+.65*pulse);
+    ctx.save();ctx.translate(x,y);ctx.rotate(-.18+i*.31);
+    ctx.fillStyle=i%2?(evo?'#d9fff0':'#c8edf3'):'#ffe2a0';
+    ctx.globalAlpha=pulse*.15;ctx.beginPath();ctx.moveTo(0,-reach*1.8);ctx.lineTo(reach*.9,0);ctx.lineTo(0,reach*1.8);ctx.lineTo(-reach*.9,0);ctx.closePath();ctx.fill();
+    ctx.globalAlpha=pulse*(evo?.95:.8);ctx.beginPath();ctx.moveTo(0,-reach);ctx.lineTo(reach*.20,-reach*.20);ctx.lineTo(reach*.68,0);ctx.lineTo(reach*.20,reach*.20);ctx.lineTo(0,reach);ctx.lineTo(-reach*.20,reach*.20);ctx.lineTo(-reach*.68,0);ctx.lineTo(-reach*.20,-reach*.20);ctx.closePath();ctx.fill();ctx.restore();
+  }
+  // A restrained jewel twinkle on the thorax, separated from the perimeter stars.
+  const jewel=.5+.5*Math.sin(t*4.2);
+  ctx.globalAlpha=.3+jewel*.5;ctx.strokeStyle=evo?'#d9fff0':'#ffe2a0';ctx.lineWidth=r*.035;
+  ctx.beginPath();ctx.moveTo(-r*.025,0);ctx.lineTo(r*.13,0);ctx.moveTo(r*.055,-r*.075);ctx.lineTo(r*.055,r*.075);ctx.stroke();
+  ctx.restore();
+}
 function drawQueenBee(){
   const lv=player.weapons.swarm; if(!lv) return;
   const Q=player.queenEnt&&player.queenEnt[0]; if(!Q) return;
@@ -3276,6 +3299,7 @@ function drawQueenBee(){
   }
   ctx.globalAlpha=1;
   ctx.drawImage(queenSprite(evo),-size/2,-size/2,size,size);
+  drawQueenSparkles(size,evo);
   ctx.restore();
 }
 function drawGuardians(){
