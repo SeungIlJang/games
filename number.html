@@ -34,8 +34,8 @@
   #cur{font-size:126px;font-weight:900;line-height:1;margin:16px 0}
   /* 숫자 스프라이트 — 그림은 마스크(모양)만 주고 색은 currentColor가 입힌다.
      그래서 과열 그라디언트와 상태색 5종이 글자일 때와 똑같이 동작한다. */
-  #cur.spr{display:flex;align-items:center;justify-content:center;font-size:0;line-height:0}
-  #cur.spr>i{display:block;width:var(--dw);height:var(--dh);margin:0 var(--dm);
+  #cur.spr,#targetN.spr{display:flex;align-items:center;justify-content:center;font-size:0;line-height:0}
+  #cur.spr>i,#targetN.spr>i{display:block;width:var(--dw);height:var(--dh);margin:0 var(--dm);
     background-color:currentColor;
     -webkit-mask-size:contain;mask-size:contain;
     -webkit-mask-position:center;mask-position:center;
@@ -45,6 +45,7 @@
   #cur.spr.hit{filter:drop-shadow(0 0 26px rgba(92,255,176,.7))}
   #cur.spr.roll{filter:drop-shadow(0 0 4px #c9a3ff) drop-shadow(0 0 16px rgba(201,163,255,.55))}
   #cur.spr.ontarget{filter:drop-shadow(0 0 30px rgba(255,225,77,.85)) drop-shadow(0 0 60px rgba(255,180,40,.45))}
+  #targetN.spr{filter:drop-shadow(0 0 14px rgba(124,246,255,.6))}
   #cur.miss{color:#ff5a6e!important;text-shadow:0 0 26px rgba(255,90,110,.7)!important}
   #cur.hit{color:#5cffb0!important;text-shadow:0 0 26px rgba(92,255,176,.7)!important}
   #cur.roll{color:#c9a3ff!important;text-shadow:0 0 4px #c9a3ff, 0 -14px 16px rgba(201,163,255,.5), 0 14px 16px rgba(201,163,255,.5)}
@@ -420,7 +421,7 @@
   <div id="shopList"></div>
   <button class="btn" id="shopClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v3.2 · 앱 이미지 복구</div>
+<div id="ver">v3.3 · 숫자 전용 서체</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -488,7 +489,7 @@ function setRing(locked){
 // ── 숫자 스프라이트 ──────────────────────────────────────────────
 // 아트(digit_0~9.webp)가 들어오면 아래 한 줄을 true 로. 켜도 파일을 못 불러오면
 // 글자 렌더링으로 자동 복구되므로 구버전 APK·오프라인에서도 안전하다.
-const DIGIT_SPR=false;
+const DIGIT_SPR=true;
 let digitOK=false, digitTried=false;
 function initDigits(){
   if(!DIGIT_SPR || digitTried) return; digitTried=true;
@@ -503,8 +504,8 @@ function initDigits(){
 // 캔버스 224x320 안에서 글자 높이가 256이므로
 //   스프라이트 높이 = 글자 크기 x 0.738(글자 높이 비율) x 1.25(캔버스/글자 높이)
 // 폭은 캔버스 비율(224/320), 자간은 폰트의 advance(0.579em)에 맞춰 음수 마진으로 좁힌다.
-function setCur(v, sizes){
-  const el=$('cur'), s=String(v), fs=sizes[Math.min(s.length,sizes.length)-1];
+function setNum(el, v, sizes){
+  const s=String(v), fs=sizes[Math.min(s.length,sizes.length)-1];
   if(!digitOK || !/^[0-9]+$/.test(s)){
     el.classList.remove('spr'); el.style.fontSize=fs+'px';
     if(el.firstElementChild || el.textContent!==s) el.textContent=s;
@@ -1005,11 +1006,9 @@ function newRound(keepCur){
   }
   render(false);
 }
-// 자릿수가 늘어도 숫자 무대·조준링 밖으로 삐져나가지 않게 글자 크기를 맞춘다
-function fitNum(el, v, sizes){ const n=String(v).replace('-','').length; el.style.fontSize=(sizes[Math.min(n,sizes.length)-1])+'px'; }
 function render(pulse){
-  $('targetN').textContent=target; fitNum($('targetN'), target, [46,46,38,30]);
-  const c=$('cur'); setCur(cur, [126,126,104,80]);
+  setNum($('targetN'), target, [46,46,38,30]);
+  const c=$('cur'); setNum(c, cur, [126,126,104,80]);
   if(curIsRoll){
     $('seq').textContent=''; $('hint').textContent='⚡ 감으로 멈춰!'; $('combo').textContent=hits>=2?('🔥 '+hits+' 연속'):''; $('score').textContent=score; renderChase();
     c.classList.toggle('ontarget', cur===target); if(cur===target) targetShownAt=now();
