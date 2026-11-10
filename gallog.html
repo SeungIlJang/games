@@ -1026,7 +1026,7 @@ function sanitizeTune(obj){
 //   배포할 때 이 값만 올리면 모든 기기의 개발 패널 수치가 버려지고 코드 기본값(TUNE_DEFAULTS)을 받는다.
 //   → 밸런스는 '코드가 유일한 진실'이 되고, 개발 패널은 내 기기에서 잠깐 돌려보는 용도로만 남는다.
 //   (골드/영구강화/전직은 ss_meta 라 영향 없음 — 그쪽은 계속 기기별로 유지된다)
-const GAME_VER='10.11';
+const GAME_VER='10.12';
 // 개발 패널 수치는 이 기기에 계속 남는다(앱을 껐다 켜도 유지). 배포해도 지우지 않는다 —
 // 모르는 사이에 설정이 사라지는 편이 더 나쁘다. 대신 '기본값' 버튼으로 언제든 코드값을 받을 수 있고,
 // 전 플레이어에게 반영하려면 '현재 수치 내보내기'로 뽑아 TUNE_DEFAULTS 에 넣고 배포한다.
@@ -1677,6 +1677,68 @@ function updateBladeUnits(dt){
         dmg:player.dmg*(0.8+0.14*lv)*(evo?1.5:1), life:1.3,
         pierce:1+Math.floor(lv/5), size:5, color:'#cdfffb', fresh:true}); } }
 }
+// ═══════ 벌떼포화 — 여왕벌 1기 ═══════
+// 천검진이 '한 명이 세 속성을 다 쓴다'로 풀렸으니 벌떼포화도 같은 틀로 맞춘다.
+// 다만 성격은 반대로 둔다 — 그래야 두 융합이 같은 것의 반복이 되지 않는다.
+//   우주전사: 적에게 파고들어 벤다 (근접)
+//   여왕벌  : 거리를 두고 퍼붓는다. 적이 다가오면 물러나며 계속 쏜다 (사격)
+// 재료 셋은 여왕이 혼자 다 쓴다 — 🚀유도미사일(침) · 🔫산탄 · 🏹화살촉.
+function ensureQueenEnt(){
+  if(!player.queenEnt || !player.queenEnt.length)
+    player.queenEnt=[{x:player.x-60,y:player.y,ang:0,wing:0,bob:0,recoil:0,cd:{m:0,g:0,a:0}}];
+  return player.queenEnt[0];
+}
+function updateQueenBee(dt){
+  const lv=player.weapons.swarm; if(!lv) return;
+  const Q=ensureQueenEnt(), evo=!!player.evolved.swarm;
+  const leash=86+2.4*lv, spd=evo?300:250;
+  const standoff=112+2*lv;   // 적과 유지하려는 거리. 여왕은 파고들지 않는다
+  let tg=null, bd=(250+9*lv)*(250+9*lv);
+  for(const e of enemies){ if(e.dead) continue; const d=dist2(Q,e); if(d<bd){ bd=d; tg=e; } }
+  let tx,ty;
+  if(tg){ // 적에게서 standoff 만큼 물러난 지점으로 — 붙으면 뒷걸음질이 된다
+    const dx=Q.x-tg.x, dy=Q.y-tg.y, d=Math.hypot(dx,dy)||1;
+    tx=tg.x+dx/d*standoff; ty=tg.y+dy/d*standoff; }
+  else { const a=-time*1.5; tx=player.x+Math.cos(a)*leash*0.55; ty=player.y+Math.sin(a)*leash*0.55; }
+  { const dx=tx-Q.x, dy=ty-Q.y, d=Math.hypot(dx,dy)||1, mv=Math.min(d,spd*dt);
+    Q.x+=dx/d*mv; Q.y+=dy/d*mv; }
+  { const px=Q.x-player.x, py=Q.y-player.y, pd=Math.hypot(px,py)||1;
+    if(pd>leash){ Q.x=player.x+px/pd*leash; Q.y=player.y+py/pd*leash; }
+    Q.ang = tg ? Math.atan2(tg.y-Q.y, tg.x-Q.x) : Math.atan2(py,px); }
+  Q.wing += dt*(evo?46:38);            // 날갯짓은 빨라야 벌로 읽힌다
+  Q.bob = Math.sin(time*6.5)*2.2;      // 제자리 부유
+  if(Q.recoil>0) Q.recoil-=dt;
+
+  // 🚀 유도미사일 — 침을 쏜다. 쫓아가 터진다
+  Q.cd.m-=dt;
+  if(Q.cd.m<=0 && tg){ Q.cd.m=Math.max(0.42,1.25-0.07*lv)*(evo?0.72:1);
+    const n=1+Math.floor(lv/4), base=Math.atan2(tg.y-Q.y,tg.x-Q.x);
+    for(let i=0;i<n;i++){ const a=base+(i-(n-1)/2)*0.34;
+      bullets.push({x:Q.x,y:Q.y,vx:Math.cos(a)*230,vy:Math.sin(a)*230,
+        dmg:player.dmg*(1.0+0.18*lv)*(evo?1.5:1), life:2.2, pierce:1, size:5,
+        color:evo?'#ffeaa0':'#ffd25c', homing:true, fresh:true, blast:48+5*lv}); }
+    Q.recoil=0.14; playWeaponSound('homing',evo); }
+
+  // 🔫 산탄 — 가까이 붙은 적에게만. 멀리서 허공에 쏘면 낭비다
+  Q.cd.g-=dt;
+  if(Q.cd.g<=0){ Q.cd.g=Math.max(0.3,0.85-0.045*lv)*(evo?0.75:1);
+    const R=(standoff+40)*(standoff+40); let near=false;
+    for(const e of enemies){ if(!e.dead && dist2(e,Q)<R){ near=true; break; } }
+    if(near){ const n=3+Math.floor(lv/3);
+      for(let i=0;i<n;i++){ const a=Q.ang+(i-(n-1)/2)*0.17+rand(-0.03,0.03);
+        bullets.push({x:Q.x,y:Q.y,vx:Math.cos(a)*400,vy:Math.sin(a)*400,
+          dmg:player.dmg*(0.45+0.09*lv)*(evo?1.5:1), life:0.55, pierce:1, size:3.5,
+          color:evo?'#fff2c4':'#ffe08a', fresh:true}); }
+      Q.recoil=0.1; } }
+
+  // 🏹 화살촉 — 멀리 꿰뚫는다
+  Q.cd.a-=dt;
+  if(Q.cd.a<=0 && tg){ Q.cd.a=Math.max(0.45,1.5-0.09*lv)*(evo?0.7:1);
+    const a=Math.atan2(tg.y-Q.y,tg.x-Q.x);
+    bullets.push({x:Q.x,y:Q.y,vx:Math.cos(a)*620,vy:Math.sin(a)*620,
+      dmg:player.dmg*(0.9+0.2*lv)*(evo?1.6:1), life:1.5,
+      pierce:2+Math.floor(lv/3), size:4, color:evo?'#ffeaa0':'#ffd25c', fresh:true}); }
+}
 function updateSpirits(dt){ if(!player.weapons.spirits) return; const S=ensureSpiritEnt();
   const L=player.weapons.spirits, Lp=L+1, evo=player.evolved.spirits, crisis=player.hp/player.maxhp<=0.4;  // Lp=공격력 기준 레벨(각 원소 +1레벨 보너스)
   const spd=crisis?320:210, rage=crisis?2.1:1, cr=crisis?0.5:1, SM=1.9;   // SM=삼수호령 추가 피해배수(각 원소 공통), rage=분노 피해배수
@@ -1788,7 +1850,7 @@ const WEAPONS = {
   // 융합 3종 — 실제 발사는 updateFusions()에서 재료별 독립 쿨다운으로 처리
   horizon:{ name:'사건의 지평선', icon:'🕳', desc:'블랙홀·충격파·서리 융합 · 빨린 적은 빙결, 블랙홀이 닫힐 때 초신성', max:10,
     interval:()=>Infinity, fire:()=>{} },
-  swarm:{ name:'벌떼포화', icon:'🐝', desc:'유도미사일·산탄·화살촉 융합 · 주기적 전방위 유도탄 일제사격', max:10,
+  swarm:{ name:'벌떼포화', icon:'🐝', desc:'유도미사일·산탄·화살촉 융합 · 여왕벌 1기가 거리를 두고 셋을 모두 쓴다', max:10,
     interval:()=>Infinity, fire:()=>{} },
   bladearray:{ name:'천검진', icon:'⚔', desc:'궤도·참격·볼트 융합 · 우주전사 1기가 세 속성을 모두 쓴다', max:10,
     interval:()=>Infinity, fire:()=>{} },
@@ -1818,7 +1880,7 @@ const FUSIONS=[
           if(dist2(h,e)<(rr+e.r)*(rr+e.r)){ e.slowT=Math.max(e.slowT||0,0.9); e.slowMul=0; } } } } },
   { key:'swarm', name:'벌떼포화', icon:'🐝', color:'#ffd25c',
     parts:['homing','spread','arrow'], partNames:'유도미사일·산탄·화살촉',
-    desc:'탄막이 멈추지 않는다 · 주기적으로 전방위 유도탄을 일제사격',
+    desc:'여왕벌 1기 소환 · 거리를 두고 미사일·산탄·화살을 퍼붓는다 · 주기적으로 전방위 일제사격',
     sigCd:3.0, sig:(p,lv)=>{ const n=6+Math.floor(lv/2);
       for(let i=0;i<n;i++){ const a=i/n*Math.PI*2+rand(0,0.5);
         bullets.push({x:p.x,y:p.y,vx:Math.cos(a)*240,vy:Math.sin(a)*240,dmg:p.dmg*(1.5+0.2*lv),
@@ -1958,6 +2020,7 @@ function updateFusions(dt){
 function weaponFireTick(dt){
   updateSpirits(dt);   // 🌟 삼수호령 이동 + 원소별 독립 쿨다운 발사 (여기서 전부 처리)
   updateBladeUnits(dt);// ⚔ 천검진 검 유닛 공전 + 찌르기
+  updateQueenBee(dt);  // 🐝 벌떼포화 여왕벌 — 거리 유지 + 미사일/산탄/화살
   updateFusions(dt);   // 🌟 융합 3종 — 재료별 독립 쿨다운 + 시그니처
   for(const key in player.weapons){ if(key==='orbit'||key==='spirits'||FUSE_KEYS.has(key)||!WEAPONS[key]) continue; const w=WEAPONS[key], l=player.weapons[key];
     if(player.timers[key]==null || player.timers[key]!==player.timers[key]) player.timers[key]=0; // null/undefined/NaN 방어: 타이머 유실 시 0으로 복구 → 진화·전직 무기 발사 누락 방지
@@ -3109,6 +3172,70 @@ function drawBladeUnits(){
   ctx.drawImage(sp,-size/2,-size/2,size,size);
   ctx.restore();
 }
+// 🐝 여왕벌 — 임시 스프라이트(전용 디자인 의뢰 전까지 쓰는 1차안).
+// 54px에서 '벌'로 읽히게 하는 건 사실상 줄무늬 하나다. 그래서 배의 띠를 제일 굵게 잡고,
+// 허리를 끊어 배-가슴-머리 셋이 따로 보이게 했다(천검진 실패작의 '한 덩어리' 문제).
+// ⚠️ 적(주황·금색 화살)과 색이 겹친다 — 줄무늬와 날개가 유일한 구분점이다.
+const queenCache=new Map();
+function queenSprite(evo){
+  const key=Number(evo); if(queenCache.has(key)) return queenCache.get(key);
+  const c=mkCv(192,192),g=c.getContext('2d');g.translate(96,96);g.scale(86,86);
+  // 재질 3개만 — 밝은 외피 / 어두운 띠(줄무늬·관절) / 발광 코어
+  const shell=evo?'#ffeaa0':'#ffd25c', band=evo?'#4a3a1c':'#3a2e18', core=evo?'#fff6d8':'#ffe9a8';
+  g.lineJoin='round';g.lineCap='round';
+  const plate=(pts,fill)=>{g.beginPath();pts.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));g.closePath();g.fillStyle=fill;g.fill();g.strokeStyle=band;g.lineWidth=.035;g.stroke();};
+  const ell=(x,y,rx,ry,fill,rot)=>{g.save();g.translate(x,y);if(rot)g.rotate(rot);g.beginPath();g.ellipse(0,0,rx,ry,0,0,6.283);g.fillStyle=fill;g.fill();g.strokeStyle=band;g.lineWidth=.035;g.stroke();g.restore();};
+  const limb=(pts,w,col)=>{g.beginPath();pts.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));g.lineWidth=w;g.strokeStyle=col;g.stroke();};
+  // 뒤쪽 침 (−x). 앞으로 쏘는 창과 헷갈리지 않게 어둡게 둔다
+  plate([[-.70,-.07],[-.99,0],[-.70,.07]],band);
+  // 배 + 줄무늬 3줄 ← 54px에서 '벌'을 만드는 건 거의 이것뿐이다
+  ell(-.42,0,.35,.27,shell);
+  for(let i=0;i<3;i++){ const x=-.63+i*.17; plate([[x,-.21],[x+.075,-.235],[x+.075,.235],[x,.21]],band); }
+  limb([[-.13,0],[-.03,0]],.10,band);       // 허리 — 배와 가슴을 끊는다
+  // 가슴
+  ell(.11,0,.27,.24,shell);
+  plate([[-.01,-.18],[.07,-.22],[.07,.22],[-.01,.18]],band);
+  // 다리 2쌍 — 실루엣에 돌기를 만들어 매끈한 알이 되지 않게
+  for(const s of [-1,1]){ limb([[.04,.17*s],[-.07,.35*s],[-.21,.41*s]],.065,band);
+                          limb([[.21,.16*s],[.27,.34*s],[.15,.43*s]],.065,band); }
+  // 머리 + 겹눈 + 더듬이
+  ell(.45,0,.20,.20,shell);
+  ell(.53,-.085,.075,.058,core,-.3); ell(.53,.085,.075,.058,core,.3);
+  limb([[.51,-.14],[.67,-.31],[.79,-.29]],.045,band);
+  limb([[.51,.14],[.67,.31],[.79,.29]],.045,band);
+  // 왕관 — 위에서 내려다보는 시점이라 좌우 대칭이어야 '관'으로 읽힌다
+  for(const s of [-1,1]) plate([[.40,.10*s],[.52,.29*s],[.65,.23*s],[.55,.06*s]],core);
+  // 앞으로 내민 창 — 탄이 나가는 곳. 정면이 어디인지 이걸로 읽힌다
+  plate([[.40,-.05],[.84,-.038],[.99,0],[.84,.038],[.40,.05]],shell);
+  ell(.87,0,.06,.06,core);
+  if(evo){   // 진화(무한포화) = 장갑 한 겹 + 등쪽 뿔
+    plate([[-.32,-.27],[-.19,-.44],[-.06,-.27]],core);
+    plate([[-.32,.27],[-.19,.44],[-.06,.27]],core);
+    ell(-.42,0,.15,.11,core);
+    plate([[.30,-.19],[.38,-.34],[.46,-.20]],core);
+    plate([[.30,.19],[.38,.34],[.46,.20]],core);
+  }
+  queenCache.set(key,c); return c;
+}
+function drawQueenBee(){
+  const lv=player.weapons.swarm; if(!lv) return;
+  const Q=player.queenEnt&&player.queenEnt[0]; if(!Q) return;
+  const evo=!!player.evolved.swarm, size=evo?62:54;
+  ctx.save();
+  ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=1;   // 앞 단계 가산합성이 새면 흰 덩어리가 된다
+  const kick=Q.recoil>0 ? -Math.sin(Math.max(0,Q.recoil)/0.14*Math.PI)*4 : 0;   // 쏠 때 뒤로 밀린다
+  ctx.translate(Q.x+Math.cos(Q.ang)*kick, Q.y+Q.bob+Math.sin(Q.ang)*kick);
+  ctx.rotate(Q.ang);
+  // 날개는 스프라이트에 넣지 않는다 — 넣으면 정지해 보이고, 벌은 떠는 날개로 읽힌다
+  { const f=Math.sin(Q.wing), ws=size*0.44;
+    ctx.globalAlpha=.30; ctx.fillStyle=evo?'#f4fff2':'#e4f6ff';
+    for(const s of [-1,1]){ ctx.save(); ctx.scale(1,s); ctx.rotate(-.45);
+      ctx.beginPath(); ctx.ellipse(-size*.05,-ws*(.52+.16*f),ws*.60,ws*.22*(.72+.32*f),0,0,6.283); ctx.fill();
+      ctx.restore(); } }
+  ctx.globalAlpha=1;
+  ctx.drawImage(queenSprite(evo),-size/2,-size/2,size,size);
+  ctx.restore();
+}
 function drawGuardians(){
   if(!player.weapons.spirits)return;const positions=spiritPositions(),evo=!!player.evolved.spirits,crisis=player.hp/player.maxhp<=.4;
   ctx.save();
@@ -3507,6 +3634,7 @@ function render(){
   //   삼수호령은 셋이 흩어져 있어 적 밑에 깔려도 보이지만, 천검진은 1기가
   //   적진 한가운데로 파고드는 구조라 적 밑에 두면 거의 늘 가려진다.
   drawBladeUnits();
+  drawQueenBee();
   // floating 데미지/처치 숫자
   for(const tx of texts){ ctx.globalAlpha=Math.max(0,Math.min(1,tx.life*2)); ctx.fillStyle=tx.color; ctx.font=fTech(tx.size||14,true); ctx.textAlign='center'; ctx.fillText(tx.str,tx.x,tx.y); }
   ctx.globalAlpha=1; ctx.textAlign='left';
