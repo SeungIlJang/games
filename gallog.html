@@ -1026,7 +1026,7 @@ function sanitizeTune(obj){
 //   배포할 때 이 값만 올리면 모든 기기의 개발 패널 수치가 버려지고 코드 기본값(TUNE_DEFAULTS)을 받는다.
 //   → 밸런스는 '코드가 유일한 진실'이 되고, 개발 패널은 내 기기에서 잠깐 돌려보는 용도로만 남는다.
 //   (골드/영구강화/전직은 ss_meta 라 영향 없음 — 그쪽은 계속 기기별로 유지된다)
-const GAME_VER='10.13';
+const GAME_VER='10.14';
 // 개발 패널 수치는 이 기기에 계속 남는다(앱을 껐다 켜도 유지). 배포해도 지우지 않는다 —
 // 모르는 사이에 설정이 사라지는 편이 더 나쁘다. 대신 '기본값' 버튼으로 언제든 코드값을 받을 수 있고,
 // 전 플레이어에게 반영하려면 '현재 수치 내보내기'로 뽑아 TUNE_DEFAULTS 에 넣고 배포한다.
@@ -3101,10 +3101,17 @@ function warriorSprite(evo,pose='idle'){
   if(warriorCache.has(key))return warriorCache.get(key);
   const c=mkCv(192,192),g=c.getContext('2d');g.translate(96,96);g.scale(86,86);
   // Three opaque materials. Pale alloy fills the silhouette; teal lives only in joints.
-  const alloy=evo?'#a7ffdc':'#cdfffb',joint=evo?'#347664':'#367080',gold=evo?'#f2cf80':'#d9bd75';
+  const alloy=evo?'#c8fff0':'#d3edf7',joint=evo?'#345668':'#344866',gold=evo?'#f0d496':'#d8bf80';
   g.lineJoin='miter';g.lineCap='square';
   function plate(points,fill=alloy){g.beginPath();points.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));g.closePath();g.fillStyle=fill;g.fill();g.strokeStyle=joint;g.lineWidth=.035;g.stroke();}
   function limb(points,width,color){g.beginPath();points.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));g.lineWidth=width;g.strokeStyle=color;g.stroke();}
+  // Split longcoat: bright outer fabric, navy inset, gold edges.
+  // Trails stay behind the torso and outside the gap between the two legs.
+  plate([[-.23,-.25],[-.42,-.14],[-.48,.24],[-.65,.62],[-.82,.73],[-.44,.64],[-.25,.24]],joint);
+  plate([[-.31,-.19],[-.37,.12],[-.49,.45],[-.69,.66],[-.43,.56],[-.25,.13]]);
+  limb([[-.37,.11],[-.49,.45],[-.69,.66]],.035,gold);
+  plate([[-.03,.03],[.17,.16],[.24,.47],[.48,.70],[.25,.65],[.06,.42]],joint);
+  plate([[.06,.13],[.17,.25],[.21,.46],[.36,.61],[.20,.54],[.04,.26]]);
   // Rear arm is a compact bent elbow, never a wing.
   limb([[-.21,-.22],[-.43,-.06],[-.28,.09]],.14,joint);
   plate([[-.43,-.16],[-.34,-.10],[-.34,.03],[-.44,.07],[-.50,-.03]]);
@@ -3112,22 +3119,30 @@ function warriorSprite(evo,pose='idle'){
   const front=strike?.20:.06,back=strike?-.08:0;
   limb([[-.14,.20],[-.30+back,.45],[-.31+back,.72]],.14,joint);
   plate([[-.39+back,.38],[-.24+back,.42],[-.23+back,.66],[-.35+back,.72],[-.43+back,.61]]);
-  plate([[-.36+back,.65],[-.24+back,.65],[-.19+back,.80],[-.43+back,.80],[-.43+back,.73]],gold);
+  plate([[-.36+back,.65],[-.24+back,.65],[-.19+back,.80],[-.43+back,.80],[-.43+back,.73]]);
   limb([[.02,.22],[.16+front,.43],[.12+front,.69]],.15,joint);
   plate([[.06+front,.37],[.23+front,.38],[.21+front,.64],[.10+front,.70],[.04+front,.60]]);
-  plate([[.10+front,.64],[.23+front,.64],[.34+front,.77],[.09+front,.79],[.04+front,.73]],gold);
+  plate([[.10+front,.64],[.23+front,.64],[.34+front,.77],[.09+front,.79],[.04+front,.73]]);
   // Hip / neck gaps are deliberately exposed dark joints.
   plate([[-.21,.11],[.09,.12],[.15,.25],[-.03,.31],[-.24,.24]],joint);
-  plate([[-.27,-.28],[.04,-.29],[.17,-.12],[.09,.13],[-.19,.17],[-.32,-.06]]);
+  plate([[-.23,-.28],[.03,-.29],[.14,-.10],[.05,.13],[-.15,.17],[-.27,-.06]],joint);
+  plate([[-.23,-.24],[-.12,-.20],[-.07,.02],[-.15,.12],[-.25,-.04]]);
+  plate([[.01,-.24],[.11,-.10],[.06,.04],[-.03,-.01],[-.03,-.18]]);
+  limb([[-.12,-.20],[-.07,.02],[-.15,.12]],.025,gold);
   plate([[-.20,-.20],[.02,-.20],[.05,-.08],[-.08,.02],[-.23,-.08]],gold);
   plate([[-.20,-.04],[.04,-.04],[.02,.05],[-.17,.09]],joint);
-  // Helmet sits above the torso, joined through a visible narrow neck.
-  limb([[-.09,-.32],[-.08,-.39]],.10,joint);
-  plate([[-.21,-.63],[-.01,-.68],[.14,-.56],[.14,-.41],[-.02,-.34],[-.22,-.41]]);
-  plate([[-.12,-.54],[.17,-.52],[.12,-.43],[-.10,-.44]],joint);
-  limb([[.00,-.49],[.12,-.48]],.035,gold);
+  // Silver-blue hair over a compact face, with a deep navy side fringe.
+  limb([[-.09,-.32],[-.08,-.39]],.09,joint);
+  plate([[-.22,-.60],[-.10,-.72],[.03,-.70],[.15,-.58],[.12,-.40],[-.04,-.34],[-.21,-.43]]);
+  plate([[-.19,-.58],[-.10,-.69],[-.07,-.51],[-.16,-.39],[-.25,-.29],[-.20,-.48]]);
+  plate([[-.04,-.69],[.10,-.61],[.16,-.51],[.06,-.50],[.02,-.38],[-.04,-.49]],joint);
+  plate([[.01,-.48],[.12,-.48],[.10,-.40],[.02,-.38]]);
+  limb([[.05,-.46],[.11,-.46]],.025,joint);
+  // Long side lock stays separate from the shoulder, rather than a wing.
+  plate([[-.18,-.46],[-.24,-.27],[-.33,-.13],[-.31,-.30],[-.24,-.51]]);
   // One thick, squared shoulder and a bent sword arm create asymmetry.
-  plate([[.08,-.27],[.26,-.23],[.29,-.07],[.15,-.01],[.06,-.12]],gold);
+  plate([[.08,-.27],[.23,-.22],[.25,-.09],[.14,-.04],[.06,-.12]]);
+  limb([[.09,-.25],[.23,-.21],[.24,-.10]],.035,gold);
   const hand=strike?[.40,.00]:[.32,.23];
   limb([[.19,-.09],[.32,.07],hand],.13,joint);
   plate([[.23,.01],[.38,.04],[hand[0]+.04,hand[1]-.03],[hand[0]-.08,hand[1]+.06]]);
@@ -3140,11 +3155,14 @@ function warriorSprite(evo,pose='idle'){
   g.restore();
   plate([[hand[0]-.045,hand[1]-.055],[hand[0]+.045,hand[1]-.055],[hand[0]+.045,hand[1]+.055],[hand[0]-.045,hand[1]+.055]],gold);
   if(evo){
-    // Evolution is solid armor and a three-prong crest, not a faint halo.
-    plate([[-.19,-.62],[-.25,-.83],[-.10,-.73],[-.03,-.91],[.04,-.71],[.18,-.77],[.12,-.58]],gold);
-    plate([[-.32,-.27],[-.43,-.26],[-.46,-.11],[-.30,-.02]],gold);
-    plate([[-.24,.03],[-.34,.20],[-.28,.36],[-.13,.22]],gold);
-    plate([[.09,.03],[.20,.12],[.23,.29],[.08,.24]],gold);
+    // Ascended form: higher collar, longer pale mantle and a gold diadem.
+    plate([[-.20,-.65],[-.12,-.75],[-.04,-.73],[.00,-.64]],gold);
+    plate([[-.30,-.25],[-.42,-.29],[-.46,-.12],[-.32,-.03]]);
+    limb([[-.41,-.25],[-.43,-.13]],.045,gold);
+    plate([[-.38,.15],[-.59,.43],[-.90,.66],[-.62,.61],[-.40,.42]]);
+    limb([[-.59,.43],[-.90,.66]],.035,gold);
+    plate([[.12,.16],[.32,.35],[.55,.62],[.35,.53],[.16,.34]]);
+    limb([[.32,.35],[.55,.62]],.035,gold);
   }
   warriorCache.set(key,c);return c;
 }
@@ -3183,52 +3201,42 @@ const queenCache=new Map();
 function queenSprite(evo){
   const key=Number(evo);if(queenCache.has(key))return queenCache.get(key);
   const c=mkCv(192,192),g=c.getContext('2d');g.translate(96,96);g.scale(86,86);
-  const shell=evo?'#f1e9cf':'#e5e2ce',dark=evo?'#514877':'#45436d',regal=evo?'#e5c982':'#d9b854';
+  const gold=evo?'#ebcc75':'#d9b854',dark='#27323f',membrane=evo?'#b4d5d9':'#93b9c5';
   g.lineJoin='round';g.lineCap='round';
-  function plate(pts,fill=shell){g.beginPath();pts.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));g.closePath();g.fillStyle=fill;g.fill();g.strokeStyle=dark;g.lineWidth=.035;g.stroke();}
-  function oval(x,y,rx,ry,fill){g.beginPath();g.ellipse(x,y,rx,ry,0,0,6.283);g.fillStyle=fill;g.fill();g.strokeStyle=dark;g.lineWidth=.035;g.stroke();}
-  function limb(pts,w,color){g.beginPath();pts.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));g.strokeStyle=color;g.lineWidth=w;g.stroke();}
-  // Six bent feet, not mandibles. They originate behind the face.
-  for(const sign of [-1,1]){
-    limb([[-.28,sign*.20],[-.39,sign*.40],[-.49,sign*.41]],.065,shell);
-    limb([[-.04,sign*.19],[-.02,sign*.43],[.09,sign*.46]],.065,shell);
-    limb([[.20,sign*.16],[.35,sign*.35],[.47,sign*.33]],.065,shell);
-  }
-  // Queen bees have a long tapered abdomen, not a fly's round rear bulb.
-  const abdomen=[[-.10,0],[-.19,-.21],[-.40,-.29],[-.68,-.27],[-.88,-.16],[-1.04,0],[-.88,.16],[-.68,.27],[-.40,.29],[-.19,.21]];
-  plate(abdomen,dark);
-  g.save();g.beginPath();abdomen.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));g.closePath();g.clip();
-  // Honey bands occupy separated sections; indigo remains the identity outline.
-  for(const [x,w,h]of [[-.80,.09,.19],[-.61,.11,.26],[-.39,.11,.27],[-.20,.07,.19]]){
-    plate([[x,-h],[x+w,-h*.9],[x+w,h*.9],[x,h]],regal);
-    g.fillStyle=shell;g.fillRect(x,-h,w*.32,h*2);
-  }
-  g.restore();
-  // Narrow waist and two dark negative spaces separate the three anatomical masses.
-  limb([[-.10,0],[.03,0]],.10,regal);
-  oval(.13,0,.22,.225,shell);
-  plate([[.01,-.11],[.13,-.17],[.25,-.11],[.22,.10],[.13,.16],[.04,.10]],dark);
-  oval(.13,0,.065,.085,regal);
-  limb([[.32,0],[.39,0]],.09,dark);
-  oval(.54,0,.165,.16,shell);
-  // Compound eyes are paired broad indigo patches, never a white perimeter.
-  oval(.62,-.075,.050,.040,dark);oval(.62,.075,.050,.040,dark);
-  // Crown is an inlaid central trident on the carapace, not lateral claw-like horns.
-  plate([[.36,-.15],[.58,-.17],[.52,-.075],[.67,0],[.52,.075],[.58,.17],[.36,.15]],regal);
-  plate([[.38,-.07],[.45,-.07],[.48,0],[.45,.07],[.38,.07]],dark);
-  // Short unmistakable front cannon, with a recessed muzzle.
-  plate([[.68,-.07],[.87,-.065],[.94,0],[.87,.065],[.68,.07]],shell);
-  plate([[.83,-.044],[.91,0],[.83,.044]],dark);
-  // Small antennae sweep backwards, outside the muzzle silhouette.
-  for(const sign of [-1,1]){limb([[.48,sign*.14],[.40,sign*.28],[.48,sign*.30]],.04,dark);oval(.48,sign*.30,.035,.035,regal);}
+  function shape(path,fill,stroke=.065){g.beginPath();path(g);g.closePath();g.fillStyle=fill;g.fill();g.strokeStyle=dark;g.lineWidth=stroke;g.stroke();}
+  function oval(x,y,rx,ry,fill){shape(g=>g.ellipse(x,y,rx,ry,0,0,6.283),fill);}
+  // A tapered royal abdomen, thick dark separators and broad honey bands.
+  const abdomen=g=>{g.moveTo(-.02,-.17);g.bezierCurveTo(-.24,-.39,-.59,-.39,-.77,-.20);g.lineTo(-1.01,0);g.lineTo(-.77,.20);g.bezierCurveTo(-.59,.39,-.24,.39,-.02,.17);};
+  shape(abdomen,gold);
+  g.save();g.beginPath();abdomen(g);g.closePath();g.clip();
+  g.fillStyle=dark;for(const x of [-.74,-.48,-.20])g.fillRect(x-.045,-.42,.09,.84);
+  // One blue-gray heraldic band, echoed by the wings, separates her from gold enemies.
+  g.fillStyle=membrane;g.fillRect(-.58,-.39,.13,.78);
+  g.fillStyle=membrane;g.beginPath();g.moveTo(-.80,-.18);g.lineTo(-.96,0);g.lineTo(-.80,.18);g.lineTo(-.86,0);g.closePath();g.fill();g.restore();
+  // Simple queen silhouette with a small armored chest and restrained mechanical accents.
+  shape(g=>{g.moveTo(-.12,-.14);g.lineTo(.25,-.13);g.lineTo(.29,0);g.lineTo(.25,.13);g.lineTo(-.12,.14);},gold);
+  oval(.48,0,.255,.265,gold);
+  // A recessed breastplate and small gold power cell, rather than jointed limbs.
+  oval(.09,0,.105,.115,dark);oval(.09,0,.047,.055,gold);
+  // Compact helmet bezel echoes the earlier robot while keeping a single round head.
+  g.strokeStyle=membrane;g.lineWidth=.045;g.beginPath();g.arc(.48,0,.21,Math.PI*.64,Math.PI*1.36);g.stroke();
+  // Two tiny recessed lenses; broad queen features remain the primary read.
+  oval(.55,-.105,.069,.064,dark);oval(.55,.105,.069,.064,dark);
+  oval(.566,-.105,.033,.033,gold);oval(.566,.105,.033,.033,gold);
+
+  // Bold three-point crown directly in front of the head, centered on the facing axis.
+  shape(g=>{g.moveTo(.67,-.19);g.lineTo(.90,-.25);g.lineTo(.85,-.09);g.lineTo(1.04,0);g.lineTo(.85,.09);g.lineTo(.90,.25);g.lineTo(.67,.19);},gold,.055);
+  // Curved antennae frame the crown instead of resembling claws at the muzzle.
+  for(const sign of [-1,1]){g.beginPath();g.moveTo(.51,sign*.22);g.bezierCurveTo(.61,sign*.34,.78,sign*.48,.88,sign*.46);g.strokeStyle=dark;g.lineWidth=.055;g.stroke();}
+  // Two thick abdomen seams suggest fitted armor without fine line noise.
+  g.strokeStyle=membrane;g.lineWidth=.04;g.beginPath();
+  g.moveTo(-.37,-.26);g.lineTo(-.29,-.22);g.moveTo(-.37,.26);g.lineTo(-.29,.22);g.stroke();
+  // Recessed center seam indicates forward emission without adding a long spear.
+  g.fillStyle=dark;g.fillRect(.79,-.035,.13,.07);
   if(evo){
-    // Regal collar and layered mantle, following the longer queen abdomen.
-    for(const sign of [-1,1]){
-      plate([[-.85,sign*.18],[-.63,sign*.35],[-.33,sign*.35],[-.16,sign*.21],[-.40,sign*.26]],shell);
-      limb([[-.68,sign*.29],[-.37,sign*.29]],.045,regal);
-    }
-    plate([[-.04,-.17],[.09,-.30],[.27,-.20],[.23,-.12],[.08,-.20]],regal);
-    plate([[-.04,.17],[.09,.30],[.27,.20],[.23,.12],[.08,.20]],regal);
+    shape(g=>{g.moveTo(-.05,-.17);g.lineTo(.05,-.26);g.lineTo(.23,-.20);g.lineTo(.25,-.13);},membrane,.045);
+    shape(g=>{g.moveTo(-.05,.17);g.lineTo(.05,.26);g.lineTo(.23,.20);g.lineTo(.25,.13);},membrane,.045);
+    g.strokeStyle=membrane;g.lineWidth=.035;g.beginPath();g.moveTo(.76,-.13);g.lineTo(.84,-.15);g.moveTo(.76,.13);g.lineTo(.84,.15);g.stroke();
   }
   queenCache.set(key,c);return c;
 }
@@ -3241,21 +3249,16 @@ function drawQueenBee(){
   const kick=Q.recoil>0 ? -Math.sin(Math.max(0,Q.recoil)/0.14*Math.PI)*4 : 0;   // 쏠 때 뒤로 밀린다
   ctx.translate(Q.x+Math.cos(Q.ang)*kick, Q.y+Q.bob+Math.sin(Q.ang)*kick);
   ctx.rotate(Q.ang);
-  // Mirrored membrane wings: long forewings and small hindwings identify a bee.
+  // Broad petal wings echo the crowned-queen reference, animated outside the body.
   {const r=size/2,f=Math.sin(Q.wing);
-    ctx.fillStyle=evo?'#f1e9cf':'#e5e2ce';ctx.strokeStyle=evo?'#514877':'#45436d';
     for(const sign of [-1,1]){ctx.save();ctx.scale(1,sign);
-      ctx.translate(.10*r,-.10*r);ctx.rotate(-.10+f*.14);
-      ctx.lineWidth=.025*r;
-      ctx.globalAlpha=evo?.40:.32;
-      ctx.beginPath();ctx.moveTo(-.08*r,0);
-      ctx.bezierCurveTo(-.42*r,-.10*r,-.85*r,-.43*r,-.72*r,-.59*r);
-      ctx.bezierCurveTo(-.59*r,-.69*r,-.19*r,-.36*r,0,0);ctx.closePath();ctx.fill();ctx.stroke();
-      ctx.globalAlpha=evo?.50:.42;
-      ctx.beginPath();ctx.moveTo(0,0);
-      ctx.bezierCurveTo(.05*r,-.30*r,-.04*r,-1.04*r,-.27*r,-1.01*r);
-      ctx.bezierCurveTo(-.54*r,-.94*r,-.31*r,-.24*r,0,0);ctx.closePath();ctx.fill();ctx.stroke();
-      ctx.globalAlpha=.3;ctx.lineWidth=.018*r;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-.25*r,-.81*r);ctx.stroke();
+      ctx.translate(.09*r,-.08*r);ctx.rotate(f*.085);
+      ctx.fillStyle=evo?'#b4d5d9':'#93b9c5';ctx.strokeStyle='#27323f';ctx.lineWidth=.065*r;ctx.globalAlpha=evo?.88:.80;
+      ctx.beginPath();ctx.moveTo(.04*r,-.04*r);ctx.bezierCurveTo(-.18*r,-.28*r,-.66*r,-.94*r,-.91*r,-.77*r);
+      ctx.bezierCurveTo(-1.08*r,-.49*r,-.53*r,-.15*r,.04*r,-.04*r);ctx.closePath();ctx.fill();ctx.stroke();
+      // Two broad veins support the insect read at 54px; no fine mesh.
+      ctx.globalAlpha=.65;ctx.lineWidth=.035*r;ctx.beginPath();ctx.moveTo(-.05*r,-.11*r);ctx.lineTo(-.75*r,-.65*r);ctx.moveTo(-.34*r,-.33*r);ctx.lineTo(-.69*r,-.33*r);ctx.stroke();
+      if(evo){ctx.globalAlpha=.75;ctx.strokeStyle='#ebcc75';ctx.lineWidth=.045*r;ctx.beginPath();ctx.moveTo(-.30*r,-.38*r);ctx.lineTo(-.70*r,-.73*r);ctx.stroke();}
       ctx.restore();
     }
   }
