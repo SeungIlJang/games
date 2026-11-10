@@ -239,13 +239,13 @@
     </div>
     <!-- 융합·계약 조건 — 레벨업 카드 한 줄로만 알 수 있던 것을 멈춘 김에 전부 펼쳐 본다.
          일시정지 안에 접어 넣으니 [포기하고 상점으로]가 밀려나서, 별도 레이어로 뺐다. -->
-    <button class="btn-sm" id="fuseGuideBtn" style="margin-top:16px;">🌟 융합 · 계약 조건</button>
+    <button class="btn-sm" id="fuseGuideBtn" style="margin-top:16px;">🌟 융합 · 승격 · 계약</button>
     <button class="btn btn-gold" id="pauseShopBtn" data-i18n="pauseShop" style="margin-top:14px;">🪙 상점</button>
     <button id="quitBtn" data-i18n="quit" style="margin-top:14px;" class="btn-sm">포기하고 상점으로</button>
   </div>
   <!-- 글이 많은 패널이라 .center 기본 배경(.68)으로는 뒤 전장이 비쳐 읽기 어렵다 -->
   <div id="condPanel" class="center hidden" style="z-index:16;justify-content:flex-start;overflow-y:auto;padding:max(env(safe-area-inset-top),18px) 0 28px;background:rgba(5,8,16,.95);backdrop-filter:blur(4px);">
-    <h1 style="font-size:21px;margin-bottom:2px;">🌟 융합 · 계약 조건</h1>
+    <h1 style="font-size:20px;margin-bottom:2px;">🌟 융합 · 승격 · 계약</h1>
     <div id="condBody" style="width:min(90vw,420px);pointer-events:auto;text-align:left;"></div>
     <button class="btn" id="condCloseBtn" style="margin-top:16px;" data-i18n="close">닫기</button>
   </div>
@@ -1032,7 +1032,7 @@ function sanitizeTune(obj){
 //   배포할 때 이 값만 올리면 모든 기기의 개발 패널 수치가 버려지고 코드 기본값(TUNE_DEFAULTS)을 받는다.
 //   → 밸런스는 '코드가 유일한 진실'이 되고, 개발 패널은 내 기기에서 잠깐 돌려보는 용도로만 남는다.
 //   (골드/영구강화/전직은 ss_meta 라 영향 없음 — 그쪽은 계속 기기별로 유지된다)
-const GAME_VER='10.16';
+const GAME_VER='10.17';
 // 개발 패널 수치는 이 기기에 계속 남는다(앱을 껐다 켜도 유지). 배포해도 지우지 않는다 —
 // 모르는 사이에 설정이 사라지는 편이 더 나쁘다. 대신 '기본값' 버튼으로 언제든 코드값을 받을 수 있고,
 // 전 플레이어에게 반영하려면 '현재 수치 내보내기'로 뽑아 TUNE_DEFAULTS 에 넣고 배포한다.
@@ -4075,14 +4075,46 @@ function pactRows(){
   }
   return html;
 }
+// ── 스탯 승격 조건 ────────────────────────────────────────────────────
+// 승격은 '같은 스탯을 5번' 이라는 조건이 화면 어디에도 안 보인다. 레벨업 카드
+// 꼬리에 (3/5 → 특화)가 붙지만 그 카드가 떠야만 보인다 — 세 줄을 미리 펼친다.
+function promoteRows(){
+  let html='<div style="font-size:11px;color:#8aa0b5;line-height:1.65;margin-bottom:9px;padding:0 2px;">'
+    + featureLabel('같은 스탯 카드를 '+PROMOTE_AT+'번 집으면, 그 자리에 특화 카드가 대신 나온다',
+                   'Pick the same stat card '+PROMOTE_AT+' times and a specialization replaces it',
+                   '同じステータスを'+PROMOTE_AT+'回取ると、その枠が特化カードに変わる')
+    +'</div>';
+  for(const k in PROMOTES){
+    const P=PROMOTES[k], S=STAT_UPS.find(s=>s.k===k);
+    const n=Math.min(PROMOTE_AT,(player.statCount&&player.statCount[k])||0);
+    const done=!!(player.promo&&player.promo[k]);
+    const col = done?'#8fe6b0' : n>0?'#9fe3ff' : '#5d7186';
+    html+='<div style="border:1px solid '+col+'4d;background:'+col+'12;'
+      +'clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px);'
+      +'padding:8px 11px;margin-bottom:6px;'+((done||n>0)?'':'opacity:.7;')+'">'
+      +'<div style="display:flex;align-items:center;gap:8px;">'
+      +'<b style="font-size:13px;color:'+(done?'#8fe6b0':'#ffe9b8')+';">'+trDesc(P.t)+'</b>'
+      +'<span style="margin-left:auto;font-size:10px;font-weight:800;color:'+col+';white-space:nowrap;">'
+      +(done?('✓ '+featureLabel('승격됨','PROMOTED','昇格')):(n+' / '+PROMOTE_AT))+'</span></div>';
+    if(!done)   // 진행 막대 — 몇 번 더 집으면 되는지가 숫자보다 빨리 읽힌다
+      html+='<div style="height:4px;background:#1b2838;margin-top:6px;">'
+        +'<div style="height:100%;width:'+(n/PROMOTE_AT*100)+'%;background:'+col+';"></div></div>';
+    html+='<div style="font-size:11px;color:#b9c9da;margin-top:5px;line-height:1.5;">'
+      +(S?'<span style="color:#7f93a8;">'+trDesc(S.t)+' ×'+PROMOTE_AT+' → </span>':'')
+      +trDesc(P.d)+'</div></div>';
+  }
+  return html;
+}
 function condSection(t){
   return '<div style="font-size:13px;font-weight:800;color:#cfe6f5;margin:15px 0 8px;padding:0 2px;letter-spacing:.5px;">'+t+'</div>';
 }
 function openCondPanel(){
   const box=document.getElementById('condBody'); if(!box) return;
+  // 순서는 '무기 → 스탯 → 특수'. 셋 다 조건이 숨어 있던 것들이다.
   box.innerHTML = (player&&player.weapons)
-    ? ( condSection('🌟 '+featureLabel('융합','FUSION','融合')) + fuseGuideRows()
-      + condSection('📜 '+featureLabel('계약','PACTS','契約'))  + pactRows() )
+    ? ( condSection('🌟 '+featureLabel('융합','FUSION','融合'))      + fuseGuideRows()
+      + condSection('⭐ '+featureLabel('스탯 승격','PROMOTION','特化')) + promoteRows()
+      + condSection('📜 '+featureLabel('계약','PACTS','契約'))       + pactRows() )
     : '';
   document.getElementById('paused').classList.add('hidden');
   document.getElementById('condPanel').classList.remove('hidden');
