@@ -291,7 +291,7 @@
 <div id="muteBtn" role="button" aria-label="소리 켜기 끄기">🔊</div>
 <div id="modBar"></div>
 <div id="wrap">
-  <div id="target">🎯 이 숫자에서 멈춰!</div>
+  <div id="target"><img class="art" src="img/number/ui/ui_target.webp" alt="" width="15" height="15" data-fb="🎯" onerror="uiFB(this)"/> 이 숫자에서 멈춰!</div>
   <div id="targetWrap"><div id="targetN">–</div></div>
   <div id="chainTag"></div>
   <div id="curWrap"><div id="cur">–</div></div>
@@ -319,23 +319,23 @@
     <div id="rankMore">👑 랭크 7단계 전체 보기 ›</div>
   </div>
   <div id="statRow">
-    <div class="hstat"><div class="sl">🏆 최고 기록</div><div class="sv"><span id="best2">0</span></div></div>
-    <div class="hstat"><div class="sl">💰 보유 코인</div><div class="sv"><span id="coins">0</span></div></div>
+    <div class="hstat"><div class="sl"><img class="art" src="img/number/ui/ui_trophy.webp" alt="" width="13" height="13" data-fb="🏆" onerror="uiFB(this)"/> 최고 기록</div><div class="sv"><span id="best2">0</span></div></div>
+    <div class="hstat"><div class="sl"><img class="art" src="img/number/ui/ui_coin.webp" alt="" width="13" height="13" data-fb="💰" onerror="uiFB(this)"/> 보유 코인</div><div class="sv"><span id="coins">0</span></div></div>
   </div>
   <button class="btn" id="startBtn">시작</button>
-  <button class="btn" id="dailyBtn">📅 일일 챌린지<span id="dailyBadge" class="hidden">NEW</span></button>
+  <button class="btn" id="dailyBtn"><img class="art" src="img/number/ui/ui_daily.webp" alt="" width="18" height="18" data-fb="📅" onerror="uiFB(this)"/> 일일 챌린지<span id="dailyBadge" class="hidden">NEW</span></button>
   <div id="navRow">
-    <button class="btn" id="lbBtn">🏆 랭킹</button>
-    <button class="btn" id="shopBtn">🛒 상점</button>
-    <button class="btn" id="helpBtn">📖 방법</button>
+    <button class="btn" id="lbBtn"><img class="art" src="img/number/ui/ui_trophy.webp" alt="" width="16" height="16" data-fb="🏆" onerror="uiFB(this)"/> 랭킹</button>
+    <button class="btn" id="shopBtn"><img class="art" src="img/number/ui/ui_shop.webp" alt="" width="16" height="16" data-fb="🛒" onerror="uiFB(this)"/> 상점</button>
+    <button class="btn" id="helpBtn"><img class="art" src="img/number/ui/ui_help.webp" alt="" width="16" height="16" data-fb="📖" onerror="uiFB(this)"/> 방법</button>
   </div>
   <div id="boostRow"></div>
   <div id="dailyBox"></div>
-  <div id="changelog">🆕 <b id="clVer">v3.1</b> · <span id="clNote"><b>맞혔을 때 연출이 화려해졌어요</b> · PERFECT·체인에 전용 리본과 빛 폭발</span></div>
+  <div id="changelog">🆕 <b id="clVer">v3.4</b> · <span id="clNote"><b>숫자와 아이콘이 전용 디자인으로 바뀌었어요</b> · 기기마다 다르던 이모지도 통일</span></div>
 </div>
 
 <div id="help" class="hidden">
-  <h1>📖 게임 방법</h1>
+  <h1><img class="art" src="img/number/ui/ui_help.webp" alt="" width="24" height="24" data-fb="📖" onerror="uiFB(this)"/> 게임 방법</h1>
   <div class="hrow">① 숫자가 <b>일정한 규칙</b>으로 올라갑니다. 아래 수열(<b>3 → 6 → 9</b>)을 보고 규칙을 읽으세요.</div>
   <div class="hrow">② 화면 위 <b>목표 숫자</b>와 <b>똑같아지는 순간</b> 아무 곳이나 탭! 지나치거나 다른 숫자에서 멈추면 실패입니다.</div>
   <div class="hrow">③ <b style="color:#ffe14d">PERFECT</b>(목표 도달 직후 반응)를 연속하면 점수 배수가 <b>최대 ×5</b>까지 올라갑니다.</div>
@@ -356,20 +356,20 @@
   <div class="sub" id="overMission" style="color:#5cffb0;font-weight:800;min-height:0"></div>
   <div class="sub" id="overRank" style="color:#ffd34d;font-weight:800;min-height:20px"></div>
   <div class="sub" style="opacity:.7">최고 <b id="overBest">0</b></div>
-  <div class="sub" id="overLbTitle" style="margin-top:6px;font-weight:800;color:#ffd34d">🏆 랭킹</div>
+  <div class="sub" id="overLbTitle" style="margin-top:6px;font-weight:800;color:#ffd34d"><img class="art" src="img/number/ui/ui_trophy.webp" alt="" width="15" height="15" data-fb="🏆" onerror="uiFB(this)"/> 랭킹</div>
   <div id="overLbList"></div>
   <button class="btn" id="reviveBtn" style="background:#2ec77a;box-shadow:0 6px 0 #1a8a52;display:none">🎬 광고 보고 이어하기</button>
   <div style="display:flex;gap:8px;margin-top:8px">
     <button class="btn" id="retryBtn" style="padding:13px 20px;font-size:18px">한 판 더</button>
     <button class="btn" id="homeBtn" style="padding:13px 18px;font-size:17px;background:#20263c;box-shadow:0 6px 0 #10131f">🏠 홈</button>
-    <button class="btn" id="shareBtn" style="padding:13px 18px;font-size:17px;background:#20263c;box-shadow:0 6px 0 #10131f">🏆 공유</button>
+    <button class="btn" id="shareBtn" style="padding:13px 18px;font-size:17px;background:#20263c;box-shadow:0 6px 0 #10131f"><img class="art" src="img/number/ui/ui_trophy.webp" alt="" width="17" height="17" data-fb="🏆" onerror="uiFB(this)"/> 공유</button>
   </div>
   <div class="sub" style="font-size:12px;opacity:.6;margin-top:2px">🏠 홈에서 랭크·일일 미션·부스터를 확인할 수 있어요</div>
 </div>
 
 <div id="lb" class="hidden">
   <div id="lbX" role="button" aria-label="닫기">✕</div>
-  <h1>🏆 랭킹</h1>
+  <h1><img class="art" src="img/number/ui/ui_trophy.webp" alt="" width="24" height="24" data-fb="🏆" onerror="uiFB(this)"/> 랭킹</h1>
   <div class="sub" id="lbName"></div>
   <div id="lbList"></div>
   <button class="btn" id="lbClose" style="margin-top:6px">닫기</button>
@@ -378,7 +378,7 @@
 <div id="daily" class="hidden">
   <div id="dailyX" role="button" aria-label="닫기">✕</div>
   <div id="dailyHead">
-    <h1>📅 일일 챌린지</h1>
+    <h1><img class="art" src="img/number/ui/ui_daily.webp" alt="" width="24" height="24" data-fb="📅" onerror="uiFB(this)"/> 일일 챌린지</h1>
     <span id="dailyDateChip">–</span>
     <div class="sub" style="font-size:12.5px;line-height:1.55;margin-top:2px">오늘은 <b style="color:#7cf6ff">모두 똑같은 순서</b>의 라운드 · 부스터 없이</div>
   </div>
@@ -395,7 +395,7 @@
   </div>
   <div id="dailyLbList"></div>
   <div id="dailyLog" class="hidden"></div>
-  <button class="btn" id="dailyShare">🏆 결과 공유</button>
+  <button class="btn" id="dailyShare"><img class="art" src="img/number/ui/ui_trophy.webp" alt="" width="16" height="16" data-fb="🏆" onerror="uiFB(this)"/> 결과 공유</button>
 </div>
 
 <div id="draft" class="hidden">
@@ -415,13 +415,13 @@
 
 <div id="shop" class="hidden">
   <div id="shopX" role="button" aria-label="닫기">✕</div>
-  <h1 style="font-size:32px">🛒 상점</h1>
-  <div class="sub">보유 💰 <b id="shopCoins" style="color:#ffd34d">0</b> · 한 판 하면 코인이 쌓여요</div>
+  <h1 style="font-size:32px"><img class="art" src="img/number/ui/ui_shop.webp" alt="" width="26" height="26" data-fb="🛒" onerror="uiFB(this)"/> 상점</h1>
+  <div class="sub">보유 <img class="art" src="img/number/ui/ui_coin.webp" alt="" width="15" height="15" data-fb="💰" onerror="uiFB(this)"/> <b id="shopCoins" style="color:#ffd34d">0</b> · 한 판 하면 코인이 쌓여요</div>
   <div id="shopTabs"><button class="stab on" data-tab="theme">🎨 테마</button><button class="stab" data-tab="boost">⚡ 부스터</button></div>
   <div id="shopList"></div>
   <button class="btn" id="shopClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v3.3 · 숫자 전용 서체</div>
+<div id="ver">v3.4 · HUD 아이콘</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -744,7 +744,7 @@ function renderBoostShop(){ const box=$('shopList');
   box.innerHTML='<div class="sub" style="font-size:12.5px;opacity:.7;margin-bottom:4px">사면 보유하고, 시작 화면에서 <b>장착</b>한 것만 그 판에 소모돼요</div>'
     + BOOSTS.map(B=>{ const n=bst[B.id]||0;
       return '<div class="boostrow"><span class="bi">'+art('boost_'+B.id,B.i,34)+'</span><span class="bn">'+B.n+(n?' <span style="color:#5cffb0">×'+n+'</span>':'')+'<div class="bd">'+B.d+'</div></span>'
-        + (coins>=B.cost? '<button class="sbtn buyb" data-id="'+B.id+'">💰 '+B.cost+'</button>' : '<span style="color:#5a6684">🔒 '+B.cost+'</span>')+'</div>'; }).join('');
+        + (coins>=B.cost? '<button class="sbtn buyb" data-id="'+B.id+'">'+uic('coin','💰',13)+' '+B.cost+'</button>' : '<span style="color:#5a6684">🔒 '+B.cost+'</span>')+'</div>'; }).join('');
   box.querySelectorAll('.sbtn.buyb').forEach(b=>b.onclick=()=>{ const B=BOOSTS.find(x=>x.id===b.dataset.id);
     if(coins<B.cost) return; coins-=B.cost; bst[B.id]=(bst[B.id]||0)+1; eqb[B.id]=true; saveBoost(); saveCoins(); renderShop(); renderBoostRow();
     floatText(B.i+' '+B.n+' 획득!','#5cffb0'); vib([15,30,15]); if(!sfx('coin_reward')) tone(880,0.1,'triangle',0.07); });
@@ -753,7 +753,7 @@ function renderThemeShop(){ const box=$('shopList'); box.innerHTML=THEMES.map(t=
     const own=owned.includes(t.id), sel=curTheme===t.id;
     const btn = sel? '<span style="color:#5cffb0;font-weight:900">✓ 사용중</span>'
       : own? '<button class="sbtn use" data-id="'+t.id+'">사용</button>'
-      : (coins>=t.cost? '<button class="sbtn buy" data-id="'+t.id+'">💰 '+t.cost+'</button>'
+      : (coins>=t.cost? '<button class="sbtn buy" data-id="'+t.id+'">'+uic('coin','💰',13)+' '+t.cost+'</button>'
                        : '<span style="color:#5a6684">🔒 '+t.cost+'</span>');
     return '<div class="shoprow"><span class="sw" style="background:'+t.bg+';border-color:'+t.accent+'"></span><span class="sn" style="color:'+t.accent+'">'+t.name+'</span>'+btn+'</div>';
   }).join('');
@@ -775,6 +775,10 @@ const RANKS=[
 ];
 // 아트 이미지 — 못 불러오면(구버전 APK·오프라인) 원래 이모지로 자동 대체
 const ART='img/number/ui/';
+// HUD 아이콘 — 이모지는 기기·OS마다 모양이 달라서 아트로 바꿨다.
+// 못 불러오면 data-fb 의 이모지로 되돌아간다(뜻은 그대로 통한다).
+function uiFB(el){ try{ el.replaceWith(document.createTextNode(el.dataset.fb||'')); }catch(e){} }
+function uic(n,e,px){ return '<img class="art" src="'+ART+'ui_'+n+'.webp" alt="" width="'+px+'" height="'+px+'" data-fb="'+e+'" onerror="uiFB(this)">'; }
 function art(file,emoji,px){ return '<img class="art" src="'+ART+file+'.png" alt="" width="'+px+'" height="'+px+'" data-fb="'+emoji+'" onerror="this.replaceWith(document.createTextNode(this.dataset.fb))">'; }
 const rankArt=(i,px)=>art(RANKS[i].f, RANKS[i].i, px);
 function rankIdx(t){ let i=0; for(let k=0;k<RANKS.length;k++) if(t>=RANKS[k].at) i=k; return i; }
@@ -847,21 +851,21 @@ saveDaily();
 function renderDaily(){
   const box=$('dailyBox'); if(!box) return;
   const doneN=daily.m.filter(m=>m.done).length;
-  box.innerHTML='<div class="dt"><span>📋 일일 미션</span><span style="color:'+(daily.bonus?'#5cffb0':'#8892b0')+'">'+doneN+'/3'+(daily.bonus?' ✓ 보너스 완료':' · 전부 완료 💰+'+DAILY_BONUS)+'</span></div>'
+  box.innerHTML='<div class="dt"><span>📋 일일 미션</span><span style="color:'+(daily.bonus?'#5cffb0':'#8892b0')+'">'+doneN+'/3'+(daily.bonus?' ✓ 보너스 완료':' · 전부 완료 '+uic('coin','💰',12)+'+'+DAILY_BONUS)+'</span></div>'
     + daily.m.map(m=>{ const D=MBY[m.id]; const p=Math.min(100,m.p/m.goal*100);
-      return '<div class="mrow'+(m.done?' ok':'')+'">'+(m.done?'✅ ':'• ')+D.t(m.goal)+' <span style="opacity:.65">('+Math.min(m.p,m.goal)+'/'+m.goal+')</span> <span style="color:#ffd34d">💰'+D.rw+'</span>'
+      return '<div class="mrow'+(m.done?' ok':'')+'">'+(m.done?'✅ ':'• ')+D.t(m.goal)+' <span style="opacity:.65">('+Math.min(m.p,m.goal)+'/'+m.goal+')</span> <span style="color:#ffd34d">'+uic('coin','💰',12)+D.rw+'</span>'
         + '<div class="mbar"><div class="mfill" style="width:'+p.toFixed(0)+'%"></div></div></div>'; }).join('');
 }
 let mToast=[];
 function mCheckAll(){
-  if(!daily.bonus && daily.m.length && daily.m.every(m=>m.done)){ daily.bonus=true; coins+=DAILY_BONUS; saveCoins(); mToast.push('🎉 일일 미션 전부 완료! 💰+'+DAILY_BONUS); }
+  if(!daily.bonus && daily.m.length && daily.m.every(m=>m.done)){ daily.bonus=true; coins+=DAILY_BONUS; saveCoins(); mToast.push('🎉 일일 미션 전부 완료! '+uic('coin','💰',13)+'+'+DAILY_BONUS); }
   saveDaily(); renderDaily();
 }
 function mBump(id,v,mode){
   let touched=false;
   for(const m of daily.m){ if(m.id!==id||m.done) continue;
     m.p = mode==='max' ? Math.max(m.p,v) : m.p+v; touched=true;
-    if(m.p>=m.goal){ m.done=true; coins+=MBY[id].rw; saveCoins(); mToast.push('✅ 미션 완료 · '+MBY[id].t(m.goal)+' 💰+'+MBY[id].rw); floatText('✅ 미션 완료! 💰+'+MBY[id].rw,'#5cffb0'); sfx('coin_reward'); }
+    if(m.p>=m.goal){ m.done=true; coins+=MBY[id].rw; saveCoins(); mToast.push('✅ 미션 완료 · '+MBY[id].t(m.goal)+' '+uic('coin','💰',13)+'+'+MBY[id].rw); floatText('✅ 미션 완료! 💰+'+MBY[id].rw,'#5cffb0'); sfx('coin_reward'); }
   }
   if(touched) mCheckAll();
 }
@@ -924,7 +928,8 @@ const now=()=>{ try{ return performance.now(); }catch(e){ return 0; } };
 function showMult(){ const m=$('mult'); if(mult>1){ m.textContent='×'+mult; m.classList.add('show'); m.classList.remove('bump'); void m.offsetWidth; m.classList.add('bump'); } else { m.classList.remove('show'); } }
 function judge(){ if(!targetShownAt) return 'GOOD'; return (now()-targetShownAt) < (190+modPerfect) ? 'PERFECT' : 'GOOD'; }
 let hearts=0;   // ⚡롤링 성공 시 적립되는 생명(죽을 때 1개 소모하고 이어감)
-function renderHearts(){ const e=$('hearts'); if(e) e.textContent = hearts>0 ? ('💛'.repeat(Math.min(hearts,heartMax))) : ''; }
+// hearts 는 숫자뿐이라 innerHTML 이어도 안전하다
+function renderHearts(){ const e=$('hearts'); if(e) e.innerHTML = hearts>0 ? uic('life','💛',14).repeat(Math.min(hearts,heartMax)) : ''; }
 let curIsRoll=false, rollLo=0, rollHi=0, rollTO=null, slowEndShown=false, slowPrev=false;
 let inChoice=false, choiceAns=-1, cChoices=[], cTO=null, cCd=null; const CHOICE_MS=5000;   // 선택형 라운드
 let reviveCount=0, deathCount=0; const MAX_REVIVE=5;   // 부활 판당 5회, 전면광고 주기 카운터
@@ -968,8 +973,8 @@ function renderChainTag(){
 function renderChase(){
   const el=$('chase'); if(!el) return;
   if(state!=='play' || !best){ el.textContent=''; return; }
-  if(score>best) el.textContent='🔥 신기록 진행중! +'+(score-best);
-  else if(score>=best*0.5) el.textContent='🏆 최고까지 '+(best-score)+'점';
+  if(score>best) el.innerHTML=uic('combo','🔥',13)+' 신기록 진행중! +'+(score-best);
+  else if(score>=best*0.5) el.innerHTML=uic('trophy','🏆',13)+' 최고까지 '+(best-score)+'점';
   else el.textContent='';
 }
 
@@ -1010,7 +1015,7 @@ function render(pulse){
   setNum($('targetN'), target, [46,46,38,30]);
   const c=$('cur'); setNum(c, cur, [126,126,104,80]);
   if(curIsRoll){
-    $('seq').textContent=''; $('hint').textContent='⚡ 감으로 멈춰!'; $('combo').textContent=hits>=2?('🔥 '+hits+' 연속'):''; $('score').textContent=score; renderChase();
+    $('seq').textContent=''; $('hint').textContent='⚡ 감으로 멈춰!'; $('combo').innerHTML=hits>=2?(uic('combo','🔥',15)+' '+hits+' 연속'):''; $('score').textContent=score; renderChase();
     c.classList.toggle('ontarget', cur===target); if(cur===target) targetShownAt=now();
     setRing(cur===target);
     $('vig').style.boxShadow='inset 0 0 90px 10px rgba(90,50,160,.55)';
@@ -1023,7 +1028,7 @@ function render(pulse){
   setRing(onT);   // 목표 순간 발광 + 정밀 판정 기준시각
   if(pulse && !near){ c.classList.remove('big'); void c.offsetWidth; c.classList.add('big'); }
   $('seq').textContent=seq.join('  →  ');
-  $('score').textContent=score; $('combo').textContent=hits>=2?('🔥 '+hits+' 연속'):''; renderChase();
+  $('score').textContent=score; $('combo').innerHTML=hits>=2?(uic('combo','🔥',15)+' '+hits+' 연속'):''; renderChase();
   $('hint').textContent = hits<2 ? (near?'⚡ 다음이 목표! 탭!' : (cur===target?'👆 지금!':'')) : (chainAll.length>1?('🔗 '+(chainIdx+1)+'/'+chainAll.length+' 번째 목표'):'');
   $('vig').style.boxShadow='inset 0 0 '+(120-heat*40)+'px 10px rgba('+Math.round(60*heat)+',0,0,'+(0.5+heat*0.35).toFixed(2)+')';
 }
@@ -1265,7 +1270,7 @@ function setupChoice(){
   cChoices=arr; choiceAns=arr.indexOf(correct);
   const box=$('cchoices'); box.innerHTML='';
   arr.forEach((v,i)=>{ const b=document.createElement('button'); b.className='cbtn'; b.textContent=v; b.onclick=(e)=>{ e.stopPropagation(); onChoice(i,b); }; box.appendChild(b); });
-  $('score').textContent=score; $('combo').textContent=hits>=2?('🔥 '+hits+' 연속'):''; $('hint').textContent='';
+  $('score').textContent=score; $('combo').innerHTML=hits>=2?(uic('combo','🔥',15)+' '+hits+' 연속'):''; $('hint').textContent='';
   const cms=Math.max(2800, CHOICE_MS - hits*90);   // 후반엔 제한시간도 짧아짐
   banner('🔢 다음 숫자는? · '+(cms/1000).toFixed(1)+'초','#7cf6ff'); tone(660,0.08,'sine',0.06);
   const f=$('ctfill'); f.style.transition='none'; f.style.width='100%'; void f.offsetWidth; f.style.transition='width '+cms+'ms linear'; f.style.width='0%';
@@ -1314,13 +1319,13 @@ function die(msg, fromChoice){
   burst(x,y,'#ff5a6e',54,9); shake=24; vib(200); setTimeout(()=>{ if(!sfx('game_over')) tone(110,0.3,'sawtooth',0.08); },90);
   let rec=false; if(score>best){ best=score; try{localStorage.setItem('num_best',best);}catch(e){} rec=true; }
   $('best').textContent=best; $('overBest').textContent=best;
-  $('overTitle').textContent = rec?'🏆 신기록!':'❌ 실패!';
+  $('overTitle').innerHTML = rec?(uic('trophy','🏆',24)+' 신기록!'):'❌ 실패!';
   $('overMsg').innerHTML = overHtml;
   $('overScore').textContent=score;
-  commitCoins(); $('overCoin').innerHTML = '💰 <b style="color:#ffd34d">+'+runEarned+'</b> <span style="opacity:.6">(보유 '+coins+')</span>';
+  commitCoins(); $('overCoin').innerHTML = uic('coin','💰',16)+' <b style="color:#ffd34d">+'+runEarned+'</b> <span style="opacity:.6">(보유 '+coins+')</span>';
   // 🏅 랭크: 이번 판 점수를 누적(부활로 이어간 판은 증가분만)
   const up=addTotal(score-totalCommitted); totalCommitted=score;
-  $('overRankUp').innerHTML = up ? ('<span style="color:'+up.R.c+'">🎉 '+rankArt(up.i,30)+' <span style="vertical-align:middle">'+up.R.n+' 승급! 💰+'+up.rw+'</span></span>') : '';
+  $('overRankUp').innerHTML = up ? ('<span style="color:'+up.R.c+'">🎉 '+rankArt(up.i,30)+' <span style="vertical-align:middle">'+up.R.n+' 승급! '+uic('coin','💰',14)+'+'+up.rw+'</span></span>') : '';
   if(up){ banner('🎉 '+up.R.i+' '+up.R.n+' 승급!',up.R.c); vib([25,50,25,50,80]); }
   $('overMission').innerHTML = mToast.length ? mToast.join('<br/>') : ''; mToast=[];
   renderRankCard(); renderOverRank(); renderDaily(); renderBoostRow();
@@ -1328,10 +1333,10 @@ function die(msg, fromChoice){
   const rank = score>0 ? insertScore(score) : 0;
   if(fbReady && score>0 && rec && !wasDaily){ fbSubmit(myName,score); $('overRank').textContent='🌐 전세계 랭킹 갱신! (랭킹 보기)'; }
   else if(fbReady && score>0){ $('overRank').innerHTML='🌐 내 최고 <b>'+best+'</b>점이 랭킹에 등록돼 있어요'; }
-  else $('overRank').textContent = rank>0 ? ('🏆 랭킹 '+rank+'위'+(rank===1?' — 1등!':(rank<=3?' 진입!':''))) : '';
+  else $('overRank').innerHTML = rank>0 ? (uic('trophy','🏆',15)+' 랭킹 '+rank+'위'+(rank===1?' — 1등!':(rank<=3?' 진입!':''))) : '';
   deathCount++;
   const wasDaily=dailyMode; finishDaily();
-  if(wasDaily) $('overTitle').textContent = rec?'🏆 신기록!':'📅 오늘의 도전 종료';
+  if(wasDaily) $('overTitle').innerHTML = rec?(uic('trophy','🏆',24)+' 신기록!'):(uic('daily','📅',24)+' 오늘의 도전 종료');
   renderChase();
   // 5판마다 전면광고 → 광고가 닫힌 뒤에 배너(동시 노출 방지)
   if(deathCount%5===0) playInterstitial(()=>showBanner()); else showBanner();
