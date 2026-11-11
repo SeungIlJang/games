@@ -1043,7 +1043,7 @@ function sanitizeTune(obj){
 //   배포할 때 이 값만 올리면 모든 기기의 개발 패널 수치가 버려지고 코드 기본값(TUNE_DEFAULTS)을 받는다.
 //   → 밸런스는 '코드가 유일한 진실'이 되고, 개발 패널은 내 기기에서 잠깐 돌려보는 용도로만 남는다.
 //   (골드/영구강화/전직은 ss_meta 라 영향 없음 — 그쪽은 계속 기기별로 유지된다)
-const GAME_VER='10.34';
+const GAME_VER='10.35';
 // 개발 패널 수치는 이 기기에 계속 남는다(앱을 껐다 켜도 유지). 배포해도 지우지 않는다 —
 // 모르는 사이에 설정이 사라지는 편이 더 나쁘다. 대신 '기본값' 버튼으로 언제든 코드값을 받을 수 있고,
 // 전 플레이어에게 반영하려면 '현재 수치 내보내기'로 뽑아 TUNE_DEFAULTS 에 넣고 배포한다.
@@ -1776,9 +1776,10 @@ function ensureBladeEnt(){
 function updateBladeUnits(dt){
   const lv=player.weapons.bladearray; if(!lv) return;
   const B=ensureBladeEnt(), evo=!!player.evolved.bladearray;
-  const leash=80+2.6*lv, spd=evo?290:240;
-  // 가장 가까운 적을 쫓되 플레이어에게서 leash 안쪽에 묶인다(혼자 멀리 나가 죽은 역할이 되지 않게)
-  let tg=null, bd=(210+8*lv)*(210+8*lv);
+  // ⚔ 돌격대 — 적에게 달려든다. 리시를 넓게 잡아 본진에서 멀리까지 나간다.
+  //   본진을 지키는 쪽은 삼수호령이다(그쪽은 리시를 좁게 잡았다). 역할을 갈라 둔다.
+  const leash=175+5*lv, spd=evo?360:310;
+  let tg=null, bd=(300+10*lv)*(300+10*lv);   // 더 멀리까지 적을 찾는다
   for(const e of enemies){ if(e.dead) continue; const d=dist2(B,e); if(d<bd){ bd=d; tg=e; } }
   let tx,ty;
   if(tg){ tx=tg.x; ty=tg.y; }
@@ -1828,11 +1829,12 @@ function updateBladeUnits(dt){
 //   우주전사: 적에게 파고들어 벤다 (근접)
 //   여왕벌  : 거리를 두고 퍼붓는다. 적이 다가오면 물러나며 계속 쏜다 (사격)
 // 재료 셋은 여왕이 혼자 다 쓴다 — 🚀유도미사일(침) · 🔫산탄 · 🏹화살촉.
-// 여왕이 세 재료를 혼자 다 쏘게 되면서 생긴 자리 손해를 메운다.
-// 여왕은 적에게서 standoff(112+2lv)만큼 떨어져 있어, 적 한가운데 선 플레이어가 쏘던
-// 때보다 같은 탄이 덜 맞는다. 실측 Lv10진화 난전 7113 → 5453 (−23%).
-// 1.3 은 그 손해만 되돌리는 값이다 — 천검진 대비 1.25배라는 기존 설계로 복귀한다.
-const QUEEN_POW=1.3;
+// 여왕이 세 재료를 혼자 다 쏘게 되면서 생긴 자리 손해를 메우던 값.
+// 처음엔 standoff(112+2lv)로 물러나며 쏴서 −23% 손해가 났고 1.3 으로 메웠다.
+// 이제 적에게 달려드는 쪽으로 바꿔 그 손해가 사라졌으므로 1.15 로 내린다
+// (완전히 1.0 으로 두지 않는 것은, 여왕이 본체가 아니라 떨어져 움직이는 유닛이라
+//  적 한가운데에 선 본체만큼 맞히지는 못하기 때문이다).
+const QUEEN_POW=1.15;
 function ensureQueenEnt(){
   if(!player.queenEnt || !player.queenEnt.length)
     player.queenEnt=[{x:player.x-60,y:player.y,ang:0,wing:0,bob:0,recoil:0,cd:{m:0,g:0,a:0}}];
@@ -1841,15 +1843,17 @@ function ensureQueenEnt(){
 function updateQueenBee(dt){
   const lv=player.weapons.swarm; if(!lv) return;
   const Q=ensureQueenEnt(), evo=!!player.evolved.swarm;
-  const leash=86+2.4*lv, spd=evo?300:250;
-  const standoff=112+2*lv;   // 적과 유지하려는 거리. 여왕은 파고들지 않는다
-  let tg=null, bd=(250+9*lv)*(250+9*lv);
+  // 🐝 돌격대 — 거리를 두던 것을 바꿔 적에게 달려든다(우주전사와 같은 역할).
+  //   예전엔 standoff 로 물러나며 쐈는데, 그만큼 탄이 덜 맞아 QUEEN_POW 로 메우고 있었다.
+  //   파고드는 쪽으로 바꾸면서 그 보정도 같이 내렸다.
+  const leash=175+5*lv, spd=evo?370:320;
+  const standoff=26;   // 몸이 겹치지 않을 만큼만 — 더는 물러나지 않는다
+  let tg=null, bd=(300+10*lv)*(300+10*lv);
   for(const e of enemies){ if(e.dead) continue; const d=dist2(Q,e); if(d<bd){ bd=d; tg=e; } }
   let tx,ty;
-  if(tg){ // 적에게서 standoff 만큼 물러난 지점으로 — 붙으면 뒷걸음질이 된다
-    const dx=Q.x-tg.x, dy=Q.y-tg.y, d=Math.hypot(dx,dy)||1;
+  if(tg){ const dx=Q.x-tg.x, dy=Q.y-tg.y, d=Math.hypot(dx,dy)||1;
     tx=tg.x+dx/d*standoff; ty=tg.y+dy/d*standoff; }
-  else { const a=-time*1.5; tx=player.x+Math.cos(a)*leash*0.55; ty=player.y+Math.sin(a)*leash*0.55; }
+  else { const a=-time*1.5; tx=player.x+Math.cos(a)*leash*0.3; ty=player.y+Math.sin(a)*leash*0.3; }
   { const dx=tx-Q.x, dy=ty-Q.y, d=Math.hypot(dx,dy)||1, mv=Math.min(d,spd*dt);
     Q.x+=dx/d*mv; Q.y+=dy/d*mv; }
   { const px=Q.x-player.x, py=Q.y-player.y, pd=Math.hypot(px,py)||1;
@@ -1893,9 +1897,12 @@ function updateSpirits(dt){ if(!player.weapons.spirits) return; const S=ensureSp
   // 이동: 뇌운령(0)은 멀리까지 사냥(leash95), 염화령(1)·검령(2)은 플레이어 근처 방어(근접 적만 요격)
   const near=cand.filter(o=>o.d<110*110);   // 플레이어 기준 근접 위협
   for(let i=0;i<3;i++){ const s=S[i]; let leash, tg;
-    if(i===0){ leash=95; tg=cand[0]; }                 // 뇌운령: 적 추격(돌아다님)
-    else if(i===1){ leash=62; tg=near[0]; }            // 염화령: 플레이어 근처 근접 적만(없으면 공전)
-    else { leash=52; tg=null; }                        // 검령: 플레이어 바로 옆 사수
+    // 🌟 본진 수호대 — 셋 다 플레이어 곁을 떠나지 않는다.
+    //   우주전사·여왕벌이 적진으로 달려나가는 동안, 이쪽은 본체에 붙은 적만 맡는다.
+    //   그래서 '근접 위협(near)'만 쫓고, 리시도 좁게 잡는다.
+    if(i===0){ leash=72; tg=near[0]; }                 // 뇌운령: 본진에 붙은 적을 연쇄로 친다
+    else if(i===1){ leash=54; tg=near[0]; }            // 염화령: 플레이어 근처 근접 적만(없으면 공전)
+    else { leash=44; tg=null; }                        // 검령: 플레이어 바로 옆 사수
     let tx,ty; if(tg){ tx=tg.e.x; ty=tg.e.y; } else { const a=time*(i===2?2.4:1.6)+i*2.0944, rr=(i===2?42:50); tx=player.x+Math.cos(a)*rr; ty=player.y+Math.sin(a)*rr; }
     const dx=tx-s.x, dy=ty-s.y, d=Math.hypot(dx,dy)||1, mv=Math.min(d, spd*dt); s.x+=dx/d*mv; s.y+=dy/d*mv;
     const px=s.x-player.x, py=s.y-player.y, pd=Math.hypot(px,py)||1; if(pd>leash){ s.x=player.x+px/pd*leash; s.y=player.y+py/pd*leash; } }
