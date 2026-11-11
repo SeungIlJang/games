@@ -1043,7 +1043,7 @@ function sanitizeTune(obj){
 //   배포할 때 이 값만 올리면 모든 기기의 개발 패널 수치가 버려지고 코드 기본값(TUNE_DEFAULTS)을 받는다.
 //   → 밸런스는 '코드가 유일한 진실'이 되고, 개발 패널은 내 기기에서 잠깐 돌려보는 용도로만 남는다.
 //   (골드/영구강화/전직은 ss_meta 라 영향 없음 — 그쪽은 계속 기기별로 유지된다)
-const GAME_VER='10.25';
+const GAME_VER='10.26';
 // 개발 패널 수치는 이 기기에 계속 남는다(앱을 껐다 켜도 유지). 배포해도 지우지 않는다 —
 // 모르는 사이에 설정이 사라지는 편이 더 나쁘다. 대신 '기본값' 버튼으로 언제든 코드값을 받을 수 있고,
 // 전 플레이어에게 반영하려면 '현재 수치 내보내기'로 뽑아 TUNE_DEFAULTS 에 넣고 배포한다.
@@ -3318,7 +3318,10 @@ function drawBladeUnits(){
 const queenCache=new Map();
 function queenSprite(evo){
   const key=Number(evo);if(queenCache.has(key))return queenCache.get(key);
-  const c=mkCv(192,192),g=c.getContext('2d');g.translate(96,96);g.scale(86,86);
+  // 가로축만 68 로 눌렀다(세로는 86 그대로). 86:86 이면 잉크가 182x84 — 2.17:1 로
+  // 너무 길쭉하다(우주전사는 0.99:1). 68 이면 1.71:1 로, 벌 특유의 긴 배는 남으면서
+  // 덜 늘어져 보인다. 60까지 가면 배 줄무늬가 뭉갠다. 전사도 같은 방식(70:86)을 쓴다.
+  const c=mkCv(192,192),g=c.getContext('2d');g.translate(96,96);g.scale(68,86);
   const gold=evo?'#ebcc75':'#d9b854',dark='#27323f',membrane=evo?'#b4d5d9':'#93b9c5';
   g.lineJoin='round';g.lineCap='round';
   function shape(path,fill,stroke=.065){g.beginPath();path(g);g.closePath();g.fillStyle=fill;g.fill();g.strokeStyle=dark;g.lineWidth=stroke;g.stroke();}
