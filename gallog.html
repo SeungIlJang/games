@@ -1010,7 +1010,7 @@ let best=0; try{ best=parseInt(localStorage.getItem('ss_best')||'0')||0; }catch{
 // ---- 개발자 튜닝 (로고 클릭+비번 799879) ----
 const TUNE_DEFAULTS={ hpWall:0.4, startPow:0, metaCompHp:0.55, metaCompDmg:0.55, metaCompSpd:0.30, awakenStart:15, awakenStep:15, levelHp:8, reviveXp:0.95, enemyHp:1.0, enemySpeed:1.0, camFollow:4, bossPow:5, bossGem:5, goldMul:1.0, bossMul:8, bossMulStep:0.1, weaponCap:10, rerollMax:2, eliteChance:0.025, eliteMax:1, eliteHp:4, eliteDmg:1.4, chestGold:120,
   champHp:2.0, champDmg:1.2, tankBlock:0.35, shardDmg:1.6, weaverDmg:0.45,
-  fuseLast:18, fuseMid:7, fuseNeedEvo:1, speedMax:3, difficulty:0 };
+  fuseLast:18, fuseMid:7, fuseNeedEvo:1, apexMode:1, speedMax:3, difficulty:0 };
 let TUNE=Object.assign({},TUNE_DEFAULTS);
 // ★ 원격 설정이 들어올 수 있는 범위. 서버에서 받은 값은 '반드시' 이 표를 통과해야 한다.
 //   Firestore 규칙으로 관리자만 쓰게 막아 두지만, 앱을 뜯으면 Firebase 설정이 보이는 구조라
@@ -1022,7 +1022,7 @@ const TUNE_RANGE={
   metaCompHp:[0,1.2], metaCompDmg:[0,1.2], metaCompSpd:[0,1], enemyHp:[0.1,10], enemySpeed:[0.2,3],
   awakenStart:[1,100], awakenStep:[1,100], levelHp:[0,100], reviveXp:[0,1], camFollow:[0,10],
   bossPow:[0.1,20], bossMul:[0.5,200], bossMulStep:[0,5], weaponCap:[1,20], rerollMax:[0,20],
-  fuseLast:[0,100], fuseMid:[0,100], fuseNeedEvo:[0,1], speedMax:[0,3], eliteChance:[0,1], eliteMax:[0,20],
+  fuseLast:[0,100], fuseMid:[0,100], fuseNeedEvo:[0,1], apexMode:[0,1], speedMax:[0,3], eliteChance:[0,1], eliteMax:[0,20],
   eliteHp:[0.5,50], chestGold:[0,100000], champHp:[0.5,50], tankBlock:[0,1],
   shardDmg:[0,10], weaverDmg:[0,10], bossGem:[0,50], goldMul:[0,100]
 };
@@ -1043,7 +1043,7 @@ function sanitizeTune(obj){
 //   배포할 때 이 값만 올리면 모든 기기의 개발 패널 수치가 버려지고 코드 기본값(TUNE_DEFAULTS)을 받는다.
 //   → 밸런스는 '코드가 유일한 진실'이 되고, 개발 패널은 내 기기에서 잠깐 돌려보는 용도로만 남는다.
 //   (골드/영구강화/전직은 ss_meta 라 영향 없음 — 그쪽은 계속 기기별로 유지된다)
-const GAME_VER='10.33';
+const GAME_VER='10.34';
 // 개발 패널 수치는 이 기기에 계속 남는다(앱을 껐다 켜도 유지). 배포해도 지우지 않는다 —
 // 모르는 사이에 설정이 사라지는 편이 더 나쁘다. 대신 '기본값' 버튼으로 언제든 코드값을 받을 수 있고,
 // 전 플레이어에게 반영하려면 '현재 수치 내보내기'로 뽑아 TUNE_DEFAULTS 에 넣고 배포한다.
@@ -1088,6 +1088,7 @@ const DEV_KNOBS=[
   {k:'rerollMax',  name:'레벨업 리롤 횟수',  step:1,    hint:'판당 다시 뽑기 횟수 (기본2)'},
   {k:'fuseLast',   name:'융합 마지막재료 노출',step:2,   hint:'재료 2/3일 때 남은 1개 카드 가중치 (기본18, 일반강화=3)'},
   {k:'fuseMid',    name:'융합 두번째재료 노출',step:1,   hint:'재료 1/3일 때 가중치 (기본7)'},
+  {k:'apexMode',   name:'융합4종 후 소수정예',step:1, min:0, max:1, hint:'1=융합 4종을 모두 끝내면 적이 적게·강하게 나온다(기본). 0=예전 스폰'},
   {k:'fuseNeedEvo',name:'융합에 진화까지 요구',step:1, min:0, max:1, hint:'1=재료를 만렙+진화까지 해야 융합(기본). 0=만렙만(예전 동작). 너무 빡빡하면 0으로 내리고 [전체 적용] — 배포 없이 되돌아간다'},
   {k:'speedMax',   name:'속도 슬라이더 상한',step:0.5, hint:'0=기록연동 자동. 5를 넣으면 5배까지 열린다(테스트용)'},
   {k:'eliteChance',name:'엘리트 출현 확률',  step:0.005,hint:'스폰당 확률 (기본0.025=2.5%). 올리면 상자가 레벨을 과공급한다'},
@@ -1438,6 +1439,16 @@ const ETYPE={
 const ENEMY_CAP=28;       // 화면 동시 적 수 상한(42→28, 물량↓·회피공간↑: 비집고 다니는 플레이)
 const ELITE_CAP=3;        // 동시 정예 수 상한(초반 급사 방지로 3 유지)
 const FODDER=['normal','fast','shard'], MID=['weaver','spiker','splitter'], ELITE=['ringed','tank','twin'];
+// ═══ 아포칼립스 — 융합 4종을 모두 끝낸 뒤의 스폰 규칙 ═══
+// 3단계 무기가 손에 들어오면 잡몹은 닿기도 전에 녹는다. 수만 많고 위협은 없어서
+// 화면만 어지럽다. 수를 줄이고 한 마리 한 마리를 강하게 바꾼다.
+//   잡몹(FODDER)은 아예 안 나오고, 정예 비중을 크게 올린다.
+// ⚠️ hp·dmg 배수는 작게 잡는다. 티어가 잡몹→정예로 바뀌는 것만으로 개체 체력이 이미
+//    8배가 된다(정예 기본 HP 가 잡몹의 13배). 배수를 2.6 으로 뒀더니 화면 총체력이
+//    3.9배가 돼 벽이 됐다 — 1.6 으로 낮춰 2.4배에 맞췄다.
+// TUNE.apexMode=0 으로 끄면 예전 스폰으로 돌아간다(원격 설정 대상).
+const APEX={ interval:2.2, cap:0.45, eliteCap:7, hp:1.6, dmg:1.25, eliteCh:0.7 };
+function apexSpawn(){ return (TUNE.apexMode!=null?TUNE.apexMode:1) && apexUnlocked(); }
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 function edgePos(){ // 무한 필드: 플레이어 주변, 화면 밖 링에서 스폰
   const ang=rand(0,6.283), rad=Math.hypot(W,H)/2 + rand(30,120);
@@ -1480,19 +1491,23 @@ function makeEnemy(x,y,type,diff){
   return {x,y,type,tier:D.tier,r:D.r,hp,maxhp:hp,speed:s,dmg:D.dmg*stageDmg*DS.dmg*MC.dmg,color:D.color,gem:D.gem,big:!!D.big,shape:D.shape,t:rand(0,6.28)};  // 접촉피해 원복
 }
 function spawnEnemy(){
-  if(enemies.length>=ENEMY_CAP) return; // 물량 상한
+  const apexNow=apexSpawn();
+  // 아포칼립스에서는 화면 상한도 낮춘다 — 적게, 대신 무겁게
+  if(enemies.length >= (apexNow?Math.round(ENEMY_CAP*APEX.cap):ENEMY_CAP)) return; // 물량 상한
   const T=ddiff(), diff=(1+T/(stage===1?60:50))*(1+(stage-1)*0.18)*(1+Math.max(0,stage-7)*TUNE.hpWall), p=edgePos();
   // 티어 확률: 스테이지 오를수록 "양"보다 "정예 비중"↑
-  const eliteCh=Math.min(0.03+T/1000+(stage-1)*0.006, 0.14);   // 정예 비중(개편 전 원복)
-  const midCh  =Math.min(0.14+T/320+(stage-1)*0.01, 0.42);     // 중급 비중(개편 전 원복)
+  const eliteCh=apexNow?APEX.eliteCh:Math.min(0.03+T/1000+(stage-1)*0.006, 0.14);   // 정예 비중(개편 전 원복)
+  const midCh  =apexNow?(1-APEX.eliteCh):Math.min(0.14+T/320+(stage-1)*0.01, 0.42); // 중급 비중(개편 전 원복)
+  const eCap   =apexNow?APEX.eliteCap:ELITE_CAP;
   const r=Math.random(); let type;
   if(r<eliteCh){
     // 정예는 동시 소수만 (초과 시 일반으로 강등)
     const eliteNow=enemies.reduce((n,e)=>n+(!e.dead&&e.tier==='e'?1:0),0);
-    type = eliteNow<ELITE_CAP ? pick(ELITE) : pick(MID);
+    type = eliteNow<eCap ? pick(ELITE) : pick(MID);
   } else if(r<eliteCh+midCh){ type=pick(MID); }
-  else { type=pick(FODDER); }
+  else { type=pick(FODDER); }   // 아포칼립스에서는 eliteCh+midCh=1 이라 잡몹이 안 나온다
   const en=makeEnemy(p.x,p.y,type,diff);
+  if(apexNow){ en.hp=en.maxhp=en.hp*APEX.hp; en.dmg*=APEX.dmg; }
   // 엘리트 승격 — 처치 시 보상 상자를 떨군다. 동시 수를 제한해 '특별함'을 지킨다.
   const eliteNow=enemies.reduce((n,x)=>n+(!x.dead&&x.elite?1:0),0);
   // 빈도를 낮춰 '특별한 적'으로 되돌린 값. 올리면 상자가 레벨 경제를 삼킨다
@@ -2466,10 +2481,12 @@ function update(dt){
   stageTime+=dt;
   lifestealT+=dt; if(lifestealT>=1){ lifestealT-=1; lifestealAcc=0; } // 흡혈 상한 초기화
   const T=ddiff();
-  spawnTimer-=dt; const interval=Math.max(0.35, 1.2 - T/90);   // 스폰 간격 완화(0.16→0.35 최소, 기울기 완만)
+  spawnTimer-=dt; const apexNow=apexSpawn();
+  const interval=Math.max(0.35, 1.2 - T/90)*(apexNow?APEX.interval:1);   // 스폰 간격 완화(0.16→0.35 최소, 기울기 완만)
   if(spawnTimer<=0){ spawnTimer=interval; spawnEnemy();
-    const extra=Math.floor((stage-1)*0.15 + (T>120?1:0)); // 추가 스폰 완화(0.25→0.15, 확률↓)
-    for(let i=0;i<extra;i++){ if(Math.random()<0.4) spawnEnemy(); } }
+    if(!apexNow){   // 아포칼립스에서는 추가 스폰을 하지 않는다 — '수'가 아니라 '질'로 간다
+      const extra=Math.floor((stage-1)*0.15 + (T>120?1:0)); // 추가 스폰 완화(0.25→0.15, 확률↓)
+      for(let i=0;i<extra;i++){ if(Math.random()<0.4) spawnEnemy(); } } }
   // 스테이지 보스: 일정 시간 뒤 등장, 처치하면 스테이지 클리어
   if(!bossSpawned && stageTime>=STAGE_BOSS_DELAY){ buildBossQueue(); bossSpawned=true; spawnNextBoss(); }
   if(bannerT>0) bannerT-=dt;
