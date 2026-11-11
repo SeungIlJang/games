@@ -55,11 +55,16 @@
   #banner.show{animation:bn .9s ease-out}
   @keyframes bn{0%{opacity:0;transform:scale(.6)}18%{opacity:1;transform:scale(1.1)}82%{opacity:1}100%{opacity:0;transform:scale(1)}}
   #hud{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:0;right:0;display:flex;justify-content:space-between;padding:0 16px;font-weight:800;font-size:15px;z-index:3}
-  #combo{color:#ffd34d;font-weight:900}
-  #mult{position:fixed;top:15%;left:50%;transform:translateX(-50%) scale(.7);font-size:44px;font-weight:900;color:#ffd34d;text-shadow:0 0 22px rgba(255,211,77,.8);z-index:6;pointer-events:none;opacity:0;transition:opacity .18s,transform .18s}
-  #mult.show{opacity:1;transform:translateX(-50%) scale(1)}
-  #mult.bump{animation:mbump .28s ease-out}
-  @keyframes mbump{0%{transform:translateX(-50%) scale(1.5)}60%{transform:translateX(-50%) scale(.9)}100%{transform:translateX(-50%) scale(1)}}
+  /* 콤보와 배수를 HUD 가운데 한 자리에 모은다.
+     배수는 예전에 화면 가운데 큰 팝업(top:15%)이었는데 목표 안내문과 조준링을
+     덮었다. HUD 는 상단 고정 띠라 어떤 화면 높이에서도 플레이 영역과 안 겹친다. */
+  #combo{color:#ffd34d;font-weight:900;white-space:nowrap}
+  /* 세 칸 모두 줄바꿈 금지 — 320px 에서 점수칸의 하트가 둘째 줄로 밀려 HUD 가 2줄이 됐다 */
+  #hud>div{white-space:nowrap}
+  @media (max-width:359px){ #hud{font-size:13.5px} }
+  #combo .mx{color:#ffe14d;text-shadow:0 0 10px rgba(255,211,77,.85);margin-left:4px}
+  #combo.bump{animation:cbump .28s ease-out}
+  @keyframes cbump{0%{transform:scale(1.45)}60%{transform:scale(.94)}100%{transform:scale(1)}}
   #cur.ontarget{color:#ffe14d!important;text-shadow:0 0 36px rgba(255,225,77,.9),0 0 70px rgba(255,180,40,.5)!important}
   #ver{position:absolute;left:8px;bottom:calc(6px + env(safe-area-inset-bottom,0px));font-size:10px;color:#3a4560;z-index:3}
   .big{animation:pop .13s ease-out}
@@ -126,7 +131,7 @@
     background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.12)}
   #navRow .btn:active{background:rgba(255,255,255,.14);transform:none}
   #navRow #shopBtn{background:rgba(56,44,12,.75);border-color:rgba(255,211,77,.32)}
-  body.menu #hud,body.menu #wrap,body.menu #chase,body.menu #mult,body.menu #banner{visibility:hidden}   /* 메뉴에선 플레이 화면이 비쳐 보이지 않게 */
+  body.menu #hud,body.menu #wrap,body.menu #chase,body.menu #banner{visibility:hidden}   /* 메뉴에선 플레이 화면이 비쳐 보이지 않게 */
   #lbX{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:16px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:#cfe;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:50%;cursor:pointer;z-index:13}
   #lbX:active{background:rgba(255,255,255,.2)}
   #lbList{width:min(92vw,352px);margin:6px 0;max-height:60vh;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
@@ -318,7 +323,6 @@
 <div id="flash"></div>
 <canvas id="fx"></canvas>
 <div id="banner"></div>
-<div id="mult"></div>
 <div id="hud"><div>점수 <span id="score">0</span> <span id="hearts" style="color:#ffd34d;font-weight:900"></span></div><div id="combo"></div><div>최고 <span id="best">0</span></div></div>
 <div id="chase"></div>
 <div id="muteBtn" role="button" aria-label="소리 켜기 끄기">🔊</div>
@@ -364,7 +368,7 @@
   </div>
   <div id="boostRow"></div>
   <div id="dailyBox"></div>
-  <div id="changelog">🆕 <b id="clVer">v3.5</b> · <span id="clNote"><b>상점·랭킹·결과 화면이 깔끔해졌어요</b> · 뒤 화면이 비치던 것도 고침</span></div>
+  <div id="changelog">🆕 <b id="clVer">v3.6</b> · <span id="clNote"><b>콤보 배수를 판 내내 볼 수 있어요</b> · 화면 가리던 것도 해결</span></div>
 </div>
 
 <div id="help" class="hidden">
@@ -460,7 +464,7 @@
   <div id="shopList"></div>
   <button class="btn" id="shopClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v3.5 · 화면 정리</div>
+<div id="ver">v3.6 · 배수 표시</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -964,7 +968,21 @@ const HEART_MAX=3;
 let mult=1, targetShownAt=0, inGap=false;   // 콤보 배수 · 목표 표시 시각 · 라운드 전환 텀
 const GAP_MS=450;    // 라운드 전환 텀 — 1000ms는 죽은 시간이 너무 길어 450으로 단축
 const now=()=>{ try{ return performance.now(); }catch(e){ return 0; } };
-function showMult(){ const m=$('mult'); if(mult>1){ m.textContent='×'+mult; m.classList.add('show'); m.classList.remove('bump'); void m.offsetWidth; m.classList.add('bump'); } else { m.classList.remove('show'); } }
+// HUD 가운데 칸 — 콤보와 배수를 함께 그린다.
+// hits<2 라 콤보가 비어 있어도 배수는 보여야 한다(PERFECT 한 번이면 바로 ×2 다).
+function renderCombo(){
+  const el=$('combo'); if(!el) return;
+  const c = hits>=2 ? (uic('combo','\u{1F525}',15)+' '+hits+' 연속') : '';
+  const m = mult>1 ? '<b class="mx">×'+mult+'</b>' : '';
+  el.innerHTML = c + m;
+}
+let multShown=1;
+function showMult(){
+  renderCombo();
+  if(mult===multShown) return;            // 매 타격마다 부르므로 값이 바뀔 때만 튕긴다
+  multShown=mult;
+  if(mult>1){ const el=$('combo'); el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+}
 function judge(){ if(!targetShownAt) return 'GOOD'; return (now()-targetShownAt) < (190+modPerfect) ? 'PERFECT' : 'GOOD'; }
 let hearts=0;   // ⚡롤링 성공 시 적립되는 생명(죽을 때 1개 소모하고 이어감)
 // hearts 는 숫자뿐이라 innerHTML 이어도 안전하다
@@ -1054,7 +1072,7 @@ function render(pulse){
   setNum($('targetN'), target, [46,46,38,30]);
   const c=$('cur'); setNum(c, cur, [126,126,104,80]);
   if(curIsRoll){
-    $('seq').textContent=''; $('hint').textContent='⚡ 감으로 멈춰!'; $('combo').innerHTML=hits>=2?(uic('combo','🔥',15)+' '+hits+' 연속'):''; $('score').textContent=score; renderChase();
+    $('seq').textContent=''; $('hint').textContent='⚡ 감으로 멈춰!'; renderCombo(); $('score').textContent=score; renderChase();
     c.classList.toggle('ontarget', cur===target); if(cur===target) targetShownAt=now();
     setRing(cur===target);
     $('vig').style.boxShadow='inset 0 0 90px 10px rgba(90,50,160,.55)';
@@ -1067,7 +1085,7 @@ function render(pulse){
   setRing(onT);   // 목표 순간 발광 + 정밀 판정 기준시각
   if(pulse && !near){ c.classList.remove('big'); void c.offsetWidth; c.classList.add('big'); }
   $('seq').textContent=seq.join('  →  ');
-  $('score').textContent=score; $('combo').innerHTML=hits>=2?(uic('combo','🔥',15)+' '+hits+' 연속'):''; renderChase();
+  $('score').textContent=score; renderCombo(); renderChase();
   $('hint').textContent = hits<2 ? (near?'⚡ 다음이 목표! 탭!' : (cur===target?'👆 지금!':'')) : (chainAll.length>1?('🔗 '+(chainIdx+1)+'/'+chainAll.length+' 번째 목표'):'');
   $('vig').style.boxShadow='inset 0 0 '+(120-heat*40)+'px 10px rgba('+Math.round(60*heat)+',0,0,'+(0.5+heat*0.35).toFixed(2)+')';
 }
@@ -1309,7 +1327,7 @@ function setupChoice(){
   cChoices=arr; choiceAns=arr.indexOf(correct);
   const box=$('cchoices'); box.innerHTML='';
   arr.forEach((v,i)=>{ const b=document.createElement('button'); b.className='cbtn'; b.textContent=v; b.onclick=(e)=>{ e.stopPropagation(); onChoice(i,b); }; box.appendChild(b); });
-  $('score').textContent=score; $('combo').innerHTML=hits>=2?(uic('combo','🔥',15)+' '+hits+' 연속'):''; $('hint').textContent='';
+  $('score').textContent=score; renderCombo(); $('hint').textContent='';
   const cms=Math.max(2800, CHOICE_MS - hits*90);   // 후반엔 제한시간도 짧아짐
   banner('🔢 다음 숫자는? · '+(cms/1000).toFixed(1)+'초','#7cf6ff'); tone(660,0.08,'sine',0.06);
   const f=$('ctfill'); f.style.transition='none'; f.style.width='100%'; void f.offsetWidth; f.style.transition='width '+cms+'ms linear'; f.style.width='0%';
