@@ -131,7 +131,7 @@
   .gold{font-size:19px;font-weight:800;color:#ffd34d;margin-top:6px}
   /* ── 결과 화면 ─────────────────────────────────────────── */
   /* 시작화면과 같은 언어: 트레일 모티프 + .stats 패널 + 카드 그라데이션 */
-  #over::before,#over::after{content:'';display:block;margin-top:auto}
+  #over::before,#over::after,#clear::before,#clear::after{content:'';display:block;margin-top:auto}
   /* 타이틀과 달리 뒤에 마지막 플레이 프레임(탄환·파티클·팝업)이 남아 패널과 섞인다 → 살짝 눌러준다 */
   #over{background:rgba(7,10,22,.62)}
   .ohead{font-size:31px;font-weight:900;letter-spacing:4px;margin:0 -4px 0 0;color:#ffdccf;
@@ -313,7 +313,7 @@
 <script>
 const cv=document.getElementById('game'), ctx=cv.getContext('2d');
 // 버전 표기는 한 곳에서만 — 시작화면/좌하단이 어긋나지 않게
-const VER='v2.3 · 난이도 곡선 실측 조정';
+const VER='v2.4 · 팝업 잘림·클리어 정렬 수정';
 { const a=document.getElementById('verTop'), b=document.getElementById('verBot');
   if(a) a.textContent=VER; if(b) b.textContent=VER; }
 let W=0,H=0,DPR=1,safeTop=0,prevW=0;
@@ -1219,7 +1219,10 @@ function render(){
   for(const p of parts){ ctx.globalAlpha=Math.max(0,p.life*2); ctx.fillStyle=p.col; ctx.beginPath(); ctx.arc(p.x,p.y,3,0,7); ctx.fill(); }
   ctx.globalAlpha=1;
   // 점수 팝업(떠오르는 텍스트)
-  for(const q of pops){ ctx.globalAlpha=Math.min(1,q.life*1.4); ctx.textAlign='center'; ctx.fillStyle=q.col; ctx.font='bold '+(q.big?22:16)+'px system-ui'; ctx.fillText(q.txt, Math.max(64,Math.min(W-64,q.x)), q.y); }
+  for(const q of pops){ ctx.globalAlpha=Math.min(1,q.life*1.4); ctx.textAlign='center'; ctx.fillStyle=q.col; ctx.font='bold '+(q.big?22:16)+'px system-ui';
+    // 고정 64px로 자르면 'PERFECT +6 x3'처럼 긴 문구가 화면 밖으로 넘친다 → 실제 폭으로 가둔다
+    const half=ctx.measureText(q.txt).width/2+6;
+    ctx.fillText(q.txt, Math.max(half,Math.min(W-half,q.x)), q.y); }
   ctx.globalAlpha=1;
   // 히트 플래시 / 피버 진입 플래시
   if(hitFlash>0){ ctx.fillStyle='rgba(255,255,255,'+(hitFlash*0.5).toFixed(3)+')'; ctx.fillRect(0,0,W,H); }
