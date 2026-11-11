@@ -1043,7 +1043,7 @@ function sanitizeTune(obj){
 //   배포할 때 이 값만 올리면 모든 기기의 개발 패널 수치가 버려지고 코드 기본값(TUNE_DEFAULTS)을 받는다.
 //   → 밸런스는 '코드가 유일한 진실'이 되고, 개발 패널은 내 기기에서 잠깐 돌려보는 용도로만 남는다.
 //   (골드/영구강화/전직은 ss_meta 라 영향 없음 — 그쪽은 계속 기기별로 유지된다)
-const GAME_VER='10.28';
+const GAME_VER='10.29';
 // 개발 패널 수치는 이 기기에 계속 남는다(앱을 껐다 켜도 유지). 배포해도 지우지 않는다 —
 // 모르는 사이에 설정이 사라지는 편이 더 나쁘다. 대신 '기본값' 버튼으로 언제든 코드값을 받을 수 있고,
 // 전 플레이어에게 반영하려면 '현재 수치 내보내기'로 뽑아 TUNE_DEFAULTS 에 넣고 배포한다.
@@ -2420,11 +2420,17 @@ function update(dt){
       if(d<R){
         if(!e.boss){ const pf=h.pull*dt*(1-d/R)*(e.tier==='e'?0.5:1); e.x+=dx/d*pf; e.y+=dy/d*pf; }
         hurtEnemy(e, h.dmg*dt, '#b06bff');
-        if(h.hz && !e.boss){
-          // ❄️ 서리 — 안에 있는 동안 계속 걸린다. 이미 더 센 둔화가 걸려 있으면 건드리지 않는다
-          e.slowT=Math.max(e.slowT||0, frostDur);
-          e.slowMul=Math.min(e.slowMul!=null?e.slowMul:1, frostMul);
-          // 💥 충격파 — 0.55초마다 회오리 안쪽을 통째로 때린다
+        if(h.hz){
+          // ❄️ 서리 — 안에 있는 동안 계속 걸린다. 이미 더 센 둔화가 걸려 있으면 건드리지 않는다.
+          //    둔화는 원래 보스에게 안 걸린다(일반 서리 파동도 !e.boss 로 막는다).
+          if(!e.boss){
+            e.slowT=Math.max(e.slowT||0, frostDur);
+            e.slowMul=Math.min(e.slowMul!=null?e.slowMul:1, frostMul);
+          }
+          // 💥 충격파 — 0.55초마다 회오리 안쪽을 통째로 때린다.
+          //    ⚠️ 피해는 보스에게도 들어가야 한다. 처음엔 둔화와 같이 !e.boss 안에 넣는 바람에
+          //    보스전에서 충격파가 통째로 빠졌다 — 일반 충격파는 보스를 때리는데 융합하면
+          //    못 때리는 모순이었다. 보스에게 막히는 건 '빨아들임·둔화' 같은 조작 효과뿐이다.
           if(pulse) hurtEnemy(e, novaDmg, '#e6d2ff');
         }
       } }
