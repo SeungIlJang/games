@@ -1043,7 +1043,7 @@ function sanitizeTune(obj){
 //   배포할 때 이 값만 올리면 모든 기기의 개발 패널 수치가 버려지고 코드 기본값(TUNE_DEFAULTS)을 받는다.
 //   → 밸런스는 '코드가 유일한 진실'이 되고, 개발 패널은 내 기기에서 잠깐 돌려보는 용도로만 남는다.
 //   (골드/영구강화/전직은 ss_meta 라 영향 없음 — 그쪽은 계속 기기별로 유지된다)
-const GAME_VER='10.26';
+const GAME_VER='10.27';
 // 개발 패널 수치는 이 기기에 계속 남는다(앱을 껐다 켜도 유지). 배포해도 지우지 않는다 —
 // 모르는 사이에 설정이 사라지는 편이 더 나쁘다. 대신 '기본값' 버튼으로 언제든 코드값을 받을 수 있고,
 // 전 플레이어에게 반영하려면 '현재 수치 내보내기'로 뽑아 TUNE_DEFAULTS 에 넣고 배포한다.
@@ -1707,6 +1707,15 @@ function spiritPositions(){ return ensureSpiritEnt(); }
 //   실측 묶기 전/후 — 만렙진화 난전 5174 → 4564 (−13%), Lv6 난전 3865 → 3500 (−9%)
 // 1.15 는 그 손해만 되돌리는 값이다.
 const BLADE_POW=1.15;
+// 전사의 참격만 반경을 줄여 전사 바로 주변에서 베게 한다(본체가 쓰는 참격은 그대로).
+//   참격 130 → 36 (만렙진화 182 → 51) · 궤도는 35 → 72 로 키워 그 바깥을 돈다
+//   나란히 두면: 몸통 23 < 참격 36 < 궤도 72 < 대참격 184
+// ⚠️ 반경을 0.28배로 줄이면 닿는 면적이 1/13 이 된다. D=4.6 은 '난전 DPS 를
+//    예전 수준으로 되돌리는' 값으로 실측해 맞춘 것이다(3865 → 3793, 2% 차).
+//    면적 손해는 난전에만 생기고 보정은 단일 표적에도 걸리므로, 단일 표적은
+//    705 → 1381 로 올라간다. 이건 피할 수 없는 맞교환이다 —
+//    좁게 베는 대신 한 방이 세진다. 되돌리려면 D 하나만 내리면 된다.
+const BLADE_SLASH_R=0.28, BLADE_SLASH_D=4.6;
 function ensureBladeEnt(){
   if(!player.bladeEnt || !player.bladeEnt.length)
     player.bladeEnt=[{x:player.x+60,y:player.y,ang:0,spin:0,slashT:0,slashR:0,thrust:0,cd:{o:0,s:0,b:0}}];
@@ -1748,13 +1757,14 @@ function updateBladeUnits(dt){
     player.x = B.x + (k==='bolt' ? Math.cos(B.ang)*tipOff : 0);
     player.y = B.y + (k==='bolt' ? Math.sin(B.ang)*tipOff : 0);
     player.dmg*=fusePow(k)*BLADE_POW;
+    if(k==='slash'){ player.__slashR=BLADE_SLASH_R; player.__slashD=BLADE_SLASH_D; }
     const nFx=player.slashFx.length;
     try{ W.fire(player,el); }
-    finally{ player.x=sx; player.y=sy; player.dmg=sd; }
+    finally{ player.x=sx; player.y=sy; player.dmg=sd; player.__slashR=0; player.__slashD=0; }
     if(k==='slash'){
       // 참격 이펙트는 기본적으로 플레이어 자리에 그려진다 — 전사 자리로 고정한다
       for(let i=nFx;i<player.slashFx.length;i++){ player.slashFx[i].x=B.x; player.slashFx[i].y=B.y; }
-      B.slashT=0.3; B.slashR=(70+10*el)*(player.evolved.slash?1.4:1); B.thrust=0.16;
+      B.slashT=0.3; B.slashR=(70+10*el)*(player.evolved.slash?1.4:1)*BLADE_SLASH_R; B.thrust=0.16;
     }
   }
 }
@@ -1875,7 +1885,9 @@ const WEAPONS = {
     interval:()=>Infinity, fire:()=>{} },
   slash:{ name:'참격', icon:'〰️', desc:'주변 적을 근접 참격 (범위)', max:6,
     interval:(p,l)=>Math.max(0.5,1.0-0.07*(l-1)),
-    fire:(p,l)=>{ const R=(70+10*l)*(p.evolved.slash?1.4:1), dmg=p.dmg*(1.1+0.2*(l-1))*(p.evolved.slash?1.9:1); let hit=0;
+    // p.__slashR: 천검진 전사가 쓸 때만 들어오는 반경 배수. 전사의 참격이 궤도 띠보다
+    //   훨씬 크면 띠와 따로 노는 고리로 보인다(실측 참격 130 vs 궤도 35 — 3.7배).
+    fire:(p,l)=>{ const R=(70+10*l)*(p.evolved.slash?1.4:1)*(p.__slashR||1), dmg=p.dmg*(1.1+0.2*(l-1))*(p.evolved.slash?1.9:1)*(p.__slashD||1); let hit=0;
       for(const e of enemies){ if(e.dead) continue; if(dist2(e,player)<(R+e.r)*(R+e.r)){ hurtEnemy(e,dmg,'#ffffff'); hit++; } }
       for(let i=0;i<18;i++){ const a=i/18*Math.PI*2; particles.push({x:player.x+Math.cos(a)*R,y:player.y+Math.sin(a)*R,vx:Math.cos(a)*50,vy:Math.sin(a)*50,life:0.22,color:'#cdfffb'}); }
       p.slashFx.push({r:R, t:0, max:0.28,evo:!!p.evolved.slash, ang0:rand(0,6.28)}); // 약한 찌릿 크래클
@@ -2380,7 +2392,9 @@ function update(dt){
     // 전사 크기(46/54)에 맞춰 반경도 줄인다 — 플레이어 기준 반경이면 전사보다 훨씬 커진다.
     const BU=player.weapons.bladearray ? (player.bladeEnt&&player.bladeEnt[0]) : null;
     const cx=BU?BU.x:player.x, cy=BU?BU.y:player.y;
-    const rad=BU ? (22+2.2*l)+(evo?8:0) : (46+7*l)+(evo?22:0);
+    // 전사 기준 궤도 반경. 참격(BLADE_SLASH_R 적용 후 65~91)을 품도록 잡는다 —
+    // 띠 안에서 베는 그림이 되어야 한 유닛의 공격으로 읽힌다.
+    const rad=BU ? (45+4.5*l)+(evo?10:0) : (46+7*l)+(evo?22:0);
     player.orbAngle+=dt*(evo?3.5:2.3); player.orbs.length=0;
     for(let i=0;i<n;i++){ const a=player.orbAngle+i/n*Math.PI*2; player.orbs.push({x:cx+Math.cos(a)*rad, y:cy+Math.sin(a)*rad, dmg:player.dmg*(0.8+0.3*l)*(evo?1.9:1)*fusePow('orbit'), evo, cx, cy}); }
   } else player.orbs.length=0;
