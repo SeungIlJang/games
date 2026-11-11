@@ -1043,7 +1043,7 @@ function sanitizeTune(obj){
 //   배포할 때 이 값만 올리면 모든 기기의 개발 패널 수치가 버려지고 코드 기본값(TUNE_DEFAULTS)을 받는다.
 //   → 밸런스는 '코드가 유일한 진실'이 되고, 개발 패널은 내 기기에서 잠깐 돌려보는 용도로만 남는다.
 //   (골드/영구강화/전직은 ss_meta 라 영향 없음 — 그쪽은 계속 기기별로 유지된다)
-const GAME_VER='10.29';
+const GAME_VER='10.30';
 // 개발 패널 수치는 이 기기에 계속 남는다(앱을 껐다 켜도 유지). 배포해도 지우지 않는다 —
 // 모르는 사이에 설정이 사라지는 편이 더 나쁘다. 대신 '기본값' 버튼으로 언제든 코드값을 받을 수 있고,
 // 전 플레이어에게 반영하려면 '현재 수치 내보내기'로 뽑아 TUNE_DEFAULTS 에 넣고 배포한다.
@@ -1763,7 +1763,9 @@ function updateBladeUnits(dt){
     finally{ player.x=sx; player.y=sy; player.dmg=sd; player.__slashR=0; player.__slashD=0; }
     if(k==='slash'){
       // 참격 이펙트는 기본적으로 플레이어 자리에 그려진다 — 전사 자리로 고정한다
-      for(let i=nFx;i<player.slashFx.length;i++){ player.slashFx[i].x=B.x; player.slashFx[i].y=B.y; }
+      // blade:true → 매 프레임 전사 자리를 따라간다. 발사 순간 좌표에 고정하면
+      // 전사가 움직이는 동안 고리만 뒤에 남아, 전사가 참격 밖으로 걸어 나가는 것처럼 보인다.
+      for(let i=nFx;i<player.slashFx.length;i++){ player.slashFx[i].x=B.x; player.slashFx[i].y=B.y; player.slashFx[i].blade=true; }
       B.slashT=0.3; B.slashR=(70+10*el)*(player.evolved.slash?1.4:1)*BLADE_SLASH_R; B.thrust=0.16;
     }
   }
@@ -2386,9 +2388,11 @@ function update(dt){
     // 전사 크기(46/54)에 맞춰 반경도 줄인다 — 플레이어 기준 반경이면 전사보다 훨씬 커진다.
     const BU=player.weapons.bladearray ? (player.bladeEnt&&player.bladeEnt[0]) : null;
     const cx=BU?BU.x:player.x, cy=BU?BU.y:player.y;
-    // 전사 기준 궤도 반경. 참격(BLADE_SLASH_R 적용 후 65~91)을 품도록 잡는다 —
-    // 띠 안에서 베는 그림이 되어야 한 유닛의 공격으로 읽힌다.
-    const rad=BU ? (45+4.5*l)+(evo?10:0) : (46+7*l)+(evo?22:0);
+    // 전사 기준 궤도 반경은 '참격보다 조금만' 크게 — 참격 반경에 직접 묶어 두면
+    // 레벨·진화로 참격이 커질 때 띠도 같은 비율로 따라가, 둘 사이 간격이 늘 일정하다.
+    // (고정값 45+4.5l 로 뒀더니 참격 36 에 띠 72 로 두 배가 돼 따로 노는 원이 됐다)
+    const bSlash=(70+10*WEAPONS.slash.max)*(player.evolved.slash?1.4:1)*BLADE_SLASH_R;
+    const rad=BU ? bSlash*1.2 : (46+7*l)+(evo?22:0);
     player.orbAngle+=dt*(evo?3.5:2.3); player.orbs.length=0;
     for(let i=0;i<n;i++){ const a=player.orbAngle+i/n*Math.PI*2; player.orbs.push({x:cx+Math.cos(a)*rad, y:cy+Math.sin(a)*rad, dmg:player.dmg*(0.8+0.3*l)*(evo?1.9:1)*fusePow('orbit'), evo, cx, cy}); }
   } else player.orbs.length=0;
@@ -2447,7 +2451,9 @@ function update(dt){
       if(dist<bl.r+e.r && (dx*cs+dy*sn)/dist>Math.cos(bl.arc)){ bl.hit.add(e); hurtEnemy(e,bl.dmg,'#eafff0'); } } }
   player.blades=player.blades.filter(b=>b.life>0);
   // 참격 찌릿 진행
-  for(const s of player.slashFx) s.t+=dt;
+  { const BU=player.bladeEnt&&player.bladeEnt[0];
+    for(const s of player.slashFx){ s.t+=dt;
+      if(s.blade&&BU){ s.x=BU.x; s.y=BU.y; } } }   // 전사의 참격은 전사를 따라다닌다
   player.slashFx=player.slashFx.filter(s=>s.t<s.max);
   // 🔥 화염 장판: 범위 내 적에게 지속 피해(DoT)
   for(const f of player.flames){ f.life-=dt;
