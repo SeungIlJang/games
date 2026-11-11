@@ -1043,7 +1043,7 @@ function sanitizeTune(obj){
 //   배포할 때 이 값만 올리면 모든 기기의 개발 패널 수치가 버려지고 코드 기본값(TUNE_DEFAULTS)을 받는다.
 //   → 밸런스는 '코드가 유일한 진실'이 되고, 개발 패널은 내 기기에서 잠깐 돌려보는 용도로만 남는다.
 //   (골드/영구강화/전직은 ss_meta 라 영향 없음 — 그쪽은 계속 기기별로 유지된다)
-const GAME_VER='10.31';
+const GAME_VER='10.33';
 // 개발 패널 수치는 이 기기에 계속 남는다(앱을 껐다 켜도 유지). 배포해도 지우지 않는다 —
 // 모르는 사이에 설정이 사라지는 편이 더 나쁘다. 대신 '기본값' 버튼으로 언제든 코드값을 받을 수 있고,
 // 전 플레이어에게 반영하려면 '현재 수치 내보내기'로 뽑아 TUNE_DEFAULTS 에 넣고 배포한다.
@@ -1369,7 +1369,7 @@ function reset(){
   player = { x:W/2, y:H/2, r:14, hp:100, maxhp:100,
     speed:105, fireRate:2.2, dmg:15, bulletSpeed:430, range:280,
     pierce:0, level:1, xp:0, xpNeed:5, magnet:90, lifesteal:0,
-    weapons:{ bolt:1 }, timers:{ bolt:0 }, orbs:[], novas:[], blades:[], holes:[], slashFx:[], flames:[], zaps:[], orbAngle:0, evolved:{}, fuseCd:{}, bladeEnt:[],
+    weapons:{ bolt:1 }, timers:{ bolt:0 }, orbs:[], novas:[], blades:[], holes:[], slashFx:[], flames:[], zaps:[], meteors:[], orbAngle:0, evolved:{}, fuseCd:{}, bladeEnt:[],
     awakened:false, awakenAt:TUNE.awakenStart, awakenCount:0, dmgReduce:1, sigCd:0, cls:'hero', baseCls:'hero', invuln:0,
     statCount:{}, promo:{}, pacts:{}, bossDmg:1, mobDmg:1 };   // 스탯 승격·계약 카드(판당 초기화)
   featureArt.reroll=null;featureArt.slotsFull=false;featureArt.chests=[];featureArt.rank=null;
@@ -1692,7 +1692,44 @@ function explode(x,y,dmg,radius,color){
 }
 // 무기 정의 (Lv6 만렙 → 진화)
 const EVOLVE = { bolt:'레일건 ⚡', arrow:'폭풍화살 🏹', spread:'스플릿링 ◍', nova:'초신성 ✵', orbit:'톱날궤도 ⚙', slash:'대참격 ✷', homing:'군집미사일 ✺', santoryu:'삼천세계 🌀', blackhole:'특이점 🕳️', lightning:'뇌신 ⚡', frost:'절대영도 🧊', flame:'용암지대 🌋', spirits:'삼신강림 🌟',
-  horizon:'대붕괴 🕳', swarm:'무한포화 🐝', bladearray:'만검진 ⚔' };
+  horizon:'대붕괴 🕳', swarm:'무한포화 🐝', bladearray:'만검진 ⚔',
+  gale:'폭풍의 눈 🌪', spore:'역병 ☣', meteor:'유성우 ☄', cataclysm:'종말 🌋' };
+// ☠️ 포자 — 적에게 붙는 상태. 발사체가 없고, 감염된 적에서 가까운 적으로 번진다.
+// 블랙홀이 적을 71 → 34 로 모아 주는데 그 뭉침을 보상하는 무기가 하나도 없었다
+// (번개는 점프 수가 상한이라 모아 줘도 0% 이득이었다). 포자는 상한이 없다.
+function infectSpore(e, l, evo){
+  if(!e || e.dead || e.spore) return;
+  e.spore={ t:(4+0.5*l)*(evo?1.4:1), dps:player.dmg*(0.5+0.12*l)*(evo?1.7:1)*fusePow('spore'),
+            next:0.9, R:70+8*l, n:evo?2:1, l, evo };
+}
+function updateSpores(dt){
+  for(const e of enemies){ const s=e.spore; if(!s||e.dead) continue;
+    s.t-=dt; if(s.t<=0){ e.spore=null; continue; }
+    hurtEnemy(e, s.dps*dt, '#b7ff7a');
+    s.next-=dt;
+    if(s.next<=0){ s.next=0.9;
+      let spread=0;
+      for(const o of enemies){ if(spread>=s.n) break;
+        if(o===e||o.dead||o.spore) continue;
+        if(dist2(o,e)<(s.R+o.r)*(s.R+o.r)){ infectSpore(o, s.l, s.evo); spread++; } }
+    }
+  }
+}
+// 🪨 운석 — 자리를 예고하고 잠시 뒤 한 번 내리꽂는다. 발사체가 없다.
+function updateMeteors(dt){
+  if(!player.meteors) player.meteors=[];
+  for(const m of player.meteors){ m.t+=dt;
+    if(!m.hit && m.t>=m.delay){ m.hit=true;
+      for(const e of enemies){ if(e.dead) continue;
+        if(dist2(e,m)<(m.r+e.r)*(m.r+e.r)) hurtEnemy(e, m.dmg, '#ffd0a0'); }
+      killRings.push({x:m.x,y:m.y,r:m.r*1.3,life:.35,color:'#ffb877'}); if(killRings.length>32) killRings.shift();
+      for(let i=0;i<14;i++){ const a=i/14*6.283;
+        particles.push({x:m.x+Math.cos(a)*m.r*0.5,y:m.y+Math.sin(a)*m.r*0.5,
+          vx:Math.cos(a)*170,vy:Math.sin(a)*170,life:0.32,color:'#ffcf9a'}); }
+      shake=Math.min((shake||0)+3,9); tone(70,0.22,'sine',0.18,32);
+    } }
+  player.meteors=player.meteors.filter(m=>m.t<m.delay+0.3);
+}
 // 삼수호령: 플레이어 주위를 도는 3정령 위치(뇌운령·염화령·검령) — time 기반 공전
 function ensureSpiritEnt(){ if(!player.spiritEnt||player.spiritEnt.length<3){ player.spiritEnt=[0,1,2].map(i=>({x:player.x+Math.cos(i*2.0944)*50, y:player.y+Math.sin(i*2.0944)*50})); } return player.spiritEnt; }
 function spiritPositions(){ return ensureSpiritEnt(); }
@@ -1954,6 +1991,31 @@ const WEAPONS = {
     interval:()=>Infinity, fire:()=>{} },
   bladearray:{ name:'천검진', icon:'⚔', desc:'궤도·참격·볼트 융합 · 우주전사 1기가 세 속성을 모두 쓴다 (본체는 쏘지 않는다)', max:9,
     interval:()=>Infinity, fire:()=>{} },
+  // ═══════ 3단계 — 융합 4종을 모두 완성(9+진화)해야 등장한다 ═══════
+  // 설계 원칙: 탄을 많이 뿌리지 않는다. 그 시점이면 화면에 이미 융합 4종이 돌고 있어서
+  // 탄막을 더하면 아무것도 안 보인다. 셋 다 '한 방이 무겁고 발사체가 없는' 쪽으로 간다.
+  //   돌풍 = 밀어내기(게임에 무기형 넉백이 없었다)
+  //   포자 = 적→적 전염(블랙홀이 모아 준 뭉침을 보상하는 유일한 무기)
+  //   운석 = 예고 후 낙하 한 방(자연계 보스 DPS 21~123 공백을 메운다)
+  gale:{ name:'돌풍', icon:'🌪', desc:'사방으로 폭풍을 밀어낸다 · 적을 바깥으로 날린다 (탄 없음)', max:6,
+    interval:(p,l)=>Math.max(1.6, 2.6-0.17*(l-1)),
+    fire:(p,l)=>{ const evo=p.evolved.gale;
+      p.novas.push({x:p.x,y:p.y,r:14,maxr:(150+14*l)*(evo?1.3:1),dmg:p.dmg*(1.3+0.3*l)*(evo?1.6:1),
+        hit:new Set(),gale:true,push:(70+8*l)*(evo?1.4:1)});
+      playWeaponSound('nova',evo); } },
+  spore:{ name:'포자', icon:'☠', desc:'감염된 적에게서 주변으로 번진다 · 뭉칠수록 빨리 퍼진다 (탄 없음)', max:6,
+    interval:(p,l)=>Math.max(2.2, 4.0-0.3*(l-1)),
+    fire:(p,l)=>{ const evo=p.evolved.spore, e=nearestEnemy(); if(!e) return;
+      infectSpore(e, l, evo); playWeaponSound('frost',evo); } },
+  meteor:{ name:'운석', icon:'🪨', desc:'자리를 예고하고 내리꽂는다 · 한 방이 무겁다 (탄 없음)', max:6,
+    interval:(p,l)=>Math.max(2.6, 5.0-0.4*(l-1)),
+    fire:(p,l)=>{ const evo=p.evolved.meteor, e=nearestEnemy(); if(!e) return;
+      if(!p.meteors) p.meteors=[];
+      p.meteors.push({x:e.x,y:e.y,t:0,delay:0.75,r:(60+7*l)*(evo?1.3:1),
+        dmg:p.dmg*(4.5+1.1*l)*(evo?1.6:1)*fusePow('meteor'), hit:false});
+      playWeaponSound('blackhole',evo); } },
+  cataclysm:{ name:'천재지변', icon:'🌋', desc:'돌풍·포자·운석 융합 · 4초마다 단 한 번, 모든 것을 한자리에 떨어뜨린다', max:9,
+    interval:()=>Infinity, fire:()=>{} },
 };
 // 블랙홀 씨앗탄이 착탄한 자리에 회오리 생성(아주 작게 시작 → 점점 커짐)
 function plantHole(x,y,l,evo){
@@ -2003,8 +2065,39 @@ const FUSIONS=[
     // 실측 비중이 난전 DPS 의 9% 뿐이라, 지우고 그만큼 전사의 공격(BLADE_POW)으로 돌렸다.
     // 천검진은 '전사가 세 무기로 싸운다' 하나로 읽히는 편이 낫다.
     sigCd:9e9, sig:()=>{} },
+  // ═══ 3단계 융합 — 융합 4종을 모두 완성한 뒤에야 재료(돌풍·포자·운석)가 등장한다 ═══
+  // "1방에 파워" — 4초에 단 한 번, 한 자리에 전부 떨어뜨린다. 탄은 하나도 안 나간다.
+  { key:'cataclysm', name:'천재지변', icon:'🌋', color:'#ff9d5c',
+    parts:['gale','spore','meteor'], partNames:'돌풍·포자·운석',
+    desc:'4초마다 단 한 번 · 적이 가장 몰린 자리에 떨어뜨리고, 날리고, 퍼뜨린다',
+    sigCd:4.0, sig:(p,lv)=>{
+      // 적이 가장 몰린 자리를 고른다 — 모아 준 보상을 여기서 받는다
+      let best=null, bestN=-1;
+      for(const e of enemies){ if(e.dead) continue; let n=0;
+        for(const o of enemies){ if(!o.dead && dist2(o,e)<160*160) n++; }
+        if(n>bestN){ bestN=n; best=e; } }
+      if(!best) return;
+      // ⚠️ 한 방에 전부 싣는 구조라 계수가 커 보이지만, 4초에 한 번뿐이다.
+      //    1차안(9+2.2lv)으로는 3단계가 2단계 융합보다 약했다 — 실측 4045 vs 천검진 18405. 두 번 올려 14885 → 19000대로 맞췄다.
+      //    난전 기준으로 2단계 최상위를 넘기도록 올렸다.
+      const R=120+9*lv;
+      p.meteors.push({x:best.x,y:best.y,t:0,delay:0.75,r:R,
+        dmg:p.dmg*(55+13*lv)*fusePow('meteor'), hit:false, big:true});
+      // 착탄과 같은 박자로 돌풍이 터지고, 맞은 적이 전부 감염된다
+      p.novas.push({x:best.x,y:best.y,r:14,maxr:R*1.6,dmg:p.dmg*(8+2*lv),
+        hit:new Set(),gale:true,push:110+10*lv});
+      for(const e of enemies){ if(e.dead) continue;
+        if(dist2(e,best)<(R+e.r)*(R+e.r)) infectSpore(e, 6, true); }
+      playWeaponSound('blackhole',true); } },
 ];
 const FUSE_KEYS=new Set(FUSIONS.map(F=>F.key));
+// 3단계 재료는 융합 4종(9+진화)을 모두 끝낸 뒤에만 카드에 나온다.
+const FUSION4=['spirits','horizon','swarm','bladearray'];
+const TIER3=new Set(['gale','spore','meteor']);
+function apexUnlocked(){
+  return FUSION4.every(k=>{ const w=WEAPONS[k];
+    return (player.weapons[k]||0)>=w.max && !!player.evolved[k]; });
+}
 // HUD 무기 슬롯에서 융합 무기를 따로 그리기 위한 고유색.
 // 삼수호령은 FUSIONS 가 아니라 RECIPES 쪽에만 있어서 따로 넣는다(뇌운령의 번개색).
 // 색만으로는 구분이 안 된다 — 벌떼포화(#ffd25c)가 진화 금색(#ffd47b)과 거의 같다.
@@ -2109,7 +2202,8 @@ function fuse(F){
 // 사건의 지평선은 블랙홀만 쏘고, 충격파·서리는 그 회오리 안에서 돈다(plantHole 참조).
 // 벌떼포화도 같다 — 여왕벌이 세 재료를 다 쏜다. 플레이어 본체는 쏘지 않는다.
 const BOUND_PARTS={ horizon:['nova','frost'], swarm:['homing','spread','arrow'],
-                    bladearray:['orbit','slash','bolt'] };   // 천검진 — 우주전사가 셋 다 쓴다
+                    bladearray:['orbit','slash','bolt'],   // 천검진 — 우주전사가 셋 다 쓴다
+                    cataclysm:['gale','spore','meteor'] };  // 천재지변 — 시그니처 한 방에 전부 담는다
 function updateFusions(dt){
   if(!player.fuseCd) player.fuseCd={};
   for(const F of FUSIONS){
@@ -2132,6 +2226,8 @@ function weaponFireTick(dt){
   updateSpirits(dt);   // 🌟 삼수호령 이동 + 원소별 독립 쿨다운 발사 (여기서 전부 처리)
   updateBladeUnits(dt);// ⚔ 천검진 검 유닛 공전 + 찌르기
   updateQueenBee(dt);  // 🐝 벌떼포화 여왕벌 — 거리 유지 + 미사일/산탄/화살
+  updateSpores(dt);    // ☠️ 포자 전염 (적에게 붙은 상태)
+  updateMeteors(dt);   // 🪨 운석 예고 → 낙하
   updateFusions(dt);   // 🌟 융합 3종 — 재료별 독립 쿨다운 + 시그니처
   for(const key in player.weapons){ if(key==='orbit'||key==='spirits'||FUSE_KEYS.has(key)||!WEAPONS[key]) continue; const w=WEAPONS[key], l=player.weapons[key];
     if(player.timers[key]==null || player.timers[key]!==player.timers[key]) player.timers[key]=0; // null/undefined/NaN 방어: 타이머 유실 시 0으로 복구 → 진화·전직 무기 발사 누락 방지
@@ -2183,6 +2279,7 @@ function buildChoices(){
   for(const key in WEAPONS){ const w=WEAPONS[key], owned=player.weapons[key];
     if(key==='spirits' && !player.weapons.spirits) continue;   // 미보유 삼수호령만 일반 풀 제외(융합 전용) · 보유 시 강화/진화는 허용
     if(FUSE_KEYS.has(key) && !player.weapons[key]) continue;   // 융합 무기도 같은 규칙 — 재료를 모아야만 등장한다
+    if(TIER3.has(key) && !owned && !apexUnlocked()) continue;  // 3단계 재료 — 융합 4종을 모두 끝내야 등장
     if(owned){
       if(owned<w.max) wpool.push({weapon:key,t:`${w.icon} ${w.name} 강화 (Lv${owned}→${owned+1})`, d:w.desc+fuseHint(key), weight:Math.max(3,fuseWeight(key)), a:()=>player.weapons[key]++});
       // 진화 카드에도 융합 가중치를 태운다 — 진화가 융합의 마지막 단계가 됐으므로,
@@ -2400,8 +2497,12 @@ function update(dt){
   for(const nv of player.novas){ nv.r+=dt*300;
     if(nv.frost){nv.frostFx=(nv.frostFx||0)-dt;if(nv.frostFx<=0){nv.frostFx=.09;for(let i=0;i<6;i++){const a=i*1.047+nv.r*.005;emitWeaponFx('frost',nv.x+Math.cos(a)*nv.r*.9,nv.y+Math.sin(a)*nv.r*.9);}}}
     for(const e of enemies){ if(nv.hit.has(e)||e.dead) continue; const dr=Math.hypot(e.x-nv.x,e.y-nv.y);
-      if(dr<nv.r && dr>nv.r-34){ nv.hit.add(e); const col=nv.frost?'#9fe8ff':'#c9a3ff'; burst(e.x,e.y,col,4); hurtEnemy(e,nv.dmg,col);
-        if(nv.frost && !e.boss){ e.slowT=nv.slowDur; e.slowMul=nv.slowMul; if(nv.freeze && Math.random()<0.3){ e.slowT=1.2; e.slowMul=0; } } } } }
+      if(dr<nv.r && dr>nv.r-34){ nv.hit.add(e); const col=nv.frost?'#9fe8ff':(nv.gale?'#cfe9ff':'#c9a3ff'); burst(e.x,e.y,col,4); hurtEnemy(e,nv.dmg,col);
+        if(nv.frost && !e.boss){ e.slowT=nv.slowDur; e.slowMul=nv.slowMul; if(nv.freeze && Math.random()<0.3){ e.slowT=1.2; e.slowMul=0; } }
+        // 🌪 돌풍 — 바깥으로 날린다. 게임에 무기로 하는 밀어내기가 이것뿐이다.
+        //    블랙홀(끌어당김)의 거울상이라, 플레이어 중심 범위기와는 반대로 맞물린다.
+        if(nv.push && !e.boss){ const dx=e.x-nv.x, dy=e.y-nv.y, d=Math.hypot(dx,dy)||1;
+          e.x+=dx/d*nv.push; e.y+=dy/d*nv.push; } } } }
   player.novas=player.novas.filter(nv=>nv.r<nv.maxr);
   // 블랙홀: 회오리로 적을 빨아들이며(보스 제외) 지속 피해
   for(const h of player.holes){ h.life-=dt; h.spin+=dt*7;
@@ -3191,7 +3292,11 @@ flame:'M12 2Q20 9 20 15A8 8 0 0 1 4 15Q4 10 8 7L9 13ZM12 13Q7 20 12 21Q17 20 12 
 spirits:'M12 3L15 8 21 10 16 15 17 21 12 18 7 21 8 15 3 10 9 8Z',
 horizon:'M12 4A8 8 0 1 1 11.9 20M12 9A3 3 0 1 0 12 15A3 3 0 1 0 12 9M3 12H6M18 12H21',
 swarm:'M5 19L10 14M10 14L8 9 13 11ZM14 10L19 5M19 5H14M19 5V10M7 7L4 4M17 17L20 20',
-bladearray:'M12 2A10 10 0 1 0 12 22A10 10 0 1 0 12 2M12 6L14 12 12 18 10 12Z'};
+bladearray:'M12 2A10 10 0 1 0 12 22A10 10 0 1 0 12 2M12 6L14 12 12 18 10 12Z',
+gale:'M3 7H15A3 3 0 1 0 12 4M3 12H19A3 3 0 1 1 16 15M3 17H12A2.5 2.5 0 1 0 9.5 14.5',
+spore:'M12 8A4 4 0 1 0 12 16A4 4 0 1 0 12 8M12 2V5M12 19V22M2 12H5M19 12H22M5 5L7.4 7.4M16.6 16.6L19 19M19 5L16.6 7.4M7.4 16.6L5 19',
+meteor:'M14 3L21 10L13 18L6 11ZM6 11L2 21L12 17M9 6L5 4M6 9L2 8',
+cataclysm:'M12 2L15 9H22L16 13L18 21L12 16L6 21L8 13L2 9H9ZM12 11A2 2 0 1 0 12 15A2 2 0 1 0 12 11'};
 const iconPaths={};
 function weaponIcon(key){return '<svg class="tech-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="'+WICON[key]+'"/></svg>';}
 function canvasIcon(key,x,y,size,color){
@@ -3827,6 +3932,29 @@ function render(){
     // 어두운 중심 void + 보라 테두리 글로우
     ctx.globalAlpha=a; ctx.fillStyle='#050109'; ctx.beginPath(); ctx.arc(0,0,void_,0,Math.PI*2); ctx.fill();
     ctx.strokeStyle='rgba(200,150,255,'+(0.55*a).toFixed(2)+')'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(0,0,void_,0,Math.PI*2); ctx.stroke();if(player.evolved.blackhole){ctx.globalAlpha=a*.4;ctx.setLineDash([7,12]);ctx.rotate(-h.spin);ctx.beginPath();ctx.ellipse(0,0,h.r*.75,h.r*.28,.4,0,6.283);ctx.stroke();}
+    ctx.restore(); }
+  // 🪨 운석 — 예고(줄어드는 링) → 착탄(섬광). 발사체가 없어 화면이 어지럽지 않다.
+  if(player.meteors) for(const m of player.meteors){
+    ctx.save(); ctx.translate(m.x,m.y);
+    if(!m.hit){ const k=Math.min(1,m.t/m.delay);
+      ctx.globalAlpha=.30+.45*k; ctx.strokeStyle=m.big?'#ff9d5c':'#ffb877'; ctx.lineWidth=m.big?3:2;
+      ctx.setLineDash([6,7]); ctx.beginPath(); ctx.arc(0,0,m.r,0,6.283); ctx.stroke(); ctx.setLineDash([]);
+      ctx.globalAlpha=.55+.4*k; ctx.lineWidth=m.big?3.5:2.5;
+      ctx.beginPath(); ctx.arc(0,0,m.r*(1-k*0.82),0,6.283); ctx.stroke();      // 조여드는 링 = 남은 시간
+      ctx.globalAlpha=.9; ctx.fillStyle='#fff0d8';
+      ctx.beginPath(); ctx.arc(0,0,2.5+3*k,0,6.283); ctx.fill();
+    } else { const f=Math.max(0,1-(m.t-m.delay)/0.3);
+      ctx.globalAlpha=f*.85; ctx.fillStyle='#ffe0b8';
+      ctx.beginPath(); ctx.arc(0,0,m.r*(0.45+0.6*(1-f)),0,6.283); ctx.fill();
+      ctx.globalAlpha=f; ctx.strokeStyle='#fff6e6'; ctx.lineWidth=3*f+1;
+      ctx.beginPath(); ctx.arc(0,0,m.r*(0.7+0.5*(1-f)),0,6.283); ctx.stroke(); }
+    ctx.restore(); }
+  // ☠️ 포자 — 감염 표식. 적 위에 작은 점 셋만 돌려 탄막과 구분한다.
+  for(const e of enemies){ const s=e.spore; if(!s||e.dead) continue;
+    ctx.save(); ctx.translate(e.x,e.y);
+    ctx.globalAlpha=.35+.35*Math.sin(time*7+e.x*.05); ctx.fillStyle='#b7ff7a';
+    for(let i=0;i<3;i++){ const a=time*2.2+i*2.094, rr=e.r+5;
+      ctx.beginPath(); ctx.arc(Math.cos(a)*rr, Math.sin(a)*rr, 2.1, 0, 6.283); ctx.fill(); }
     ctx.restore(); }
   // Sweeping, tapered blade crescents communicate the radial melee hit.
   for(const fx of player.slashFx)drawSlash(fx);
