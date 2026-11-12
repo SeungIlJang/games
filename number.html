@@ -375,7 +375,7 @@
   </div>
   <div id="boostRow"></div>
   <div id="dailyBox"></div>
-  <div id="changelog">🆕 <b id="clVer">v4.1</b> · <span id="clNote">첫 설명은 <b>핵심 3줄</b>로 · 점수·코인 <b>밸런스 조정</b> · 🌟골든이 더 자주</span></div>
+  <div id="changelog">🆕 <b id="clVer">v4.2</b> · <span id="clNote">콤보 배수는 <b>길게 갈수록</b> 올라가요 · 🌟골든은 <b>배수 +2</b>로</span></div>
 </div>
 
 <div id="help" class="hidden">
@@ -466,7 +466,7 @@
   <div id="shopList"></div>
   <button class="btn" id="shopClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v4.1 · 결과창 보유 코인</div>
+<div id="ver">v4.2 · 콤보 배수·골든 재조정</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -984,17 +984,17 @@ const MODS=[
   {id:'chain',  i:'🔗', n:'체인 특화', d:'체인 등장↑ · 완성 보너스 +35%', max:3, a:()=>{ modChain+=0.12; modChainBonus+=0.35; }},
   {id:'perfect',i:'✨', n:'정밀',     d:'PERFECT 판정 +70ms · 배수 상한 +1', max:3, a:()=>{ modPerfect+=70; modMultCap+=1; }},
   {id:'life',   i:'💛', n:'생명',     d:'생명 +1 (상한도 +1)',          max:3, a:()=>{ heartMax++; hearts=Math.min(heartMax,hearts+1); renderHearts(); }},
-  {id:'golden', i:'🌟', n:'황금',     d:'골든 라운드 2배 자주 · 골든 +35%', max:2, a:()=>{ modGolden++; modGoldenScore+=0.35; }},
+  {id:'golden', i:'🌟', n:'황금',     d:'골든 라운드 2배 자주 · 골든 배수 +1', max:2, a:()=>{ modGolden++; modGoldenBonus+=1; }},
   {id:'read',   i:'🧮', n:'해독',     d:'수열을 6개까지 표시 · 점수 -8%', max:1, a:()=>{ modSeq=6; modScore-=0.08; }},
   {id:'lucky',  i:'🎲', n:'행운',     d:'롤링 2배 자주 · 롤링 점수 +60%', max:2, a:()=>{ modRoll+=0.10; modRollScore+=0.60; }},
 ];
 const MOD_BY={}; MODS.forEach(m=>MOD_BY[m.id]=m);
 let modSpeed=1, modScore=1, modChain=0, modChainBonus=1, modPerfect=0, modMultCap=5,
-    modGolden=0, modGoldenScore=1, modSeq=4, modRoll=0, modRollScore=1, heartMax=3,
+    modGolden=0, modGoldenBonus=0, modSeq=4, modRoll=0, modRollScore=1, heartMax=3,
     modOwned={}, nextDraftAt=5;
 function resetMods(){
   modSpeed=1; modScore=1; modChain=0; modChainBonus=1; modPerfect=0; modMultCap=5;
-  modGolden=0; modGoldenScore=1; modSeq=4; modRoll=0; modRollScore=1; heartMax=3;
+  modGolden=0; modGoldenBonus=0; modSeq=4; modRoll=0; modRollScore=1; heartMax=3;
   modOwned={}; nextDraftAt=5; renderModBar();
 }
 function renderModBar(){
@@ -1006,6 +1006,11 @@ let state='start', cur=0, target=0, score=0, hits=0, rule=null, ti=0, seq=[], ti
 let chainAll=[], chain=[], chainIdx=0, startVal=0;   // 🔗 체인 목표
 const HEART_MAX=3;
 let mult=1, targetShownAt=0, inGap=false;   // 콤보 배수 · 목표 표시 시각 · 라운드 전환 텀
+// 🔥 배수를 한 칸 올리는 데 필요한 PERFECT 연속 횟수.
+// 1 이면 4연속 만에 ×5 에 닿아서 그 뒤 모든 점수가 ×5 로 깔린다(=판이 길어져도
+// 배수에서 더 가져갈 게 없다). 2 로 두면 ×5 는 8번째 PERFECT 의 보상이 되고,
+// 상한은 ×5 그대로라 도움말 문구도 안 바뀐다. PERFECT 가 없는 초보는 영향 없음.
+const MULT_STEP=2; let pstreak=0;
 const GAP_MS=450;    // 라운드 전환 텀 — 1000ms는 죽은 시간이 너무 길어 450으로 단축
 const now=()=>{ try{ return performance.now(); }catch(e){ return 0; } };
 // HUD 가운데 칸 — 콤보와 배수를 함께 그린다.
@@ -1101,7 +1106,7 @@ function newRound(keepCur){
     // 첫 목표는 규칙을 읽을 수 있게 3칸 이상, 이어지는 체인 고리는 2칸부터(대기 시간 단축)
     for(let c=0;c<nC;c++){ const k=rule.type==='mul'?rndS(2,3):(c===0?rndS(3,4):rndS(2,4)); for(let j=0;j<k;j++){ t=advance(t,si); si++; } tg.push(t); }
     chainAll=tg.slice(); chainIdx=0; chain=tg.slice(1); target=tg[0]; seq=[cur];
-    if(rule.golden){ banner(''+uic('golden','🌟',22)+' 골든 라운드! 점수 ×2','#ffd34d'); vib([15,30,15]); if(!sfx('golden_enter')) tone(880,0.1,'triangle',0.06); }
+    if(rule.golden){ banner(''+uic('golden','🌟',22)+' 골든 라운드! 배수 +2','#ffd34d'); vib([15,30,15]); if(!sfx('golden_enter')) tone(880,0.1,'triangle',0.06); }
     else if(nC>1){ banner('<img class="art" src="'+PLAY_DIR+'chain_link.webp" alt="" width="22" height="22" data-fb="🔗" onerror="uiFB(this)"> 체인 '+nC+'연속 목표!','#ffd34d'); vib([15,25,15]); tone(740,0.09,'triangle',0.06); }
     else if(rule.type==='stepup'){ banner(''+uic('stepup','📈',22)+' 계단! 간격이 커져요','#7cf6ff'); vib(25); }
     else if(rule.type==='mul'){ banner(''+uic('mul','✖️',22)+' 곱하기! ×'+(rule.m||2),'#c9a3ff'); vib(25); }
@@ -1157,7 +1162,7 @@ function start(){
   runBoost={};
   if(!dailyMode) for(const B of BOOSTS){ if(eqb[B.id] && (bst[B.id]||0)>0){ bst[B.id]--; runBoost[B.id]=true; if(!bst[B.id]) eqb[B.id]=false; } }
   saveBoost(); renderBoostRow();
-  score=0; hits=0; hearts=1+(runBoost.life?2:0); mult=1; runCoins=0; runEarned=0; totalCommitted=0; inGap=false; showMult(); slowEndShown=false; reviveCount=0; adPlaying=false;
+  score=0; hits=0; hearts=1+(runBoost.life?2:0); mult=1; pstreak=0; runCoins=0; runEarned=0; totalCommitted=0; inGap=false; showMult(); slowEndShown=false; reviveCount=0; adPlaying=false;
   slowLeft=runBoost.slow?6:0; chainAll=[]; chain=[]; chainIdx=0; renderChainTag();
   const _rb=$('reviveBtn'); if(_rb)_rb.disabled=false; hideBanner(); document.body.classList.remove('menu'); $('start').classList.add('hidden'); $('over').classList.add('hidden'); state='play';
   try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
@@ -1170,13 +1175,15 @@ function hitOK(){
   const grade=judge();   // 목표 표시 후 반응 속도로 PERFECT/GOOD
   $('cur').classList.remove('miss','ontarget'); $('cur').classList.add('hit'); setTimeout(()=>$('cur').classList.remove('hit'),220);  // 성공=초록 확실히
   hits++;
-  if(grade==='PERFECT'){ mult=Math.min(modMultCap, mult+1); mprog('perfect',1); } else mult=1;   // 퍼펙트 연속 → 배수↑, 굿이면 리셋
+  if(grade==='PERFECT'){ pstreak++; if(pstreak%MULT_STEP===0) mult=Math.min(modMultCap, mult+1); mprog('perfect',1); }
+  else { pstreak=0; mult=1; }   // 퍼펙트 MULT_STEP 연속마다 배수↑, 굿이면 둘 다 리셋
   if(slowLeft>0) slowLeft--;
   const chainEnd = chainAll.length>1 && chain.length===0;   // 이번 성공으로 체인이 완성되는가
   const jg = chainEnd ? 0.4 : 1;                            // 완성음과 겹치면 판정음을 낮춘다(납품 안내)
   const link = chainAll.length>1 ? 0.5*chainIdx : 0;              // 🔗 체인 뒷 링크 — 곱이 아니라 콤보 배수에 더한다(겹칠 때 폭주 억제)
-  const base=((wasRoll?25*modRollScore:10) + (hits-1)*2) * (wasGolden?2*modGoldenScore:1);   // 🌟 골든 라운드 점수 ×2
-  const gain=Math.round(base*(mult+link)*modScore*(runBoost.score2?2:1));
+  const gb = wasGolden ? (2 + modGoldenBonus) : 0;   // 🌟 골든 — 기본점을 2배 하지 않고 배수에 +2 (체인 링크와 같은 방식)
+  const base=(wasRoll?25*modRollScore:10) + (hits-1)*2;
+  const gain=Math.round(base*(mult+link+gb)*modScore*(runBoost.score2?2:1));
   score += gain; showMult(); addCoins(gain);
   mset('score',score); mset('streak',hits);
   const [x,y]=centerXY();
@@ -1396,7 +1403,7 @@ function die(msg, fromChoice){
   if(state!=='play') return;
   $('draft').classList.add('hidden');   // 이미 끝난 판에 지연 타이머가 또 들어와 점수·코인이 중복 정산되는 것 방지
   clearTimeout(timer); clearTimeout(rollTO); clearTimeout(cTO); clearTimeout(cCd);
-  mult=1; showMult();   // 콤보 배수 리셋
+  mult=1; pstreak=0; showMult();   // 콤보 배수 리셋(부활로 이어가도 처음부터)
   const choiceMode = fromChoice || inChoice; inChoice=false;
   $('wrap').classList.remove('slow');
   let overHtml; const [x,y] = choiceMode ? [innerWidth/2, innerHeight*0.4] : centerXY();
