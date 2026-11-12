@@ -4,6 +4,11 @@
 .enemy-review/
 .weapon-review/
 
+# 비교·검증용 임시 사본 — 여기는 Pages 배포 루트라 커밋되면 그대로 URL 로 공개된다.
+#   (예: 밸런스 전후 비교하려고 옛 빌드를 _tmp_v41.html 로 꺼내둔 적이 있다)
+# 애초에 레포 밖에 두는 게 맞지만, 실수로 만들어도 git add -A 에 안 쓸리게 막는다.
+_tmp*
+
 # 납품 원본(풀사이즈)은 images/number/ 와 number-app/assets/ 에 보관 — 배포 저장소에는 축소본(ui/)만 올린다
 img/number/neon-v2/
 audio/number/neon-v1/
