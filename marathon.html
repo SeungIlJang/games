@@ -147,7 +147,7 @@
 <div class="ov" id="title">
   <h1 style="font-size:34px">🏃 모두의 마라톤</h1>
   <p id="titleSub">오늘은 어떻게 달려볼까요?</p>
-  <div style="font-size:11px;opacity:.6;margin-top:-4px">v4.2 · 레인 레이더·누르기 안내(튜토리얼·HUD 다이어트)</div>
+  <div style="font-size:11px;opacity:.6;margin-top:-4px">v4.3 · 초보 숨 고르기·첫 레이스 접전(튜토리얼·HUD 다이어트)</div>
   <div id="hero" style="display:none;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:360px">
     <div class="mode" id="heroStart" style="background:linear-gradient(135deg,#ffffff,#ffe6ee);border-color:#ffb3cb;width:100%"><b class="mi">🏁</b><b>첫 레이스 시작</b><small>서울 코스에서 10명과 함께 달려요<br>조작은 달리면서 하나씩 알려드릴게요</small></div>
     <button class="pill" id="heroMore" style="flex:none;background:#eef3f8;color:var(--txt);box-shadow:none;padding:9px 18px;font-size:13px">먼저 둘러볼게요</button>
@@ -621,7 +621,10 @@ function update(dt){
   P.ahead=ahead;
   P.draft=!!ahead&&gap>=BODY-2&&gap<=DRAFT&&!P.tired;
   P.draftHold=P.draft?P.draftHold+dt:Math.max(0,P.draftHold-dt*2);
-  const sprint=holding()&&!P.tired&&!(P.cramp>0);
+  let sprint=holding()&&!P.tired&&!(P.cramp>0);
+  // 🫁 초보 페이스 도우미(완주 5회 미만): 계속 누르고 있어도 체력 15%에서 자동으로 숨 고르기 → 35%까지 회복 후 다시 가속
+  if(racesN()<5&&!kick&&sprint&&(P.stam<=15||(P.breath&&P.stam<35))){ sprint=false; if(!P.breath){ P.breath=true; if(!hint.breath){ hint.breath=1; pop("🫁 숨 고르는 중 — 손을 떼면 더 빨리 회복돼요",'#2a9d55'); } } }
+  else if(!holding()||P.stam>=35||kick) P.breath=false;
   if(holding()){ lastHoldT=raceT; holdEver=true; }
   const hillSpd=gr>0?0.86:gr<0?1.12:1, hillDrain=gr>0?1.5:gr<0?0.6:1, hillRegen=gr>0?0.6:gr<0?1.2:1;
   const uS=upLv('spd'), wDrain=(wnd&&!P.draft?1.25:1)*(weather==='heat'?1.15:1), wRegen=(weather==='heat'?0.85:1)*(wnd&&P.draft?1.3:1);
@@ -659,13 +662,14 @@ function update(dt){
   P.stam=clamp(P.stam,0,100);
   if(P.draft&&P.ahead&&P.ahead.pacer&&!hint.pacer){ hint.pacer=1; pop("🎈 3:30 페이스 그룹 합류! 따라가면 서브3:30",'#3fa0ff'); }
   if(P.draft){ st.draftT+=dt; if(!hint.draft){hint.draft=1; pop("🌀 드래프팅! 회복↑ · 빠지면 슬링샷",'#2aa0e0');} }
-  if(P.stam<=0&&!P.tired){ P.tired=true; st.tiredEver=1; pop("😵 퍼졌다! 손 떼고 회복"+(P.gels>0?" (젤!)":""),'#ff5d6c',true); sfx.bad(); buzz(60); }
+  if(P.stam<=0&&!P.tired){ st.tiredN=(st.tiredN||0)+1; if(st.tiredN===2) setTimeout(()=>{ if(state==='race') pop("💡 체력 바가 노랗게 되면 손을 떼세요 — 계속 누르면 퍼져요",'#ffab2e',true); },1600);
+    P.tired=true; st.tiredEver=1; pop("😵 퍼졌다! 손 떼고 회복"+(P.gels>0?" (젤!)":""),'#ff5d6c',true); sfx.bad(); buzz(60); }
   if(P.tired&&P.stam>=30){ P.tired=false; pop("💪 회복! 다시 가자",'#3fca6b'); }
   // ❤️ 심박수
   const hrT=128+(weather==='heat'?8:0)+(sprint?42:0)+(gr>0?14:gr<0?-6:0)+(100-P.stam)*0.22+(P.tired?10:0)+(kick?8:0);
   P.hr+=(hrT-P.hr)*Math.min(1,dt*1.2);
   // 🦵 근육 경련: 체력이 바닥(40%↓)·심박 높은 채로 계속 가속을 밀어붙이면 쥐가 난다 (라스트 스퍼트 구간은 아드레날린으로 면제)
-  if(holding()&&P.stam<40&&P.hr>165&&!kick) P.hiHR+=dt; else P.hiHR=Math.max(0,P.hiHR-dt);
+  if(holding()&&!P.breath&&P.stam<40&&P.hr>165&&!kick) P.hiHR+=dt; else P.hiHR=Math.max(0,P.hiHR-dt);
   if(P.hr>172&&!hint.hr&&raceT>5){ hint.hr=1; pop("❤️ 심박 한계! 이대로 무리하면 쥐가 나요",'#ff5d6c'); }
   if(!(P.cramp>0)&&P.hiHR>2.5&&raceT>P.crampCd){ P.cramp=8; P.crampCd=raceT+40; P.hiHR=0; st.cramps++;
     showBanner("🦵 쥐가 났다!!","화면을 빠르게 연타해서 풀어요!",'#c0303a'); sfx.bad(); shake=10; buzz(150); }
@@ -695,6 +699,10 @@ function update(dt){
         P.stumble=0.6; P.speed*=0.6; st.streak=0; pop(it.type==='puddle'?"💦 미끄덩!":"🚧 꽈당!",'#ff5d6c'); sfx.bad(); shake=7; buzz(50); } } }
 
   // --- 라이벌 ---
+  // 🎬 첫 레이스 결승 접전: 36km쯤 가장 가까운 라이벌이 따라붙어 마지막까지 경합, 결승 직전 플레이어가 간발로 앞섬
+  if(tut&&!tut.duel&&p>0.86){ const c=R.filter(r=>!r.fin&&r.pos<TRACK*0.97).sort((a,b)=>Math.abs(a.pos-P.pos)-Math.abs(b.pos-P.pos))[0];
+    if(c){ tut.duel=c; if(Math.abs(c.lane-P.lane)<1){ const nl=[P.lane-1,P.lane+1].filter(l=>l>=0&&l<LANES); c.lane=nl[0]; c.lc=99; }
+      say(c,"마지막은 내 거야!"); pop("😤 "+c.n+"이(가) 따라붙었다! 마지막 승부!",'#ff3b6b',true); shake=6; } }
   for(const r of R){
     const rp=clamp(r.pos/TRACK,0,1); let rt=r.f(rp,raceT)*course.diff*(tut?0.94:1);
     if(r.fin) rt=60;
@@ -704,6 +712,7 @@ function update(dt){
     const rg=gradeAt(r.pos); rt*=rg>0?0.87:rg<0?1.1:1;               // 라이벌도 언덕 영향
     if(windAt(r.pos)) rt*=0.95; if(weather==='heat') rt*=0.985;
     if(r.surge>0){ rt+=18; r.surge-=dt; }
+    if(tut&&tut.duel===r&&!r.fin){ const last=P.pos>=TRACK*0.97, want=P.pos+(last?-14:20); rt=clamp(Math.max(P.speed,85)+(want-r.pos)*1.4,70,170); if(last) r.speed=Math.min(r.speed,rt); }   // 마지막 1.3km는 즉시 반응 → 플레이어가 간발로 앞섬
     let blk=null,bg=1e9;
     for(const o of R){ if(o===r||Math.abs(o.laneF-r.lane)>0.45)continue; const g=o.pos-r.pos; if(g>0&&g<bg){bg=g;blk=o;} }
     if(Math.abs(P.laneF-r.lane)<0.45){ const g=P.pos-r.pos; if(g>0&&g<bg){bg=g;blk=P;} }
@@ -912,7 +921,7 @@ function render(){
       if(P.fever>0){ ctx.fillStyle="#ffd23f55"; ctx.beginPath(); ctx.ellipse(d.x,foot-h*0.45,h*0.42,h*0.6,0,0,7); ctx.fill(); }
       if(P.speed>122&&state==='race'){ ctx.strokeStyle=P.sling>0?"#c9a6ffee":P.boost>0||P.fever>0?"#ffd23fcc":"#ffffffaa"; ctx.lineWidth=3; ctx.lineCap="round";
         for(let i=0;i<5;i++){ const yy=foot-h*0.15-i*h*0.16; ctx.beginPath(); ctx.moveTo(d.x-h*0.3,yy); ctx.lineTo(d.x-h*0.3-20-((raceT*600+i*31)%40),yy); ctx.stroke(); } }
-      const pushing=state==='race'&&holding()&&!P.tired&&!(P.cramp>0);
+      const pushing=state==='race'&&holding()&&!P.tired&&!(P.cramp>0)&&!P.breath;
       if(pushing){ ctx.save(); ctx.fillStyle="#ff9f1c"; ctx.font="900 "+Math.round(h*0.28)+"px sans-serif"; ctx.textAlign="center";
         for(let i=0;i<3;i++){ ctx.globalAlpha=0.85-i*0.25; ctx.fillText("»",d.x-h*(0.42+i*0.2)-((raceT*90)%14),foot-h*0.38); } ctx.restore(); }
       const top=drawRunner(pImg(),d.x,foot,h,P.phase,state==='menu'?null:"나",null,true);
@@ -993,7 +1002,7 @@ function hud(p,wall,kick){
   if(P.gelT>0){ ctx.fillStyle="#ffd23f88"; ctx.fillRect(bx+bw*P.stam/100,by,bw*Math.min(GEL_HEAL,100-P.stam)/100*(1-P.gelT/GEL_DELAY),16); }
   ctx.strokeStyle="#ffffffcc"; ctx.lineWidth=2; ctx.strokeRect(bx,by,bw,16);
   ctx.font="900 13px sans-serif"; ctx.textAlign="left"; ctx.fillStyle="#fff";
-  const stTxt=(wall&&!P.sw&&state==='race')?"🧱 버티기 "+Math.min(100,Math.round(P.grit/(GRIT_NEED*TRACK/10000)*100))+"%":P.high>0?"✨ 러너스 하이":P.cramp>0?"🦵 쥐! 화면 연타":P.fever>0?"🔥 FEVER!":P.tired?"😵 퍼짐 — 손 떼고 회복":P.stumble>0?"💥 휘청":P.blocked?"🚫 막힘 — 레인 바꿔!":P.sling>0?"🚀 슬링샷!":P.boost>0?"📣 부스트!!":holding()?"⚡ 가속 중!":P.draft?"🌀 드래프팅 — 회복 2배":"😌 쉬는 중 — 회복";
+  const stTxt=(wall&&!P.sw&&state==='race')?"🧱 버티기 "+Math.min(100,Math.round(P.grit/(GRIT_NEED*TRACK/10000)*100))+"%":P.high>0?"✨ 러너스 하이":P.cramp>0?"🦵 쥐! 화면 연타":P.fever>0?"🔥 FEVER!":P.tired?"😵 퍼짐 — 손 떼고 회복":P.stumble>0?"💥 휘청":P.blocked?"🚫 막힘 — 레인 바꿔!":P.sling>0?"🚀 슬링샷!":P.boost>0?"📣 부스트!!":P.breath?"🫁 숨 고르기 — 손 떼면 더 빨리":holding()?"⚡ 가속 중!":P.draft?"🌀 드래프팅 — 회복 2배":"😌 쉬는 중 — 회복";
   ctx.fillText("체력 "+Math.round(P.stam)+"%",bx,by-7); ctx.textAlign="right"; ctx.fillStyle=stTxt.startsWith("⚡")?"#ffb35c":"#fff"; ctx.fillText(stTxt,bx+bw,by-7); ctx.fillStyle="#fff";
   const beat=Math.abs(Math.sin(raceT*Math.PI*P.hr/60));
   ctx.textAlign="left"; ctx.font="bold 13px sans-serif"; ctx.fillStyle=P.hr>175?"#ff6b7a":P.hr>160?"#ffb35c":"#cfe3f5";
