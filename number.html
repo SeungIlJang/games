@@ -320,6 +320,8 @@
   #overRankNow .ofill{height:100%;background:linear-gradient(90deg,#7cf6ff,#5cffb0);border-radius:3px}
   .bprev{display:flex;gap:9px;justify-content:center;align-items:center;opacity:.5}
   #help .hrow{font-size:15.5px;line-height:1.65;max-width:330px;color:#cfe}
+  #help #helpRows{display:flex;flex-direction:column;align-items:center;gap:8px}
+  #help #helpMore{font-size:12.5px;line-height:1.55;max-width:330px;color:#8892b0;text-align:center}
   #help b{color:#7cf6ff}
 </style></head>
 <body>
@@ -373,18 +375,13 @@
   </div>
   <div id="boostRow"></div>
   <div id="dailyBox"></div>
-  <div id="changelog">🆕 <b id="clVer">v3.9</b> · <span id="clNote"><b>신기록 결과창</b>과 <b>생명 부활 후 숫자 겹침</b> 수정 · 이제 끝까지 제대로 보여요</span></div>
+  <div id="changelog">🆕 <b id="clVer">v4.0</b> · <span id="clNote">첫 설명은 <b>핵심 3줄</b>로 · 점수·코인 <b>밸런스 조정</b> · 🌟골든이 더 자주</span></div>
 </div>
 
 <div id="help" class="hidden">
-  <h1><img class="art" src="img/number/ui/ui_help.webp" alt="" width="24" height="24" data-fb="📖" onerror="uiFB(this)"/> 게임 방법</h1>
-  <div class="hrow">① 숫자가 <b>일정한 규칙</b>으로 올라갑니다. 아래 수열(<b>3 → 6 → 9</b>)을 보고 규칙을 읽으세요.</div>
-  <div class="hrow">② 화면 위 <b>목표 숫자</b>와 <b>똑같아지는 순간</b> 아무 곳이나 탭! 지나치거나 다른 숫자에서 멈추면 실패입니다.</div>
-  <div class="hrow">③ <b style="color:#ffe14d">PERFECT</b>(목표 도달 직후 반응)를 연속하면 점수 배수가 <b>최대 ×5</b>까지 올라갑니다.</div>
-  <div class="hrow">④ <b style="color:#c9a3ff">⚡ 롤링</b>은 숫자가 빙글빙글 — 감으로 목표에서 STOP. 성공하면 <b style="color:#ffd34d">💛 생명 +1</b>(최대 3), 실패해도 손해 없습니다.</div>
-  <div class="hrow">⑤ <b style="color:#7cf6ff">🔢 선택형</b>은 수열의 다음 숫자를 버튼으로 고르세요(제한시간 있음).</div>
-  <div class="hrow">⑥ 후반엔 <b style="color:#ffd34d">🔗 체인 목표</b>가 나옵니다. 목표를 연달아 맞히면 보너스가 크게 붙습니다.</div>
-  <div class="hrow">⑦ 점수는 <b>누적 랭크</b>로 쌓이고, 코인으로 <b>테마·부스터</b>를 살 수 있어요.</div>
+  <h1><img class="art" src="img/number/ui/ui_help.webp" alt="" width="24" height="24" data-fb="📖" onerror="uiFB(this)"/> <span id="helpTitle">게임 방법</span></h1>
+  <div id="helpRows"></div>
+  <div id="helpMore" class="hidden">나머지 규칙(⚡롤링 · 🔢선택형 · 🔗체인)은 처음 나올 때 화면이 알려줘요. 전체 설명은 홈의 <b>📖 방법</b>에 있어요.</div>
   <button class="btn" id="helpClose" style="align-self:center">알겠어요</button>
 </div>
 
@@ -469,7 +466,7 @@
   <div id="shopList"></div>
   <button class="btn" id="shopClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v3.9 · 결과창·숫자 겹침</div>
+<div id="ver">v4.0 · 첫 설명·점수/코인 밸런스</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -809,7 +806,13 @@ function applyTheme(id){ const t=THEMES.find(x=>x.id===id)||THEMES[0]; document.
 function saveCoins(){ try{ localStorage.setItem('num_coins',coins); }catch(e){} const a=$('coins'); if(a)a.textContent=coins; const s=$('shopCoins'); if(s)s.textContent=coins; }
 function renderCoins(){ const a=$('coins'); if(a)a.textContent=coins; const s=$('shopCoins'); if(s)s.textContent=coins; }
 let runEarned=0;
-function addCoins(pts){ runCoins += Math.max(1, Math.ceil(pts/8)) * (runBoost&&runBoost.coin2?2:1); }
+// 💰 판당 코인 상한 — 점수가 곱으로 커지면 코인도 같이 터져서 잘한 한 판이 상점을 통째로 열었다.
+// 초보 한 판이 30~135 코인이라 250 은 초보에겐 닿지 않고 상단만 누른다.
+// 부활로 이어간 판도 '한 판'이다 — commitCoins() 가 runCoins 를 비우므로 runEarned 와 합쳐서 건다.
+const RUN_COIN_CAP=250;
+function runCoinCap(){ return RUN_COIN_CAP * (runBoost&&runBoost.coin2?2:1); }
+function addCoins(pts){ const m=(runBoost&&runBoost.coin2?2:1);
+  runCoins = Math.max(0, Math.min(runCoinCap()-runEarned, runCoins + Math.max(1, Math.ceil(pts/8))*m)); }
 function commitCoins(){ if(runCoins>0){ runEarned+=runCoins; coins+=runCoins; runCoins=0; saveCoins(); } renderCoins(); }
 let shopTab='theme';
 function openShop(){ $('shop').classList.remove('hidden'); renderShop(); }
@@ -976,14 +979,14 @@ function renderBoostRow(){
 // ── 런 중 강화(모디파이어) ────────────────────────────────────────
 // 판마다 다른 빌드가 나오도록 5연속마다 3택 1. 위험/보상이 갈리는 카드를 섞는다.
 const MODS=[
-  {id:'speed',  i:'⚡', n:'가속',     d:'속도 +14% · 점수 ×1.3',        max:5, a:()=>{ modSpeed*=0.86; modScore*=1.3; }},
-  {id:'slow',   i:'🐢', n:'감속',     d:'속도 -15% · 점수 ×0.88',       max:3, a:()=>{ modSpeed*=1.15; modScore*=0.88; }},
-  {id:'chain',  i:'🔗', n:'체인 특화', d:'체인 등장↑ · 완성 보너스 ×1.5', max:3, a:()=>{ modChain+=0.12; modChainBonus*=1.35; }},
+  {id:'speed',  i:'⚡', n:'가속',     d:'속도 +14% · 점수 +20%',        max:5, a:()=>{ modSpeed*=0.86; modScore+=0.20; }},
+  {id:'slow',   i:'🐢', n:'감속',     d:'속도 -15% · 점수 -12%',        max:3, a:()=>{ modSpeed*=1.15; modScore-=0.12; }},
+  {id:'chain',  i:'🔗', n:'체인 특화', d:'체인 등장↑ · 완성 보너스 +35%', max:3, a:()=>{ modChain+=0.12; modChainBonus+=0.35; }},
   {id:'perfect',i:'✨', n:'정밀',     d:'PERFECT 판정 +70ms · 배수 상한 +1', max:3, a:()=>{ modPerfect+=70; modMultCap+=1; }},
   {id:'life',   i:'💛', n:'생명',     d:'생명 +1 (상한도 +1)',          max:3, a:()=>{ heartMax++; hearts=Math.min(heartMax,hearts+1); renderHearts(); }},
-  {id:'golden', i:'🌟', n:'황금',     d:'골든 라운드 2배 자주 · 골든 ×1.5', max:2, a:()=>{ modGolden++; modGoldenScore*=1.35; }},
-  {id:'read',   i:'🧮', n:'해독',     d:'수열을 6개까지 표시 · 점수 ×0.92', max:1, a:()=>{ modSeq=6; modScore*=0.92; }},
-  {id:'lucky',  i:'🎲', n:'행운',     d:'롤링 2배 자주 · 롤링 점수 ×1.6', max:2, a:()=>{ modRoll+=0.10; modRollScore*=1.6; }},
+  {id:'golden', i:'🌟', n:'황금',     d:'골든 라운드 2배 자주 · 골든 +35%', max:2, a:()=>{ modGolden++; modGoldenScore+=0.35; }},
+  {id:'read',   i:'🧮', n:'해독',     d:'수열을 6개까지 표시 · 점수 -8%', max:1, a:()=>{ modSeq=6; modScore-=0.08; }},
+  {id:'lucky',  i:'🎲', n:'행운',     d:'롤링 2배 자주 · 롤링 점수 +60%', max:2, a:()=>{ modRoll+=0.10; modRollScore+=0.60; }},
 ];
 const MOD_BY={}; MODS.forEach(m=>MOD_BY[m.id]=m);
 let modSpeed=1, modScore=1, modChain=0, modChainBonus=1, modPerfect=0, modMultCap=5,
@@ -1042,7 +1045,9 @@ function baseRule(){
 }
 function makeRule(){
   if(hits<2) return {type:'add',s:1};                         // 온보딩 2판
-  const gEvery=modGolden?5:10;                                  // 🌟 황금 강화를 먹으면 5연속마다
+  // 🌟 골든 주기 — 10연속은 첫날 유저가 거의 못 봐서 일일 미션 '골든 1회'가 사실상 불가능했다.
+  // 브론즈(누적 3,000점 미만)만 6연속으로 당긴다. 일일 챌린지는 모두 같은 전개여야 하므로 제외.
+  const gEvery=modGolden?5:((!dailyMode && rankIdx(total)<1)?6:10);
   if(hits>=6 && hits%gEvery===0){ const g={type:'add', s:pickS([3,4,5])}; g.golden=true; return g; }
   return baseRule();
 }
@@ -1169,9 +1174,9 @@ function hitOK(){
   if(slowLeft>0) slowLeft--;
   const chainEnd = chainAll.length>1 && chain.length===0;   // 이번 성공으로 체인이 완성되는가
   const jg = chainEnd ? 0.4 : 1;                            // 완성음과 겹치면 판정음을 낮춘다(납품 안내)
-  const link = chainAll.length>1 ? (1 + 0.5*chainIdx) : 1;        // 🔗 체인 뒷 링크일수록 배점↑
+  const link = chainAll.length>1 ? 0.5*chainIdx : 0;              // 🔗 체인 뒷 링크 — 곱이 아니라 콤보 배수에 더한다(겹칠 때 폭주 억제)
   const base=((wasRoll?25*modRollScore:10) + (hits-1)*2) * (wasGolden?2*modGoldenScore:1);   // 🌟 골든 라운드 점수 ×2
-  const gain=Math.round(base*mult*link*modScore*(runBoost.score2?2:1));
+  const gain=Math.round(base*(mult+link)*modScore*(runBoost.score2?2:1));
   score += gain; showMult(); addCoins(gain);
   mset('score',score); mset('streak',hits);
   const [x,y]=centerXY();
@@ -1416,7 +1421,9 @@ function die(msg, fromChoice){
   $('overTitle').innerHTML = rec?(uic('trophy','🏆',24)+' 신기록!'):(uic('fail','❌',24)+' 실패!');
   $('overMsg').innerHTML = overHtml;
   $('overScore').textContent=score;
-  commitCoins(); $('overCoin').innerHTML = uic('coin','💰',16)+' <b style="color:#ffd34d">+'+runEarned+'</b> <span style="opacity:.6">(보유 '+coins+')</span>';
+  commitCoins(); $('overCoin').innerHTML = uic('coin','💰',16)+' <b style="color:#ffd34d">+'+runEarned+'</b>'
+    + (runEarned>=runCoinCap() ? ' <span style="opacity:.55;font-size:11px">판당 상한</span>' : '')
+    + ' <span style="opacity:.6">(보유 '+coins+')</span>';
   // 🏅 랭크: 이번 판 점수를 누적(부활로 이어간 판은 증가분만)
   const up=addTotal(score-totalCommitted); totalCommitted=score;
   $('overRankUp').innerHTML = up ? ('<span style="color:'+up.R.c+'">🎉 '+rankArt(up.i,30)+' <span style="vertical-align:middle">'+up.R.n+' 승급! '+uic('coin','💰',14)+'+'+up.rw+'</span></span>') : '';
@@ -1472,7 +1479,19 @@ $('muteBtn').onclick=(e)=>{ e.stopPropagation(); sfxOn=!sfxOn; try{ localStorage
 renderMute();
 $('startBtn').onclick=()=>start();
 $('homeBtn').onclick=()=>goHome();
-$('helpBtn').onclick=()=>{ $('help').classList.remove('hidden'); };
+// 📖 게임 방법 — 첫 실행은 '핵심 3줄'만.
+// 롤링(4연속)·선택형(6)·체인(6)은 아직 본 적도 없는 규칙이라 먼저 읽히면 그냥 닫는다.
+// 전문 7줄은 홈의 '방법' 버튼에서 그대로 볼 수 있다.
+const HELP_CORE=["① 숫자가 <b>일정한 규칙</b>으로 올라갑니다. 아래 수열(<b>3 → 6 → 9</b>)에서 규칙을 읽으세요.", "② 위의 <b>목표 숫자</b>와 <b>똑같아지는 순간</b> 아무 곳이나 탭!", "③ 빠를수록 <b style=\"color:#ffe14d\">PERFECT</b> — 연속하면 점수 배수가 올라갑니다."];
+const HELP_FULL=["① 숫자가 <b>일정한 규칙</b>으로 올라갑니다. 아래 수열(<b>3 → 6 → 9</b>)을 보고 규칙을 읽으세요.", "② 화면 위 <b>목표 숫자</b>와 <b>똑같아지는 순간</b> 아무 곳이나 탭! 지나치거나 다른 숫자에서 멈추면 실패입니다.", "③ <b style=\"color:#ffe14d\">PERFECT</b>(목표 도달 직후 반응)를 연속하면 점수 배수가 <b>최대 ×5</b>까지 올라갑니다.", "④ <b style=\"color:#c9a3ff\">⚡ 롤링</b>은 숫자가 빙글빙글 — 감으로 목표에서 STOP. 성공하면 <b style=\"color:#ffd34d\">💛 생명 +1</b>(최대 3), 실패해도 손해 없습니다.", "⑤ <b style=\"color:#7cf6ff\">🔢 선택형</b>은 수열의 다음 숫자를 버튼으로 고르세요(제한시간 있음).", "⑥ 후반엔 <b style=\"color:#ffd34d\">🔗 체인 목표</b>가 나옵니다. 목표를 연달아 맞히면 보너스가 크게 붙습니다.", "⑦ 점수는 <b>누적 랭크</b>로 쌓이고, 코인으로 <b>테마·부스터</b>를 살 수 있어요."];
+function openHelp(full){
+  $('helpTitle').textContent = full?'게임 방법':'30초면 끝';
+  $('helpRows').innerHTML = (full?HELP_FULL:HELP_CORE).map(t=>'<div class="hrow">'+t+'</div>').join('');
+  $('helpMore').classList.toggle('hidden', !!full);
+  $('helpClose').textContent = full?'닫기':'알겠어요, 시작!';
+  $('help').classList.remove('hidden');
+}
+$('helpBtn').onclick=()=>openHelp(true);
 $('helpClose').onclick=()=>{ $('help').classList.add('hidden'); try{ localStorage.setItem('num_seen_help','1'); }catch(e){} };
 document.querySelectorAll('#shopTabs .stab').forEach(b=>b.onclick=()=>{ shopTab=b.dataset.tab; renderShop(); if(!sfx('ui_tap')) tone(640,0.05,'square',0.06); });
 $('retryBtn').onclick=()=>retryGame();
@@ -1495,6 +1514,6 @@ $('shopClose').onclick=()=>closeShop();
 $('shopX').onclick=()=>closeShop();
 $('best2').textContent=best;
 renderRankCard(); renderDaily(); renderBoostRow(); renderDailyBadge(); document.body.classList.add('menu');
-try{ if(!localStorage.getItem('num_seen_help')) $('help').classList.remove('hidden'); }catch(e){}
+try{ if(!localStorage.getItem('num_seen_help')) openHelp(false); }catch(e){}
 </script>
 </body></html>
