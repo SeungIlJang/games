@@ -373,7 +373,7 @@
   </div>
   <div id="boostRow"></div>
   <div id="dailyBox"></div>
-  <div id="changelog">🆕 <b id="clVer">v3.8</b> · <span id="clNote"><b>라운드 안내가 목표 숫자를 가리지 않아요</b> · 시작하자마자 목표를 읽을 수 있어요</span></div>
+  <div id="changelog">🆕 <b id="clVer">v3.9</b> · <span id="clNote"><b>신기록 결과창</b>과 <b>생명 부활 후 숫자 겹침</b> 수정 · 이제 끝까지 제대로 보여요</span></div>
 </div>
 
 <div id="help" class="hidden">
@@ -469,7 +469,7 @@
   <div id="shopList"></div>
   <button class="btn" id="shopClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v3.8 · 배너 위치</div>
+<div id="ver">v3.9 · 결과창·숫자 겹침</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -561,8 +561,14 @@ function setNum(el, v, sizes){
   }
   const dh=Math.round(fs*0.9225), dw=Math.round(dh*0.7), dm=Math.round(dh*0.036);
   if(!el.classList.contains('spr')){ el.textContent=''; el.classList.add('spr'); }
+  // ⚠️ 글자 분기가 남긴 인라인 font-size 는 .spr 의 font-size:0 을 이긴다.
+  //    지우지 않으면 아래에서 걷어낸 뒤에도 또 생긴 텍스트가 눈에 보인다.
+  if(el.style.fontSize) el.style.fontSize='';
+  // ⚠️ die() 처럼 .spr 인 채로 textContent 를 쓴 흔적(텍스트 노드)을 걷어낸다.
+  //    남겨두면 숫자 앞에 죽을 때 값이 붙어서 5318 처럼 보인다.
+  for(let n=el.firstChild; n; ){ const nx=n.nextSibling; if(n.nodeType!==1) el.removeChild(n); n=nx; }
   el.style.setProperty('--dh',dh+'px'); el.style.setProperty('--dw',dw+'px'); el.style.setProperty('--dm',(-dm)+'px');
-  while(el.children.length>s.length) el.removeChild(el.lastChild);
+  while(el.children.length>s.length) el.removeChild(el.lastElementChild);
   while(el.children.length<s.length) el.appendChild(document.createElement('i'));
   for(let k=0;k<s.length;k++){
     const c=el.children[k];
@@ -658,8 +664,11 @@ let myName = (function(){ try{
   if(!n){ n='도전자'+Math.random().toString(36).slice(2,6).toUpperCase(); localStorage.setItem('num_name',n); }
   return n;
 }catch(e){ return '도전자'; } })();
-// ⚠️ 개발 중 올라간 봇 기록(2026-10-22). Firebase 콘솔에서 해당 문서를 지우면 이 배열은 비워도 된다.
-const LB_HIDE=['e2SzwUSTUSClEMXaz0CI','FkPcd9ndxcRMP8JFg8za','Un2NVSeymEATGSE4MBYF','RS8KUTQgp32Fz1UQqpnl'];
+// ⚠️ 전세계 랭킹에서 숨길 문서. Firebase 콘솔에서 해당 문서를 지우면 이 배열은 비워도 된다.
+//    앞 4개 = 개발 중 올라간 봇 기록(2026-10-22)
+//    뒤 2개 = 2026-11-12 출시 전 검증 중 자동 플레이가 올려버린 기록(21399 / 123)
+const LB_HIDE=['e2SzwUSTUSClEMXaz0CI','FkPcd9ndxcRMP8JFg8za','Un2NVSeymEATGSE4MBYF','RS8KUTQgp32Fz1UQqpnl',
+               'XmiPrhSG2ZqT80cJ28r4','fcQh8MLqohI0iplzGERV'];
 function esc(s){ return String(s).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c])); }
 // 로컬 저장
 function loadLB(){ try{ return JSON.parse(localStorage.getItem('num_lb')||'[]'); }catch(e){ return []; } }
@@ -1389,7 +1398,7 @@ function die(msg, fromChoice){
   if(choiceMode){ banner(''+uic('fail','❌',22)+' 틀렸어요','#ff5a6e'); overHtml = msg || '틀렸어요'; $('cur').classList.remove('miss','hit','ontarget'); $('cur').textContent=''; }   // 낡은 숫자 노출 방지
   else {
     const stopped=cur, tgt=target, diff=Math.abs(tgt-stopped);
-    $('cur').classList.remove('hit'); $('cur').classList.add('miss'); $('cur').textContent=stopped;
+    $('cur').classList.remove('hit'); $('cur').classList.add('miss'); setNum($('cur'), stopped, [126,126,104,80]);
     banner(''+uic('fail','❌',22)+' '+stopped+'  →  목표 '+tgt,'#ff5a6e');
     overHtml = '멈춘 곳 <b style="color:#ff5a6e">'+stopped+'</b> · 목표 <b style="color:#7cf6ff">'+tgt+'</b> <span style="opacity:.7">(差 '+diff+')</span>';
   }
@@ -1416,11 +1425,15 @@ function die(msg, fromChoice){
   renderRankCard(); renderOverRank(); renderDaily(); renderBoostRow();
   $('overRec').innerHTML = rec?'<span class="rec">최고 갱신!</span>' : (best>0?('(최고까지 '+(best-score)+'점!)'):'');
   const rank = score>0 ? insertScore(score) : 0;
+  // ⚠️ finishDaily() 가 dailyMode 를 지우므로 먼저 잡아둔다.
+  //    이 선언이 아래로 내려가면 !wasDaily 를 읽는 순간 TDZ ReferenceError 가 나고
+  //    die() 가 거기서 멈춰 결과창이 영영 안 열린다(신기록마다 재현).
+  const wasDaily=dailyMode;
   if(fbReady && score>0 && rec && !wasDaily){ fbSubmit(myName,score); $('overRank').textContent='🌐 전세계 랭킹 갱신! (랭킹 보기)'; }
   else if(fbReady && score>0){ $('overRank').innerHTML='🌐 내 최고 <b>'+best+'</b>점이 랭킹에 등록돼 있어요'; }
   else $('overRank').innerHTML = rank>0 ? (uic('trophy','🏆',15)+' 랭킹 '+rank+'위'+(rank===1?' — 1등!':(rank<=3?' 진입!':''))) : '';
   deathCount++;
-  const wasDaily=dailyMode; finishDaily();
+  finishDaily();
   if(wasDaily) $('overTitle').innerHTML = rec?(uic('trophy','🏆',24)+' 신기록!'):(uic('daily','📅',24)+' 오늘의 도전 종료');
   renderChase();
   // 5판마다 전면광고 → 광고가 닫힌 뒤에 배너(동시 노출 방지)
