@@ -51,7 +51,12 @@
   #cur.roll{color:#c9a3ff!important;text-shadow:0 0 4px #c9a3ff, 0 -14px 16px rgba(201,163,255,.5), 0 14px 16px rgba(201,163,255,.5)}
   #seq{font-size:21px;color:#5a6684;letter-spacing:1px;min-height:26px;font-weight:700}
   #hint{font-size:14px;color:#8892b0;margin-top:8px;height:20px;font-weight:700}
-  #banner{position:fixed;top:24%;left:0;right:0;text-align:center;font-size:26px;font-weight:900;z-index:6;pointer-events:none;opacity:0}
+  /* 기록줄~조준링 사이 빈 띠가 360x560 에서 36px 뿐이다. 26px 글자는 두 줄로 넘어가고
+     아이콘(28px)이 줄 높이를 35px 까지 밀어올려 들어가지 않는다.
+     글자 20px + 아이콘 22px 로 한 줄 29px 을 만들어 그 띠에 넣었다. */
+  #banner{position:fixed;top:24%;left:0;right:0;text-align:center;font-size:20px;font-weight:900;z-index:6;pointer-events:none;opacity:0;padding:0 12px;white-space:nowrap;line-height:1.25}
+  /* 배너가 떠 있는 0.9초 동안은 안내문이 자리를 비킨다(visibility 라 레이아웃은 그대로) */
+  #wrap.bnr #target{visibility:hidden}
   #banner.show{animation:bn .9s ease-out}
   @keyframes bn{0%{opacity:0;transform:scale(.6)}18%{opacity:1;transform:scale(1.1)}82%{opacity:1}100%{opacity:0;transform:scale(1)}}
   #hud{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:0;right:0;display:flex;justify-content:space-between;padding:0 16px;font-weight:800;font-size:15px;z-index:3}
@@ -368,7 +373,7 @@
   </div>
   <div id="boostRow"></div>
   <div id="dailyBox"></div>
-  <div id="changelog">🆕 <b id="clVer">v3.7</b> · <span id="clNote"><b>라운드마다 전용 아이콘이 떠요</b> · 기기마다 다르던 이모지 교체 마무리</span></div>
+  <div id="changelog">🆕 <b id="clVer">v3.8</b> · <span id="clNote"><b>라운드 안내가 목표 숫자를 가리지 않아요</b> · 시작하자마자 목표를 읽을 수 있어요</span></div>
 </div>
 
 <div id="help" class="hidden">
@@ -464,7 +469,7 @@
   <div id="shopList"></div>
   <button class="btn" id="shopClose" style="margin-top:6px">닫기</button>
 </div>
-<div id="ver">v3.7 · 배너 아이콘</div>
+<div id="ver">v3.8 · 배너 위치</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -751,7 +756,28 @@ function burstFx(kind){
 function hitFlash(col){ const f=$('flash'); f.style.background='radial-gradient(circle at 50% 46%,'+col+'66,transparent 62%)'; f.style.opacity='1'; setTimeout(()=>{ f.style.opacity='0'; },120); }
 // 아이콘을 넣기 위해 innerHTML 을 쓴다. 호출부는 전부 고정 문자열 아니면 숫자다
 // (nC · rule.m · 남은 시간 · stopped=cur · tgt=target · 랭크 이름은 코드 상수).
-function banner(txt,col){ const b=$('banner'); b.innerHTML=txt; b.style.color=col||'#fff'; b.classList.remove('show'); void b.offsetWidth; b.classList.add('show'); }
+// 기본 자리(top:24%)는 조준링 한가운데라 목표 숫자를 덮는다.
+// 조준링이 보일 때만 기록줄과 목표 안내문 사이 빈 띠로 옮긴다.
+// 화면 높이마다 플레이 영역이 오르내리므로 고정 %가 아니라 그때그때 잰다.
+function bannerTop(b){
+  const ch=$('chase'), tw=$('targetWrap');
+  if(!ch||!tw) return '';
+  const cr=ch.getBoundingClientRect(), wr=tw.getBoundingClientRect();
+  if(!(wr.height>0)) return '';                 // 선택형 등 조준링이 숨은 화면
+  // 가리면 안 되는 건 조준링(안의 목표 숫자)이다. 기록줄과 조준링 사이에 끼운다.
+  // 배너는 뜰 때 1.1배까지 커지므로 그만큼 여유를 두고 잰다.
+  const h=b.getBoundingClientRect().height*1.1;
+  return Math.round(Math.max(cr.bottom+2, (cr.bottom+wr.top)/2 - h/2))+'px';
+}
+let bnrTO=null;
+function banner(txt,col){ const b=$('banner');
+  // show 를 먼저 떼야 확대 애니메이션이 섞이지 않은 높이를 잴 수 있다
+  b.classList.remove('show');
+  b.innerHTML=txt; b.style.color=col||'#fff';
+  const w=$('wrap');
+  if(w){ w.classList.add('bnr'); clearTimeout(bnrTO); bnrTO=setTimeout(()=>w.classList.remove('bnr'), 900); }
+  b.style.top=''; b.style.top=bannerTop(b);
+  void b.offsetWidth; b.classList.add('show'); }
 
 let best=+(localStorage.getItem('num_best')||0);
 $('best').textContent=best; $('best2').textContent=best; $('overBest').textContent=best;
@@ -1049,7 +1075,7 @@ function newRound(keepCur){
   $('wrap').classList.remove('choice'); inChoice=false;
   if(curIsRoll){
     target = rndS(8,40); rollLo=target-6; rollHi=target+5; cur=rollLo; seq=[]; startVal=cur;   // 12칸(target-6~+5) 순환
-    banner(''+uic('roll','⚡',28)+' 롤링! 감으로 STOP','#c9a3ff'); vib(30);
+    banner(''+uic('roll','⚡',22)+' 롤링! 감으로 STOP','#c9a3ff'); vib(30);
     rollTO=setTimeout(()=>{ if(state==='play' && curIsRoll && !inGap) rollMiss(true); }, ROLL_MS*12*3+500);   // 3바퀴 안에 결정
   } else {
     const nC=chainCount();
@@ -1061,11 +1087,11 @@ function newRound(keepCur){
     // 첫 목표는 규칙을 읽을 수 있게 3칸 이상, 이어지는 체인 고리는 2칸부터(대기 시간 단축)
     for(let c=0;c<nC;c++){ const k=rule.type==='mul'?rndS(2,3):(c===0?rndS(3,4):rndS(2,4)); for(let j=0;j<k;j++){ t=advance(t,si); si++; } tg.push(t); }
     chainAll=tg.slice(); chainIdx=0; chain=tg.slice(1); target=tg[0]; seq=[cur];
-    if(rule.golden){ banner(''+uic('golden','🌟',28)+' 골든 라운드! 점수 ×2','#ffd34d'); vib([15,30,15]); if(!sfx('golden_enter')) tone(880,0.1,'triangle',0.06); }
-    else if(nC>1){ banner('<img class="art" src="'+PLAY_DIR+'chain_link.webp" alt="" width="28" height="28" data-fb="🔗" onerror="uiFB(this)"> 체인 '+nC+'연속 목표!','#ffd34d'); vib([15,25,15]); tone(740,0.09,'triangle',0.06); }
-    else if(rule.type==='stepup'){ banner(''+uic('stepup','📈',28)+' 계단! 간격이 커져요','#7cf6ff'); vib(25); }
-    else if(rule.type==='mul'){ banner(''+uic('mul','✖️',28)+' 곱하기! ×'+(rule.m||2),'#c9a3ff'); vib(25); }
-    else if(hits>=2 && !slowEndShown){ slowEndShown=true; banner(''+uic('combo','🔥',28)+' 슬로모 끝! 이제 실전','#ff9a5a'); vib([20,40,20]); }
+    if(rule.golden){ banner(''+uic('golden','🌟',22)+' 골든 라운드! 점수 ×2','#ffd34d'); vib([15,30,15]); if(!sfx('golden_enter')) tone(880,0.1,'triangle',0.06); }
+    else if(nC>1){ banner('<img class="art" src="'+PLAY_DIR+'chain_link.webp" alt="" width="22" height="22" data-fb="🔗" onerror="uiFB(this)"> 체인 '+nC+'연속 목표!','#ffd34d'); vib([15,25,15]); tone(740,0.09,'triangle',0.06); }
+    else if(rule.type==='stepup'){ banner(''+uic('stepup','📈',22)+' 계단! 간격이 커져요','#7cf6ff'); vib(25); }
+    else if(rule.type==='mul'){ banner(''+uic('mul','✖️',22)+' 곱하기! ×'+(rule.m||2),'#c9a3ff'); vib(25); }
+    else if(hits>=2 && !slowEndShown){ slowEndShown=true; banner(''+uic('combo','🔥',22)+' 슬로모 끝! 이제 실전','#ff9a5a'); vib([20,40,20]); }
     renderChainTag();
   }
   render(false);
@@ -1331,7 +1357,7 @@ function setupChoice(){
   arr.forEach((v,i)=>{ const b=document.createElement('button'); b.className='cbtn'; b.textContent=v; b.onclick=(e)=>{ e.stopPropagation(); onChoice(i,b); }; box.appendChild(b); });
   $('score').textContent=score; renderCombo(); $('hint').textContent='';
   const cms=Math.max(2800, CHOICE_MS - hits*90);   // 후반엔 제한시간도 짧아짐
-  banner(''+uic('choice','🔢',28)+' 다음 숫자는? · '+(cms/1000).toFixed(1)+'초','#7cf6ff'); tone(660,0.08,'sine',0.06);
+  banner(''+uic('choice','🔢',22)+' 다음 숫자는? · '+(cms/1000).toFixed(1)+'초','#7cf6ff'); tone(660,0.08,'sine',0.06);
   const f=$('ctfill'); f.style.transition='none'; f.style.width='100%'; void f.offsetWidth; f.style.transition='width '+cms+'ms linear'; f.style.width='0%';
   if(cms>1400) cCd=setTimeout(()=>{ if(inChoice && state==='play') sfx('countdown'); }, cms-900);   // 시간 임박 경고음
   cTO=setTimeout(()=>{ if(inChoice && state==='play'){ inChoice=false; const ok=$('cchoices').children[choiceAns]; if(ok)ok.classList.add('ok'); die('⏰ 시간 초과! 정답은 <b style="color:#5cffb0">'+cChoices[choiceAns]+'</b>', true); } }, cms);
@@ -1360,18 +1386,18 @@ function die(msg, fromChoice){
   const choiceMode = fromChoice || inChoice; inChoice=false;
   $('wrap').classList.remove('slow');
   let overHtml; const [x,y] = choiceMode ? [innerWidth/2, innerHeight*0.4] : centerXY();
-  if(choiceMode){ banner(''+uic('fail','❌',28)+' 틀렸어요','#ff5a6e'); overHtml = msg || '틀렸어요'; $('cur').classList.remove('miss','hit','ontarget'); $('cur').textContent=''; }   // 낡은 숫자 노출 방지
+  if(choiceMode){ banner(''+uic('fail','❌',22)+' 틀렸어요','#ff5a6e'); overHtml = msg || '틀렸어요'; $('cur').classList.remove('miss','hit','ontarget'); $('cur').textContent=''; }   // 낡은 숫자 노출 방지
   else {
     const stopped=cur, tgt=target, diff=Math.abs(tgt-stopped);
     $('cur').classList.remove('hit'); $('cur').classList.add('miss'); $('cur').textContent=stopped;
-    banner(''+uic('fail','❌',28)+' '+stopped+'  →  목표 '+tgt,'#ff5a6e');
+    banner(''+uic('fail','❌',22)+' '+stopped+'  →  목표 '+tgt,'#ff5a6e');
     overHtml = '멈춘 곳 <b style="color:#ff5a6e">'+stopped+'</b> · 목표 <b style="color:#7cf6ff">'+tgt+'</b> <span style="opacity:.7">(差 '+diff+')</span>';
   }
   hitFlash('#ff5a6e'); shake=16; vib(120); if(!sfx('miss')) tone(200,0.16,'sawtooth',0.09);
   $('chainTag').innerHTML=''; chainAll=[]; chain=[]; chainIdx=0;
   // 💛 생명이 있으면: 판정 보여준 뒤 소모하고 이어감(콤보 유지)
   if(hearts>0 && state==='play'){ hearts--; renderHearts();
-    setTimeout(()=>{ $('cur').classList.remove('miss'); $('wrap').classList.remove('choice'); banner(''+uic('life','💛',28)+' 생명 사용! 계속 GO!','#ffd34d'); if(!sfx('life_continue')){ tone(660,0.12,'sine',0.09); setTimeout(()=>tone(880,0.12,'sine',0.08),110); } newRound(false); if(rule.type!=='choice') nextTick(Math.max(320, speed())); }, 950);
+    setTimeout(()=>{ $('cur').classList.remove('miss'); $('wrap').classList.remove('choice'); banner(''+uic('life','💛',22)+' 생명 사용! 계속 GO!','#ffd34d'); if(!sfx('life_continue')){ tone(660,0.12,'sine',0.09); setTimeout(()=>tone(880,0.12,'sine',0.08),110); } newRound(false); if(rule.type!=='choice') nextTick(Math.max(320, speed())); }, 950);
     return;
   }
   state='over';   // choice 클래스는 결과창 뜰 때 제거(낡은 #cur 노출/깜빡임 방지)
