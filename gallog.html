@@ -1043,7 +1043,7 @@ function sanitizeTune(obj){
 //   배포할 때 이 값만 올리면 모든 기기의 개발 패널 수치가 버려지고 코드 기본값(TUNE_DEFAULTS)을 받는다.
 //   → 밸런스는 '코드가 유일한 진실'이 되고, 개발 패널은 내 기기에서 잠깐 돌려보는 용도로만 남는다.
 //   (골드/영구강화/전직은 ss_meta 라 영향 없음 — 그쪽은 계속 기기별로 유지된다)
-const GAME_VER='10.43';
+const GAME_VER='10.44';
 // 개발 패널 수치는 이 기기에 계속 남는다(앱을 껐다 켜도 유지). 배포해도 지우지 않는다 —
 // 모르는 사이에 설정이 사라지는 편이 더 나쁘다. 대신 '기본값' 버튼으로 언제든 코드값을 받을 수 있고,
 // 전 플레이어에게 반영하려면 '현재 수치 내보내기'로 뽑아 TUNE_DEFAULTS 에 넣고 배포한다.
@@ -2638,8 +2638,12 @@ function update(dt){
         if(e.bossKind==='charge'){ e.dashT=0.7; e.abilityCd=3.0; banner=t('bnDash'); bannerT=0.7; }
         else if(e.bossKind==='summon'){ for(let i=0;i<3;i++){ const a=rand(0,6.28); enemies.push(makeEnemy(e.x+Math.cos(a)*44,e.y+Math.sin(a)*44,'fast',1+dtime()/60)); } e.abilityCd=4.5; tone(300,0.15,'square',0.12); }
         else if(e.bossKind==='shoot'){ const b=Math.atan2(player.y-e.y,player.x-e.x); for(let k=-1;k<=1;k++){ const a=b+k*0.26; ebullets.push({x:e.x,y:e.y,vx:Math.cos(a)*270,vy:Math.sin(a)*270,r:8,dmg:e.dmg*0.5,life:3}); } e.abilityCd=2.2; tone(200,0.1,'sawtooth',0.12,120); }
-        // 나선체: 한 번에 6발 → 4발. 0.5초마다 뿜는 보스라 게임에서 가장 빽빽한 탄막이었다.
-        else if(e.bossKind==='spiral'){ e.spin=(e.spin||0)+0.5; const n=4; for(let k=0;k<n;k++){ const a=e.spin+k*(Math.PI*2/n); ebullets.push({x:e.x,y:e.y,vx:Math.cos(a)*235,vy:Math.sin(a)*235,r:7,dmg:e.dmg*0.42,life:3.2}); } e.abilityCd=0.5; tone(320,0.07,'sawtooth',0.1,180); }
+        // 나선체: 한 번에 6발 → 4발. 그래도 혼자 튀어서 쿨다운 0.5 → 0.75초로 늘렸다.
+        //   측정해보니 이 보스가 센 건 탄 수가 아니라 간격이었다. 0.5초는 다음으로 빠른
+        //   저격수(1.7초)의 3.4배라, 탄이 화면에 17발까지 쌓여 초당 피해 873 — 나머지 보스의
+        //   2~4.7배였다. 탄 간격 자체는 오히려 제일 넓어서(100px 거리에서 157px) 한 번에
+        //   두 발 맞을 일은 없다. 순수하게 쌓여서 이기는 보스라 탄 수가 아니라 쿨다운을 건드린다.
+        else if(e.bossKind==='spiral'){ e.spin=(e.spin||0)+0.5; const n=4; for(let k=0;k<n;k++){ const a=e.spin+k*(Math.PI*2/n); ebullets.push({x:e.x,y:e.y,vx:Math.cos(a)*235,vy:Math.sin(a)*235,r:7,dmg:e.dmg*0.42,life:3.2}); } e.abilityCd=0.75; tone(320,0.07,'sawtooth',0.1,180); }
         // 폭렬구: 사방으로 동시에 퍼지는 링. 14발 → 8발(마일 보스는 18 → 10, 같은 비율).
         //   수가 많으면 틈이 좁아져 '피할 곳'이 사라진다 — 8발이면 45도마다라 길이 보인다.
         else if(e.bossKind==='ring'){ const n=e.mile?10:8; for(let k=0;k<n;k++){ const a=k/n*Math.PI*2; ebullets.push({x:e.x,y:e.y,vx:Math.cos(a)*215,vy:Math.sin(a)*215,r:8,dmg:e.dmg*0.5,life:3}); } e.abilityCd=2.6; tone(160,0.14,'square',0.14,120); }
