@@ -147,7 +147,7 @@
 <div class="ov" id="title">
   <h1 style="font-size:34px">🏃 모두의 마라톤</h1>
   <p id="titleSub">오늘은 어떻게 달려볼까요?</p>
-  <div style="font-size:11px;opacity:.6;margin-top:-4px">v5.0 · 아트 슬롯(튜토리얼·HUD 다이어트)</div>
+  <div style="font-size:11px;opacity:.6;margin-top:-4px">v5.1 · 체형 러너 5종(튜토리얼·HUD 다이어트)</div>
   <div id="hero" style="display:none;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:360px">
     <div class="mode" id="heroStart" style="background:linear-gradient(135deg,#ffffff,#ffe6ee);border-color:#ffb3cb;width:100%"><b class="mi">🏁</b><b>첫 레이스 시작</b><small>서울 코스에서 20명과 함께 달려요<br>조작은 달리면서 하나씩 알려드릴게요</small></div>
     <button class="pill" id="heroMore" style="flex:none;background:#eef3f8;color:var(--txt);box-shadow:none;padding:9px 18px;font-size:13px">먼저 둘러볼게요</button>
@@ -397,12 +397,13 @@ try{ if(ART_Q.get('artfiles')) ART_Q.get('artfiles').split(',').forEach(f=>artLo
 const SHEET={'번개':'slim','질주왕':'slim','프로':'slim','모델':'slim','바람돌이':'slim','대학생':'slim','울트라':'slim',
   '방해꾼':'chubby','아저씨':'chubby','코스튬':'chubby','스퍼터':'muscle','철인':'muscle','군인':'muscle','헬스왕':'muscle',
   '거북이':'short','완주요정':'short','쌍둥이':'short','초보':'short','할머니':'granny'};
-const SHEET_H={slim:1.08,chubby:0.98,short:0.82,muscle:1.02,granny:0.8};   // 시트별 그리는 키 배율
+const SHEET_H={slim:1,chubby:1,short:1,muscle:1,granny:1};   // 시트별 그리는 키 배율(그림 자체에 키 차이가 들어 있어 1)
 const ICON={water:'item-water.png',gel:'item-gel.png',sponge:'item-sponge.png',cheer:'item-cheer.png',five:'item-highfive.png',cone:'item-barricade.png',puddle:'item-puddle.png'};
 const tintCache={};
 function rivalSprite(name,hex){ const type=SHEET[name], sheet=type&&ART['runner-'+type+'.png'], src=sheet||img; if(!(src.naturalWidth>0)) return null;
   const k=(sheet?type:'base')+'|'+hex; return tintCache[k]||(tintCache[k]=uniformTint(hex,src)); }
-function rivalBody(name){ const type=SHEET[name]; return (type&&ART['runner-'+type+'.png'])?{w:1,h:SHEET_H[type],legs:1}:BODIES[name]; }
+const SHEET_TOP={slim: 0.04, chubby: 0.16, short: 0.3, muscle: 0.07, granny: 0.21};   // 칸 위쪽 빈 여백 비율(이름표를 머리 바로 위에 붙이기 위함)
+function rivalBody(name){ const type=SHEET[name]; return (type&&ART['runner-'+type+'.png'])?{w:1,h:SHEET_H[type],legs:1,top:SHEET_TOP[type]||0}:BODIES[name]; }
 // 라이벌 색: 전체에 색을 덧씌우지 않고 빨간 유니폼(헤어밴드·셔츠·신발)만 러너 색으로 바꿈 → 피부·머리는 자연스럽게
 function hex2hsl(hex){ const n=parseInt(hex.slice(1),16), r=(n>>16&255)/255, g=(n>>8&255)/255, b=(n&255)/255, mx=Math.max(r,g,b), mn=Math.min(r,g,b), l=(mx+mn)/2, d=mx-mn;
   let h=0; if(d){ h=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4; h*=60; if(h<0)h+=360; } return {h, s:d?d/(1-Math.abs(2*l-1)):0, l}; }
@@ -410,7 +411,7 @@ function uniformTint(hex,src){ src=src||img; const c=document.createElement('can
   const x=c.getContext('2d'); x.drawImage(src,0,0,c.width,c.height);
   try{ const T=hex2hsl(hex), d=x.getImageData(0,0,c.width,c.height), p=d.data, H=T.h/60;
     for(let i=0;i<p.length;i+=4){ if(p[i+3]<20)continue; const r=p[i]/255,g=p[i+1]/255,b=p[i+2]/255, mx=Math.max(r,g,b), mn=Math.min(r,g,b), l=(mx+mn)/2, dd=mx-mn;
-      if(dd<0.25||mx!==r)continue; let h=((g-b)/dd)%6*60; if(h<0)h+=360; if(h>18&&h<340)continue;   // 빨강 계열만
+      if(dd<0.25||mx!==r)continue; let h=((g-b)/dd)%6*60; if(h<0)h+=360; if(h>9&&h<346)continue; if(l<0.25||(l>0.5?dd/(2-mx-mn):dd/(mx+mn))<0.55)continue;   // 선명한 빨강만(갈색 머리·피부 제외: 색상 346°~9°, 채도 0.55↑)
       const ps=l>0.5?dd/(2-mx-mn):dd/(mx+mn), S=ps*Math.min(1,0.25+T.s), L=Math.min(0.92,l*(0.45+1.1*T.l));
       const C=(1-Math.abs(2*L-1))*S, X=C*(1-Math.abs(H%2-1)), m=L-C/2; let R2=0,G2=0,B2=0;
       if(H<1){R2=C;G2=X;}else if(H<2){R2=X;G2=C;}else if(H<3){G2=C;B2=X;}else if(H<4){G2=X;B2=C;}else if(H<5){R2=X;B2=C;}else{R2=C;B2=X;}
@@ -928,10 +929,10 @@ function drawRunner(src,x,foot,h,phase,tag,tagCol,me,body){
     ctx.fillStyle=tagCol||'#ff5147'; ctx.beginPath(); ctx.arc(x,foot-h*0.75-bo,h*0.18,0,7); ctx.fill(); ctx.fillRect(x-h*0.1,foot-h*0.6-bo,h*0.2,h*0.5);
   }
   if(tag){ ctx.font=(me?"900 14px":"bold 12px")+" sans-serif"; ctx.textAlign="center";
-    const ty=foot-H-bo-6, tw=ctx.measureText(tag).width+12;
+    const ty=foot-H*(1-(B.top||0))-bo-6, tw=ctx.measureText(tag).width+12;
     ctx.fillStyle=me?"#ffd23f":"#ffffffd0"; rr(x-tw/2,ty-15,tw,19,9); ctx.fill();
     ctx.fillStyle=me?"#3a2a00":"#2b3a4a"; ctx.fillText(tag,x,ty-1); }   // 기록은 어떤 유니폼 색이든 잘 읽히게 진한 글씨
-  return foot-H-bo;
+  return foot-H*(1-(B.top||0))-bo;
 }
 function bubble(x,y,txt){ ctx.font="bold 13px sans-serif"; const w=ctx.measureText(txt).width+16;
   ctx.fillStyle="#fff"; rr(x-w/2,y-46,w,24,10); ctx.fill(); ctx.beginPath(); ctx.moveTo(x-5,y-23); ctx.lineTo(x+5,y-23); ctx.lineTo(x,y-15); ctx.fill();
@@ -1785,7 +1786,7 @@ function recolor(o){ if(outCache[o.id]!==undefined)return outCache[o.id];
   try{ const c=document.createElement('canvas'); c.width=Math.round(img.naturalWidth/2); c.height=Math.round(img.naturalHeight/2);
     const x=c.getContext('2d'); x.drawImage(img,0,0,c.width,c.height); const d=x.getImageData(0,0,c.width,c.height), p=d.data;
     for(let i=0;i<p.length;i+=4){ if(p[i+3]<20)continue; const r=p[i]/255,g=p[i+1]/255,b=p[i+2]/255, mx=Math.max(r,g,b), mn=Math.min(r,g,b), l=(mx+mn)/2, dd=mx-mn;
-      if(dd<0.25||mx!==r)continue; let h=((g-b)/dd)%6*60; if(h<0)h+=360; if(h>18&&h<340)continue;   // 빨강 계열만(피부 주황 제외)
+      if(dd<0.25||mx!==r)continue; let h=((g-b)/dd)%6*60; if(h<0)h+=360; if(h>9&&h<346)continue; if(l<0.25||(l>0.5?dd/(2-mx-mn):dd/(mx+mn))<0.55)continue;   // 빨강 계열만(피부 주황 제외)
       const s=(l>0.5?dd/(2-mx-mn):dd/(mx+mn))*(o.sat!=null?o.sat:1), L=o.light!=null?l*o.light/0.45:l, H=o.hue/60;
       const C=(1-Math.abs(2*L-1))*s, X=C*(1-Math.abs(H%2-1)), m=L-C/2; let rr2=0,gg=0,bb=0;
       if(H<1){rr2=C;gg=X;}else if(H<2){rr2=X;gg=C;}else if(H<3){gg=C;bb=X;}else if(H<4){gg=X;bb=C;}else if(H<5){rr2=X;bb=C;}else{rr2=C;bb=X;}
