@@ -1043,7 +1043,7 @@ function sanitizeTune(obj){
 //   배포할 때 이 값만 올리면 모든 기기의 개발 패널 수치가 버려지고 코드 기본값(TUNE_DEFAULTS)을 받는다.
 //   → 밸런스는 '코드가 유일한 진실'이 되고, 개발 패널은 내 기기에서 잠깐 돌려보는 용도로만 남는다.
 //   (골드/영구강화/전직은 ss_meta 라 영향 없음 — 그쪽은 계속 기기별로 유지된다)
-const GAME_VER='10.41';
+const GAME_VER='10.42';
 // 개발 패널 수치는 이 기기에 계속 남는다(앱을 껐다 켜도 유지). 배포해도 지우지 않는다 —
 // 모르는 사이에 설정이 사라지는 편이 더 나쁘다. 대신 '기본값' 버튼으로 언제든 코드값을 받을 수 있고,
 // 전 플레이어에게 반영하려면 '현재 수치 내보내기'로 뽑아 TUNE_DEFAULTS 에 넣고 배포한다.
@@ -1389,7 +1389,7 @@ function reset(){
   featureArt.chests=chests;
   stageNoHit=true; champSpawned=false; endBonusAcc=0;
   flashT=0; hurtFlash=0; goldDoubled=false; reviveCount=0; combo=0; comboTimer=0; maxCombo=0; runGold=0; interCount=0;
-  time=0; kills=0; spawnTimer=0; shake=0; bossAlive=false; banner='STAGE 1 ▶ '+t('bnBoss'); bannerT=2.6; startHintT=5;
+  time=0; kills=0; spawnTimer=0; shake=0; bossAlive=false; banner='STAGE 1 ▶ '+t('bnBoss'); bannerT=2.6; startHintT=7;
   stage=1; stageTime=0; bossSpawned=false; bossQueue=[]; won=false;
   catchUpStage=(meta.bestStage||0);   // 죽고 재도전 시, 이전 최고 스테이지 전까지 가속(초반 지루함↓)
   { const bs=meta.bestStage||0; catchUpSpeed = Math.min(2.0, Math.round((1.1 + 0.1*Math.floor((Math.max(1,bs)-1)/10))*10)/10); } // 최고스테이지별 가속 배율: 10스테이지마다 +0.1 (1~10=1.1 … 91+=2.0)
@@ -4103,10 +4103,34 @@ function render(){
   if(!bossAlive){ ctx.strokeStyle='rgba(120,160,210,.16)'; ctx.lineWidth=1;
     ctx.beginPath(); ctx.moveTo(14,TY+10.5); ctx.lineTo(W-14,TY+10.5); ctx.stroke();
     ctx.fillStyle='rgba(120,160,210,.30)'; ctx.fillRect(14,TY+9.5,22,2); ctx.fillRect(W-36,TY+9.5,22,2); }
-  // 시작 시 일시정지 안내 (처음 몇 초)
+  // 시작 시 일시정지 안내 — 버튼을 직접 가리킨다.
+  //   예전엔 화면 중앙 상단에 "좌상단 버튼 = 일시정지" 한 줄이었는데, 버튼은 좌상단에 있어
+  //   글과 버튼이 연결되지 않았다("저 버튼을 잘 모른다"는 보고). 버튼 자리를 DOM 에서 읽어
+  //   고리로 감싸고 지시선을 내려 말풍선을 붙인다.
   if(startHintT>0){ const a=Math.min(1,startHintT/1.2); ctx.save(); ctx.globalAlpha=a;
-    ctx.fillStyle='#ffd25c'; ctx.font=fTech(14,true); ctx.textAlign='center';
-    ctx.fillText('좌상단 버튼 = 일시정지 / 상점', W/2, TY+26);
+    // ⚠️ offsetParent 로 '보이는지'를 보면 안 된다 — pauseBtn 은 position:fixed 라
+    //    보이는 상태에서도 항상 null 이다(그래서 늘 글만 나왔다). 실제 크기로 판단한다.
+    const btn=document.getElementById('pauseBtn');
+    const _rc=btn?btn.getBoundingClientRect():null;
+    const rc=(_rc&&_rc.width>0)?_rc:null;
+    const label=featureLabel('일시정지 · 속도 · 상점','PAUSE · SPEED · SHOP','一時停止 · 速度 · ショップ');
+    if(rc){
+      const bx=rc.left+rc.width/2, by=rc.top+rc.height/2, rad=rc.width*0.72;
+      const pulse=0.5+0.5*Math.sin(time*5);
+      ctx.strokeStyle='#ffd25c'; ctx.lineWidth=2.5; ctx.globalAlpha=a*(0.5+0.5*pulse);
+      ctx.beginPath(); ctx.arc(bx,by,rad+pulse*3,0,6.283); ctx.stroke();
+      ctx.globalAlpha=a; ctx.lineWidth=2;
+      const ty=by+rad+14;
+      ctx.beginPath(); ctx.moveTo(bx,by+rad+2); ctx.lineTo(bx,ty-5); ctx.stroke();
+      ctx.font=fTech(13,true); ctx.textAlign='left';
+      const tw=ctx.measureText(label).width;
+      let lx=bx-12; if(lx+tw+16>W-8) lx=W-8-tw-16; if(lx<8) lx=8;
+      ctx.fillStyle='rgba(8,14,26,.90)'; ctx.fillRect(lx-8,ty-4,tw+16,22);
+      ctx.strokeStyle='#ffd25c'; ctx.lineWidth=1; ctx.strokeRect(lx-8,ty-4,tw+16,22);
+      ctx.fillStyle='#ffd25c'; ctx.fillText(label,lx,ty+12);
+    } else {   // 버튼이 아직 안 보이면 예전처럼 글만
+      ctx.fillStyle='#ffd25c'; ctx.font=fTech(14,true); ctx.textAlign='center';
+      ctx.fillText(label, W/2, TY+26); }
     ctx.globalAlpha=1; ctx.restore(); ctx.textAlign='left'; }
   drawWeaponSlots(B);
   // 보유 골드 (우측 하단, 무기 라인과 동일한 줄) — 🪙 대신 벡터 코인
