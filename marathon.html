@@ -147,7 +147,7 @@
 <div class="ov" id="title">
   <h1 style="font-size:34px">🏃 모두의 마라톤</h1>
   <p id="titleSub">오늘은 어떻게 달려볼까요?</p>
-  <div style="font-size:11px;opacity:.6;margin-top:-4px">v5.1 · 체형 러너 5종(튜토리얼·HUD 다이어트)</div>
+  <div style="font-size:11px;opacity:.6;margin-top:-4px">v5.2 · 급수대·관중·아치 자리(튜토리얼·HUD 다이어트)</div>
   <div id="hero" style="display:none;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:360px">
     <div class="mode" id="heroStart" style="background:linear-gradient(135deg,#ffffff,#ffe6ee);border-color:#ffb3cb;width:100%"><b class="mi">🏁</b><b>첫 레이스 시작</b><small>서울 코스에서 20명과 함께 달려요<br>조작은 달리면서 하나씩 알려드릴게요</small></div>
     <button class="pill" id="heroMore" style="flex:none;background:#eef3f8;color:var(--txt);box-shadow:none;padding:9px 18px;font-size:13px">먼저 둘러볼게요</button>
@@ -976,7 +976,11 @@ function render(){
     ctx.fillStyle="#6d4a2a"; ctx.fillRect(x-3,rt-40,6,30); ctx.fillStyle="#5fbf6c"; ctx.beginPath(); ctx.arc(x,rt-48,22,0,7); ctx.fill(); }
   ctx.fillStyle=course.ground; ctx.fillRect(-W,rt-14,3*W,14);
   const crowdK=p<0.06?1:kick?1:wall?0.25:0.45;
-  for(let i=0;i<60;i++){ if((i*37%100)/100>crowdK)continue; const x=repX(i*23-cam*PX*0.95,60*23)-20;
+  // 관중 띠 그림(crowd-a/b/c.png)이 있으면 가로로 이어 깔고 동작을 번갈아 보여 응원 애니메이션, 없으면 코드로 그림
+  const crowdF=['crowd-a.png','crowd-b.png','crowd-c.png'].map(n=>ART[n]).filter(Boolean);
+  if(crowdF.length){ const ci=crowdF[Math.floor(raceT*(kick?7:2.5))%crowdF.length], chh=Math.min(46,rt*0.13), cw=chh*ci.naturalWidth/ci.naturalHeight, off=repX(-cam*PX*0.95,cw);
+    ctx.save(); ctx.globalAlpha=crowdK<0.3?0.55:1; for(let x=off-cw*(Math.ceil(W/cw)+1); x<2*W; x+=cw) ctx.drawImage(ci,x,rt-4-chh-(kick?Math.abs(Math.sin(raceT*9))*3:0),cw+1,chh); ctx.restore(); }
+  else for(let i=0;i<60;i++){ if((i*37%100)/100>crowdK)continue; const x=repX(i*23-cam*PX*0.95,60*23)-20;
     ctx.fillStyle=['#ff6f9c','#4aa3ff','#ffd23f','#3fca6b','#9a5cff'][i%5];
     const jump=kick?Math.abs(Math.sin(raceT*8+i))*5:0;
     ctx.beginPath(); ctx.arc(x,rt-18-jump,6,0,7); ctx.fill(); ctx.fillRect(x-5,rt-14-jump,10,10); }
@@ -996,6 +1000,9 @@ function render(){
     ctx.fillStyle=k===35?"#c0303a":"#ff6f9c"; ctx.font="bold 13px sans-serif"; ctx.textAlign="center"; ctx.fillText(k+"K",x,rt-64); }
   // 급수대 테이블(도로변)
   for(const s of stations){ const x0=wx(s.pos)-30, x1=wx(s.pos+84)+30; if(x1<-20||x0>W+20)continue;
+    const aid=ART['aid-station.png'];   // 급수대 그림이 있으면 사용(현수막은 비어 있으므로 km 표시는 게임이 씀)
+    if(aid){ const aw=x1-x0, ah2=aw*aid.naturalHeight/aid.naturalWidth; ctx.drawImage(aid,x0,rt-4-ah2,aw,ah2);
+      ctx.fillStyle="#fff"; ctx.font="900 11px sans-serif"; ctx.textAlign="center"; ctx.lineWidth=3; ctx.strokeStyle="#1f6fb5"; ctx.strokeText("💧 "+s.km+"K",(x0+x1)/2,rt-4-ah2*0.8); ctx.fillText("💧 "+s.km+"K",(x0+x1)/2,rt-4-ah2*0.8); continue; }
     ctx.fillStyle="#2a8ad8"; rr(x0,rt-58,x1-x0,16,5); ctx.fill(); ctx.fillStyle="#fff"; ctx.font="bold 11px sans-serif"; ctx.textAlign="center"; ctx.fillText("💧 WATER "+s.km+"K",(x0+x1)/2,rt-46);
     ctx.fillStyle="#e8e2d0"; ctx.fillRect(x0,rt-30,x1-x0,10); ctx.fillStyle="#b9a98a"; ctx.fillRect(x0+4,rt-20,4,14); ctx.fillRect(x1-8,rt-20,4,14);
     ctx.fillStyle="#cfe9ff"; for(let xx=x0+8;xx<x1-8;xx+=11) ctx.fillRect(xx,rt-37,7,8);
@@ -1005,9 +1012,15 @@ function render(){
   { const x=wx(TRACK); if(x>-60&&x<W+60){ const sz=lh/4;
       for(let yy=0;yy<(rb-rt)/sz;yy++)for(let c=0;c<2;c++){ ctx.fillStyle=(yy+c)%2?"#fff":"#222"; ctx.fillRect(x+c*sz-sz,rt+yy*sz,sz,sz); }
       // 🏁 결승 아치(도로 전체를 가로지름) + 풍선
+      const arch=ART['finish-arch.png'];   // 결승 아치 그림이 있으면 사용
+      if(arch){ const top=rt-150, hh=rb-top, ww=Math.min(hh*arch.naturalWidth/arch.naturalHeight,W*0.62);   // 도로 전체를 덮는 높이, 폭은 화면의 62%까지만(옆에서 본 느낌으로 좁힘)
+        ctx.drawImage(arch,x-ww/2,top,ww,hh);
+        ctx.fillStyle="#fff"; ctx.font="900 "+Math.round(ww*0.11)+"px sans-serif"; ctx.textAlign="center"; ctx.fillText("FINISH",x,top+hh*0.17); }
+      else {
       const ah=rt-150; ctx.fillStyle="#ff3b6b"; ctx.fillRect(x-6,ah,12,rb-ah); ctx.fillStyle="#c92a52"; ctx.fillRect(x-60,ah-8,120,36);
       ctx.fillStyle="#fff"; ctx.font="900 20px sans-serif"; ctx.textAlign="center"; ctx.fillText("FINISH",x,ah+18);
       for(let b=0;b<6;b++){ const bx=x-50+b*20, by=ah-22+Math.sin(raceT*3+b)*3; ctx.fillStyle=['#ffd23f','#4aa3ff','#3fca6b','#ff6f9c','#9a5cff','#ff8a3c'][b]; ctx.beginPath(); ctx.ellipse(bx,by,8,10,0,0,7); ctx.fill(); }
+      }
       // 🎀 결승 테이프: 1등이 끊는다
       ctx.strokeStyle="#ff3b6b"; ctx.lineWidth=5; ctx.lineCap="round";
       if(!tapeBy){ ctx.beginPath(); ctx.moveTo(x+6,rt+4); ctx.quadraticCurveTo(x+16,(rt+rb)/2,x+6,rb-4); ctx.stroke(); }
