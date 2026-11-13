@@ -147,7 +147,7 @@
 <div class="ov" id="title">
   <h1 style="font-size:34px">🏃 모두의 마라톤</h1>
   <p id="titleSub">오늘은 어떻게 달려볼까요?</p>
-  <div style="font-size:11px;opacity:.6;margin-top:-4px">v4.7 · 깔끔한 러너(튜토리얼·HUD 다이어트)</div>
+  <div style="font-size:11px;opacity:.6;margin-top:-4px">v4.9 · 기록 이름표(튜토리얼·HUD 다이어트)</div>
   <div id="hero" style="display:none;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:360px">
     <div class="mode" id="heroStart" style="background:linear-gradient(135deg,#ffffff,#ffe6ee);border-color:#ffb3cb;width:100%"><b class="mi">🏁</b><b>첫 레이스 시작</b><small>서울 코스에서 20명과 함께 달려요<br>조작은 달리면서 하나씩 알려드릴게요</small></div>
     <button class="pill" id="heroMore" style="flex:none;background:#eef3f8;color:var(--txt);box-shadow:none;padding:9px 18px;font-size:13px">먼저 둘러볼게요</button>
@@ -306,19 +306,19 @@ const CITY=['#b9d7ef','#a9cbe8','#c6dff2'];
 const COURSES=[
   {id:'seoul', ic:'🏙️', n:'서울 마라톤', sub:'도심 평지 · 입문 코스', diff:1.01, w:'clear',
    hills:[[8,10,1],[10,11.5,-1],[24,26,1],[26,27.5,-1]], sky:['#7fc6ff','#d6efff'], ground:'#7fce89', bld:CITY},
-  {id:'chuncheon', ic:'🏞️', n:'춘천 호반 마라톤', sub:'호수를 끼고 오르내리는 언덕', diff:1.03, w:'clear',
+  {id:'chuncheon', ic:'🏞️', n:'춘천 호반 마라톤', sub:'호수를 끼고 오르내리는 언덕', diff:1.04, w:'clear',
    hills:[[5,7,1],[7,9,-1],[14,17,1],[17,19,-1],[27,29,1],[29,31,-1],[37,38.5,1]], sky:['#8fd3f0','#e3f6ff'], ground:'#6fc27c', bld:['#9cc7a6','#86b894','#b0d6b8'], lake:true},
-  {id:'tokyo', ic:'🗼', n:'도쿄 마라톤', sub:'⭐메이저 · 비 내리는 도심, 물웅덩이 주의', diff:1.045, w:'rain', major:1,
+  {id:'tokyo', ic:'🗼', n:'도쿄 마라톤', sub:'⭐메이저 · 비 내리는 도심, 물웅덩이 주의', diff:1.06, w:'rain', major:1,
    hills:[[12,13.5,1],[13.5,15,-1],[36,38,1],[38,39,-1]], sky:['#9fb4c8','#dde6ee'], ground:'#7fb889', bld:['#c8ccd8','#b4bccb','#d8dce6']},
-  {id:'berlin', ic:'🏛️', n:'베를린 마라톤', sub:'⭐메이저 · 세계기록의 평지 — 라이벌이 빠르다', diff:1.06, w:'clear', major:1,
+  {id:'berlin', ic:'🏛️', n:'베를린 마라톤', sub:'⭐메이저 · 세계기록의 평지 — 라이벌이 빠르다', diff:1.085, w:'clear', major:1,
    hills:[[20,21,1],[21,22,-1]], sky:['#86c2f0','#e8f4ff'], ground:'#86c98e', bld:['#d6c6a8','#c2b08e','#e4d8c0']},
-  {id:'chicago', ic:'🌬️', n:'시카고 마라톤', sub:'⭐메이저 · 바람의 도시, 맞바람엔 드래프팅', diff:1.065, w:'wind', major:1,
+  {id:'chicago', ic:'🌬️', n:'시카고 마라톤', sub:'⭐메이저 · 바람의 도시, 맞바람엔 드래프팅', diff:1.085, w:'wind', major:1,
    hills:[[17,18,1],[18,19,-1]], wind:[[9,15],[25,32]], sky:['#7fb6e8','#dff0ff'], ground:'#7fc48a', bld:['#a8b8cc','#93a6be','#bccadb']},
-  {id:'london', ic:'🎡', n:'런던 마라톤', sub:'⭐메이저 · 템스강변, 비와 완만한 언덕', diff:1.075, w:'rain', major:1,
+  {id:'london', ic:'🎡', n:'런던 마라톤', sub:'⭐메이저 · 템스강변, 비와 완만한 언덕', diff:1.095, w:'rain', major:1,
    hills:[[6,8,1],[8,10,-1],[19,21,1],[21,22.5,-1],[33,34.5,1]], sky:['#a2b2c2','#e2e8ee'], ground:'#76b483', bld:['#c9b5a0','#b39e88','#d8c8b6'], lake:true},
-  {id:'boston', ic:'🦞', n:'보스턴 마라톤', sub:'⭐메이저 · 폭염 속 32km 하트브레이크 힐', diff:1.075, w:'heat', major:1,
+  {id:'boston', ic:'🦞', n:'보스턴 마라톤', sub:'⭐메이저 · 폭염 속 32km 하트브레이크 힐', diff:1.095, w:'heat', major:1,
    hills:[[2,6,-1],[25,27,1],[28,29.5,1],[31,33.5,1],[33.5,36,-1]], sky:['#f0c27a','#fff1d6'], ground:'#a7c47a', bld:['#c9a98c','#b8917a','#d9c0a8']},
-  {id:'nyc', ic:'🗽', n:'뉴욕 마라톤', sub:'⭐메이저 · 5개 다리와 강바람, 최종 보스', diff:1.08, w:'wind', major:1,
+  {id:'nyc', ic:'🗽', n:'뉴욕 마라톤', sub:'⭐메이저 · 5개 다리와 강바람, 최종 보스', diff:1.105, w:'wind', major:1,
    hills:[[1,3,1],[3,4,-1],[13,14,1],[14,15,-1],[24,26,1],[26,27,-1],[33,34.5,1],[34.5,35.5,-1],[39,41,1]], wind:[[1,4],[24,27],[33,35.5]], sky:['#8eb0dc','#eaeef6'], ground:'#7fbf88', bld:['#9aa6b8','#8494aa','#b2bccb']},
 ];
 const WEATHER={ clear:{ic:'☀️',n:'맑음'}, rain:{ic:'🌧️',n:'비'}, wind:{ic:'🌬️',n:'강풍'}, heat:{ic:'🥵',n:'폭염'} };
@@ -488,14 +488,24 @@ function gradeAt(pos){ const km=toKm(pos); for(const h of course.hills) if(km>=h
 function windAt(pos){ if(weather!=='wind')return false; const km=toKm(pos); const ws=course.wind||[[12,18],[28,34]]; return ws.some(w=>km>=w[0]&&km<w[1]); }
 function buildElev(){ elev=[]; let e=0; for(let i=0;i<=120;i++){ const pos=TRACK*i/120; elev.push(e); e+=gradeAt(pos)*1; } }
 
+// ⏱️ 라이벌의 '오늘 예상 완주 기록': 실제 레이스와 같은 속도 공식(코스 난이도·언덕·벽·바람·폭염·출발 가속)을 미리 돌려 계산
+function predictFinish(r,pos0){ let pos=pos0,t=0,v=0; const dt=0.1, tf=tutReq?0.94:1;
+  while(pos<TRACK&&t<600){ const rp=pos/TRACK; let rt=r.f(rp,t)*course.diff*tf; if(rp>=WALL_P&&rp<KICK_P)rt*=0.97;
+    const rg=gradeAt(pos); rt*=rg>0?0.87:rg<0?1.1:1; if(windAt(pos))rt*=0.95; if(weather==='heat')rt*=0.985;
+    v+=(rt-v)*Math.min(1,dt*2); pos+=v*dt; t+=dt; } return t*TIME_K; }
+const fmtHM=x=>{ x=Math.round(x/60); return Math.floor(x/60)+":"+String(x%60).padStart(2,"0"); };
 function newRace(){
   P={grit:0,sw:false,flow:0,high:0,highN:0,hiHR:0,cramp:0,crampCd:20,lane:MIDL,laneF:MIDL,pos:0,speed:0,stam:100,tired:false,stumble:0,boost:0,phase:0,draft:false,ahead:null,blocked:false,lastBump:-9,
      gels:1+upLv('gel'),gelT:0,sling:0,draftHold:0,fever:0,hr:120};
-  const FIELD=tutReq?RIVALS.slice(0,9):RIVALS;   // 🎓 첫 레이스는 원조 9명만 — 조작을 배우는 동안 혼잡하지 않게
-  const GRID=FIELD.map((d,i)=>{ if(tutReq) return i<5?{l:i,p:62+rand(0,8)}:{l:[0,1,3,4][i-5],p:rand(-10,-2)}; if(i<10) return {l:i%LANES,p:(i<5?124:62)+rand(0,8)}; if(i<14) return {l:[0,1,3,4][i-10],p:rand(-10,-2)}; const j=i-14; return {l:j%LANES,p:(j<5?-62:-124)+rand(0,8)}; });
+  const FIELD=(tutReq?RIVALS.slice(0,9):RIVALS.slice()).map(d=>({d,t:d.pacer?12600:predictFinish(d,0)})).sort((a,b)=>a.t-b.t).map(x=>x.d);   // 🎓 첫 레이스는 원조 9명만. 기록 빠른 순 → 앞줄(실제 대회의 기록순 출발)
+  // 출발 대열: 나는 맨 뒤(0)에서 출발 — 모든 라이벌이 앞줄에. 5명씩 한 줄, 줄 간격 56
+  const GRID=FIELD.map((d,i)=>{ if(tutReq) return i<5?{l:i,p:112+rand(0,8)}:{l:[0,1,3,4][i-5],p:56+rand(0,8)}; return {l:i%LANES,p:56*(4-Math.floor(i/LANES))+rand(0,8)}; });
   NTOT=FIELD.length+1;
   R=FIELD.map((d,i)=>({...d, lane:GRID[i].l, laneF:GRID[i].l, pos:GRID[i].p, speed:0, phase:rand(0,14), lc:rand(0.5,2), wasAhead:true, fin:false, surge:0, bub:null}));
-  for(const r of R) r.wasAhead=r.pos>P.pos;
+  for(const r of R){ r.wasAhead=r.pos>P.pos;
+    if(r.pacer){ r.rec=12600; r.v0=(TRACK-r.pos)/(12600/TIME_K); }   // 페이서는 어떤 코스든 정확히 3:30:00에 골인
+    else r.rec=predictFinish(r,r.pos);
+    r.tag=fmtHM(r.rec); }   // 이름 대신 예상 완주 기록
   buildItems(); buildElev(); fx=[]; pops=[]; banner=null; finOrder=[];
   raceT=0; cam=P.pos; shake=0; slowmo=false; hint={}; tilt=0;
   st={ev:{},rk10:0,worst:{rk:0,km:0},kickPass:null,wallRank:0,cramps:0,sponge:0,five:0,finT:0,pass:0,passed:0,bumps:0,water:0,miss:0,gels:0,draftT:0,streak:0,lastPass:-9,bestStreak:0,coins:0,sling:0,fever:0,splits:[],lastSplit:0,lastGrade:0,lastWind:false};
@@ -567,7 +577,7 @@ function changeLane(d){
   if(state!=='race'&&state!=='count')return;
   const nl=P.lane+d; if(nl<0||nl>=LANES)return;
   const side=R.find(r=>Math.abs(r.laneF-nl)<0.6&&Math.abs(r.pos-P.pos)<BODY*0.5);   // 21명 혼잡 — 바로 옆에 딱 붙은 경우만 막음
-  if(side){ pop("옆에 "+side.n+"!", '#ff7a2f'); P.speed*=0.93; shake=Math.max(shake,4); sfx.bump(); return; }
+  if(side){ pop("옆에 "+side.tag+" 러너!", '#ff7a2f'); P.speed*=0.93; shake=Math.max(shake,4); sfx.bump(); return; }
   // 🚀 슬링샷: 드래프팅으로 바람을 충분히 피하다 옆으로 빠지면 순간 가속
   if(state==='race'&&P.draftHold>=1.0){ P.sling=1.3; st.sling++; pop("🚀 슬링샷!!",'#9a5cff',true); sfx.sling(); shake=6;
     burst(W*0.3,laneFoot(P.laneF)-60,'#c9a6ff',14,5); }
@@ -645,8 +655,8 @@ function update(dt){
   // --- 플레이어 ---
   P.laneF+=(P.lane-P.laneF)*Math.min(1,dt*12);
   let ahead=null,gap=1e9;
-  if(P.sqT>0) P.sqT-=dt;
-  for(const r of R){ if(Math.abs(r.laneF-P.lane)>0.45)continue; if(P.sqT>0)continue; const g=r.pos-P.pos; if(g>-4&&g<gap){gap=g;ahead=r;} }
+  if(P.sqT>0){ P.sqT-=dt; if(P.sqT<=0&&P.sq&&!P.sq.fin&&P.pos<P.sq.pos+8&&P.sqMax>0){ P.sqT=0.2; P.sqMax-=0.2; } }   // 앞사람을 완전히 지나칠 때까지 유지(최대 2.5초 추가)
+  for(const r of R){ if(Math.abs(r.laneF-P.lane)>0.45)continue; if(P.sqT>0)continue; const g=r.pos-P.pos; if(g>BODY*0.45&&g<gap){gap=g;ahead=r;} }   // 이미 절반 넘게 겹친 러너는 지나친 것으로 봄(뒤로 끌려가지 않게)
   if(Math.abs(P.laneF-P.lane)>0.45){ ahead=null; }
   P.ahead=ahead;
   P.draft=!!ahead&&gap>=BODY-2&&gap<=DRAFT&&!P.tired;
@@ -663,7 +673,7 @@ function update(dt){
   if(P.tired)tgt=TIRED*hillSpd;
   if(P.draft)tgt+=12;
   if(P.boost>0){tgt+=30;P.boost-=dt;}
-  if(P.sqT>0) tgt+=18;   // 틈새 추월: 무리를 실제로 빠져나가게
+  if(P.sqT>0) tgt+=24;   // 틈새 추월: 무리를 실제로 빠져나가게
   if(P.sling>0){tgt+=36;P.sling-=dt;}
   if(P.fever>0){tgt+=10;P.fever-=dt; if(P.fever<=0)pop("피버 종료",'#8496a8');}
   if(P.stumble>0){tgt=48;P.stumble-=dt;}
@@ -708,10 +718,13 @@ function update(dt){
   if(ahead){ const g=ahead.pos-P.pos;
     if(g<BODY&&P.speed>ahead.speed*0.97){ P.pos=ahead.pos-BODY; P.speed=ahead.speed*0.92;
       P.blocked=true; P.blkT=(P.blkT||0)+dt;
-      if(P.blkT>0.6){ P.sq=ahead; P.sqT=1.4; P.blkT=0; P.speed=Math.max(P.speed,ahead.speed+10); if(raceT-(P.lastSq||-9)>4){ P.lastSq=raceT; pop("🫨 틈새로 빠져나간다!",'#2aa0e0'); say(ahead,"어어?!"); } }   // 무리 속에서 1.4초간 빠져나감
+      if(P.blkT>0.6){ P.sq=ahead; P.sqT=1.4; P.sqMax=2.5; P.blkT=0; P.speed=Math.max(P.speed,ahead.speed+10); if(raceT-(P.lastSq||-9)>4){ P.lastSq=raceT; pop("🫨 틈새로 빠져나간다!",'#2aa0e0'); say(ahead,"어어?!"); } }   // 무리 속에서 1.4초간 빠져나감
       if(raceT-P.lastBump>1.4){ P.lastBump=raceT; st.bumps++; st.streak=0; shake=5; sfx.bump(); buzz(30);
         if(!(tut&&!tut.done&&tut.step<2)){ pop(hint.bump?"💥 막혔다!":"💥 막혔다! 위/아래로 쓸어 레인 바꿔 추월",'#ff5d6c'); hint.bump=1; } } } }
-  if(!P.blocked) P.blkT=Math.max(0,(P.blkT||0)-dt*0.4);   // 막힘이 프레임마다 깜빡여도 누적되게 천천히만 줄임
+  // 가속을 누른 채 앞사람 바로 뒤에 붙어 있으면 '갇힘'으로 누적 → 0.8초면 틈새 추월
+  { const pinned=ahead&&!ahead.fin&&(ahead.pos-P.pos)<BODY+10&&holding()&&!P.tired&&!(P.cramp>0)&&!(tut&&!tut.done&&tut.step===3);   // 튜토리얼 '뒤에 붙기' 단계에선 빠져나가지 않음
+    if(pinned&&!P.blocked) P.blkT=(P.blkT||0)+dt; else if(!P.blocked) P.blkT=Math.max(0,(P.blkT||0)-dt*0.6);
+    if(pinned&&P.blkT>0.8&&!(P.sqT>0)){ P.sq=ahead; P.sqT=1.4; P.sqMax=2.5; P.blkT=0; P.speed=Math.max(P.speed,ahead.speed+10); if(raceT-(P.lastSq||-9)>4){ P.lastSq=raceT; pop("🫨 틈새로 빠져나간다!",'#2aa0e0'); say(ahead,"어어?!"); } } }
   const prevPh=P.phase; P.phase+=dt*(P.speed/100)*20;
   if(Math.floor(prevPh/7)!==Math.floor(P.phase/7)) stepSnd();
   if((P.hr>165||wallFx>0.5)&&raceT-lastHeart>60/P.hr*1.0){ lastHeart=raceT; heartSnd(); }
@@ -735,7 +748,7 @@ function update(dt){
   // 🎬 첫 레이스 결승 접전: 36km쯤 가장 가까운 라이벌이 따라붙어 마지막까지 경합, 결승 직전 플레이어가 간발로 앞섬
   if(tut&&!tut.duel&&p>0.86){ const c=R.filter(r=>!r.fin&&r.pos<TRACK*0.97).sort((a,b)=>Math.abs(a.pos-P.pos)-Math.abs(b.pos-P.pos))[0];
     if(c){ tut.duel=c; if(Math.abs(c.lane-P.lane)<1){ const nl=[P.lane-1,P.lane+1].filter(l=>l>=0&&l<LANES); c.lane=nl[0]; c.lc=99; }
-      say(c,"마지막은 내 거야!"); pop("😤 "+c.n+"이(가) 따라붙었다! 마지막 승부!",'#ff3b6b',true); shake=6; } }
+      say(c,"마지막은 내 거야!"); pop("😤 "+c.tag+" 러너가 따라붙었다! 마지막 승부!",'#ff3b6b',true); shake=6; } }
   for(const r of R){
     const rp=clamp(r.pos/TRACK,0,1); let rt=r.f(rp,raceT)*course.diff*(tut?0.94:1);   // 튜토리얼은 느리게 + 속도를 흩어 한 덩어리로 뭉치지 않게
     if(r.fin) rt=60;
@@ -744,6 +757,7 @@ function update(dt){
     if(rp>=WALL_P&&rp<KICK_P) rt*=0.97;
     const rg=gradeAt(r.pos); rt*=rg>0?0.87:rg<0?1.1:1;               // 라이벌도 언덕 영향
     if(windAt(r.pos)) rt*=0.95; if(weather==='heat') rt*=0.985;
+    if(r.pacer&&!r.fin) rt=r.v0;
     if(r.surge>0){ rt+=18; r.surge-=dt; }
     if(tut&&tut.duel===r&&!r.fin){ const last=P.pos>=TRACK*0.97, want=P.pos+(last?-14:20); rt=clamp(Math.max(P.speed,85)+(want-r.pos)*1.4,70,170); if(last) r.speed=Math.min(r.speed,rt); }   // 마지막 1.3km는 즉시 반응 → 플레이어가 간발로 앞섬
     let blk=null,bg=1e9;
@@ -755,7 +769,7 @@ function update(dt){
       else rt=Math.min(rt,blk.speed);
     }
     if(r.block&&!r.fin&&r.lc<=0&&d>BODY+6&&d<95&&Math.abs(r.lane-P.lane)===1&&Math.random()<dt*1.2){
-      if(laneFree(P.lane,r,r.pos)){ r.lane=P.lane; r.lc=3.5; say(r,"😈 비켜!"); pop("😈 방해꾼이 끼어들었다!",'#3a404c'); }
+      if(laneFree(P.lane,r,r.pos)){ r.lane=P.lane; r.lc=3.5; say(r,"😈 비켜!"); pop("😈 "+r.tag+" 러너가 끼어들었다!",'#3a404c'); }
     }
     r.speed+=(rt-r.speed)*Math.min(1,dt*2);
     r.pos+=r.speed*dt;
@@ -763,12 +777,12 @@ function update(dt){
     r.laneF+=(r.lane-r.laneF)*Math.min(1,dt*6);
     r.phase+=dt*(r.speed/100)*20/((BODIES[r.n]&&BODIES[r.n].legs)||1);   // 다리 길면 보폭이 커서 걸음이 느긋
     if(r.bub){ r.bub.t+=dt; if(r.bub.t>1.8)r.bub=null; }
-    if(!r.fin&&r.pos>=TRACK){ r.fin=true; r.finT=raceT; finOrder.push(r); if(!tapeBy){ tapeBy=r; if(P.pos>TRACK-400)pop("🎀 "+r.n+"이(가) 테이프를 끊었다!",'#8496a8'); } }
+    if(!r.fin&&r.pos>=TRACK){ r.fin=true; r.finT=raceT; finOrder.push(r); if(!tapeBy){ tapeBy=r; if(P.pos>TRACK-400)pop("🎀 "+r.tag+" 러너가 테이프를 끊었다!",'#8496a8'); } }
     // 추월 판정
     const isAhead=r.pos>P.pos;
     if(r.wasAhead&&!isAhead&&raceT>1.2){ st.pass++; st.coins+=(P.fever>0?2:1);
       st.streak=(raceT-st.lastPass<4)?st.streak+1:1; st.lastPass=raceT; st.bestStreak=Math.max(st.bestStreak,st.streak);
-      const lbl=st.streak>=3?"🔥 "+st.streak+"연속 추월!":st.streak===2?"⚡ 더블 추월!":"🏃 "+r.n+" 추월!";
+      const lbl=st.streak>=3?"🔥 "+st.streak+"연속 추월!":st.streak===2?"⚡ 더블 추월!":"🏃 "+r.tag+" 러너 추월!";
       pop(lbl+"  "+rank()+"위",'#ff7a2f',st.streak>=2); sfx.pass(); burst(W*0.3,laneFoot(P.laneF)-80,'#ffd23f',10); shake=Math.max(shake,st.streak>=2?6:3);
       say(r,pick(r.say));
       // 자존심 센 라이벌은 반격 스퍼트
@@ -776,7 +790,7 @@ function update(dt){
       // 🔥 피버: 3연속 추월 → 4초간 체력 무소모 + 장애물 무시 + 코인 2배
       if(st.streak===3){ P.fever=4; st.fever++; showBanner("🔥 FEVER!!","4초간 체력 무한 · 코인 2배",'#ff3b6b'); sfx.fever(); shake=10; buzz(60); }
     }
-    else if(!r.wasAhead&&isAhead&&raceT>1.2){ st.passed++; pop(r.n+"에게 추월당함 · "+rank()+"위",'#8496a8'); sfx.passed(); if(Math.random()<0.5)say(r,"먼저 갈게~"); }
+    else if(!r.wasAhead&&isAhead&&raceT>1.2){ st.passed++; pop(r.tag+" 러너에게 추월당함 · "+rank()+"위",'#8496a8'); sfx.passed(); if(Math.random()<0.5)say(r,"먼저 갈게~"); }
     r.wasAhead=isAhead;
   }
 
@@ -894,7 +908,7 @@ function drawRunner(src,x,foot,h,phase,tag,tagCol,me,body){
   if(tag){ ctx.font=(me?"900 14px":"bold 12px")+" sans-serif"; ctx.textAlign="center";
     const ty=foot-H-bo-6, tw=ctx.measureText(tag).width+12;
     ctx.fillStyle=me?"#ffd23f":"#ffffffd0"; rr(x-tw/2,ty-15,tw,19,9); ctx.fill();
-    ctx.fillStyle=me?"#3a2a00":tagCol; ctx.fillText(tag,x,ty-1); }
+    ctx.fillStyle=me?"#3a2a00":"#2b3a4a"; ctx.fillText(tag,x,ty-1); }   // 기록은 어떤 유니폼 색이든 잘 읽히게 진한 글씨
   return foot-H-bo;
 }
 function bubble(x,y,txt){ ctx.font="bold 13px sans-serif"; const w=ctx.measureText(txt).width+16;
@@ -996,7 +1010,7 @@ function render(){
     else if(d.k==='f'){ ctx.globalAlpha=0.45; drawRunner(tints['#9a5cff']||pImg(),d.x,foot,h,P.phase+9,"👥 "+friend.name,'#7b3ff2',false); ctx.globalAlpha=1; }
     else if(d.k==='g'){ ctx.globalAlpha=0.32; drawRunner(pImg(),d.x,foot,h,P.phase+5,"👻 PB",'#5a6a7c',false); ctx.globalAlpha=1; }
     else if(d.k==='r'){ const r=d.r; const showTag=Math.abs(r.pos-P.pos)<90||r.pacer||r.bub||(tut&&tut.duel===r);   // 21명이라 이름표는 가까운 러너만
-      const top=drawRunner(tints[r.c]||null,d.x,foot,h,r.phase,showTag?r.n:null,r.c,false,BODIES[r.n]);
+      const top=drawRunner(tints[r.c]||null,d.x,foot,h,r.phase,showTag?(r.pacer?"페이서":r.tag):null,r.c,false,BODIES[r.n]);
       if(r.surge>0){ ctx.font="18px sans-serif"; ctx.textAlign="center"; ctx.fillText("🔥",d.x-h*0.3,foot-h*0.5); }
       if(r.pacer){ const by=top-34+Math.sin(raceT*3)*3; ctx.strokeStyle="#8899aa"; ctx.lineWidth=1.2; ctx.beginPath(); ctx.moveTo(d.x+6,top+10); ctx.lineTo(d.x+10,by+14); ctx.stroke();
         ctx.fillStyle="#3fa0ff"; ctx.beginPath(); ctx.ellipse(d.x+10,by,17,15,0,0,7); ctx.fill(); ctx.fillStyle="#fff"; ctx.font="900 11px sans-serif"; ctx.textAlign="center"; ctx.fillText(r.pacer,d.x+10,by+4); }
@@ -1073,7 +1087,7 @@ function hud(p,wall,kick){
   const nx=R.filter(r=>r.pos>P.pos).sort((a,b)=>a.pos-b.pos)[0];
   ctx.font="bold 13px sans-serif"; ctx.fillStyle="#2b3a4a"; ctx.textAlign="center";
   const terr=gr>0?"⛰️ 업힐":gr<0?"⬇️ 다운힐":"🛣️ 평지";
-  if(state==='race'){ const nxm=nx?Math.round(toKm(nx.pos-P.pos)*1000):0; const parts=[]; if(gr!==0||vet)parts.push(terr); if(!nx)parts.push("선두!"); else if(vet||nxm<=400)parts.push("다음 목표 "+nx.n+" "+nxm+"m");
+  if(state==='race'){ const nxm=nx?Math.round(toKm(nx.pos-P.pos)*1000):0; const parts=[]; if(gr!==0||vet)parts.push(terr); if(!nx)parts.push("선두!"); else if(vet||nxm<=400)parts.push("다음 목표 "+nx.tag+" 러너 "+nxm+"m");
     if(parts.length) ctx.fillText(parts.join("  ·  "),W/2,top+98); }
   if(state==='race'&&(vet||windAt(P.pos))){ const gp=ghostPos(raceT); let line=WEATHER[weather].ic+" "+WEATHER[weather].n+(windAt(P.pos)?" · 맞바람!":"")+(daily?" · 🗓️ 오늘의 레이스":"");
     if(gp!=null&&gp<TRACK){ const ds=Math.round((P.pos-gp)/Math.max(P.speed,60)*TIME_K); line+="  ·  👻 PB "+(ds>=0?"보다 "+ds+"초 앞":"보다 "+(-ds)+"초 뒤"); }
