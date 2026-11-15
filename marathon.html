@@ -147,7 +147,7 @@
 <div class="ov" id="title">
   <h1 style="font-size:34px">🏃 모두의 마라톤</h1>
   <p id="titleSub">오늘은 어떻게 달려볼까요?</p>
-  <div style="font-size:11px;opacity:.6;margin-top:-4px">v5.2 · 급수대·관중·아치 자리(튜토리얼·HUD 다이어트)</div>
+  <div id="verLine" style="font-size:11px;opacity:.6;margin-top:-4px;padding:6px 14px">v5.3 · 개발자 모드(튜토리얼·HUD 다이어트)</div>
   <div id="hero" style="display:none;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:360px">
     <div class="mode" id="heroStart" style="background:linear-gradient(135deg,#ffffff,#ffe6ee);border-color:#ffb3cb;width:100%"><b class="mi">🏁</b><b>첫 레이스 시작</b><small>서울 코스에서 20명과 함께 달려요<br>조작은 달리면서 하나씩 알려드릴게요</small></div>
     <button class="pill" id="heroMore" style="flex:none;background:#eef3f8;color:var(--txt);box-shadow:none;padding:9px 18px;font-size:13px">먼저 둘러볼게요</button>
@@ -176,6 +176,21 @@
   <div class="courses" id="outList"></div>
 </div>
 
+<!-- 🔒 개발자 모드: 타이틀의 버전 글자를 빠르게 5번 → 비밀번호. 대화상자(prompt/confirm)는 WebView에서 무시될 수 있어 화면 안에서 입력·확인한다 -->
+<div class="ov" id="dev" style="display:none;z-index:60;background:#0b1220f2;color:#dfe9f5">
+  <h1 style="color:#ffb14a;font-size:22px">🔒 개발자 모드</h1>
+  <div id="devGate" style="display:flex;flex-direction:column;align-items:center;gap:10px">
+    <input type="password" id="devPass" inputmode="numeric" autocomplete="off" placeholder="비밀번호" style="font-size:20px;padding:10px 14px;border-radius:12px;border:none;text-align:center;width:200px;user-select:text;-webkit-user-select:text">
+    <button class="btn sub" id="devGo">확인</button>
+    <div id="devErr" style="color:#ff8a94;font-size:13px;min-height:18px"></div>
+  </div>
+  <div id="devBody" style="display:none;flex-direction:column;align-items:center;gap:12px;width:100%;max-width:340px">
+    <pre id="devInfo" style="font-size:12px;line-height:1.5;background:#ffffff14;border-radius:12px;padding:10px 14px;margin:0;width:100%;white-space:pre-wrap;font-family:inherit"></pre>
+    <button class="btn" id="devReset" style="background:#e5484d;box-shadow:none;font-size:17px;width:100%">🧨 전체 초기화</button>
+    <p style="font-size:12px;color:#9fb2c6;margin:0;text-align:center">기록·코인·업적·해금·튜토리얼·설정을 모두 지우고<br>처음 설치한 상태로 다시 시작합니다.</p>
+  </div>
+  <button class="btn sub" id="devClose">닫기</button>
+</div>
 <div class="ov" id="settings" style="display:none">
   <button class="back toTitle">← 처음으로</button>
   <h1>⚙️ 설정</h1>
@@ -1833,6 +1848,24 @@ $("setVoice").addEventListener("click",()=>{ voiceOn=!voiceOn; store.set('mv2_vo
 $("setOfsDn").addEventListener("click",()=>{ rOfs=Math.max(-150,rOfs-10); store.set('mv2_rofs',rOfs); renderSettings(); });
 $("setOfsUp").addEventListener("click",()=>{ rOfs=Math.min(150,rOfs+10); store.set('mv2_rofs',rOfs); renderSettings(); });
 $("setSpd").addEventListener("click",()=>{ const o=[1,1.25,1.5,0.8]; rSpd=o[(o.indexOf(rSpd)+1)%o.length]; store.set('mv2_rspd',rSpd); renderSettings(); });
+// 🔒 개발자 모드
+const DEV_PASS='799879';
+let devTaps=0, devTapT=0, devArm=0;
+function devOpen(){ $("dev").style.display="flex"; $("devGate").style.display="flex"; $("devBody").style.display="none"; $("devErr").textContent=""; devArm=0;
+  const i=$("devPass"); i.value=""; const f=()=>{ try{ i.focus(); }catch(e){} }; f(); setTimeout(f,60); }
+function devClose(){ $("dev").style.display="none"; $("devPass").value=""; }
+function devKeys(){ return Object.keys(localStorage).filter(k=>k.startsWith('mv2_')); }
+function devBuild(){ $("devGate").style.display="none"; $("devBody").style.display="flex"; devArm=0; $("devReset").textContent="🧨 전체 초기화";
+  $("devInfo").textContent="저장 항목 "+devKeys().length+"개 · 레이스 "+(store.get('mv2_races')||0)+"회 · 코인 "+(store.get('mv2_coins')||0)+"\n불러온 그림 "+Object.keys(ART).length+"장\n"+$("verLine").textContent; }
+function devSubmit(){ const i=$("devPass"); if(i.value.trim()!==DEV_PASS){ $("devErr").textContent="비밀번호가 틀렸습니다"; i.value=""; return; } i.value=""; i.blur(); devBuild(); }
+// 전체 초기화: 한 번 누르면 확인 문구로 바뀌고, 3초 안에 한 번 더 눌러야 지운다
+function devResetAll(){ const now=Date.now(); if(now-devArm>3000){ devArm=now; $("devReset").textContent="⚠️ 한 번 더 누르면 모두 지워집니다"; setTimeout(()=>{ if(Date.now()-devArm>=3000) $("devReset").textContent="🧨 전체 초기화"; },3100); return; }
+  devKeys().forEach(k=>localStorage.removeItem(k)); try{ sessionStorage.clear(); }catch(e){} location.reload(); }
+$("verLine").addEventListener("click",()=>{ const now=Date.now(); devTaps=(now-devTapT<600)?devTaps+1:1; devTapT=now; if(devTaps>=5){ devTaps=0; devOpen(); } });
+$("devGo").addEventListener("click",devSubmit);
+$("devPass").addEventListener("keydown",e=>{ if(e.key==="Enter") devSubmit(); });
+$("devClose").addEventListener("click",devClose);
+$("devReset").addEventListener("click",devResetAll);
 $("setReset").addEventListener("click",()=>{ if(!confirm("모든 기록·코인·업적·해금이 지워집니다. 정말 초기화할까요?"))return;
   Object.keys(localStorage).filter(k=>k.startsWith('mv2_')).forEach(k=>localStorage.removeItem(k)); location.reload(); });
 
