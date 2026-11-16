@@ -20,6 +20,8 @@ const GROUND = 0.70;
 const LANE_BACK = 0.60, LANE_FRONT = 0.82;
 const laneY = d => H * (LANE_BACK + d * (LANE_FRONT - LANE_BACK));
 const laneS = d => 0.80 + d * 0.38;
+/** 방패병이 방패를 든 중인가 (combat.guarding 과 같은 판정) */
+const guardOn = e => e.guardCyc !== undefined && e.guardCyc >= e.hero.trait.open;
 // 적 깊이 줄(0 = 멀리 · 1 = 가까이). 진형 순서대로 앞에서 뒤로 서므로 중간 범위에서만 엇갈리게 하고,
 // **맨 뒤 적은 늘 가장 먼 줄**(REAR_LANE)에 세운다 — 가까운 줄에 서면 크게 그려져 앞에 있는 것처럼 읽혔다.
 const FOE_LANES = [0.60, 0.40, 0.70, 0.50];
@@ -768,7 +770,7 @@ function launchCorpse(hero, x, y, h, idx) {
     vx: W * (0.5 + Math.random() * 0.35), vy: -H * (0.42 + Math.random() * 0.22),
     rot: 0, vr: 7 + Math.random() * 6, life: 0.7, max: 0.7,
   });
-  if (corpses.length > 12) corpses.shift();
+  if (corpses.length > 18) corpses.shift();      // 물량전 — 병사가 연달아 날아간다
   const cols = ['#ffe27a', '#ffffff', '#ffb36b'];
   for (let i = 0; i < 9; i++) {
     const a = Math.random() * 6.2832, v = 60 + Math.random() * 120;
@@ -1001,6 +1003,42 @@ export function render(dt) {
   ctx.fillStyle = '#cfdcf2';
   ctx.fillText('HP ' + fmt(R.Lhp), W * 0.30, hpY);
 
+  // ── 파워 업 (combat.powerPulse) ── 리드 위로 빛기둥 · 올라가는 화살표 · 한 줄. 1.8초.
+  // 자동 강화가 조용히 사던 걸 "방금 세졌다" 로 보여 준다. 수치는 아무것도 바꾸지 않는다.
+  if (R.powerUp && R.powerUp.t > 0) {
+    const pu = R.powerUp, u = 1 - pu.t / 1.8;              // 0 → 1
+    const px = W * 0.30, a = Math.min(1, pu.t * 2.2);
+    ctx.save();
+    // 빛기둥 — 처음 0.3초에 솟고 서서히 옅어진다
+    const colH = pH * 2.2 * Math.min(1, u * 3.5);
+    const g = ctx.createLinearGradient(0, feet, 0, feet - colH);
+    g.addColorStop(0, `rgba(255,230,120,${0.45 * a})`);
+    g.addColorStop(1, 'rgba(255,230,120,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(px - pH * 0.42, feet - colH, pH * 0.84, colH);
+    // 화살표 셋이 차례로 올라간다
+    ctx.fillStyle = `rgba(255,236,140,${a})`;
+    for (let k = 0; k < 3; k++) {
+      const v = (u * 1.6 + k * 0.28) % 1;
+      const ax = px + (k - 1) * pH * 0.3, ay = feet - pH * 0.3 - v * pH * 1.3, s2 = pH * 0.09;
+      ctx.globalAlpha = a * (1 - v);
+      ctx.beginPath(); ctx.moveTo(ax, ay - s2); ctx.lineTo(ax + s2, ay); ctx.lineTo(ax - s2, ay); ctx.closePath(); ctx.fill();
+    }
+    // 한 줄 — 용사를 몇 방에 쓰러뜨리는지가 줄었으면 그걸, 아니면 퍼센트
+    ctx.globalAlpha = a;
+    const txt = pu.from >= 2 && pu.from <= 99 && pu.to < pu.from
+      ? tr('pw.hits', { a: pu.from, b: pu.to }) : tr('pw.pct', { p: pu.pct });
+    ctx.font = '900 14px system-ui';
+    ctx.textAlign = 'center';
+    ctx.strokeStyle = 'rgba(40,24,0,.85)'; ctx.lineWidth = 3.5;
+    // 연쇄 수(feet−pH−56, 최대 22px) 위 한 줄 — 물량전에선 연쇄가 거의 늘 떠 있어서 같은 자리면 겹친다(실측 화면)
+    const ty = feet - pH - 86 - u * 12;
+    ctx.strokeText(txt, px, ty);
+    ctx.fillStyle = '#ffe680';
+    ctx.fillText(txt, px, ty);
+    ctx.restore();
+  }
+
   // ── 적 (용사) — 프레임 애니 + 피격 시 밀림 ──
   // 한 기마다 용사가 다르다(combat.spawnWave 가 e.hero 를 심는다). 구세이브로 들어오면
   // e.hero 가 없으므로 예전처럼 구역 용사로 폴백한다.
@@ -1008,15 +1046,44 @@ export function render(dt) {
   // 쓰러지는 중인 적도 그린다 — dead 포즈가 끝나야 사라진다.
   // 레인은 **R.enemies 안의 제자리 번호**로 고른다. 살아있는 것만 세서 고르면
   // 하나가 죽을 때마다 남은 적들이 레인을 갈아타며 툭 튄다.
+  // ── 물량전 진형 ── 병사(minion)는 앞 두 줄에 셋씩(SWARM.shown 기), 나머지는 화면 밖에서 줄 서 있다가
+  // 앞이 쓰러지면 달려 들어온다. 용사는 병사 뒤에 섰다가 병사가 다 쓰러지면 **앞으로 나선다**.
+  // 자리는 목표로 정하고 실제 위치(e._x · e._d)는 그쪽으로 미끄러지게 한다 — 쓰러질 때마다 툭툭 튀지 않게.
+  // 처음 그려질 때는 화면 밖(오른쪽)에서 출발하므로 웨이브 입장 연출도 이걸로 된다.
   const shown = [];
+  const SW = B.stage.swarm || {};
+  const shownMin = SW.shown || 6;
+  let nHero = 0, minAlive = 0;
+  for (const e of R.enemies) { if (!e.minion) nHero++; else if (e.Lhp > L0) minAlive++; }
+  let hi = 0, mr = 0;
+  const slide = Math.min(1, dt * 7);
   R.enemies.forEach((e, idx) => {
-    if (!(e.Lhp > L0 || e.deadT > 0)) return;
-    const nE = R.enemies.length;
-    const d = R.boss ? 0.5 : (nE > 1 && idx === nE - 1 ? REAR_LANE : FOE_LANES[idx % FOE_LANES.length]);
-    // 순번 = 진형 순서(spawnWave 가 근접 < 궁수 < 마법사 < 백마법사로 정렬). 앞에서 뒤로 한 칸씩 물러선다.
-    // 예전엔 idx % 3 이라 4번째가 맨 앞 칸으로 돌아와 백마법사가 앞에 서기도 했다.
-    const x = R.boss ? W * 0.66 : W * (0.56 + Math.min(idx, 3) * 0.095 + (d - 0.5) * 0.05);
-    shown.push({ e, idx, d, x });
+    const alive = e.Lhp > L0;
+    const myHi = e.minion ? -1 : hi++;
+    const myR = e.minion && alive ? mr++ : -1;
+    if (!(alive || e.deadT > 0)) return;
+    let d, x;
+    if (R.boss) { d = 0.5; x = W * 0.66; }
+    else if (e.minion) {
+      if (!alive) { if (e._x === undefined) return; d = e._d; x = e._x; }   // 쓰러지는 중 — 그 자리에서
+      else if (myR >= shownMin) { e._x = undefined; return; }             // 줄 서서 기다린다 (화면 밖)
+      else {
+        d = myR % 2 ? 0.30 : 0.66;
+        x = W * (0.465 + Math.floor(myR / 2) * 0.062 + (myR % 2) * 0.03);
+      }
+    } else {
+      d = nHero > 1 && myHi === nHero - 1 ? REAR_LANE : FOE_LANES[myHi % FOE_LANES.length];
+      // 순번 = 진형 순서(spawnWave 가 근접 < 궁수 < 마법사 < 백마법사로 정렬). 앞에서 뒤로 한 칸씩 물러선다.
+      // 예전엔 idx % 3 이라 4번째가 맨 앞 칸으로 돌아와 백마법사가 앞에 서기도 했다.
+      x = minAlive
+        ? W * (0.67 + Math.min(myHi, 3) * 0.072 + (d - 0.5) * 0.04)        // 병사 뒤에서 지켜본다
+        : W * (0.56 + Math.min(myHi, 3) * 0.095 + (d - 0.5) * 0.05);       // 병사가 쓰러지면 앞으로
+    }
+    if (e._x === undefined) { e._x = x + W * 0.55; e._d = d; }            // 화면 밖에서 달려 들어온다
+    // 기병(돌진)은 들어올 때 세 배 빠르게 — 들어오자마자 먼저 친다(combat)
+    const sl = !e.minion && e.hero?.trait?.type === 'charge' ? Math.min(1, slide * 3) : slide;
+    if (alive) { e._x += (x - e._x) * sl; e._d += (d - e._d) * sl; }
+    shown.push({ e, idx, d: e._d, x: e._x });
   });
   shown.sort((a, b) => a.d - b.d);        // 뒤에 있는 것부터 그린다
 
@@ -1038,13 +1105,11 @@ export function render(dt) {
   // 웨이브가 막 시작했으면 화면 밖에서 달려 들어온다.
   // 적 4기를 쓸어도 다음 무리가 조용히 나타나서 "한 무리를 끝냈다" 가 없었다.
   // 뒤쪽 레인일수록 조금 늦게 들어와 한 덩어리로 안 보인다.
-  const waveU = R.waveInT > 0 ? R.waveInT / WAVE_IN_SEC : 0;    // 1 → 0
-  for (const { e, idx, d, x: ex0 } of shown) {
-    const lag = Math.max(0, Math.min(1, waveU * (1.15 + (1 - d) * 0.35)));
-    const ease = lag * lag;                                     // 빨리 들어와 부드럽게 선다
-    const ex = ex0 + ease * W * 0.55;
+  // (입장은 위 진형 계산의 '화면 밖에서 미끄러져 들어오기' 가 맡는다)
+  for (const { e, idx, d, x: ex } of shown) {
     const ey = laneY(d);
-    const h = eH * laneS(d);
+    // 병사는 작게 — 용사가 누구인지 묻히지 않게. 황금 병사는 조금 크게 + 금빛(아래 glow) — 멀리서도 눈에 띄어야 '노려볼' 맛이 난다
+    const h = eH * laneS(d) * (e.minion ? (SW.scale || 0.62) * (e.golden ? 1.18 : 1) : 1);
     const eb = Math.sin(t * 2.4 + e.ph) * h * 0.015;
     const hit = e.hitT > 0 ? e.hitT / 0.12 : 0;
     const dying = e.deadT > 0 ? e.deadT / (B.combatFx?.deathSec || 0.32) : 0;
@@ -1061,6 +1126,28 @@ export function render(dt) {
       continue;
     }
     const kb = e.kbT > 0 ? Math.sin((e.kbT / 0.26) * Math.PI) : 0;   // 강타에 밀렸다 돌아온다
+    // 황금 병사 — 발밑 금빛 웅덩이 + 위로 오르는 반짝임. 몸빛(glow)만으론 작은 그림이라 묻혔다(실측 화면)
+    if (e.golden && dying <= 0) {
+      const pulse = 0.75 + 0.25 * Math.sin(t * 6 + e.ph);
+      ctx.save();
+      const gr = ctx.createRadialGradient(ex, ey, 0, ex, ey, h * 0.9);
+      gr.addColorStop(0, `rgba(255,220,90,${0.55 * pulse})`);
+      gr.addColorStop(1, 'rgba(255,200,60,0)');
+      ctx.fillStyle = gr;
+      ctx.beginPath(); ctx.ellipse(ex, ey, h * 0.9, h * 0.32, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = '#fff3b0';
+      for (let k = 0; k < 3; k++) {
+        const u = ((t * 0.9 + k / 3 + e.ph) % 1);
+        ctx.globalAlpha = (1 - u) * 0.9;
+        ctx.beginPath(); ctx.arc(ex + Math.sin(k * 2.1 + t * 2) * h * 0.3, ey - u * h * 1.1, 1.6 + (1 - u) * 1.4, 0, 7); ctx.fill();
+      }
+      // 머리 위 돈주머니 — 작은 병사 무리 속에서 '저놈이다' 가 한눈에 보이게
+      ctx.globalAlpha = 1;
+      ctx.font = `${Math.round(h * 0.42)}px system-ui`;
+      ctx.textAlign = 'center';
+      ctx.fillText('💰', ex, ey - h * 1.08 + Math.sin(t * 5 + e.ph) * h * 0.05);
+      ctx.restore();
+    }
     if (dying > 0) ctx.globalAlpha = Math.max(0, dying);   // 쓰러지며 옅어진다
     // 프레임: 공격은 포즈 진행도로 준비 → 타격 → 마무리, 대기는 가끔 눈 감기. 예전엔 초당 7장으로
     // 돌렸는데 대기 2장을 그렇게 돌리면 깜빡거린다
@@ -1071,9 +1158,43 @@ export function render(dt) {
       dx: hit * 7 + kb * W * 0.05 + (1 - dying) * (dying > 0 ? 14 : 0),    // 맞은 쪽으로 밀리며 쓰러진다
       sx: 1 + hit * 0.06,
       ring: dying > 0 ? null : FOE,
+      glow: e.windT > 0 ? `rgba(255,60,60,${0.6 + 0.4 * Math.sin(t * 18)})`
+        : e.golden ? `rgba(255,214,70,${0.75 + 0.25 * Math.sin(t * 7)})`
+        : guardOn(e) ? 'rgba(120,200,255,.9)' : null,
+      glowBlur: e.windT > 0 ? h * 0.5 : e.golden ? h * 0.7 : guardOn(e) ? h * 0.35 : 0,
     });
+    // ── 힘을 모은다 (보스 큰 공격 · 대포 장전) ── 발밑 붉은 고리가 조여 들고 머리 위에 '!'. 이때 스킬을 직접 누르면 끊긴다
+    if (e.windT > 0 && dying <= 0) {
+      const wind = e.shellCd !== undefined ? e.hero.trait.wind : (B.stage.bossHeavy?.wind || 1.6);
+      const u = 1 - e.windT / wind;                   // 0 → 1
+      ctx.save();
+      ctx.strokeStyle = `rgba(255,70,70,${0.5 + 0.5 * u})`;
+      ctx.lineWidth = 2 + u * 3;
+      const rr = h * (0.95 - u * 0.55);
+      ctx.beginPath(); ctx.ellipse(ex, ey, rr, rr * 0.32, 0, 0, 7); ctx.stroke();
+      ctx.font = `900 ${Math.round(h * (R.boss ? 0.34 : 0.3) * (1 + 0.15 * Math.sin(t * 20)))}px system-ui`;
+      ctx.textAlign = 'center';
+      ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(60,0,0,.9)';
+      ctx.strokeText('!', ex, ey - h * 1.12);
+      ctx.fillStyle = '#ff5050';
+      ctx.fillText('!', ex, ey - h * 1.12);
+      ctx.restore();
+    }
+    // ── 방패를 들었다 ── 앞(왼쪽)에 푸른 막. 이때는 평타 · 스킬이 막힌다
+    if (guardOn(e) && dying <= 0) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(140,210,255,.85)'; ctx.lineWidth = 3;
+      ctx.fillStyle = 'rgba(120,190,255,.18)';
+      ctx.beginPath(); ctx.ellipse(ex - h * 0.18, ey - h * 0.5, h * 0.42, h * 0.58, 0, Math.PI * 0.55, Math.PI * 1.45); ctx.fill(); ctx.stroke();
+      ctx.restore();
+    }
     ctx.globalAlpha = 1;
     if (dying > 0) continue;              // 쓰러지는 적은 체력바를 지운다
+    // 병사는 1~2방이라 바가 꽉 찬 채로 늘어서 있으면 화면이 바로 덮인다 — 맞았을 때만 가늘게
+    if (e.minion) {
+      if (e.Lhp < e.Lmax) bar(ex - h * 0.3, ey - h - 5, h * 0.6, 3, ratio(e.Lhp, e.Lmax), '#ff8a8a');
+      continue;
+    }
     const bw = h * 0.62;
     // 회복 중이면 바를 초록으로 — **올라가는 게 보여야** 힐러가 일하는 걸 안다
     bar(ex - bw / 2, ey - h - 7, bw, 4, ratio(e.Lhp, e.Lmax), e.healT > 0 ? '#5ee88a' : '#ff5a6e');
@@ -1346,6 +1467,26 @@ export function render(dt) {
     ctx.restore();
   }
 
+  // ── 피버 ── 화면 가장자리가 달아오르고 속도선이 진하게 흐른다. 리드 발밑에 불꽃 고리
+  if (R.feverT > 0) {
+    const a = Math.min(1, R.feverT * 2) * (0.75 + 0.25 * Math.sin(t * 12));
+    ctx.save();
+    const g = ctx.createRadialGradient(W / 2, H * 0.55, Math.min(W, H) * 0.25, W / 2, H * 0.55, Math.max(W, H) * 0.7);
+    g.addColorStop(0, 'rgba(255,120,30,0)');
+    g.addColorStop(1, `rgba(255,110,20,${(0.42 * a).toFixed(3)})`);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = '#ffcf6a'; ctx.lineWidth = 2.5; ctx.globalAlpha = 0.35 * a;
+    for (let i = 0; i < 9; i++) {
+      const yy = H * (0.08 + i * 0.105) + Math.sin(t * 7 + i) * 4, len = W * 0.14;
+      const x0 = (t * 620 + i * 97) % (W + len) - len;
+      ctx.beginPath(); ctx.moveTo(x0, yy); ctx.lineTo(x0 + len, yy); ctx.stroke();
+    }
+    ctx.globalAlpha = a;
+    ctx.strokeStyle = '#ffb03a'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.ellipse(W * 0.30, feet, pH * (0.7 + 0.1 * Math.sin(t * 16)), pH * 0.22, 0, 0, 7); ctx.stroke();
+    ctx.restore();
+  }
+
   // ── 버프 가시화 ── 배속은 숫자로만 있어서 켜 둔 줄도 모른다. 가장자리에 속도선을 깐다.
   if ((S.spd || 1) > 1) {
     ctx.save();
@@ -1388,7 +1529,13 @@ export function render(dt) {
     }
     // 적에게 뜨는 공격 수치(평타·치명타·스킬)는 한 단계(2px)씩 줄였다 — 큰 단위(6.81az)가 여러 발
     // 겹치면 적 머리 위가 숫자로 덮였다. 크기 차이(평타 < 스킬 < 치명타)는 그대로 둔다.
-    if (f.type === 'foe') { ctx.fillStyle = '#ff6b6b'; ctx.font = '800 14px system-ui'; }
+    // 뜻밖의 보상 — 황금 병사 · 보스 상자 · 떨어진 젬. 평소 숫자보다 크고 오래 남는다(combat.fx 의 life)
+    if (f.type === 'cut') { ctx.fillStyle = '#8ff0ff'; ctx.font = '900 20px system-ui'; }
+    else if (f.type === 'block') { ctx.fillStyle = '#b8dcff'; ctx.font = '800 12px system-ui'; }
+    else if (f.type === 'golden') { ctx.fillStyle = '#ffe24a'; ctx.font = '900 21px system-ui'; }
+    else if (f.type === 'chest') { ctx.fillStyle = '#ffd34d'; ctx.font = '900 16px system-ui'; }
+    else if (f.type === 'gem') { ctx.fillStyle = '#7fe3ff'; ctx.font = '900 16px system-ui'; }
+    else if (f.type === 'foe') { ctx.fillStyle = '#ff6b6b'; ctx.font = '800 14px system-ui'; }
     else if (f.type === 'skill') { ctx.fillStyle = '#b59bff'; ctx.font = '800 18px system-ui'; }
     else if (f.type === 'crit') { ctx.fillStyle = '#ffe24a'; ctx.font = '800 20px system-ui'; }
     else if (f.type === 'gold') { ctx.fillStyle = '#ffd34d'; ctx.font = '800 15px system-ui'; }

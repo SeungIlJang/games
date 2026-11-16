@@ -3,14 +3,14 @@
 import { t, applyStatic } from './i18n.js';
 import { B } from './balance.js';
 import { S, load, save, holdSaveTime } from './state.js';
-import { enterStage, tick, setEventHandler, MODE, R } from './combat.js';
+import { enterStage, tick, setEventHandler, MODE, R, powerPulse } from './combat.js';
 import { initRender, render, preloadFor, resize, bgAdvance } from './render.js';
 import { initUI, refresh, toast } from './ui.js';
 import { pendingOffline, claimOffline, fmtDuration } from './offline.js';
 import { fmt } from './logmath.js';
 import { autoBuyTick } from './stats.js';
 import { initAds, playRewarded, isNative } from './ads.js';
-import { renderSkillBar } from './ui-skills.js';
+import { renderSkillBar, renderFever } from './ui-skills.js';
 import { showTitle } from './ui-title.js';
 import * as sfx from './audio.js';
 import { DEV } from './dev-flags.js';
@@ -40,14 +40,24 @@ preloadFor(S.st);
 
 // 전투는 **사건만 알린다.** 소리 연결은 여기서 한다 — combat.js 가 오디오를 직접 들면
 // 전투 로직이 재생 실패에 얽힌다. 기존 동작(클리어 시 갱신·예열)은 그대로 둔다.
+let lastHitSfx = 0;
 setEventHandler(ev => {
   switch (ev.type) {
     case 'attack':    break;                    // 발사 자체는 조용하다 — 소리는 닿을 때 난다
     case 'impact':    sfx.attack(); break;      // 투사체가 맞은 순간
-    case 'playerHit': sfx.playerHit(); break;
+    // 물량전에선 병사 여럿이 잘게 때린다 — 매번 울리면 소리가 뭉개진다. 0.12초에 한 번만
+    case 'playerHit': { const n = performance.now(); if (n - lastHitSfx > 120) { lastHitSfx = n; sfx.playerHit(); } break; }
     // 연쇄가 길수록 배경이 더 달린다 — 화면이 같이 앞으로 쏠려야 "몰아친다" 가 읽힌다
     case 'kill':      sfx.kill(); if (R.chain >= 3) bgAdvance(0.18 + Math.min(R.chain, 10) * 0.02); break;
     case 'wave':      bgAdvance(); break;        // 웨이브를 넘길 때 한 걸음 더
+    // 뜻밖의 보상(황금 병사 · 은/금 상자 · 떨어진 젬) — 뽑기의 좋은 결과 소리를 빌린다. 귀로도 '오!' 가 와야 한다
+    case 'powerUp':   sfx.upgrade(); break;     // 전투력이 한 계단 올랐다(combat.powerPulse)
+    // ⑥⑦ 손맛 — 피버가 찼다 · 켰다 · 큰 공격을 끊었다 · 적이 힘을 모은다(보스는 경고음)
+    case 'feverReady': sfx.gachaResult(0); break;
+    case 'fever':     sfx.gachaResult(1); break;
+    case 'cut':       sfx.upgrade(); sfx.kill(); break;
+    case 'charge':    if (ev.boss) sfx.heartbeat(0.9); break;
+    case 'lucky':     if (ev.what === 'gem') sfx.upgrade(); else sfx.gachaResult(1); break;
     // 클리어마다 다음 장면 자원을 예열한다 (적·배경이 5스테이지마다 바뀐다)
     case 'stageClear': refresh(); preloadFor(ev.stage + 1); bgAdvance(1.1); break;   // 스테이지는 더 길게
     case 'death':      refresh(); break;
@@ -107,6 +117,7 @@ function loop(now) {
     R.freezeBank += sdt;
     render(0);             // dt 0 — 화면이 그대로 멈춘다
     renderSkillBar();
+    renderFever();
     requestAnimationFrame(loop);
     return;
   }
@@ -119,11 +130,13 @@ function loop(now) {
   } else tick(sdt);
   render(sdt);
   renderSkillBar();        // 쿨 채움은 매 프레임 — DOM 은 구성이 바뀔 때만 다시 만든다
+  renderFever();
   acc += dt;
   if (acc > 0.25) {
     acc = 0;
     // 자동 강화 — 0.25초마다. 소리는 안 낸다(켜 두면 쉬지 않고 사서 끊임없이 울린다).
     if (S.autoBuy !== false && autoBuyTick(R.stage, R.boss) > 0) save();
+    powerPulse(0.25);          // 세진 게 쌓이면 한 박자로 보여 준다 — 출처(자동 강화 · 뽑기 · 성장)는 묻지 않는다
     refresh();
   }
   requestAnimationFrame(loop);
